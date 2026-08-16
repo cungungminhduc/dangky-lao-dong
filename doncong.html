@@ -3,84 +3,130 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Xác nhận đã đón lao động</title>
+<title>Xác nhận đã đón</title>
 <style>
   :root{
-    --nen:#f4f6f8; --the:#fff; --chu:#1b2430; --mo:#5d6b7a; --vien:#d3dae2;
-    --chinh:#1a6fd4; --chinh-dam:#12569f;
-    --tot:#0f7a3d; --tot-nen:#e7f5ec; --tot-vien:#a9d9bb;
-    --canh:#9a6b00; --canh-nen:#fff6e0; --canh-vien:#f0d9a0;
+    --nen:#f2f4f6; --the:#fff; --chu:#1b2430; --mo:#9aa3ad; --vien:#e9edf1;
+    --xanh:#12b76a; --xanh-dam:#0e9257;
+    --tot:#0f7a3d; --tot-nen:#e7f7ee; --tot-vien:#a9d9bb;
+    --canh:#8a6300; --canh-nen:#fff6e0; --canh-vien:#f0dda0;
     --loi:#b3261e; --loi-nen:#fdeceb; --loi-vien:#f0b3ae;
   }
   *{box-sizing:border-box}
   body{margin:0;background:var(--nen);color:var(--chu);
-       font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-  .boc{max-width:640px;margin:0 auto;padding:14px 14px 40px}
-  header{text-align:center;padding:10px 0 14px}
-  header h1{margin:0 0 3px;font-size:20px}
-  header p{margin:0;color:var(--mo);font-size:13.5px}
-  .the{background:var(--the);border:1px solid var(--vien);border-radius:12px;padding:16px;margin-bottom:12px}
-  label{display:block;font-weight:600;font-size:14px;margin:0 0 6px}
-  input{width:100%;padding:13px 12px;font-size:16px;font-family:inherit;
-       border:1px solid var(--vien);border-radius:9px;background:#fff;color:var(--chu)}
-  input:focus{outline:2px solid var(--chinh);outline-offset:-1px;border-color:var(--chinh)}
-  button{width:100%;padding:15px;font-size:17px;font-weight:600;font-family:inherit;
-       border:0;border-radius:10px;background:var(--chinh);color:#fff;cursor:pointer;margin-top:12px}
-  button:active{background:var(--chinh-dam)}
-  button[disabled]{opacity:.5;cursor:not-allowed}
-  button.phu{background:#e8ecf1;color:var(--chu)}
-  .goiy{font-size:13px;color:var(--mo);margin-top:6px}
+       font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  .boc{max-width:560px;margin:0 auto;padding-bottom:30px}
 
-  #vungquet{width:100%;border-radius:10px;overflow:hidden;background:#000;min-height:250px}
-  #vungquet video{width:100%!important;display:block}
+  .dinh{background:var(--the);display:flex;align-items:center;gap:12px;
+        padding:14px 16px;border-bottom:1px solid var(--vien)}
+  .dinh .bieu{flex:0 0 46px;height:46px;border:0;border-radius:10px;background:#f2f4f6;
+        display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .dinh .bieu:active{background:#e4e8ec}
+  .dinh .bieu svg{width:25px;height:25px;stroke:#3c4650;fill:none;stroke-width:1.8;
+        stroke-linecap:round;stroke-linejoin:round}
+  .dinh .giua{flex:1;min-width:0;text-align:center}
+  .dinh .giua b{display:block;font-size:17px;font-weight:700;letter-spacing:.3px}
+  .dinh .giua span{display:block;font-size:12.5px;color:var(--mo);margin-top:2px}
+
+  .khoi{background:var(--the);margin-top:10px;border-top:1px solid var(--vien);border-bottom:1px solid var(--vien)}
+  .hang{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:54px;border-top:1px solid #f2f4f6}
+  .hang:first-child{border-top:0}
+  .hang > span{flex:0 0 108px;font-size:15px}
+  .hang input{flex:1;min-width:0;border:0;padding:15px 0;font-size:15.5px;font-family:inherit;
+        background:transparent;color:var(--chu);text-align:right}
+  .hang input::placeholder{color:#c6ced6}
+  .hang input:focus{outline:0}
+
+  .nut{display:block;width:calc(100% - 28px);margin:18px 14px 0;padding:16px;
+       font-size:17px;font-weight:600;font-family:inherit;border:0;border-radius:9px;
+       background:var(--xanh);color:#fff;cursor:pointer}
+  .nut:active{background:var(--xanh-dam)}
+  .nut[disabled]{opacity:.5}
+  .nut.phu{background:#eceff3;color:var(--chu)}
+
+  .tron{position:fixed;right:14px;bottom:22px;width:82px;height:82px;border-radius:50%;
+        background:var(--xanh);color:#fff;border:0;font-family:inherit;font-size:12.5px;
+        font-weight:600;line-height:1.25;cursor:pointer;box-shadow:0 4px 14px rgba(18,183,106,.4);z-index:20}
+  .tron:active{background:var(--xanh-dam)}
+
+  .thanh{display:flex;gap:10px;align-items:center;font-size:13.5px;color:var(--mo);
+        background:var(--the);padding:12px 16px;border-bottom:1px solid var(--vien)}
+  .thanh b{color:var(--chu)}
+  .thanh.cho{background:var(--canh-nen);color:var(--canh);border-color:var(--canh-vien)}
 
   /* thẻ kết quả to, đọc được từ xa khi đứng ở bến xe */
-  .kq{border-radius:12px;padding:20px 16px;margin-bottom:12px;border:2px solid;text-align:center}
-  .kq .nhan{font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
-  .kq .ten{font-size:24px;font-weight:700;line-height:1.25;margin-bottom:5px;word-break:break-word}
-  .kq .phu-tt{font-size:14.5px;line-height:1.5}
+  .kq{margin:10px 14px 0;border-radius:12px;padding:20px 16px;border:2px solid;text-align:center}
+  .kq .nhan{font-size:12.5px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
+  .kq .ten{font-size:24px;font-weight:700;line-height:1.25;margin-bottom:5px;word-break:break-word;color:var(--chu)}
+  .kq .phu-tt{font-size:14.5px;line-height:1.5;color:var(--chu);white-space:pre-line}
   .kq.tot{background:var(--tot-nen);border-color:var(--tot-vien);color:var(--tot)}
   .kq.canh{background:var(--canh-nen);border-color:var(--canh-vien);color:var(--canh)}
   .kq.xau{background:var(--loi-nen);border-color:var(--loi-vien);color:var(--loi)}
-  .kq .ten,.kq .phu-tt{color:var(--chu)}
 
-  .thanh{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--mo);
-       background:#eef2f6;border-radius:9px;padding:10px 12px;margin-bottom:12px}
-  .thanh b{color:var(--chu)}
-  .thanh.cho{background:#fff6e0;color:var(--canh)}
-  .ls{margin:0;padding:0;list-style:none;font-size:14px}
-  .ls li{padding:9px 0;border-bottom:1px solid #eef1f4;display:flex;gap:9px;align-items:baseline}
-  .ls li:last-child{border-bottom:0}
-  .ls .cham{flex:0 0 9px;height:9px;border-radius:50%;margin-top:6px}
-  .ls .cham.tot{background:var(--tot)} .ls .cham.canh{background:var(--canh)} .ls .cham.xau{background:var(--loi)}
-  .ls .gio{color:var(--mo);font-size:12.5px;margin-left:auto;white-space:nowrap}
-  h2.tieu{margin:0 0 10px;font-size:15px;color:var(--mo);font-weight:600}
+  #vungquet{width:100%;background:#000;min-height:270px}
+  .nhac{background:#fffbe8;padding:11px 16px;font-size:13px;line-height:1.5;color:#6b5900}
+  .loi-o{color:var(--loi);font-size:13.5px;padding:10px 16px;display:none;background:var(--loi-nen)}
+  .loi-o.hien{display:block}
+
+  .ds-hang{display:flex;gap:10px;align-items:baseline;padding:13px 16px;border-top:1px solid #f2f4f6;font-size:14.5px}
+  .ds-hang:first-child{border-top:0}
+  .ds-hang .cham{flex:0 0 9px;height:9px;border-radius:50%;align-self:center}
+  .ds-hang .cham.tot{background:var(--tot)} .ds-hang .cham.canh{background:var(--canh)} .ds-hang .cham.xau{background:var(--loi)}
+  .ds-hang .gio{margin-left:auto;font-size:12.5px;color:var(--mo);white-space:nowrap}
+  .trong{padding:26px 16px;text-align:center;color:var(--mo);font-size:14.5px}
+  footer{text-align:center;font-size:12px;color:var(--mo);margin-top:18px;padding:0 16px;line-height:1.7}
+  .chon{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border-top:1px solid #f2f4f6;cursor:pointer}
+  .chon input{width:22px;height:22px;flex:none;margin:1px 0 0;accent-color:var(--xanh)}
+  .chon b{display:block;font-size:15px;font-weight:600}
+  .chon small{display:block;font-size:12.5px;color:var(--mo);line-height:1.4;margin-top:1px}
   .an{display:none}
-  footer{text-align:center;font-size:12px;color:var(--mo);margin-top:18px;line-height:1.7}
 </style>
 </head>
 <body>
 <div class="boc">
 
-<header>
-  <h1>Xác nhận đã đón</h1>
-  <p>Quét mã QR trên thẻ căn cước của người được đón</p>
-</header>
-
 <!-- ===== BƯỚC 1: AI ĐANG ĐÓN ===== -->
-<div id="man_ten" class="the">
-  <label for="nguoi_don">Tên người đi đón</label>
-  <input id="nguoi_don" autocomplete="off" placeholder="Ví dụ: Dương">
-  <div class="goiy">Chỉ cần nhập một lần trong ngày, máy sẽ nhớ. Tên này được ghi lại cùng mỗi lượt quét.</div>
-  <button type="button" id="nut_bat_dau">Bắt đầu quét</button>
+<div id="man_ten">
+  <div style="text-align:center;padding:20px 16px 6px">
+    <b style="font-size:17px">XÁC NHẬN ĐÃ ĐÓN</b>
+    <div style="font-size:13px;color:var(--mo);margin-top:3px">Quét thẻ căn cước khi lao động đến công ty</div>
+  </div>
+  <div class="khoi">
+    <div class="hang"><span>Người đi đón</span><input id="nguoi_don" placeholder="Ví dụ: Dương" autocomplete="off"></div>
+  </div>
+
+  <div class="khoi">
+    <h2 style="margin:0;padding:12px 16px 4px;font-size:12.5px;font-weight:600;color:var(--mo);text-transform:uppercase;letter-spacing:.5px">Nơi đến làm việc</h2>
+    <label class="chon"><input type="radio" name="dd" value="dk" checked>
+      <span><b>Tại chính công ty đã đăng ký</b><small>Mỗi người đến đúng công ty ghi trong phiếu của họ</small></span></label>
+    <label class="chon"><input type="radio" name="dd" value="khac">
+      <span><b>Công ty khác</b><small>Được hẹn chuyển sang nơi khác — người đón tự điền</small></span></label>
+    <div class="hang an" id="hang_diem"><span>Nơi đến</span>
+      <input id="diem_khac" list="ds_nm" placeholder="Chọn hoặc gõ tên công ty" autocomplete="off">
+      <datalist id="ds_nm"></datalist></div>
+  </div>
+
+  <div class="khoi">
+    <div class="hang"><span>Nhà máy</span>
+      <select id="ma_ct"><option value="">Chọn nhà máy</option></select></div>
+  </div>
+  <div style="padding:10px 16px;font-size:13px;color:var(--mo)">
+    Nhà máy chỉ dùng khi gặp người <b>chưa từng đăng ký</b> — lúc đó hệ thống đăng ký và
+    đánh dấu đón luôn trong một lượt. Người đã đăng ký thì hệ thống tự biết nhà máy của họ.
+  </div>
+  <button type="button" class="nut" id="nut_bat_dau">Bắt đầu quét</button>
 </div>
 
 <!-- ===== BƯỚC 2: QUÉT ===== -->
 <div id="man_quet" class="an">
-
-  <div class="thanh" id="thanh_tt">
-    <span>Người đón: <b id="ht_ten">—</b></span>
-    <span style="margin-left:auto">Đã đón: <b id="ht_dem">0</b></span>
+  <div class="dinh">
+    <button type="button" class="bieu" id="nut_anh" title="Lấy từ ảnh thẻ">
+      <svg viewBox="0 0 24 24"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.2l1.1-1.8h8.4L17.3 7h2.2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>
+    </button>
+    <span class="giua"><b id="ht_ten">—</b><span id="ht_diem">Đã đón hôm nay: <b id="ht_dem">0</b></span></span>
+    <button type="button" class="bieu" id="nut_tay" title="Nhập số CCCD bằng tay">
+      <svg viewBox="0 0 24 24"><path d="M4 20h16M6 16.5 16.6 5.9a2 2 0 0 1 2.8 2.8L8.8 19.3l-4 1.2z"/></svg>
+    </button>
   </div>
 
   <div class="thanh cho an" id="thanh_cho">
@@ -89,31 +135,32 @@
 
   <div id="o_kq"></div>
 
-  <div class="the">
-    <div id="vungquet"></div>
-    <div class="goiy" style="margin-top:10px">
-      Thẻ căn cước cấp từ 01/7/2024 có mã QR ở <b>mặt sau</b>; thẻ gắn chip đời trước ở <b>mặt trước</b>.
-    </div>
-    <button type="button" class="phu" id="nut_tay">Không quét được — nhập số CCCD</button>
-  </div>
+  <div class="nhac">Đưa mặt thẻ <b>có mã QR</b> vào khung. Thẻ cấp từ 01/7/2024 mã QR ở <b>mặt sau</b>.</div>
+  <div id="vungquet"></div>
+  <div class="loi-o" id="loi_quet"></div>
+  <div id="anhtam" style="display:none"></div>
+  <input type="file" id="file_anh" accept="image/*" class="an">
 
-  <div class="the" id="o_ls" style="display:none">
-    <h2 class="tieu">Đã quét trong phiên này</h2>
-    <ul class="ls" id="ls"></ul>
-  </div>
+  <button type="button" class="nut phu" id="nut_bao_cao">Gửi bảng tổng hợp vào nhóm ngay</button>
+  <button type="button" class="nut phu" id="nut_doi_ten">Đổi người đón</button>
 
-  <div class="the">
-    <button type="button" class="phu" id="nut_bao_cao">Gửi bảng tổng hợp vào nhóm ngay</button>
-    <button type="button" class="phu" id="nut_doi_ten">Đổi người đón</button>
-  </div>
+  <footer>
+    Đây là <b>nhật ký điều phối</b>, không phải bằng chứng pháp lý.<br>
+    Chỉ chấp nhận thẻ của người đã đăng ký trước.
+  </footer>
 </div>
 
-<footer>
-  Đây là <b>nhật ký điều phối</b>, không phải bằng chứng pháp lý.<br>
-  Chỉ chấp nhận thẻ của người đã đăng ký trước.
-</footer>
+<!-- ===== DANH SÁCH ĐÃ QUÉT ===== -->
+<div id="man_ds" class="an">
+  <div style="text-align:center;padding:18px 0 6px"><b style="font-size:17px">ĐÃ QUÉT HÔM NAY</b>
+    <div style="font-size:13px;color:var(--mo);margin-top:3px" id="ds_tom">—</div></div>
+  <div class="khoi"><div id="ds_noi"></div></div>
+  <button type="button" class="nut phu" id="nut_dong_ds">Quay lại quét</button>
+</div>
 
 </div>
+
+<button type="button" class="tron an" id="nut_ds">Xem danh sách tổng</button>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
@@ -125,160 +172,20 @@ var TOKEN_API = 'd905baa65db6457e830d8f40';
 var $ = function (id) { return document.getElementById(id); };
 var mayQuet = null, nguoiDon = '', demDaDon = 0, dangBan = false, vuaQuet = {};
 var KHOA_CHO = 'hang_doi_don';
+var diemDon = '', maCT = '', tenCT = '', dsCT = [];
+// Dữ liệu đọc được từ mã QR của lượt quét hiện tại — dùng khi phải đăng ký luôn cho người chưa có phiếu
+var qrHienTai = null;
 
-// ---------- Hàng đợi khi mất sóng (bến xe hay mất mạng đúng lúc cần nhất) ----------
-function docHangDoi() {
-  try { return JSON.parse(localStorage.getItem(KHOA_CHO) || '[]'); } catch (e) { return []; }
+function hien(el) {
+  ['man_ten', 'man_quet', 'man_ds'].forEach(function (i) { $(i).classList.add('an'); });
+  if (el) $(el).classList.remove('an');
+  $('nut_ds').classList.toggle('an', el !== 'man_quet');
+  window.scrollTo(0, 0);
 }
-function ghiHangDoi(ds) {
-  try { localStorage.setItem(KHOA_CHO, JSON.stringify(ds)); } catch (e) {}
-  var n = ds.length;
-  $('ht_cho').textContent = n;
-  $('thanh_cho').classList.toggle('an', n === 0);
-}
-function xepHangDoi(item) { var ds = docHangDoi(); ds.push(item); ghiHangDoi(ds); }
-
-function dayHangDoi() {
-  var ds = docHangDoi();
-  if (!ds.length) return;
-  var con = [];
-  var lam = ds.map(function (it) {
-    return goiAPI(it).then(function () {}).catch(function () { con.push(it); });
-  });
-  Promise.all(lam).then(function () {
-    ghiHangDoi(con);
-    if (!con.length) guiTinNhan();
-  });
-}
-window.addEventListener('online', dayHangDoi);
 
 function goiAPI(body) {
-  return fetch(URL_API, {
-    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(body)
-  }).then(function (r) { return r.json(); });
-}
-function guiTinNhan() {
-  goiAPI({ token: TOKEN_API, hanh_dong: 'gui_tin' }).catch(function () {});
-}
-
-// ---------- Nhớ tên người đón ----------
-try {
-  var luu = localStorage.getItem('nguoi_don');
-  if (luu) $('nguoi_don').value = luu;
-} catch (e) {}
-
-$('nut_bat_dau').addEventListener('click', function () {
-  var t = $('nguoi_don').value.trim().replace(/\s+/g, ' ');
-  if (t.length < 2) { alert('Nhập tên người đi đón trước đã.'); $('nguoi_don').focus(); return; }
-  nguoiDon = t;
-  try { localStorage.setItem('nguoi_don', t); } catch (e) {}
-  $('ht_ten').textContent = t;
-  $('man_ten').classList.add('an');
-  $('man_quet').classList.remove('an');
-  ghiHangDoi(docHangDoi());
-  dayHangDoi();
-  batCamera();
-});
-
-$('nut_doi_ten').addEventListener('click', function () {
-  dungCamera(function () {
-    $('man_quet').classList.add('an');
-    $('man_ten').classList.remove('an');
-    window.scrollTo(0, 0);
-  });
-});
-
-// ---------- Camera ----------
-function batCamera() {
-  if (typeof Html5Qrcode === 'undefined') {
-    veKetQua('xau', 'Thiếu bộ giải mã', 'Không tải được thư viện quét QR (có thể do mạng). Dùng nút "nhập số CCCD" bên dưới.', '');
-    return;
-  }
-  if (mayQuet) return;
-  mayQuet = new Html5Qrcode('vungquet');
-  mayQuet.start(
-    { facingMode: 'environment' },
-    { fps: 10, qrbox: { width: 250, height: 250 } },
-    function (text) { xuLyQuet(text); },
-    function () { /* khung hình chưa đọc được — bỏ qua */ }
-  ).catch(function (e) {
-    mayQuet = null;
-    veKetQua('xau', 'Không mở được camera', String(e) + ' — kiểm tra quyền camera của trình duyệt, hoặc dùng nút nhập số CCCD.', '');
-  });
-}
-
-function dungCamera(xong) {
-  if (!mayQuet) { if (xong) xong(); return; }
-  var m = mayQuet; mayQuet = null;
-  m.stop().then(function () { try { m.clear(); } catch (e) {} if (xong) xong(); })
-          .catch(function () { if (xong) xong(); });
-}
-
-// ---------- Xử lý một lượt quét ----------
-function xuLyQuet(chuoi) {
-  if (dangBan) return;
-  var cccd = String(chuoi).split('|')[0].replace(/\D/g, '');
-  if (cccd.length !== 12) {
-    veKetQua('xau', 'Không phải thẻ căn cước', 'Mã vừa quét không chứa số CCCD hợp lệ. Đưa đúng mặt thẻ có mã QR vào khung.', '');
-    return;
-  }
-  // Chặn quét trùng liên tiếp trong 20 giây (camera bắn liên tục dễ đọc lại cùng một thẻ)
-  var giay = Date.now();
-  if (vuaQuet[cccd] && giay - vuaQuet[cccd] < 20000) return;
-  vuaQuet[cccd] = giay;
-
-  dangBan = true;
-  guiDon(cccd);
-}
-
-function guiDon(cccd) {
-  var body = { token: TOKEN_API, hanh_dong: 'da_don', so_cccd: cccd, nguoi_don: nguoiDon };
-  goiAPI(body).then(function (kq) {
-    dangBan = false;
-    if (kq.ma === 'DA_DON') {
-      demDaDon++; $('ht_dem').textContent = demDaDon;
-      veKetQua('tot', 'Đã đón', kq.ho_ten, 'Mã ' + kq.ma_ld + ' · CCCD ' + kq.cccd_che);
-      themLichSu('tot', kq.ho_ten, kq.cccd_che);
-    } else if (kq.ma === 'DA_DON_TRUOC_DO') {
-      veKetQua('canh', 'Đã đón trước đó', kq.ho_ten,
-        'Người này đã được đánh dấu lúc ' + (kq.gio_don || '?') + ' bởi ' + (kq.nguoi_don_cu || '?'));
-      themLichSu('canh', kq.ho_ten, kq.cccd_che);
-    } else if (kq.ma === 'KHONG_CO_TRONG_DS') {
-      veKetQua('xau', 'Chưa đăng ký', 'Không có trong danh sách',
-        'CCCD ' + (kq.cccd_che || '') + ' — người này chưa đăng ký, không đánh dấu đón. Cho họ đăng ký trước.');
-      themLichSu('xau', 'Chưa đăng ký', kq.cccd_che);
-    } else {
-      veKetQua('xau', 'Lỗi', 'Chưa ghi nhận được', kq.loi || 'Không rõ lỗi');
-    }
-    guiTinNhan();
-  }).catch(function () {
-    // Mất sóng — KHÔNG báo hỏng cho người đón, xếp hàng đợi và tự gửi lại khi có mạng
-    dangBan = false;
-    xepHangDoi(body);
-    veKetQua('canh', 'Đã ghi tạm — chờ sóng', 'CCCD …' + cccd.slice(-4),
-      'Điện thoại đang mất mạng. Lượt quét này đã lưu lại và sẽ tự gửi khi có sóng. Cứ quét tiếp bình thường.');
-    themLichSu('canh', 'Chờ gửi', '…' + cccd.slice(-4));
-  });
-}
-
-function veKetQua(loai, nhan, ten, phu) {
-  $('o_kq').innerHTML = '<div class="kq ' + loai + '">' +
-    '<div class="nhan">' + nhan + '</div>' +
-    '<div class="ten">' + thoat(ten) + '</div>' +
-    (phu ? '<div class="phu-tt">' + thoat(phu) + '</div>' : '') + '</div>';
-  window.scrollTo(0, 0);
-  if (navigator.vibrate) navigator.vibrate(loai === 'tot' ? 90 : [70, 60, 70]);
-}
-
-function themLichSu(loai, ten, cccd) {
-  $('o_ls').style.display = 'block';
-  var li = document.createElement('li');
-  var gio = new Date().toTimeString().substring(0, 5);
-  li.innerHTML = '<span class="cham ' + loai + '"></span><span>' + thoat(ten) +
-    (cccd ? ' <span style="color:var(--mo)">' + thoat(cccd) + '</span>' : '') +
-    '</span><span class="gio">' + gio + '</span>';
-  $('ls').insertBefore(li, $('ls').firstChild);
+  return fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                          body: JSON.stringify(body) }).then(function (r) { return r.json(); });
 }
 
 function thoat(s) {
@@ -287,23 +194,300 @@ function thoat(s) {
   });
 }
 
-// ---------- Nhập tay khi QR không quét được ----------
+// ---------- Hàng đợi khi mất sóng ----------
+function docHangDoi() { try { return JSON.parse(localStorage.getItem(KHOA_CHO) || '[]'); } catch (e) { return []; } }
+function ghiHangDoi(ds) {
+  try { localStorage.setItem(KHOA_CHO, JSON.stringify(ds)); } catch (e) {}
+  $('ht_cho').textContent = ds.length;
+  $('thanh_cho').classList.toggle('an', ds.length === 0);
+}
+function xepHangDoi(it) { var ds = docHangDoi(); ds.push(it); ghiHangDoi(ds); }
+function dayHangDoi() {
+  var ds = docHangDoi();
+  if (!ds.length) return;
+  var con = [];
+  Promise.all(ds.map(function (it) {
+    return goiAPI(it).then(function () {}).catch(function () { con.push(it); });
+  })).then(function () { ghiHangDoi(con); if (!con.length) guiTinNhan(); });
+}
+window.addEventListener('online', dayHangDoi);
+function guiTinNhan() { goiAPI({ token: TOKEN_API, hanh_dong: 'gui_tin' }).catch(function () {}); }
+
+// ---------- Tách chuỗi QR trên thẻ căn cước ----------
+function tachQR(chuoi) {
+  var p = String(chuoi).split('|');
+  var ngay = function (x) {
+    var d = String(x || '').replace(/\D/g, '');
+    return d.length === 8 ? d.substring(0, 2) + '/' + d.substring(2, 4) + '/' + d.substring(4) : '';
+  };
+  var g = String(p[4] || '').trim();
+  return {
+    so_cccd: String(p[0] || '').replace(/\D/g, ''),
+    cmnd_cu: String(p[1] || '').replace(/\D/g, ''),
+    ho_ten: String(p[2] || '').replace(/\s+/g, ' ').trim(),
+    ngay_sinh: ngay(p[3]),
+    gioi_tinh: /^n[\u1eef\u0169u]/i.test(g) ? 'N\u1eef' : (/^nam/i.test(g) ? 'Nam' : ''),
+    noi_thuong_tru: String(p[5] || '').replace(/\s+/g, ' ').trim(),
+    ngay_cap: ngay(p[6])
+  };
+}
+
+// ---------- Nạp danh sách nhà máy ----------
+goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_cong_ty' })
+  .then(function (kq) {
+    dsCT = (kq && kq.danh_sach) || [];
+    var sel = $('ma_ct');
+    [['thoi_vu', 'TH\u1edcI V\u1ee4'], ['chinh_thuc', 'CH\u00cdNH TH\u1ee8C']].forEach(function (n) {
+      var nhom = dsCT.filter(function (c) { return c.loai === n[0]; });
+      if (!nhom.length) return;
+      var g = document.createElement('optgroup');
+      g.label = n[1];
+      nhom.forEach(function (c) {
+        var o = document.createElement('option');
+        o.value = c.ma_ct; o.textContent = c.ten_cong_ty;
+        g.appendChild(o);
+      });
+      sel.appendChild(g);
+    });
+    var dl = $('ds_nm');
+    dsCT.forEach(function (c) {
+      var o = document.createElement('option'); o.value = c.ten_cong_ty; dl.appendChild(o);
+    });
+    try { var m = localStorage.getItem('don_ma_ct'); if (m) sel.value = m; } catch (e) {}
+  })
+  .catch(function () {});
+
+// ---------- Chọn điểm đón ----------
+[].forEach.call(document.querySelectorAll('input[name=dd]'), function (r) {
+  r.addEventListener('change', function () {
+    $('hang_diem').classList.toggle('an', r.value !== 'khac' || !r.checked);
+    if (r.value === 'khac' && r.checked) $('diem_khac').focus();
+  });
+});
+
+// ---------- Nhớ tên người đón ----------
+try { var l = localStorage.getItem('nguoi_don'); if (l) $('nguoi_don').value = l; } catch (e) {}
+
+$('nut_bat_dau').addEventListener('click', function () {
+  var t = $('nguoi_don').value.trim().replace(/\s+/g, ' ');
+  if (t.length < 2) { alert('Nhập tên người đi đón trước đã.'); $('nguoi_don').focus(); return; }
+  var kieu = (document.querySelector('input[name=dd]:checked') || {}).value;
+  diemDon = kieu === 'khac' ? $('diem_khac').value.trim().replace(/\s+/g, ' ') : '';
+  if (kieu === 'khac' && diemDon.length < 2) {
+    alert('B\u1ea1n ch\u1ecdn "C\u00f4ng ty kh\u00e1c" th\u00ec ph\u1ea3i ghi t\u00ean n\u01a1i \u0111\u1ebfn.');
+    $('diem_khac').focus(); return;
+  }
+  maCT = $('ma_ct').value;
+  tenCT = maCT ? ($('ma_ct').options[$('ma_ct').selectedIndex] || {}).text || '' : '';
+  nguoiDon = t;
+  try {
+    localStorage.setItem('nguoi_don', t);
+    if (maCT) localStorage.setItem('don_ma_ct', maCT);
+  } catch (e) {}
+  $('ht_ten').textContent = t;
+  $('ht_diem').innerHTML = (diemDon ? '\u0110\u1ebfn <b>' + thoat(diemDon) + '</b> \u00b7 ' : 'T\u1ea1i c\u00f4ng ty \u0111\u0103ng k\u00fd \u00b7 ') +
+                           '\u0110\u00e3 \u0111\u00f3n: <b id="ht_dem">' + demDaDon + '</b>';
+  hien('man_quet');
+  ghiHangDoi(docHangDoi());
+  dayHangDoi();
+  batCamera();
+});
+$('nut_doi_ten').addEventListener('click', function () { dungCamera(function () { hien('man_ten'); }); });
+
+// ---------- Camera ----------
+function batCamera() {
+  if (typeof Html5Qrcode === 'undefined') {
+    veKetQua('xau', 'Thiếu bộ giải mã', 'Không tải được thư viện quét QR', 'Dùng nút bút chì ở trên để nhập số CCCD.');
+    return;
+  }
+  if (mayQuet) return;
+  mayQuet = new Html5Qrcode('vungquet');
+  mayQuet.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 250, height: 250 } },
+    function (text) { xuLyQuet(text); }, function () {}
+  ).catch(function (e) {
+    mayQuet = null;
+    var o = $('loi_quet');
+    o.textContent = 'Không mở được camera: ' + e + '. Dùng nút máy ảnh hoặc nút bút chì ở trên.';
+    o.classList.add('hien');
+  });
+}
+function dungCamera(xong) {
+  if (!mayQuet) { if (xong) xong(); return; }
+  var m = mayQuet; mayQuet = null;
+  m.stop().then(function () { try { m.clear(); } catch (e) {} if (xong) xong(); })
+          .catch(function () { if (xong) xong(); });
+}
+
+// ---------- Lấy từ ảnh thẻ ----------
+$('nut_anh').addEventListener('click', function () {
+  if (typeof Html5Qrcode === 'undefined') { alert('Chưa tải được bộ quét mã.'); return; }
+  $('file_anh').click();
+});
+$('file_anh').addEventListener('change', function () {
+  var f = this.files && this.files[0]; this.value = '';
+  if (!f) return;
+  var doc = new Html5Qrcode('anhtam');
+  doc.scanFile(f, false)
+    .then(function (t) { try { doc.clear(); } catch (e) {} f = null; xuLyQuet(t); })
+    .catch(function () {
+      try { doc.clear(); } catch (e) {} f = null;
+      veKetQua('xau', 'Không đọc được ảnh', 'Không thấy mã QR', 'Chụp lại thẳng mặt thẻ có mã QR, đủ sáng. Hoặc bấm nút bút chì nhập tay.');
+    });
+});
+
+// ---------- Nhập tay ----------
 $('nut_tay').addEventListener('click', function () {
   var s = prompt('Nhập 12 số CCCD của người được đón:');
   if (s === null) return;
   var cccd = String(s).replace(/\D/g, '');
   if (cccd.length !== 12) { alert('Số CCCD phải đủ 12 chữ số. Bạn nhập ' + cccd.length + ' số.'); return; }
+  qrHienTai = null;
   dangBan = true;
   guiDon(cccd);
 });
+
+// ---------- Xử lý một lượt quét ----------
+function xuLyQuet(chuoi) {
+  if (dangBan) return;
+  qrHienTai = tachQR(chuoi);
+  qrHienTai.qr_tho = chuoi;
+  var cccd = qrHienTai.so_cccd;
+  if (cccd.length !== 12) {
+    veKetQua('xau', 'Không phải thẻ căn cước', 'Mã vừa quét không hợp lệ', 'Đưa đúng mặt thẻ có mã QR vào khung.');
+    return;
+  }
+  // Camera bắn ~10 khung/giây, chặn đọc lại cùng một thẻ trong 20 giây
+  var giay = Date.now();
+  if (vuaQuet[cccd] && giay - vuaQuet[cccd] < 20000) return;
+  vuaQuet[cccd] = giay;
+  dangBan = true;
+  guiDon(cccd);
+}
+
+function guiDon(cccd, tuDangKy) {
+  var body = { token: TOKEN_API, hanh_dong: 'da_don', so_cccd: cccd,
+               nguoi_don: nguoiDon, diem_don: diemDon };
+  if (tuDangKy) {
+    body.tu_dang_ky = true;
+    body.ma_ct = maCT;
+    if (qrHienTai && qrHienTai.so_cccd === cccd) {
+      body.ho_ten = qrHienTai.ho_ten; body.ngay_sinh = qrHienTai.ngay_sinh;
+      body.gioi_tinh = qrHienTai.gioi_tinh; body.noi_thuong_tru = qrHienTai.noi_thuong_tru;
+      body.ngay_cap = qrHienTai.ngay_cap; body.cmnd_cu = qrHienTai.cmnd_cu;
+      body.qr_tho = qrHienTai.qr_tho; body.nguon_nhap = 'qr';
+    } else {
+      body.ho_ten = tuDangKy.ho_ten; body.nguon_nhap = 'tay';
+    }
+  }
+  goiAPI(body).then(function (kq) {
+    dangBan = false;
+    if (kq.ma === 'DANG_KY_VA_DON') {
+      demDaDon++; $('ht_dem').textContent = demDaDon;
+      veKetQua('tot', '\u0110\u0102NG K\u00dd V\u00c0 \u0110\u00c3 \u0110\u00d3N \u2014 ' + (kq.ten_cong_ty || ''), kq.ho_ten,
+        'M\u00e3 ' + kq.ma_ld + ' \u00b7 \u0110\u00f3n t\u1ea1i ' + (kq.diem_don_thuc || '?') + ' \u00b7 ' + (kq.gio || ''));
+      themLichSu('tot', kq.ho_ten, '\u0111\u0103ng k\u00fd + \u0111\u00f3n \u00b7 ' + (kq.ten_cong_ty || ''));
+      guiTinNhan();
+      return;
+    }
+    if (kq.ma === 'KHONG_CO_TRONG_DS') {
+      xuLyChuaDangKy(cccd);
+      return;
+    }
+    if (kq.ma === 'DA_DON') {
+      demDaDon++; $('ht_dem').textContent = demDaDon;
+      veKetQua('tot', kq.ten_cong_ty || '\u0110\u00e3 \u0111\u00f3n', kq.ho_ten,
+        'M\u00e3 ' + kq.ma_ld + ' \u00b7 \u0110K ' + (kq.ngay_dk || '?') +
+        '\n\u0110\u1ebfn t\u1ea1i: ' + (kq.diem_don_thuc || '?') +
+        (kq.doi_diem ? ' (KH\u00c1C n\u01a1i \u0111\u0103ng k\u00fd: ' + kq.diem_don_dk + ')' : ''));
+      themLichSu('tot', kq.ho_ten, (kq.ten_cong_ty || '') + ' \u00b7 ' + (kq.diem_don_thuc || ''));
+    } else if (kq.ma === 'DA_DON_TRUOC_DO') {
+      veKetQua('canh', '\u0110\u00e3 \u0111\u00f3n tr\u01b0\u1edbc \u0111\u00f3 \u2014 ' + (kq.ten_cong_ty || ''), kq.ho_ten,
+        '\u0110\u00e3 \u0111\u00e1nh d\u1ea5u l\u00fac ' + (kq.gio_don || '?') + ' t\u1ea1i ' + (kq.diem_don_thuc || '?') +
+        ', b\u1edfi ' + (kq.nguoi_don_cu || '?'));
+      themLichSu('canh', kq.ho_ten, kq.ten_cong_ty || kq.cccd_che);
+    } else {
+      veKetQua('xau', 'Lỗi', 'Chưa ghi nhận được', kq.loi || 'Không rõ lỗi');
+    }
+    guiTinNhan();
+  }).catch(function () {
+    // Mất sóng — không báo hỏng, xếp hàng đợi và tự gửi lại khi có mạng
+    dangBan = false;
+    xepHangDoi(body);
+    veKetQua('canh', 'Đã ghi tạm — chờ sóng', 'CCCD …' + cccd.slice(-4),
+      'Điện thoại đang mất mạng. Lượt quét này đã lưu và sẽ tự gửi khi có sóng. Cứ quét tiếp bình thường.');
+    themLichSu('canh', 'Chờ gửi', '…' + cccd.slice(-4));
+  });
+}
+
+/**
+ * Quét trúng người CHƯA TỪNG ĐĂNG KÝ.
+ * Hỏi người đón một câu; đồng ý thì đăng ký và đánh dấu đón trong cùng một lượt.
+ */
+function xuLyChuaDangKy(cccd) {
+  if (!maCT) {
+    veKetQua('xau', 'Ch\u01b0a \u0111\u0103ng k\u00fd', 'Kh\u00f4ng c\u00f3 trong danh s\u00e1ch',
+      'Mu\u1ed1n \u0111\u0103ng k\u00fd lu\u00f4n t\u1ea1i ch\u1ed7 th\u00ec b\u1ea5m "\u0110\u1ed5i ng\u01b0\u1eddi \u0111\u00f3n" \u1edf d\u01b0\u1edbi v\u00e0 ch\u1ecdn nh\u00e0 m\u00e1y tr\u01b0\u1edbc.');
+    themLichSu('xau', 'Ch\u01b0a \u0111\u0103ng k\u00fd', '***' + cccd.slice(-4));
+    return;
+  }
+  var ten = (qrHienTai && qrHienTai.so_cccd === cccd) ? qrHienTai.ho_ten : '';
+  if (!ten) {
+    ten = prompt('Ng\u01b0\u1eddi n\u00e0y ch\u01b0a \u0111\u0103ng k\u00fd.\n\nNh\u1eadp H\u1eccVA T\u00caN \u0111\u1ec3 \u0111\u0103ng k\u00fd v\u00e0 \u0111\u00e1nh d\u1ea5u \u0111\u00f3n lu\u00f4n:'.replace('H\u1eccVA', 'H\u1ecc V\u00c0'));
+    if (ten === null) { veKetQua('canh', '\u0110\u00e3 hu\u1ef7', 'Kh\u00f4ng ghi g\u00ec', 'Ng\u01b0\u1eddi n\u00e0y v\u1eabn ch\u01b0a c\u00f3 trong danh s\u00e1ch.'); return; }
+    ten = String(ten).trim().replace(/\s+/g, ' ');
+    if (ten.length < 3) { alert('H\u1ecd t\u00ean ch\u01b0a h\u1ee3p l\u1ec7.'); return; }
+  } else {
+    var hoi = 'NG\u01af\u1edcI N\u00c0Y CH\u01afA T\u1eeaNG \u0110\u0102NG K\u00dd\n\n' + ten + '\n***' + cccd.slice(-4) +
+              '\n\n\u0110\u0103ng k\u00fd cho "' + tenCT + '" v\u00e0 \u0111\u00e1nh d\u1ea5u \u0110\u00c3 \u0110\u00d3N lu\u00f4n?';
+    if (!confirm(hoi)) {
+      veKetQua('canh', '\u0110\u00e3 hu\u1ef7', ten, 'Kh\u00f4ng ghi g\u00ec. Ng\u01b0\u1eddi n\u00e0y v\u1eabn ch\u01b0a c\u00f3 trong danh s\u00e1ch.');
+      return;
+    }
+  }
+  dangBan = true;
+  guiDon(cccd, { ho_ten: ten });
+}
+
+function veKetQua(loai, nhan, ten, phu) {
+  $('o_kq').innerHTML = '<div class="kq ' + loai + '">' +
+    '<div class="nhan">' + thoat(nhan) + '</div>' +
+    '<div class="ten">' + thoat(ten) + '</div>' +
+    (phu ? '<div class="phu-tt">' + thoat(phu) + '</div>' : '') + '</div>';
+  window.scrollTo(0, 0);
+  if (navigator.vibrate) navigator.vibrate(loai === 'tot' ? 90 : [70, 60, 70]);
+}
+
+function themLichSu(loai, ten, phu) {
+  try {
+    var k = 'don_' + new Date().toISOString().substring(0, 10);
+    var ds = JSON.parse(localStorage.getItem(k) || '[]');
+    ds.unshift({ loai: loai, ten: ten, phu: phu, gio: new Date().toTimeString().substring(0, 5) });
+    localStorage.setItem(k, JSON.stringify(ds.slice(0, 200)));
+  } catch (e) {}
+}
+
+// ---------- Danh sách đã quét hôm nay (lưu trong máy) ----------
+$('nut_ds').addEventListener('click', function () {
+  var ds = [];
+  try { ds = JSON.parse(localStorage.getItem('don_' + new Date().toISOString().substring(0, 10)) || '[]'); } catch (e) {}
+  $('ds_tom').textContent = ds.length ? 'Bạn đã quét ' + ds.length + ' lượt trong hôm nay' : 'Chưa quét lượt nào hôm nay';
+  $('ds_noi').innerHTML = ds.length
+    ? ds.map(function (m) {
+        return '<div class="ds-hang"><span class="cham ' + m.loai + '"></span><b>' + thoat(m.ten) + '</b>' +
+               '<span style="color:var(--mo);font-size:13px">' + thoat(m.phu || '') + '</span>' +
+               '<span class="gio">' + thoat(m.gio) + '</span></div>';
+      }).join('')
+    : '<div class="trong">Danh sách này chỉ hiện những lượt <b>bạn</b> vừa quét trên máy này hôm nay.<br>' +
+      'Bảng tổng hợp đầy đủ của cả đội xem trong nhóm Zalo.</div>';
+  hien('man_ds');
+});
+$('nut_dong_ds').addEventListener('click', function () { hien('man_quet'); });
 
 // ---------- Gửi bảng tổng hợp ngay ----------
 $('nut_bao_cao').addEventListener('click', function () {
   var n = this; n.disabled = true; n.textContent = 'Đang gửi…';
   goiAPI({ token: TOKEN_API, hanh_dong: 'bao_cao_ngay' })
-    .then(function (kq) {
-      alert('Đã gửi vào nhóm Zalo.\n\nĐã đón hôm nay: ' + kq.da_don + '\nCòn chờ đón: ' + kq.chua_don);
-    })
+    .then(function (kq) { alert('Đã gửi ' + kq.so_nhom + ' bảng vào nhóm Zalo.\n\nĐã đón hôm nay: ' + kq.da_don + '\nCòn chờ đón: ' + kq.chua_don); })
     .catch(function () { alert('Không gửi được — kiểm tra mạng rồi thử lại.'); })
     .then(function () { n.disabled = false; n.textContent = 'Gửi bảng tổng hợp vào nhóm ngay'; });
 });
