@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Đăng ký lao động</title>
+<style>
+  :root{
+    --nen:#f4f6f8; --the:#fff; --chu:#1b2430; --mo:#5d6b7a; --vien:#d3dae2;
+    --chinh:#1a6fd4; --chinh-dam:#12569f; --tot:#0f7a3d; --canh:#b8860b; --loi:#c0392b;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--nen);color:var(--chu);
+       font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  .boc{max-width:640px;margin:0 auto;padding:16px 14px 48px}
+  header{text-align:center;padding:14px 0 18px}
+  header h1{margin:0 0 4px;font-size:21px}
+  header p{margin:0;color:var(--mo);font-size:14px}
+  .the{background:var(--the);border:1px solid var(--vien);border-radius:12px;padding:18px 16px;margin-bottom:14px}
+  label{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+  label .sao{color:var(--loi)}
+  input,select,textarea{width:100%;padding:13px 12px;font-size:16px;font-family:inherit;
+       border:1px solid var(--vien);border-radius:9px;background:#fff;color:var(--chu)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--chinh);outline-offset:-1px;border-color:var(--chinh)}
+  textarea{min-height:70px;resize:vertical}
+  .goiy{font-size:13px;color:var(--mo);margin-top:5px}
+  .hang{display:flex;gap:10px}
+  .hang>div{flex:1}
+  button{width:100%;padding:15px;font-size:17px;font-weight:600;font-family:inherit;
+       border:0;border-radius:10px;background:var(--chinh);color:#fff;cursor:pointer;margin-top:20px}
+  button:active{background:var(--chinh-dam)}
+  button[disabled]{opacity:.55;cursor:not-allowed}
+  button.phu{background:#e8ecf1;color:var(--chu);margin-top:10px}
+
+  /* --- màn chọn cách nhập --- */
+  .chon button{display:flex;align-items:center;gap:14px;text-align:left;padding:18px 16px;
+       background:var(--the);color:var(--chu);border:1px solid var(--vien);margin:0 0 12px;
+       box-shadow:0 1px 2px rgba(0,0,0,.05)}
+  .chon button:active{background:#eef4fc;border-color:var(--chinh)}
+  .chon .icon{flex:0 0 44px;height:44px;border-radius:11px;background:#eef4fc;color:var(--chinh-dam);
+       display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700}
+  .chon .noi{flex:1}
+  .chon .noi b{display:block;font-size:16px;margin-bottom:2px}
+  .chon .noi span{display:block;font-size:13px;font-weight:400;color:var(--mo);line-height:1.4}
+
+  /* --- vùng camera --- */
+  #vungquet{width:100%;border-radius:10px;overflow:hidden;background:#000;min-height:240px}
+  #vungquet video{width:100%!important;display:block}
+  .nhacnho{background:#fffbe8;border:1px solid #f0e0a0;border-radius:9px;padding:11px 13px;
+       font-size:13.5px;line-height:1.5;margin-bottom:14px}
+
+  .dongy{background:#fbfcfd;border:1px solid var(--vien);border-radius:10px;padding:14px;margin-top:22px}
+  .dongy h3{margin:0 0 4px;font-size:15px}
+  .dongy>p{margin:0 0 12px;font-size:13px;color:var(--mo)}
+  .tick{display:flex;gap:11px;align-items:flex-start;margin-bottom:11px;font-size:14px;line-height:1.5}
+  .tick input{width:22px;height:22px;flex:0 0 22px;margin:1px 0 0}
+  .loi-o{color:var(--loi);font-size:13px;margin-top:5px;display:none}
+  .loi-o.hien{display:block}
+  .bang-qr{background:#eef7f0;border:1px solid #bfe0c8;border-radius:9px;padding:11px 13px;
+       font-size:13.5px;margin-bottom:6px;display:none}
+  .bang-qr.hien{display:block}
+  #soat dl{margin:0;display:grid;grid-template-columns:130px 1fr;gap:9px 12px;font-size:15px}
+  #soat dt{color:var(--mo);font-size:14px}
+  #soat dd{margin:0;font-weight:600;word-break:break-word}
+  .kq{text-align:center;padding:26px 18px}
+  .kq .bieu{font-size:40px;line-height:1;margin-bottom:12px}
+  .kq h2{margin:0 0 8px;font-size:20px}
+  .kq p{margin:0 0 6px;color:var(--mo);font-size:15px}
+  .kq .ma{display:inline-block;margin-top:12px;padding:9px 16px;background:#eef4fc;
+       border-radius:8px;font-size:19px;font-weight:700;color:var(--chinh-dam);letter-spacing:.5px}
+  .tot{color:var(--tot)} .canh{color:var(--canh)} .xau{color:var(--loi)}
+  .an{display:none}
+  footer{text-align:center;font-size:12px;color:var(--mo);margin-top:22px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="boc">
+
+<header>
+  <h1>Đăng ký lao động</h1>
+  <p>Thông tin lấy theo thẻ căn cước công dân</p>
+</header>
+
+<!-- ============ MÀN 0: CHỌN CÁCH NHẬP ============ -->
+<div id="man_chon" class="the chon">
+  <button type="button" id="nut_camera">
+    <span class="icon">▣</span>
+    <span class="noi"><b>Quét bằng camera</b>
+      <span>Nhanh nhất, không sai chính tả. Đưa mặt thẻ có mã QR vào khung</span></span>
+  </button>
+  <button type="button" id="nut_anh">
+    <span class="icon">⬒</span>
+    <span class="noi"><b>Tải ảnh thẻ lên</b>
+      <span>Dùng ảnh chụp sẵn trong máy. Ảnh không rời khỏi điện thoại bạn</span></span>
+  </button>
+  <button type="button" id="nut_tay">
+    <span class="icon">✎</span>
+    <span class="noi"><b>Điền tay</b>
+      <span>Khi thẻ cũ không có mã QR, hoặc mã bị mờ, xước</span></span>
+  </button>
+  <input type="file" id="file_anh" accept="image/*" style="display:none">
+</div>
+
+<!-- ============ MÀN QUÉT CAMERA ============ -->
+<div id="man_quet" class="the an">
+  <div class="nhacnho">
+    <b>Đưa mặt thẻ CÓ MÃ QR vào khung.</b><br>
+    Thẻ căn cước cấp từ 01/7/2024 có mã QR ở <b>mặt sau</b>; thẻ gắn chip đời trước ở <b>mặt trước</b>.
+    Nếu quét mãi không ra, bấm "Điền tay".
+  </div>
+  <div id="vungquet"></div>
+  <div class="loi-o" id="loi_quet"></div>
+  <button type="button" class="phu" id="nut_huy_quet">Quay lại</button>
+</div>
+
+<!-- ============ MÀN 1: NHẬP / SOÁT SAU KHI QUÉT ============ -->
+<form id="form" class="the an" novalidate>
+  <div class="bang-qr" id="bao_qr"></div>
+
+  <label for="so_cccd">Số CCCD <span class="sao">*</span></label>
+  <input id="so_cccd" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="12 chữ số trên thẻ">
+  <div class="goiy">Đúng 12 chữ số, không có dấu cách</div>
+  <div class="loi-o" id="loi_so_cccd"></div>
+
+  <label for="ho_ten">Họ và tên <span class="sao">*</span></label>
+  <input id="ho_ten" autocomplete="off" placeholder="Nguyễn Văn A">
+  <div class="loi-o" id="loi_ho_ten"></div>
+
+  <div class="hang">
+    <div>
+      <label for="ngay_sinh">Ngày sinh</label>
+      <input id="ngay_sinh" inputmode="numeric" maxlength="10" placeholder="01/01/1990">
+    </div>
+    <div>
+      <label for="gioi_tinh">Giới tính</label>
+      <select id="gioi_tinh">
+        <option value="">— chọn —</option>
+        <option>Nam</option>
+        <option>Nữ</option>
+      </select>
+    </div>
+  </div>
+
+  <label for="sdt">Số điện thoại</label>
+  <input id="sdt" inputmode="tel" maxlength="15" autocomplete="off" placeholder="09xx xxx xxx">
+  <div class="goiy">Rất nên có — để liên hệ khi đến ngày đón</div>
+
+  <label for="noi_thuong_tru">Nơi thường trú</label>
+  <textarea id="noi_thuong_tru" placeholder="Thôn/số nhà, xã/phường, huyện, tỉnh"></textarea>
+
+  <label for="ghi_chu">Ghi chú</label>
+  <textarea id="ghi_chu" placeholder="Ví dụ: đón tại bến xe Bắc Giang sáng 20/08"></textarea>
+
+  <label for="nguoi_nhap">Người nhập phiếu</label>
+  <input id="nguoi_nhap" autocomplete="off" placeholder="Tên bạn — máy sẽ nhớ cho lần sau">
+
+  <div class="dongy">
+    <h3>Đồng ý xử lý thông tin cá nhân</h3>
+    <p>Theo Luật Bảo vệ dữ liệu cá nhân, bạn cần tự tích từng ô dưới đây.</p>
+
+    <label class="tick"><input type="checkbox" id="dy1">
+      <span>Tôi đồng ý cho đơn vị thu thập và xử lý <b>số CCCD, họ tên, ngày sinh, nơi thường trú, số điện thoại</b>
+      nhằm mục đích <b>đăng ký và điều phối đón lao động</b>.</span></label>
+
+    <label class="tick"><input type="checkbox" id="dy2">
+      <span>Tôi đồng ý để hệ thống gửi <b>họ tên và 4 số cuối CCCD</b> của tôi vào
+      <b>nhóm nội bộ của đội điều phối</b> để báo tình trạng đăng ký và đón.</span></label>
+
+    <label class="tick"><input type="checkbox" id="dy3">
+      <span>Tôi đồng ý dữ liệu được lưu trên <b>Google Sheets (máy chủ đặt ở nước ngoài)</b>,
+      lưu tối đa <b>90 ngày</b>, và tôi có quyền yêu cầu xem, sửa hoặc xoá bất cứ lúc nào.</span></label>
+
+    <div class="loi-o" id="loi_dongy"></div>
+  </div>
+
+  <button type="submit" id="nut_tiep">Xem lại thông tin</button>
+  <button type="button" class="phu" id="nut_ve_dau">Chọn cách nhập khác</button>
+</form>
+
+<!-- ============ MÀN 2: SOÁT LẠI ============ -->
+<div id="soat" class="the an">
+  <h2 style="margin:0 0 4px;font-size:18px">Soát lại trước khi gửi</h2>
+  <p style="margin:0 0 16px;color:var(--mo);font-size:14px">Sai một chữ trong tên hay số CCCD là hồ sơ hỏng — đọc kỹ giúp nhé.</p>
+  <dl id="soat_ds"></dl>
+  <button type="button" id="nut_gui">Gửi đăng ký</button>
+  <button type="button" class="phu" id="nut_sua">Quay lại sửa</button>
+</div>
+
+<!-- ============ MÀN 3: KẾT QUẢ ============ -->
+<div id="kq" class="the kq an"></div>
+
+<footer>
+  Ảnh thẻ căn cước <b>không được tải lên máy chủ</b> — mã QR được giải ngay trên máy bạn.<br>
+  Cần xem lại, sửa hoặc xoá dữ liệu — liên hệ người đã tiếp nhận hồ sơ của bạn.
+</footer>
+
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+// ====== CẤU HÌNH — dán 2 giá trị này sau khi triển khai Apps Script ======
+var URL_API   = 'https://script.google.com/macros/s/AKfycby1EldZql-1j9H3vaoZdK2e7CfEHZAyyHW-SiTkY4rFWUrb-jHODY68x-OWGVAFlKzU/exec';
+var TOKEN_API = 'd905baa65db6457e830d8f40';
+// ========================================================================
+
+var $ = function (id) { return document.getElementById(id); };
+var manChon = $('man_chon'), manQuet = $('man_quet'), form = $('form'),
+    manSoat = $('soat'), manKQ = $('kq');
+var duLieu = null, qrTho = '', mayQuet = null, nguonNhap = 'tay';
+
+function hien(el) {
+  [manChon, manQuet, form, manSoat, manKQ].forEach(function (e) { e.classList.add('an'); });
+  el.classList.remove('an');
+  window.scrollTo(0, 0);
+}
+
+// Nhớ tên người nhập cho lần sau
+try {
+  var luu = localStorage.getItem('nguoi_nhap');
+  if (luu) $('nguoi_nhap').value = luu;
+} catch (e) {}
+
+// ============ GIẢI MÃ CHUỖI QR TRÊN THẺ CĂN CƯỚC ============
+// Định dạng phổ biến: 7 trường ngăn bằng dấu |
+//   sốCCCD | sốCMND9 | họ tên | ddMMyyyy sinh | giới tính | nơi thường trú | ddMMyyyy cấp
+// Thẻ mẫu mới (từ 01/7/2024) có thể mang thêm trường, nên đọc theo kiểu
+// "được bao nhiêu lấy bấy nhiêu": thiếu thì để trống, thừa thì bỏ qua — không bao giờ báo hỏng.
+function tachQR(chuoi) {
+  var p = String(chuoi).split('|');
+  var ngay = function (s) {
+    var d = String(s || '').replace(/\D/g, '');
+    return d.length === 8 ? d.substring(0, 2) + '/' + d.substring(2, 4) + '/' + d.substring(4) : (s || '');
+  };
+  var gt = String(p[4] || '').trim();
+  return {
+    so_cccd: String(p[0] || '').replace(/\D/g, ''),
+    cmnd_cu: String(p[1] || '').replace(/\D/g, ''),
+    ho_ten: String(p[2] || '').replace(/\s+/g, ' ').trim(),
+    ngay_sinh: ngay(p[3]),
+    gioi_tinh: /^n[ữu]/i.test(gt) ? 'Nữ' : (/^nam/i.test(gt) ? 'Nam' : ''),
+    noi_thuong_tru: String(p[5] || '').replace(/\s+/g, ' ').trim(),
+    ngay_cap: ngay(p[6])
+  };
+}
+
+function nhanQR(chuoi, nguon) {
+  qrTho = chuoi;
+  nguonNhap = nguon;
+  var t = tachQR(chuoi);
+  if (t.so_cccd) $('so_cccd').value = t.so_cccd;
+  if (t.ho_ten) $('ho_ten').value = t.ho_ten;
+  if (t.ngay_sinh) $('ngay_sinh').value = t.ngay_sinh;
+  if (t.gioi_tinh) $('gioi_tinh').value = t.gioi_tinh;
+  if (t.noi_thuong_tru) $('noi_thuong_tru').value = t.noi_thuong_tru;
+
+  var doc = [t.so_cccd && 'số CCCD', t.ho_ten && 'họ tên', t.ngay_sinh && 'ngày sinh',
+             t.gioi_tinh && 'giới tính', t.noi_thuong_tru && 'nơi thường trú']
+            .filter(Boolean);
+  var b = $('bao_qr');
+  b.innerHTML = '<b>Đã đọc mã QR</b> — lấy được ' + doc.length + ' mục: ' + doc.join(', ') +
+                '.<br>Soát lại rồi bổ sung số điện thoại giúp nhé.';
+  b.classList.add('hien');
+  hien(form);
+  $('sdt').focus();
+}
+
+// ============ QUÉT BẰNG CAMERA ============
+$('nut_camera').addEventListener('click', function () {
+  if (typeof Html5Qrcode === 'undefined') {
+    alert('Chưa tải được bộ giải mã QR (có thể do mạng). Bạn dùng cách "Điền tay" nhé.');
+    return;
+  }
+  hien(manQuet);
+  baoLoi('quet', '');
+  mayQuet = new Html5Qrcode('vungquet');
+  mayQuet.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 260, height: 260 } },
+    function (text) { dungQuet(function () { nhanQR(text, 'qr_camera'); }); },
+    function () { /* mỗi khung hình không đọc được đều gọi vào đây — bỏ qua */ }
+  ).catch(function (e) {
+    baoLoi('quet', 'Không mở được camera: ' + e + '. Kiểm tra xem trình duyệt đã được cấp quyền camera chưa, hoặc dùng cách "Tải ảnh thẻ lên".');
+  });
+});
+
+function dungQuet(xong) {
+  if (!mayQuet) { if (xong) xong(); return; }
+  mayQuet.stop().then(function () {
+    try { mayQuet.clear(); } catch (e) {}
+    mayQuet = null; if (xong) xong();
+  }).catch(function () { mayQuet = null; if (xong) xong(); });
+}
+
+$('nut_huy_quet').addEventListener('click', function () { dungQuet(function () { hien(manChon); }); });
+
+// ============ ĐỌC QR TỪ ẢNH TẢI LÊN (ảnh không rời khỏi máy) ============
+$('nut_anh').addEventListener('click', function () { $('file_anh').click(); });
+
+$('file_anh').addEventListener('change', function () {
+  var f = this.files && this.files[0];
+  this.value = '';
+  if (!f) return;
+  if (typeof Html5Qrcode === 'undefined') {
+    alert('Chưa tải được bộ giải mã QR (có thể do mạng). Bạn dùng cách "Điền tay" nhé.');
+    return;
+  }
+  var doc = new Html5Qrcode('vungquet');
+  doc.scanFile(f, true)
+    .then(function (text) { try { doc.clear(); } catch (e) {} nhanQR(text, 'qr_anh'); })
+    .catch(function () {
+      try { doc.clear(); } catch (e) {}
+      alert('Không đọc được mã QR trong ảnh này.\n\nThử lại với ảnh chụp rõ và thẳng mặt thẻ CÓ MÃ QR, ' +
+            'tránh loá đèn. Hoặc chọn "Điền tay".');
+      hien(manChon);
+    });
+});
+
+// ============ ĐIỀN TAY ============
+$('nut_tay').addEventListener('click', function () {
+  qrTho = ''; nguonNhap = 'tay';
+  $('bao_qr').classList.remove('hien');
+  hien(form);
+});
+
+$('nut_ve_dau').addEventListener('click', function () { hien(manChon); });
+
+// ============ KIỂM TRA & GỬI ============
+$('ngay_sinh').addEventListener('input', function () {
+  var s = this.value.replace(/\D/g, '').substring(0, 8);
+  if (s.length > 4) this.value = s.substring(0, 2) + '/' + s.substring(2, 4) + '/' + s.substring(4);
+  else if (s.length > 2) this.value = s.substring(0, 2) + '/' + s.substring(2);
+  else this.value = s;
+});
+
+function baoLoi(id, tin) {
+  var o = $('loi_' + id);
+  if (!o) return !tin;
+  o.textContent = tin || '';
+  o.classList.toggle('hien', !!tin);
+  return !tin;
+}
+
+function kiemTra() {
+  var ok = true;
+  var cccd = $('so_cccd').value.replace(/\D/g, '');
+  ok &= baoLoi('so_cccd', cccd.length === 12 ? '' :
+    (cccd.length ? 'Đang có ' + cccd.length + ' chữ số, cần đúng 12' : 'Chưa nhập số CCCD'));
+  var ten = $('ho_ten').value.trim().replace(/\s+/g, ' ');
+  ok &= baoLoi('ho_ten', (ten.length >= 3 && ten.indexOf(' ') > 0) ? '' : 'Nhập đầy đủ họ và tên');
+  var duDongY = $('dy1').checked && $('dy2').checked && $('dy3').checked;
+  ok &= baoLoi('dongy', duDongY ? '' : 'Cần tích đủ cả 3 ô đồng ý mới gửi được');
+  return !!ok;
+}
+
+form.addEventListener('submit', function (ev) {
+  ev.preventDefault();
+  if (!kiemTra()) {
+    var d = document.querySelector('.loi-o.hien');
+    if (d) d.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    return;
+  }
+  duLieu = {
+    token: TOKEN_API, hanh_dong: 'dang_ky',
+    so_cccd: $('so_cccd').value.replace(/\D/g, ''),
+    ho_ten: $('ho_ten').value.trim().replace(/\s+/g, ' '),
+    ngay_sinh: $('ngay_sinh').value.trim(),
+    gioi_tinh: $('gioi_tinh').value,
+    sdt: $('sdt').value.replace(/\D/g, ''),
+    noi_thuong_tru: $('noi_thuong_tru').value.trim(),
+    ghi_chu: $('ghi_chu').value.trim(),
+    nguoi_nhap: $('nguoi_nhap').value.trim(),
+    nguon_nhap: nguonNhap,
+    qr_tho: qrTho,
+    dong_y: true
+  };
+  try { localStorage.setItem('nguoi_nhap', duLieu.nguoi_nhap); } catch (e) {}
+
+  var cap = [
+    ['Số CCCD', duLieu.so_cccd], ['Họ và tên', duLieu.ho_ten],
+    ['Ngày sinh', duLieu.ngay_sinh], ['Giới tính', duLieu.gioi_tinh],
+    ['Điện thoại', duLieu.sdt], ['Nơi thường trú', duLieu.noi_thuong_tru],
+    ['Ghi chú', duLieu.ghi_chu], ['Người nhập', duLieu.nguoi_nhap]
+  ];
+  $('soat_ds').innerHTML = cap.filter(function (c) { return c[1]; })
+    .map(function (c) {
+      var v = String(c[1]).replace(/[<>&]/g, function (m) {
+        return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[m];
+      });
+      return '<dt>' + c[0] + '</dt><dd>' + v + '</dd>';
+    }).join('');
+  hien(manSoat);
+});
+
+$('nut_sua').addEventListener('click', function () { hien(form); });
+
+$('nut_gui').addEventListener('click', function () {
+  var nut = this;
+  nut.disabled = true;
+  nut.textContent = 'Đang gửi…';
+  // LƯỢT 1 — chỉ ghi dữ liệu, trả lời ngay, không chờ Zalo
+  fetch(URL_API, {
+    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(duLieu)
+  })
+  .then(function (r) { return r.json(); })
+  .then(function (kq) {
+    hienKetQua(kq);
+    // LƯỢT 2 — bắn thông báo Zalo, KHÔNG chờ. Hỏng thì lịch 5 phút gửi bù.
+    fetch(URL_API, {
+      method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify({ token: TOKEN_API, hanh_dong: 'gui_tin' })
+    }).catch(function () {});
+  })
+  .catch(function () {
+    hienKetQua({ ok: false, ma: 'MAT_MANG', loi: 'Không gửi được. Kiểm tra mạng rồi bấm thử lại.' });
+    nut.disabled = false;
+    nut.textContent = 'Gửi lại';
+  });
+});
+
+function hienKetQua(kq) {
+  var h = '';
+  if (kq.ok && kq.ma === 'THANH_CONG') {
+    h = '<div class="bieu tot">✓</div><h2 class="tot">Đăng ký thành công</h2>' +
+        '<p>' + kq.ho_ten + ' — CCCD ' + kq.cccd_che + '</p>' +
+        '<div class="ma">' + kq.ma_ld + '</div>' +
+        '<p style="margin-top:14px">Ghi lại mã này. Khi đến đón, chỉ cần đưa thẻ CCCD.</p>';
+  } else if (kq.ok && kq.ma === 'DANG_KY_LAI') {
+    h = '<div class="bieu tot">✓</div><h2 class="tot">Đã đăng ký lại</h2>' +
+        '<p>' + kq.ho_ten + ' — lần đăng ký trước (' + kq.ma_lan_truoc + ') đã huỷ</p>' +
+        '<div class="ma">' + kq.ma_ld + '</div>';
+  } else if (kq.ok && kq.ma === 'TRUNG') {
+    h = '<div class="bieu canh">!</div><h2 class="canh">Đã đăng ký trước đó</h2>' +
+        '<p>' + kq.ho_ten + ' đang trong danh sách chờ đón' +
+        (kq.ngay_dk ? ' từ ngày ' + kq.ngay_dk : '') + '.</p>' +
+        '<div class="ma">' + kq.ma_ld + '</div>' +
+        '<p style="margin-top:14px">Không cần đăng ký lại. Nếu cần đổi thông tin, báo người phụ trách.</p>';
+  } else {
+    h = '<div class="bieu xau">×</div><h2 class="xau">Chưa gửi được</h2>' +
+        '<p>' + (kq.loi || 'Có lỗi xảy ra') + '</p>';
+  }
+  h += '<button type="button" class="phu" onclick="location.reload()">Đăng ký người tiếp theo</button>';
+  manKQ.innerHTML = h;
+  hien(manKQ);
+}
+</script>
+</body>
+</html>
