@@ -1,1 +1,312 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Xác nhận đã đón lao động</title>
+<style>
+  :root{
+    --nen:#f4f6f8; --the:#fff; --chu:#1b2430; --mo:#5d6b7a; --vien:#d3dae2;
+    --chinh:#1a6fd4; --chinh-dam:#12569f;
+    --tot:#0f7a3d; --tot-nen:#e7f5ec; --tot-vien:#a9d9bb;
+    --canh:#9a6b00; --canh-nen:#fff6e0; --canh-vien:#f0d9a0;
+    --loi:#b3261e; --loi-nen:#fdeceb; --loi-vien:#f0b3ae;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--nen);color:var(--chu);
+       font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  .boc{max-width:640px;margin:0 auto;padding:14px 14px 40px}
+  header{text-align:center;padding:10px 0 14px}
+  header h1{margin:0 0 3px;font-size:20px}
+  header p{margin:0;color:var(--mo);font-size:13.5px}
+  .the{background:var(--the);border:1px solid var(--vien);border-radius:12px;padding:16px;margin-bottom:12px}
+  label{display:block;font-weight:600;font-size:14px;margin:0 0 6px}
+  input{width:100%;padding:13px 12px;font-size:16px;font-family:inherit;
+       border:1px solid var(--vien);border-radius:9px;background:#fff;color:var(--chu)}
+  input:focus{outline:2px solid var(--chinh);outline-offset:-1px;border-color:var(--chinh)}
+  button{width:100%;padding:15px;font-size:17px;font-weight:600;font-family:inherit;
+       border:0;border-radius:10px;background:var(--chinh);color:#fff;cursor:pointer;margin-top:12px}
+  button:active{background:var(--chinh-dam)}
+  button[disabled]{opacity:.5;cursor:not-allowed}
+  button.phu{background:#e8ecf1;color:var(--chu)}
+  .goiy{font-size:13px;color:var(--mo);margin-top:6px}
 
+  #vungquet{width:100%;border-radius:10px;overflow:hidden;background:#000;min-height:250px}
+  #vungquet video{width:100%!important;display:block}
+
+  /* thẻ kết quả to, đọc được từ xa khi đứng ở bến xe */
+  .kq{border-radius:12px;padding:20px 16px;margin-bottom:12px;border:2px solid;text-align:center}
+  .kq .nhan{font-size:13px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px}
+  .kq .ten{font-size:24px;font-weight:700;line-height:1.25;margin-bottom:5px;word-break:break-word}
+  .kq .phu-tt{font-size:14.5px;line-height:1.5}
+  .kq.tot{background:var(--tot-nen);border-color:var(--tot-vien);color:var(--tot)}
+  .kq.canh{background:var(--canh-nen);border-color:var(--canh-vien);color:var(--canh)}
+  .kq.xau{background:var(--loi-nen);border-color:var(--loi-vien);color:var(--loi)}
+  .kq .ten,.kq .phu-tt{color:var(--chu)}
+
+  .thanh{display:flex;gap:8px;align-items:center;font-size:13.5px;color:var(--mo);
+       background:#eef2f6;border-radius:9px;padding:10px 12px;margin-bottom:12px}
+  .thanh b{color:var(--chu)}
+  .thanh.cho{background:#fff6e0;color:var(--canh)}
+  .ls{margin:0;padding:0;list-style:none;font-size:14px}
+  .ls li{padding:9px 0;border-bottom:1px solid #eef1f4;display:flex;gap:9px;align-items:baseline}
+  .ls li:last-child{border-bottom:0}
+  .ls .cham{flex:0 0 9px;height:9px;border-radius:50%;margin-top:6px}
+  .ls .cham.tot{background:var(--tot)} .ls .cham.canh{background:var(--canh)} .ls .cham.xau{background:var(--loi)}
+  .ls .gio{color:var(--mo);font-size:12.5px;margin-left:auto;white-space:nowrap}
+  h2.tieu{margin:0 0 10px;font-size:15px;color:var(--mo);font-weight:600}
+  .an{display:none}
+  footer{text-align:center;font-size:12px;color:var(--mo);margin-top:18px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="boc">
+
+<header>
+  <h1>Xác nhận đã đón</h1>
+  <p>Quét mã QR trên thẻ căn cước của người được đón</p>
+</header>
+
+<!-- ===== BƯỚC 1: AI ĐANG ĐÓN ===== -->
+<div id="man_ten" class="the">
+  <label for="nguoi_don">Tên người đi đón</label>
+  <input id="nguoi_don" autocomplete="off" placeholder="Ví dụ: Dương">
+  <div class="goiy">Chỉ cần nhập một lần trong ngày, máy sẽ nhớ. Tên này được ghi lại cùng mỗi lượt quét.</div>
+  <button type="button" id="nut_bat_dau">Bắt đầu quét</button>
+</div>
+
+<!-- ===== BƯỚC 2: QUÉT ===== -->
+<div id="man_quet" class="an">
+
+  <div class="thanh" id="thanh_tt">
+    <span>Người đón: <b id="ht_ten">—</b></span>
+    <span style="margin-left:auto">Đã đón: <b id="ht_dem">0</b></span>
+  </div>
+
+  <div class="thanh cho an" id="thanh_cho">
+    <span>Mất mạng — còn <b id="ht_cho">0</b> lượt chưa gửi được. Máy sẽ tự gửi lại khi có sóng.</span>
+  </div>
+
+  <div id="o_kq"></div>
+
+  <div class="the">
+    <div id="vungquet"></div>
+    <div class="goiy" style="margin-top:10px">
+      Thẻ căn cước cấp từ 01/7/2024 có mã QR ở <b>mặt sau</b>; thẻ gắn chip đời trước ở <b>mặt trước</b>.
+    </div>
+    <button type="button" class="phu" id="nut_tay">Không quét được — nhập số CCCD</button>
+  </div>
+
+  <div class="the" id="o_ls" style="display:none">
+    <h2 class="tieu">Đã quét trong phiên này</h2>
+    <ul class="ls" id="ls"></ul>
+  </div>
+
+  <div class="the">
+    <button type="button" class="phu" id="nut_bao_cao">Gửi bảng tổng hợp vào nhóm ngay</button>
+    <button type="button" class="phu" id="nut_doi_ten">Đổi người đón</button>
+  </div>
+</div>
+
+<footer>
+  Đây là <b>nhật ký điều phối</b>, không phải bằng chứng pháp lý.<br>
+  Chỉ chấp nhận thẻ của người đã đăng ký trước.
+</footer>
+
+</div>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+// ====== CẤU HÌNH ======
+var URL_API   = 'https://script.google.com/macros/s/AKfycby1EldZql-1j9H3vaoZdK2e7CfEHZAyyHW-SiTkY4rFWUrb-jHODY68x-OWGVAFlKzU/exec';
+var TOKEN_API = 'd905baa65db6457e830d8f40';
+// ======================
+
+var $ = function (id) { return document.getElementById(id); };
+var mayQuet = null, nguoiDon = '', demDaDon = 0, dangBan = false, vuaQuet = {};
+var KHOA_CHO = 'hang_doi_don';
+
+// ---------- Hàng đợi khi mất sóng (bến xe hay mất mạng đúng lúc cần nhất) ----------
+function docHangDoi() {
+  try { return JSON.parse(localStorage.getItem(KHOA_CHO) || '[]'); } catch (e) { return []; }
+}
+function ghiHangDoi(ds) {
+  try { localStorage.setItem(KHOA_CHO, JSON.stringify(ds)); } catch (e) {}
+  var n = ds.length;
+  $('ht_cho').textContent = n;
+  $('thanh_cho').classList.toggle('an', n === 0);
+}
+function xepHangDoi(item) { var ds = docHangDoi(); ds.push(item); ghiHangDoi(ds); }
+
+function dayHangDoi() {
+  var ds = docHangDoi();
+  if (!ds.length) return;
+  var con = [];
+  var lam = ds.map(function (it) {
+    return goiAPI(it).then(function () {}).catch(function () { con.push(it); });
+  });
+  Promise.all(lam).then(function () {
+    ghiHangDoi(con);
+    if (!con.length) guiTinNhan();
+  });
+}
+window.addEventListener('online', dayHangDoi);
+
+function goiAPI(body) {
+  return fetch(URL_API, {
+    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(body)
+  }).then(function (r) { return r.json(); });
+}
+function guiTinNhan() {
+  goiAPI({ token: TOKEN_API, hanh_dong: 'gui_tin' }).catch(function () {});
+}
+
+// ---------- Nhớ tên người đón ----------
+try {
+  var luu = localStorage.getItem('nguoi_don');
+  if (luu) $('nguoi_don').value = luu;
+} catch (e) {}
+
+$('nut_bat_dau').addEventListener('click', function () {
+  var t = $('nguoi_don').value.trim().replace(/\s+/g, ' ');
+  if (t.length < 2) { alert('Nhập tên người đi đón trước đã.'); $('nguoi_don').focus(); return; }
+  nguoiDon = t;
+  try { localStorage.setItem('nguoi_don', t); } catch (e) {}
+  $('ht_ten').textContent = t;
+  $('man_ten').classList.add('an');
+  $('man_quet').classList.remove('an');
+  ghiHangDoi(docHangDoi());
+  dayHangDoi();
+  batCamera();
+});
+
+$('nut_doi_ten').addEventListener('click', function () {
+  dungCamera(function () {
+    $('man_quet').classList.add('an');
+    $('man_ten').classList.remove('an');
+    window.scrollTo(0, 0);
+  });
+});
+
+// ---------- Camera ----------
+function batCamera() {
+  if (typeof Html5Qrcode === 'undefined') {
+    veKetQua('xau', 'Thiếu bộ giải mã', 'Không tải được thư viện quét QR (có thể do mạng). Dùng nút "nhập số CCCD" bên dưới.', '');
+    return;
+  }
+  if (mayQuet) return;
+  mayQuet = new Html5Qrcode('vungquet');
+  mayQuet.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    function (text) { xuLyQuet(text); },
+    function () { /* khung hình chưa đọc được — bỏ qua */ }
+  ).catch(function (e) {
+    mayQuet = null;
+    veKetQua('xau', 'Không mở được camera', String(e) + ' — kiểm tra quyền camera của trình duyệt, hoặc dùng nút nhập số CCCD.', '');
+  });
+}
+
+function dungCamera(xong) {
+  if (!mayQuet) { if (xong) xong(); return; }
+  var m = mayQuet; mayQuet = null;
+  m.stop().then(function () { try { m.clear(); } catch (e) {} if (xong) xong(); })
+          .catch(function () { if (xong) xong(); });
+}
+
+// ---------- Xử lý một lượt quét ----------
+function xuLyQuet(chuoi) {
+  if (dangBan) return;
+  var cccd = String(chuoi).split('|')[0].replace(/\D/g, '');
+  if (cccd.length !== 12) {
+    veKetQua('xau', 'Không phải thẻ căn cước', 'Mã vừa quét không chứa số CCCD hợp lệ. Đưa đúng mặt thẻ có mã QR vào khung.', '');
+    return;
+  }
+  // Chặn quét trùng liên tiếp trong 20 giây (camera bắn liên tục dễ đọc lại cùng một thẻ)
+  var giay = Date.now();
+  if (vuaQuet[cccd] && giay - vuaQuet[cccd] < 20000) return;
+  vuaQuet[cccd] = giay;
+
+  dangBan = true;
+  guiDon(cccd);
+}
+
+function guiDon(cccd) {
+  var body = { token: TOKEN_API, hanh_dong: 'da_don', so_cccd: cccd, nguoi_don: nguoiDon };
+  goiAPI(body).then(function (kq) {
+    dangBan = false;
+    if (kq.ma === 'DA_DON') {
+      demDaDon++; $('ht_dem').textContent = demDaDon;
+      veKetQua('tot', 'Đã đón', kq.ho_ten, 'Mã ' + kq.ma_ld + ' · CCCD ' + kq.cccd_che);
+      themLichSu('tot', kq.ho_ten, kq.cccd_che);
+    } else if (kq.ma === 'DA_DON_TRUOC_DO') {
+      veKetQua('canh', 'Đã đón trước đó', kq.ho_ten,
+        'Người này đã được đánh dấu lúc ' + (kq.gio_don || '?') + ' bởi ' + (kq.nguoi_don_cu || '?'));
+      themLichSu('canh', kq.ho_ten, kq.cccd_che);
+    } else if (kq.ma === 'KHONG_CO_TRONG_DS') {
+      veKetQua('xau', 'Chưa đăng ký', 'Không có trong danh sách',
+        'CCCD ' + (kq.cccd_che || '') + ' — người này chưa đăng ký, không đánh dấu đón. Cho họ đăng ký trước.');
+      themLichSu('xau', 'Chưa đăng ký', kq.cccd_che);
+    } else {
+      veKetQua('xau', 'Lỗi', 'Chưa ghi nhận được', kq.loi || 'Không rõ lỗi');
+    }
+    guiTinNhan();
+  }).catch(function () {
+    // Mất sóng — KHÔNG báo hỏng cho người đón, xếp hàng đợi và tự gửi lại khi có mạng
+    dangBan = false;
+    xepHangDoi(body);
+    veKetQua('canh', 'Đã ghi tạm — chờ sóng', 'CCCD …' + cccd.slice(-4),
+      'Điện thoại đang mất mạng. Lượt quét này đã lưu lại và sẽ tự gửi khi có sóng. Cứ quét tiếp bình thường.');
+    themLichSu('canh', 'Chờ gửi', '…' + cccd.slice(-4));
+  });
+}
+
+function veKetQua(loai, nhan, ten, phu) {
+  $('o_kq').innerHTML = '<div class="kq ' + loai + '">' +
+    '<div class="nhan">' + nhan + '</div>' +
+    '<div class="ten">' + thoat(ten) + '</div>' +
+    (phu ? '<div class="phu-tt">' + thoat(phu) + '</div>' : '') + '</div>';
+  window.scrollTo(0, 0);
+  if (navigator.vibrate) navigator.vibrate(loai === 'tot' ? 90 : [70, 60, 70]);
+}
+
+function themLichSu(loai, ten, cccd) {
+  $('o_ls').style.display = 'block';
+  var li = document.createElement('li');
+  var gio = new Date().toTimeString().substring(0, 5);
+  li.innerHTML = '<span class="cham ' + loai + '"></span><span>' + thoat(ten) +
+    (cccd ? ' <span style="color:var(--mo)">' + thoat(cccd) + '</span>' : '') +
+    '</span><span class="gio">' + gio + '</span>';
+  $('ls').insertBefore(li, $('ls').firstChild);
+}
+
+function thoat(s) {
+  return String(s == null ? '' : s).replace(/[<>&]/g, function (m) {
+    return { '<': '&lt;', '>': '&gt;', '&': '&amp;' }[m];
+  });
+}
+
+// ---------- Nhập tay khi QR không quét được ----------
+$('nut_tay').addEventListener('click', function () {
+  var s = prompt('Nhập 12 số CCCD của người được đón:');
+  if (s === null) return;
+  var cccd = String(s).replace(/\D/g, '');
+  if (cccd.length !== 12) { alert('Số CCCD phải đủ 12 chữ số. Bạn nhập ' + cccd.length + ' số.'); return; }
+  dangBan = true;
+  guiDon(cccd);
+});
+
+// ---------- Gửi bảng tổng hợp ngay ----------
+$('nut_bao_cao').addEventListener('click', function () {
+  var n = this; n.disabled = true; n.textContent = 'Đang gửi…';
+  goiAPI({ token: TOKEN_API, hanh_dong: 'bao_cao_ngay' })
+    .then(function (kq) {
+      alert('Đã gửi vào nhóm Zalo.\n\nĐã đón hôm nay: ' + kq.da_don + '\nCòn chờ đón: ' + kq.chua_don);
+    })
+    .catch(function () { alert('Không gửi được — kiểm tra mạng rồi thử lại.'); })
+    .then(function () { n.disabled = false; n.textContent = 'Gửi bảng tổng hợp vào nhóm ngay'; });
+});
+</script>
+</body>
+</html>
