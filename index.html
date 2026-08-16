@@ -6,7 +6,7 @@
 <title>Đăng ký lao động</title>
 <style>
   :root{
-    --nen:#f2f4f6; --the:#fff; --chu:#1b2430; --mo:#8a95a1; --vien:#e6eaee;
+    --nen:#f2f4f6; --the:#fff; --chu:#1b2430; --mo:#9aa3ad; --vien:#e9edf1;
     --xanh:#12b76a; --xanh-dam:#0e9257;
     --tot:#0f7a3d; --tot-nen:#e7f7ee;
     --canh:#8a6300; --canh-nen:#fff6e0;
@@ -16,90 +16,85 @@
   *{box-sizing:border-box}
   body{margin:0;background:var(--nen);color:var(--chu);
        font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-  .boc{max-width:560px;margin:0 auto;padding:0 0 40px}
-  .dau{background:var(--the);text-align:center;padding:16px 14px;border-bottom:1px solid var(--vien)}
-  .dau h1{margin:0;font-size:17px;font-weight:700;letter-spacing:.3px}
-  .dau p{margin:3px 0 0;font-size:13px;color:var(--mo)}
-  .dau .nhan{display:inline-block;margin-top:6px;padding:3px 11px;border-radius:999px;
-        font-size:11.5px;font-weight:700;letter-spacing:.5px}
-  .dau .nhan.tv{background:#e6f4f0;color:var(--tv)}
-  .dau .nhan.ct{background:#efeafa;color:var(--ct)}
+  .boc{max-width:560px;margin:0 auto;padding-bottom:30px}
 
+  /* ===== thanh trên cùng: nút ảnh | tên nhà máy | nút QR ===== */
+  .dinh{background:var(--the);display:flex;align-items:center;gap:12px;
+        padding:14px 16px;border-bottom:1px solid var(--vien)}
+  .dinh .bieu{flex:0 0 46px;height:46px;border:0;border-radius:10px;background:#f2f4f6;
+        display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+  .dinh .bieu:active{background:#e4e8ec}
+  .dinh .bieu svg{width:25px;height:25px;stroke:#3c4650;fill:none;stroke-width:1.8;
+        stroke-linecap:round;stroke-linejoin:round}
+  .dinh .giua{flex:1;min-width:0;text-align:center}
+  .dinh .giua b{display:block;font-size:17px;font-weight:700;letter-spacing:.3px;
+        white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .dinh .giua span{display:inline-block;margin-top:3px;padding:2px 10px;border-radius:999px;
+        font-size:10.5px;font-weight:700;letter-spacing:.6px}
+  .dinh .giua span.tv{background:#e6f4f0;color:var(--tv)}
+  .dinh .giua span.ct{background:#efeafa;color:var(--ct)}
+  .goiquet{text-align:center;font-size:12.5px;color:var(--mo);background:var(--the);
+        padding:0 16px 11px;border-bottom:1px solid var(--vien)}
+
+  /* ===== khối biểu mẫu kiểu danh sách ===== */
   .khoi{background:var(--the);margin-top:10px;border-top:1px solid var(--vien);border-bottom:1px solid var(--vien)}
-  .khoi h2{margin:0;padding:11px 16px 3px;font-size:12.5px;font-weight:600;color:var(--mo);
-           text-transform:uppercase;letter-spacing:.5px}
-
-  /* hàng kiểu danh sách: nhãn trái, giá trị phải */
-  .hang{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:52px;
-        border-top:1px solid #f0f2f5}
-  .hang:first-of-type{border-top:0}
-  .hang > span{flex:0 0 104px;font-size:15px;color:var(--chu)}
-  .hang input,.hang select{flex:1;min-width:0;border:0;padding:14px 0;font-size:15.5px;
-        font-family:inherit;background:transparent;color:var(--chu);text-align:right}
-  .hang input::placeholder{color:#c2cad3}
+  .hang{display:flex;align-items:center;gap:10px;padding:0 16px;min-height:54px;
+        border-top:1px solid #f2f4f6}
+  .hang:first-child{border-top:0}
+  .hang > span{flex:0 0 108px;font-size:15px}
+  .hang input,.hang select{flex:1;min-width:0;border:0;padding:15px 0;font-size:15.5px;
+        font-family:inherit;background:transparent;color:var(--chu);text-align:right;
+        -webkit-appearance:none;appearance:none}
+  .hang select{direction:rtl}
+  .hang input::placeholder{color:#c6ced6}
   .hang input:focus,.hang select:focus{outline:0}
   .hang.sai{background:#fff5f4}
-  .hang .doc{flex:1;text-align:right;font-size:15.5px;font-weight:600;word-break:break-word;padding:14px 0}
 
-  .gt{display:flex;gap:18px;justify-content:flex-end;flex:1;padding:11px 0}
-  .gt label{display:flex;align-items:center;gap:7px;font-size:15px;margin:0;cursor:pointer}
-  .gt input{width:21px;height:21px;flex:none;accent-color:var(--xanh)}
+  .gt{display:flex;gap:20px;justify-content:flex-end;flex:1;padding:12px 0}
+  .gt label{display:flex;align-items:center;gap:8px;font-size:15px;margin:0;cursor:pointer}
+  .gt input{width:23px;height:23px;flex:none;accent-color:var(--xanh)}
 
-  .nut{display:block;width:calc(100% - 28px);margin:16px 14px 0;padding:15px;
-       font-size:16.5px;font-weight:600;font-family:inherit;border:0;border-radius:9px;
+  .nut{display:block;width:calc(100% - 28px);margin:18px 14px 0;padding:16px;
+       font-size:17px;font-weight:600;font-family:inherit;border:0;border-radius:9px;
        background:var(--xanh);color:#fff;cursor:pointer}
   .nut:active{background:var(--xanh-dam)}
   .nut[disabled]{opacity:.5}
   .nut.phu{background:#eceff3;color:var(--chu)}
 
-  /* chọn mảng */
+  /* nút tròn nổi góc phải */
+  .tron{position:fixed;right:14px;bottom:22px;width:82px;height:82px;border-radius:50%;
+        background:var(--xanh);color:#fff;border:0;font-family:inherit;font-size:12.5px;
+        font-weight:600;line-height:1.25;cursor:pointer;box-shadow:0 4px 14px rgba(18,183,106,.4);z-index:20}
+  .tron:active{background:var(--xanh-dam)}
+
+  /* ===== chọn mảng ===== */
   .mang{padding:14px}
   .mang button{display:flex;align-items:center;gap:14px;width:100%;text-align:left;
         background:var(--the);border:1px solid var(--vien);border-radius:11px;
         padding:18px 16px;margin-bottom:11px;font-family:inherit;cursor:pointer;color:var(--chu)}
   .mang button:active{background:#f6f8fa}
   .mang .cham{flex:0 0 44px;height:44px;border-radius:11px;display:flex;align-items:center;
-        justify-content:center;font-size:20px;font-weight:700}
+        justify-content:center;font-size:19px;font-weight:700}
   .mang .tv{background:#e6f4f0;color:var(--tv)} .mang .ct{background:#efeafa;color:var(--ct)}
   .mang b{display:block;font-size:16.5px;margin-bottom:2px}
   .mang small{display:block;font-size:13px;color:var(--mo);font-weight:400;line-height:1.4}
 
-  /* danh sách công ty */
-  .ds a{display:flex;align-items:center;justify-content:space-between;gap:10px;
-        padding:15px 16px;border-top:1px solid #f0f2f5;text-decoration:none;
-        color:var(--chu);font-size:15.5px;font-weight:600}
-  .ds a:first-child{border-top:0}
-  .ds a:active{background:#f6f8fa}
-  .ds a::after{content:'›';color:var(--mo);font-size:22px;font-weight:400}
-
-  /* 3 cách nhập */
-  .cach{display:flex;gap:0;background:var(--the);border-top:1px solid var(--vien);
-        border-bottom:1px solid var(--vien);margin-top:10px}
-  .cach button{flex:1;background:none;border:0;border-left:1px solid #f0f2f5;padding:15px 6px;
-        font-family:inherit;cursor:pointer;color:var(--chu)}
-  .cach button:first-child{border-left:0}
-  .cach button:active{background:#f6f8fa}
-  .cach .so{display:block;width:26px;height:26px;line-height:26px;margin:0 auto 7px;
-        border-radius:50%;background:var(--xanh);color:#fff;font-size:14px;font-weight:700}
-  .cach .ten{display:block;font-size:13.5px;font-weight:600}
-
-  #vungquet{width:100%;background:#000;min-height:260px}
+  #vungquet{width:100%;background:#000;min-height:270px}
   #anhtam{display:none}
   .nhac{background:#fffbe8;padding:11px 16px;font-size:13px;line-height:1.5;color:#6b5900}
-  .loi-o{color:var(--loi);font-size:13px;padding:0 16px 10px;display:none}
+  .loi-o{color:var(--loi);font-size:13.5px;padding:10px 16px;display:none;background:var(--loi-nen)}
   .loi-o.hien{display:block}
 
-  /* dải cảnh báo hiện ngay sau khi quét */
-  .canhbao{margin:10px 14px 0;padding:12px 14px;border-radius:9px;font-size:13.5px;line-height:1.5;display:none}
+  .canhbao{margin:10px 14px 0;padding:12px 14px;border-radius:9px;font-size:13.5px;line-height:1.55;display:none}
   .canhbao.hien{display:block}
   .canhbao.vang{background:var(--canh-nen);color:#6b4e00;border:1px solid #f0dda0}
   .canhbao.xanh{background:var(--tot-nen);color:#0a5c2f;border:1px solid #b6e2c8}
 
-  .tick{display:flex;gap:11px;align-items:flex-start;padding:14px 16px;font-size:13.5px;
+  .tick{display:flex;gap:11px;align-items:flex-start;padding:14px 16px;font-size:13px;
         line-height:1.5;color:var(--mo)}
-  .tick input{width:21px;height:21px;flex:none;margin:0;accent-color:var(--xanh)}
+  .tick input{width:22px;height:22px;flex:none;margin:0;accent-color:var(--xanh)}
 
-  /* màn tình trạng */
+  /* ===== màn tình trạng ===== */
   .tt{text-align:center;padding:34px 20px}
   .tt .vong{width:66px;height:66px;border-radius:50%;margin:0 auto 14px;
         display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:700}
@@ -108,77 +103,75 @@
   .tt.xau .vong{background:var(--loi-nen);color:var(--loi)}
   .tt h2{margin:0 0 6px;font-size:21px}
   .tt.tot h2{color:var(--tot)} .tt.canh h2{color:var(--canh)} .tt.xau h2{color:var(--loi)}
-  .tt p{margin:0 0 4px;color:var(--mo);font-size:14.5px}
+  .tt p{margin:0 0 5px;color:var(--mo);font-size:14.5px}
   .tt .ma{display:inline-block;margin-top:14px;padding:9px 18px;background:#f2f4f6;
         border-radius:8px;font-size:19px;font-weight:700;letter-spacing:.5px}
+
+  /* ===== danh sách đã nhập trong ngày ===== */
+  .ds-hang{display:flex;gap:10px;align-items:baseline;padding:13px 16px;border-top:1px solid #f2f4f6;font-size:14.5px}
+  .ds-hang:first-child{border-top:0}
+  .ds-hang .gio{margin-left:auto;font-size:12.5px;color:var(--mo);white-space:nowrap}
+  .trong{padding:26px 16px;text-align:center;color:var(--mo);font-size:14.5px}
   .an{display:none}
 </style>
 </head>
 <body>
 <div class="boc">
 
-<div class="dau">
-  <h1 id="ten_ct">ĐĂNG KÝ LAO ĐỘNG</h1>
-  <p id="phu_de">Đang tải…</p>
-  <span id="nhan_mang" class="nhan an"></span>
-</div>
-
 <!-- ===== BƯỚC 1: CHỌN MẢNG ===== -->
 <div class="mang an" id="man_mang">
+  <div style="text-align:center;padding:16px 0 18px">
+    <b style="font-size:17px">ĐĂNG KÝ LAO ĐỘNG</b>
+    <div style="font-size:13px;color:var(--mo);margin-top:3px" id="phu_de">Chọn mảng lao động</div>
+  </div>
   <button type="button" data-loai="thoi_vu">
     <span class="cham tv">TV</span>
     <span><b>Lao động thời vụ</b><small>Làm theo đợt, theo mùa vụ</small></span>
   </button>
   <button type="button" data-loai="chinh_thuc">
     <span class="cham ct">CT</span>
-    <span><b>Lao động chính thức</b><small>Ký hợp đồng dài hạn với công ty</small></span>
+    <span><b>Lao động chính thức</b><small>Ký hợp đồng dài hạn với nhà máy</small></span>
   </button>
 </div>
 
-<!-- ===== BƯỚC 2: CHỌN CÔNG TY ===== -->
-<div class="an" id="man_ct">
-  <div class="khoi"><h2 id="tieu_ct">Chọn công ty</h2><div class="ds" id="ds_ct"></div></div>
-  <button type="button" class="nut phu" id="nut_doi_mang">Chọn mảng khác</button>
-</div>
-
-<!-- ===== BƯỚC 3: 3 CÁCH NHẬP ===== -->
-<div class="cach an" id="cach">
-  <button type="button" id="c1"><span class="so">1</span><span class="ten">Quét mã</span></button>
-  <button type="button" id="c2"><span class="so">2</span><span class="ten">Lấy từ ảnh</span></button>
-  <button type="button" id="c3"><span class="so">3</span><span class="ten">Nhập tay</span></button>
-</div>
-<input type="file" id="file_anh" accept="image/*" class="an">
-<div id="anhtam"></div>
-
-<!-- ===== CAMERA ===== -->
-<div id="man_quet" class="an">
-  <div class="nhac">Đưa mặt thẻ <b>có mã QR</b> vào khung. Thẻ cấp từ 01/7/2024 mã QR ở <b>mặt sau</b>.</div>
-  <div id="vungquet"></div>
-  <div class="loi-o" id="loi_quet"></div>
-  <button type="button" class="nut phu" id="nut_huy">Quay lại</button>
-</div>
-
-<!-- ===== BIỂU MẪU ===== -->
+<!-- ===== BƯỚC 2: BIỂU MẪU (hiện luôn, quét chỉ là điền hộ) ===== -->
 <form id="form" class="an">
+  <div class="dinh">
+    <button type="button" class="bieu" id="nut_anh" title="Lấy thông tin từ ảnh thẻ">
+      <svg viewBox="0 0 24 24"><path d="M3 8.5A1.5 1.5 0 0 1 4.5 7h2.2l1.1-1.8h8.4L17.3 7h2.2A1.5 1.5 0 0 1 21 8.5v9A1.5 1.5 0 0 1 19.5 19h-15A1.5 1.5 0 0 1 3 17.5z"/><circle cx="12" cy="13" r="3.4"/></svg>
+    </button>
+    <span class="giua">
+      <b id="ten_ct">ĐĂNG KÝ LAO ĐỘNG</b>
+      <span id="nhan_mang" class="an"></span>
+    </span>
+    <button type="button" class="bieu" id="nut_qr" title="Quét mã QR trên thẻ">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14h1M14 20h3M20 18v3"/></svg>
+    </button>
+  </div>
+  <div class="goiquet">Bấm <b>máy ảnh</b> hoặc <b>mã QR</b> ở trên để tự điền — hoặc điền tay bên dưới</div>
+
   <div class="canhbao" id="canh_bao"></div>
+
   <div class="khoi">
     <div class="hang" id="hang_ct">
-      <span>Công ty</span>
-      <select id="ma_ct"><option value="">Vui lòng chọn</option></select>
+      <span>Nhà máy</span>
+      <select id="ma_ct"><option value="">Vui lòng chọn nhà máy</option></select>
     </div>
-    <div class="hang"><span>Họ và tên</span><input id="ho_ten" placeholder="Nhập họ tên" autocomplete="off"></div>
-    <div class="hang"><span>Số CCCD</span><input id="so_cccd" inputmode="numeric" maxlength="14" placeholder="12 chữ số" autocomplete="off"></div>
-    <div class="hang"><span>Ngày sinh</span><input id="ngay_sinh" inputmode="numeric" maxlength="10" placeholder="01/01/1990"></div>
+    <div class="hang"><span>Ngày phỏng vấn</span><input id="ngay_phong_van" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
+    <div class="hang"><span>Ngày đi làm</span><input id="ngay_di_lam" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
+    <div class="hang"><span>Tên</span><input id="ho_ten" placeholder="Xin vui lòng nhập tên" autocomplete="off"></div>
     <div class="hang"><span>Giới tính</span>
       <div class="gt">
         <label><input type="radio" name="gt" value="Nam"> Nam</label>
         <label><input type="radio" name="gt" value="Nữ"> Nữ</label>
       </div>
     </div>
-    <div class="hang"><span>Điện thoại</span><input id="sdt" inputmode="tel" maxlength="15" placeholder="Nhập số điện thoại" autocomplete="off"></div>
+    <div class="hang"><span>Ngày sinh</span><input id="ngay_sinh" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
+    <div class="hang"><span>Mobile</span><input id="sdt" inputmode="tel" maxlength="15" placeholder="Xin vui lòng nhập số điện thoại" autocomplete="off"></div>
+    <div class="hang"><span>CCCD</span><input id="so_cccd" inputmode="numeric" maxlength="14" placeholder="Xin vui lòng nhập số CCCD" autocomplete="off"></div>
     <div class="hang"><span>Thường trú</span><input id="noi_thuong_tru" placeholder="Theo thẻ căn cước" autocomplete="off"></div>
-    <div class="hang"><span>Ghi chú</span><input id="ghi_chu" placeholder="Không bắt buộc" autocomplete="off"></div>
-    <div class="hang"><span>Người nhập</span><input id="nguoi_nhap" placeholder="Tên bạn" autocomplete="off"></div>
+    <div class="hang"><span>Ghi chú</span><input id="ghi_chu" placeholder="Xin vui lòng điền vào ghi chú" autocomplete="off"></div>
+    <div class="hang"><span>Người tuyển dụng</span><input id="nguoi_nhap" placeholder="Tên bạn" autocomplete="off"></div>
   </div>
 
   <div class="loi-o" id="loi_form"></div>
@@ -191,14 +184,34 @@
       tối đa <b>90 ngày</b>, có quyền yêu cầu xem, sửa hoặc xoá bất cứ lúc nào.</span></label>
   </div>
 
-  <button type="submit" class="nut" id="nut_dk">Đăng ký</button>
-  <button type="button" class="nut phu" id="nut_lai">Chọn cách nhập khác</button>
+  <button type="submit" class="nut" id="nut_dk">Xác nhận nộp</button>
+  <button type="button" class="nut phu" id="nut_doi_mang">Đổi mảng / nhà máy</button>
 </form>
+
+<!-- ===== CAMERA ===== -->
+<div id="man_quet" class="an">
+  <div class="nhac">Đưa mặt thẻ <b>có mã QR</b> vào khung. Thẻ cấp từ 01/7/2024 mã QR ở <b>mặt sau</b>.</div>
+  <div id="vungquet"></div>
+  <div class="loi-o" id="loi_quet"></div>
+  <button type="button" class="nut phu" id="nut_huy">Quay lại</button>
+</div>
+<input type="file" id="file_anh" accept="image/*" class="an">
+<div id="anhtam"></div>
 
 <!-- ===== TÌNH TRẠNG ===== -->
 <div id="man_tt" class="an"></div>
 
+<!-- ===== DANH SÁCH ĐÃ NHẬP HÔM NAY ===== -->
+<div id="man_ds" class="an">
+  <div style="text-align:center;padding:16px 0 6px"><b style="font-size:17px">DANH SÁCH HÔM NAY</b>
+    <div style="font-size:13px;color:var(--mo);margin-top:3px" id="ds_tom">—</div></div>
+  <div class="khoi"><div id="ds_noi"></div></div>
+  <button type="button" class="nut phu" id="nut_dong_ds">Quay lại đăng ký</button>
 </div>
+
+</div>
+
+<button type="button" class="tron an" id="nut_ds">Xem danh sách tổng</button>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
@@ -209,21 +222,18 @@ var TOKEN_API = 'd905baa65db6457e830d8f40';
 
 var $ = function (id) { return document.getElementById(id); };
 var maCT = '', tenCT = '', loaiCT = '', qrTho = '', nguonNhap = 'tay', mayQuet = null;
-var dsCT = [];
-// Hai trường này KHÔNG hiện trên biểu mẫu nhưng vẫn tách từ mã QR và lưu đầy đủ vào Sheet
-var ngayCap = '', cmndCu = '';
+var dsCT = [], ngayCap = '', cmndCu = '';
 
 function hien(el) {
-  ['man_mang', 'man_ct', 'cach', 'man_quet', 'form', 'man_tt'].forEach(function (i) { $(i).classList.add('an'); });
+  ['man_mang', 'form', 'man_quet', 'man_tt', 'man_ds'].forEach(function (i) { $(i).classList.add('an'); });
   if (el) $(el).classList.remove('an');
+  $('nut_ds').classList.toggle('an', el !== 'form');
   window.scrollTo(0, 0);
 }
 
 function goiAPI(body) {
-  return fetch(URL_API, {
-    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify(body)
-  }).then(function (r) { return r.json(); });
+  return fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                          body: JSON.stringify(body) }).then(function (r) { return r.json(); });
 }
 
 function thoat(s) {
@@ -232,78 +242,68 @@ function thoat(s) {
   });
 }
 
-// ---------- Nạp danh sách công ty ----------
+// ---------- Nạp danh sách nhà máy ----------
 maCT = decodeURIComponent((location.search.match(/[?&]ct=([^&]+)/) || [])[1] || '');
 
 goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_cong_ty' })
   .then(function (kq) {
     dsCT = (kq && kq.danh_sach) || [];
-    var sel = $('ma_ct');
-    dsCT.forEach(function (c) {
-      var o = document.createElement('option');
-      o.value = c.ma_ct; o.textContent = c.ten_cong_ty;
-      sel.appendChild(o);
-    });
     if (maCT) {
       var tim = dsCT.filter(function (c) { return c.ma_ct.toLowerCase() === maCT.toLowerCase(); })[0];
-      if (tim) { chonCongTy(tim); return; }                 // link riêng → vào thẳng bước quét
-      alert('Link này không gắn với công ty nào đang tuyển. Bạn chọn thủ công giúp nhé.');
+      if (tim) { chonMang(tim.loai); chonNhaMay(tim); return; }
+      alert('Link này không gắn với nhà máy nào đang tuyển. Bạn chọn thủ công giúp nhé.');
     }
-    if (!dsCT.length) { $('phu_de').textContent = 'Chưa khai công ty nào trong hệ thống'; return; }
-    $('phu_de').textContent = 'Chọn mảng lao động';
+    if (!dsCT.length) { $('phu_de').textContent = 'Chưa khai nhà máy nào trong hệ thống'; }
     hien('man_mang');
   })
-  .catch(function () { $('phu_de').textContent = 'Không kết nối được máy chủ'; });
+  .catch(function () { $('phu_de').textContent = 'Không kết nối được máy chủ'; hien('man_mang'); });
 
 // ---------- Bước 1: chọn mảng ----------
 [].forEach.call(document.querySelectorAll('#man_mang button'), function (b) {
-  b.addEventListener('click', function () { moDanhSachCT(b.getAttribute('data-loai')); });
+  b.addEventListener('click', function () { chonMang(b.getAttribute('data-loai')); hien('form'); });
 });
 
-function moDanhSachCT(loai) {
-  var nhom = dsCT.filter(function (c) { return c.loai === loai; });
-  $('tieu_ct').textContent = (loai === 'thoi_vu' ? 'Thời vụ' : 'Chính thức') + ' — chọn công ty';
-  if (!nhom.length) {
-    $('ds_ct').innerHTML = '<div style="padding:16px;color:var(--mo);font-size:14.5px">' +
-      'Chưa có công ty nào đang tuyển ở mảng này.</div>';
-  } else {
-    $('ds_ct').innerHTML = nhom.map(function (c) {
-      return '<a href="#" data-ma="' + thoat(c.ma_ct) + '">' + thoat(c.ten_cong_ty) + '</a>';
-    }).join('');
-    [].forEach.call($('ds_ct').querySelectorAll('a'), function (a) {
-      a.addEventListener('click', function (ev) {
-        ev.preventDefault();
-        var m = a.getAttribute('data-ma');
-        chonCongTy(dsCT.filter(function (c) { return c.ma_ct === m; })[0]);
-      });
-    });
-  }
-  hien('man_ct');
+function chonMang(loai) {
+  loaiCT = loai;
+  var n = $('nhan_mang');
+  n.textContent = loai === 'chinh_thuc' ? 'CHÍNH THỨC' : 'THỜI VỤ';
+  n.className = loai === 'chinh_thuc' ? 'ct' : 'tv';
+  // nạp lại danh sách nhà máy, chỉ của mảng vừa chọn
+  var sel = $('ma_ct');
+  sel.innerHTML = '<option value="">Vui lòng chọn nhà máy</option>';
+  dsCT.filter(function (c) { return c.loai === loai; }).forEach(function (c) {
+    var o = document.createElement('option');
+    o.value = c.ma_ct; o.textContent = c.ten_cong_ty;
+    sel.appendChild(o);
+  });
+  $('hang_ct').classList.remove('an');
+  $('ten_ct').textContent = loai === 'chinh_thuc' ? 'LAO ĐỘNG CHÍNH THỨC' : 'LAO ĐỘNG THỜI VỤ';
+  maCT = ''; tenCT = '';
 }
+
+function chonNhaMay(c) {
+  if (!c) return;
+  maCT = c.ma_ct; tenCT = c.ten_cong_ty;
+  $('ma_ct').value = maCT;
+  $('ten_ct').textContent = tenCT.toUpperCase();
+  hien('form');
+}
+
+$('ma_ct').addEventListener('change', function () {
+  var c = dsCT.filter(function (x) { return x.ma_ct === this.value; }.bind(this))[0];
+  if (c) { maCT = c.ma_ct; tenCT = c.ten_cong_ty; $('ten_ct').textContent = tenCT.toUpperCase(); }
+  else { maCT = ''; $('ten_ct').textContent = loaiCT === 'chinh_thuc' ? 'LAO ĐỘNG CHÍNH THỨC' : 'LAO ĐỘNG THỜI VỤ'; }
+  var c2 = $('so_cccd').value.replace(/\D/g, '');
+  if (maCT && c2.length === 12) traTinhTrang(c2);
+});
 
 $('nut_doi_mang').addEventListener('click', function () { hien('man_mang'); });
 
-// ---------- Bước 2: chốt công ty → sang bước quét ----------
-function chonCongTy(c) {
-  if (!c) return;
-  maCT = c.ma_ct; tenCT = c.ten_cong_ty; loaiCT = c.loai;
-  $('ten_ct').textContent = tenCT.toUpperCase();
-  $('phu_de').textContent = 'Chọn cách lấy thông tin lao động';
-  var n = $('nhan_mang');
-  n.textContent = loaiCT === 'chinh_thuc' ? 'CHÍNH THỨC' : 'THỜI VỤ';
-  n.className = 'nhan ' + (loaiCT === 'chinh_thuc' ? 'ct' : 'tv');
-  $('ma_ct').value = maCT;
-  $('hang_ct').classList.add('an');     // đã biết công ty thì ẩn hàng chọn cho gọn
-  hien('cach');
-}
-
-// ---------- Nhớ tên người nhập ----------
 try { var l = localStorage.getItem('nguoi_nhap'); if (l) $('nguoi_nhap').value = l; } catch (e) {}
 
 // ---------- Tách chuỗi QR trên thẻ căn cước ----------
-// 7 trường ngăn bằng dấu |: sốCCCD | sốCMND9 | họ tên | ddMMyyyy sinh | giới tính | nơi thường trú | ddMMyyyy cấp
-// Thẻ mẫu 2024 có thể dư trường → đọc được bao nhiêu lấy bấy nhiêu, không bao giờ báo hỏng.
-// LẤY ĐỦ CẢ 7 TRƯỜNG dù biểu mẫu chỉ hiện một phần — số CMND cũ và ngày cấp vẫn lưu vào Sheet.
+// 7 trường ngăn bằng |: sốCCCD | sốCMND9 | họ tên | ddMMyyyy sinh | giới tính | nơi thường trú | ddMMyyyy cấp
+// Lấy ĐỦ cả 7 trường; số CMND cũ và ngày cấp không hiện trên biểu mẫu nhưng vẫn lưu vào Sheet.
 function tachQR(chuoi) {
   var p = String(chuoi).split('|');
   var ngay = function (s) {
@@ -322,13 +322,17 @@ function tachQR(chuoi) {
   };
 }
 
+/** Đọc được QR → tự điền vào biểu mẫu. Không đọc được → báo rõ là phải điền tay. */
 function nhanQR(chuoi, nguon) {
-  qrTho = chuoi; nguonNhap = nguon;
   var t = tachQR(chuoi);
   if (!t.so_cccd || t.so_cccd.length !== 12) {
-    alert('Mã vừa quét không phải thẻ căn cước.\n\nThử lại, hoặc chọn cách 3 để nhập tay.');
-    hien('cach'); return;
+    hien('form');
+    baoDai('vang', '<b>Không đọc được mã QR trên thẻ.</b><br>' +
+      'Thẻ đời cũ có thể không có mã QR, hoặc mã bị mờ/xước. ' +
+      '<b>Bạn điền tay các ô bên dưới giúp nhé.</b>');
+    return;
   }
+  qrTho = chuoi; nguonNhap = nguon;
   $('so_cccd').value = t.so_cccd;
   if (t.ho_ten) $('ho_ten').value = t.ho_ten;
   if (t.ngay_sinh) $('ngay_sinh').value = t.ngay_sinh;
@@ -337,44 +341,47 @@ function nhanQR(chuoi, nguon) {
     var r = document.querySelector('input[name=gt][value="' + t.gioi_tinh + '"]');
     if (r) r.checked = true;
   }
-  ngayCap = t.ngay_cap; cmndCu = t.cmnd_cu;   // đi ngầm, vẫn lưu vào Sheet
+  ngayCap = t.ngay_cap; cmndCu = t.cmnd_cu;
   hien('form');
-  traTinhTrang(t.so_cccd);                    // báo trùng/báo chéo NGAY, không bắt điền hết form
+  baoDai('xanh', '<b>Đã đọc thẻ và tự điền xong.</b> Soát lại rồi bổ sung số điện thoại giúp nhé.');
+  if (maCT) traTinhTrang(t.so_cccd);
   $('sdt').focus();
 }
 
-// ---------- Tra tình trạng ngay sau khi quét (không ghi gì lên Sheet) ----------
-function traTinhTrang(cccd) {
+function baoDai(mau, html) {
   var o = $('canh_bao');
-  o.className = 'canhbao'; o.textContent = '';
+  o.innerHTML = html;
+  o.className = 'canhbao hien ' + mau;
+}
+
+// ---------- Tra tình trạng (chỉ tra, không ghi) ----------
+function traTinhTrang(cccd) {
   goiAPI({ token: TOKEN_API, hanh_dong: 'kiem_tra', so_cccd: cccd, ma_ct: maCT })
     .then(function (kq) {
       if (!kq.ok) return;
-      if (kq.ma === 'TRUNG') {
-        // Đang bị khoá → hiện thẳng màn tình trạng, khỏi bắt điền tiếp cho phí công
-        veTinhTrang({ ok: true, ma: 'TRUNG', ho_ten: kq.ho_ten, ma_ld: kq.ma_ld,
-                      ngay_dk: kq.ngay_dk, loi: kq.loi, con_khoa_ngay: kq.con_khoa_ngay,
-                      canh_bao_cheo: kq.canh_bao_cheo });
+      if (kq.ma === 'TRUNG') { veTinhTrang(kq); return; }
+      var tin = '';
+      if (kq.ma === 'CAN_XAC_NHAN') {
+        baoDai('vang', '<b>Người này vừa đăng ký ở công ty khác:</b><br>' + thoat(kq.trung_voi) +
+          '<br>Vẫn đăng ký được — bấm <b>Xác nhận nộp</b> rồi máy sẽ hỏi lại một lần nữa.');
         return;
       }
-      var tin = '';
       if (kq.ma === 'CHO_DANG_KY_LAI') {
-        tin += '<b>Người này đã từng đăng ký</b> (' + thoat(kq.ma_ld) + ', ' +
-               (kq.trang_thai_cu === 'da_don' ? 'đã được đón' : 'chưa đón') +
-               '). Đã quá hạn khoá nên <b>đăng ký lại được</b>.';
+        tin = '<b>Người này đã từng đăng ký</b> (' + thoat(kq.ma_ld) + ', ' +
+              (kq.trang_thai_cu === 'da_don' ? 'đã được đón' : 'chưa đón') +
+              ', do "' + thoat(kq.nguoi_nhap_cu) + '" đăng ký). Đã quá hạn khoá nên <b>đăng ký lại được</b>.';
       }
       if (kq.canh_bao_cheo) tin += (tin ? '<br>' : '') + '(!) ' + thoat(kq.canh_bao_cheo);
-      if (tin) {
-        o.innerHTML = tin;
-        o.className = 'canhbao hien ' + (kq.canh_bao_cheo ? 'vang' : 'xanh');
-      }
+      if (tin) baoDai(kq.canh_bao_cheo ? 'vang' : 'xanh', tin);
     })
-    .catch(function () { /* không tra được thì thôi, lúc bấm Đăng ký backend vẫn kiểm lại */ });
+    .catch(function () {});
 }
 
-// ---------- 1. Quét mã ----------
-$('c1').addEventListener('click', function () {
-  if (typeof Html5Qrcode === 'undefined') { alert('Chưa tải được bộ quét mã. Dùng cách 3 để nhập tay.'); return; }
+// ---------- Nút QR: quét trực tiếp bằng camera ----------
+$('nut_qr').addEventListener('click', function () {
+  if (typeof Html5Qrcode === 'undefined') {
+    baoDai('vang', '<b>Chưa tải được bộ quét mã</b> (có thể do mạng). Bạn điền tay giúp nhé.'); return;
+  }
   hien('man_quet');
   $('loi_quet').classList.remove('hien');
   mayQuet = new Html5Qrcode('vungquet');
@@ -384,7 +391,7 @@ $('c1').addEventListener('click', function () {
   ).catch(function (e) {
     mayQuet = null;
     var o = $('loi_quet');
-    o.textContent = 'Không mở được camera: ' + e + '. Kiểm tra quyền camera, hoặc dùng cách 2 / cách 3.';
+    o.textContent = 'Không mở được camera: ' + e + '. Dùng nút máy ảnh, hoặc điền tay.';
     o.classList.add('hien');
   });
 });
@@ -395,46 +402,43 @@ function dungQuet(xong) {
   m.stop().then(function () { try { m.clear(); } catch (e) {} if (xong) xong(); })
           .catch(function () { if (xong) xong(); });
 }
-$('nut_huy').addEventListener('click', function () { dungQuet(function () { hien('cach'); }); });
+$('nut_huy').addEventListener('click', function () { dungQuet(function () { hien('form'); }); });
 
-// ---------- 2. Lấy từ ảnh (ảnh KHÔNG rời khỏi máy) ----------
-$('c2').addEventListener('click', function () {
-  if (typeof Html5Qrcode === 'undefined') { alert('Chưa tải được bộ quét mã. Dùng cách 3 để nhập tay.'); return; }
+// ---------- Nút máy ảnh: lấy từ ảnh thẻ (ảnh KHÔNG rời khỏi máy) ----------
+$('nut_anh').addEventListener('click', function () {
+  if (typeof Html5Qrcode === 'undefined') {
+    baoDai('vang', '<b>Chưa tải được bộ quét mã</b> (có thể do mạng). Bạn điền tay giúp nhé.'); return;
+  }
   $('file_anh').click();
 });
 $('file_anh').addEventListener('change', function () {
   var f = this.files && this.files[0]; this.value = '';
   if (!f) return;
-  // Giải mã trong khối riêng #anhtam; tham số false = KHÔNG vẽ ảnh ra màn hình
   var doc = new Html5Qrcode('anhtam');
   doc.scanFile(f, false)
     .then(function (t) { try { doc.clear(); } catch (e) {} f = null; nhanQR(t, 'qr_anh'); })
     .catch(function () {
       try { doc.clear(); } catch (e) {}
       f = null;
-      alert('Không đọc được mã QR trong ảnh.\n\nChụp rõ và thẳng mặt thẻ có mã QR, tránh loá đèn. Hoặc dùng cách 3.');
+      hien('form');
+      baoDai('vang', '<b>Không đọc được mã QR trong ảnh.</b><br>' +
+        'Chụp lại thẳng mặt thẻ có mã QR, đủ sáng, tránh loá. ' +
+        'Hoặc <b>điền tay các ô bên dưới</b>.');
     });
 });
 
-// ---------- 3. Nhập tay ----------
-$('c3').addEventListener('click', function () {
-  qrTho = ''; nguonNhap = 'tay'; ngayCap = ''; cmndCu = '';
-  $('canh_bao').className = 'canhbao';
-  hien('form'); $('ho_ten').focus();
+// tự chèn dấu / cho ô ngày
+['ngay_sinh', 'ngay_phong_van', 'ngay_di_lam'].forEach(function (id) {
+  $(id).addEventListener('input', function () {
+    var s = this.value.replace(/\D/g, '').substring(0, 8);
+    this.value = s.length > 4 ? s.substring(0, 2) + '/' + s.substring(2, 4) + '/' + s.substring(4)
+               : s.length > 2 ? s.substring(0, 2) + '/' + s.substring(2) : s;
+  });
 });
-$('nut_lai').addEventListener('click', function () { hien('cach'); });
 
-// Nhập tay đủ 12 số cũng tra tình trạng luôn
 $('so_cccd').addEventListener('blur', function () {
   var c = this.value.replace(/\D/g, '');
   if (c.length === 12 && maCT) traTinhTrang(c);
-});
-
-// tự chèn dấu / cho ngày sinh
-$('ngay_sinh').addEventListener('input', function () {
-  var s = this.value.replace(/\D/g, '').substring(0, 8);
-  this.value = s.length > 4 ? s.substring(0, 2) + '/' + s.substring(2, 4) + '/' + s.substring(4)
-             : s.length > 2 ? s.substring(0, 2) + '/' + s.substring(2) : s;
 });
 
 // ---------- Gửi ----------
@@ -442,10 +446,11 @@ $('form').addEventListener('submit', function (ev) {
   ev.preventDefault();
   var loi = '', cccd = $('so_cccd').value.replace(/\D/g, ''),
       ten = $('ho_ten').value.trim().replace(/\s+/g, ' '),
-      ct = $('ma_ct').value;
-  if (!ct) loi = 'Chưa chọn công ty';
+      ct = $('ma_ct').value, nn = $('nguoi_nhap').value.trim();
+  if (!ct) loi = 'Chưa chọn nhà máy';
   else if (ten.length < 3 || ten.indexOf(' ') < 0) loi = 'Nhập đầy đủ họ và tên';
   else if (cccd.length !== 12) loi = cccd.length ? 'Số CCCD đang có ' + cccd.length + ' chữ số, cần đúng 12' : 'Chưa nhập số CCCD';
+  else if (nn.length < 2) loi = 'Nhập tên người tuyển dụng (để nhóm biết ai vừa đăng ký)';
   else if (!$('dong_y').checked) loi = 'Cần tích ô đồng ý mới đăng ký được';
   var o = $('loi_form');
   o.textContent = loi; o.classList.toggle('hien', !!loi);
@@ -458,36 +463,71 @@ $('form').addEventListener('submit', function (ev) {
     token: TOKEN_API, hanh_dong: 'dang_ky', ma_ct: ct,
     so_cccd: cccd, ho_ten: ten,
     ngay_sinh: $('ngay_sinh').value.trim(),
+    ngay_phong_van: $('ngay_phong_van').value.trim(),
+    ngay_di_lam: $('ngay_di_lam').value.trim(),
     gioi_tinh: gt ? gt.value : '',
     sdt: $('sdt').value.replace(/\D/g, ''),
     noi_thuong_tru: $('noi_thuong_tru').value.trim(),
     ghi_chu: $('ghi_chu').value.trim(),
-    nguoi_nhap: $('nguoi_nhap').value.trim(),
-    ngay_cap: ngayCap, cmnd_cu: cmndCu,      // không hiện trên form nhưng vẫn lưu để đối chiếu
+    nguoi_nhap: nn,
+    ngay_cap: ngayCap, cmnd_cu: cmndCu,
     nguon_nhap: nguonNhap, qr_tho: qrTho, dong_y: true
   };
-  try { localStorage.setItem('nguoi_nhap', d.nguoi_nhap); } catch (e) {}
+  try { localStorage.setItem('nguoi_nhap', nn); } catch (e) {}
 
+  guiDangKy(d, ten, nut);
+});
+
+/**
+ * Gửi hồ sơ. Nếu máy chủ trả CAN_XAC_NHAN (người này vừa đăng ký ở công ty khác)
+ * thì hỏi người nhập, đồng ý mới gửi lại kèm cờ xác nhận — lúc đó vẫn đăng ký
+ * và ghi rõ là trùng.
+ */
+function guiDangKy(d, ten, nut) {
   goiAPI(d).then(function (kq) {
+    if (kq.ok && kq.ma === 'CAN_XAC_NHAN') {
+      nut.disabled = false; nut.textContent = 'Xác nhận nộp';
+      var ds = (kq.danh_sach_trung || []).map(function (x) {
+        return '• ' + x.ten_cong_ty + ' (' + x.loai + ')\n  do "' + x.nguoi_nhap +
+               '" đăng ký ngày ' + x.ngay_dk;
+      }).join('\n');
+      var hoi = 'NGƯỜI NÀY VỪA ĐĂNG KÝ Ở CÔNG TY KHÁC\n\n' + ds +
+                '\n\nBạn vẫn muốn đăng ký cho "' + (kq.ten_cong_ty || tenCT) + '"?\n' +
+                'Nếu đồng ý, hệ thống vẫn đăng ký và ghi rõ là trùng.';
+      if (!confirm(hoi)) {
+        baoDai('vang', '<b>Đã huỷ.</b> Người này vừa đăng ký ở: ' + thoat(kq.trung_voi));
+        hien('form'); return;
+      }
+      d.xac_nhan_trung = true;
+      nut.disabled = true; nut.textContent = 'Đang gửi…';
+      guiDangKy(d, ten, nut);
+      return;
+    }
+    if (kq.ok && (kq.ma === 'THANH_CONG' || kq.ma === 'DANG_KY_LAI' || kq.ma === 'TRUNG_KHAC_CT')) {
+      luuDanhSach({ ma_ld: kq.ma_ld, ho_ten: ten, cccd_che: kq.cccd_che, ten_cong_ty: kq.ten_cong_ty || tenCT });
+    }
     veTinhTrang(kq);
     goiAPI({ token: TOKEN_API, hanh_dong: 'gui_tin' }).catch(function () {});
   }).catch(function () {
-    veTinhTrang({ ok: false, loi: 'Không gửi được. Kiểm tra mạng rồi bấm Đăng ký lại.' });
-    nut.disabled = false; nut.textContent = 'Đăng ký';
+    veTinhTrang({ ok: false, loi: 'Không gửi được. Kiểm tra mạng rồi bấm Xác nhận nộp lại.' });
+    nut.disabled = false; nut.textContent = 'Xác nhận nộp';
   });
-});
+}
 
 function veTinhTrang(kq) {
-  var loai, dau, tieu, mo = '', ma = kq.ma_ld || '';
+  var loai, dau, tieu, mo = '', ma = kq.ma_ld || '', them = '';
   if (kq.ok && kq.ma === 'THANH_CONG')       { loai = 'tot';  dau = '✓'; tieu = 'Đăng ký thành công'; mo = kq.ho_ten + ' — ' + kq.cccd_che; }
   else if (kq.ok && kq.ma === 'DANG_KY_LAI') { loai = 'tot';  dau = '✓'; tieu = 'Đã đăng ký lại';     mo = kq.ho_ten + ' — lần trước ' + kq.ma_lan_truoc + ' đã kết thúc'; }
-  else if (kq.ok && kq.ma === 'TRUNG')       { loai = 'canh'; dau = '!'; tieu = 'Chưa đăng ký lại được';
-                                               mo = kq.ho_ten + (kq.con_khoa_ngay ? ' — còn ' + kq.con_khoa_ngay + ' ngày nữa mới đăng ký lại được' : ''); }
-  else                                        { loai = 'xau';  dau = '×'; tieu = 'Chưa đăng ký được'; mo = kq.loi || 'Có lỗi xảy ra'; ma = ''; }
+  else if (kq.ok && kq.ma === 'TRUNG_KHAC_CT'){ loai = 'tot'; dau = '✓'; tieu = 'Đã đăng ký (có trùng)';
+      mo = kq.ho_ten;
+      them = '<p style="color:var(--canh)">(!) Cũng đang đăng ký tại: ' + thoat(kq.trung_voi) + '</p>'; }
+  else if (kq.ok && kq.ma === 'TRUNG')       { loai = 'canh'; dau = '!'; tieu = 'Trùng — chưa đăng ký được';
+      mo = kq.ho_ten + (kq.con_khoa_ngay ? ' — còn ' + kq.con_khoa_ngay + ' ngày nữa mới đăng ký lại được' : '');
+      them = '<p><b>Đã được "' + thoat(kq.nguoi_nhap_cu || 'không rõ') + '"</b> đăng ký tại <b>' +
+             thoat(kq.ten_cong_ty_cu || '?') + '</b>' + (kq.ngay_dk ? ' ngày ' + thoat(kq.ngay_dk) : '') + '</p>'; }
+  else { loai = 'xau'; dau = '×'; tieu = 'Chưa đăng ký được'; mo = kq.loi || 'Có lỗi xảy ra'; ma = ''; }
 
-  var them = '';
-  if (kq.ma === 'TRUNG' && kq.loi) them += '<p>' + thoat(kq.loi) + '</p>';
-  if (kq.ten_cong_ty) them += '<p>' + thoat(kq.ten_cong_ty) + '</p>';
+  if (kq.ten_cong_ty && kq.ma !== 'TRUNG' && kq.ma !== 'TRUNG_KHAC_CT') them += '<p>' + thoat(kq.ten_cong_ty) + '</p>';
   if (kq.canh_bao_cheo) them += '<p style="color:var(--canh)">(!) ' + thoat(kq.canh_bao_cheo) + '</p>';
 
   $('man_tt').className = 'tt ' + loai;
@@ -498,6 +538,35 @@ function veTinhTrang(kq) {
     '<button type="button" class="nut" onclick="location.reload()">Đăng ký người tiếp theo</button>';
   hien('man_tt');
 }
+
+// ---------- Danh sách đã nhập hôm nay (lưu trong máy, KHÔNG lộ dữ liệu người khác) ----------
+function khoaNgay() { return 'ds_' + new Date().toISOString().substring(0, 10); }
+
+function luuDanhSach(m) {
+  try {
+    var ds = JSON.parse(localStorage.getItem(khoaNgay()) || '[]');
+    m.gio = new Date().toTimeString().substring(0, 5);
+    ds.unshift(m);
+    localStorage.setItem(khoaNgay(), JSON.stringify(ds.slice(0, 200)));
+  } catch (e) {}
+}
+
+$('nut_ds').addEventListener('click', function () {
+  var ds = [];
+  try { ds = JSON.parse(localStorage.getItem(khoaNgay()) || '[]'); } catch (e) {}
+  $('ds_tom').textContent = ds.length ? 'Bạn đã đăng ký ' + ds.length + ' người trong hôm nay'
+                                      : 'Chưa đăng ký ai trong hôm nay';
+  $('ds_noi').innerHTML = ds.length
+    ? ds.map(function (m) {
+        return '<div class="ds-hang"><b>' + thoat(m.ho_ten) + '</b>' +
+               '<span style="color:var(--mo);font-size:13px">' + thoat(m.cccd_che || '') + ' · ' + thoat(m.ma_ld) + '</span>' +
+               '<span class="gio">' + thoat(m.gio) + '</span></div>';
+      }).join('')
+    : '<div class="trong">Danh sách này chỉ hiện những người <b>bạn</b> vừa đăng ký trên máy này hôm nay.<br>' +
+      'Danh sách đầy đủ của cả đội xem trong nhóm Zalo hoặc Google Sheet.</div>';
+  hien('man_ds');
+});
+$('nut_dong_ds').addEventListener('click', function () { hien('form'); });
 </script>
 </body>
 </html>
