@@ -190,10 +190,15 @@
 
 <!-- ===== CAMERA ===== -->
 <div id="man_quet" class="an">
-  <div class="nhac">Đưa mặt thẻ <b>có mã QR</b> vào khung. Thẻ cấp từ 01/7/2024 mã QR ở <b>mặt sau</b>.</div>
+  <div class="nhac">Đưa <b>RIÊNG Ô MÃ QR</b> lại gần cho đầy khung — đừng lấy cả tấm thẻ.
+    Thẻ cấp từ 01/7/2024 mã QR ở <b>mặt sau</b>.<br>
+    Thẻ bị <b>loá bóng</b> thì nghiêng thẻ đi một chút, hoặc bật đèn.</div>
   <div id="vungquet"></div>
   <div class="loi-o" id="loi_quet"></div>
-  <button type="button" class="nut phu" id="nut_huy">Quay lại</button>
+  <div style="display:flex;gap:8px;margin:18px 14px 0">
+    <button type="button" class="nut phu" id="nut_den" style="margin:0;flex:0 0 44%">Bật đèn</button>
+    <button type="button" class="nut phu" id="nut_huy" style="margin:0;flex:1">Quay lại</button>
+  </div>
 </div>
 <input type="file" id="file_anh" accept="image/*" class="an">
 <div id="anhtam"></div>
@@ -308,14 +313,33 @@ setTimeout(xemPhieuCho, 400);
 // 7 trường ngăn bằng |: sốCCCD | sốCMND9 | họ tên | ddMMyyyy sinh | giới tính | nơi thường trú | ddMMyyyy cấp
 // Lấy ĐỦ cả 7 trường; số CMND cũ và ngày cấp không hiện trên biểu mẫu nhưng vẫn lưu vào Sheet.
 function tachQR(chuoi) {
-  var p = String(chuoi).split('|');
-  var ngay = function (s) {
-    var d = String(s || '').replace(/\D/g, '');
+  var s = String(chuoi == null ? '' : chuoi).trim();
+  var p = s.split('|');
+
+  // KHÔNG tin tuyệt đối rằng ô đầu tiên là số căn cước.
+  // Thẻ đời mới (từ 01/7/2024) hoặc máy đọc chèn thêm tiền tố sẽ làm lệch cả 7 ô.
+  // Cách chắc: tìm ô nào ĐÚNG 12 chữ số rồi coi ô đó là mốc, cắt bỏ phần thừa phía trước.
+  for (var i = 0; i < p.length && i < 4; i++) {
+    if (/^\s*\d{12}\s*$/.test(p[i])) { if (i > 0) p = p.slice(i); break; }
+  }
+
+  var ngay = function (s2) {
+    var d = String(s2 || '').replace(/\D/g, '');
     return d.length === 8 ? d.substring(0, 2) + '/' + d.substring(2, 4) + '/' + d.substring(4) : '';
   };
+
+  var cccd = String(p[0] || '').replace(/\D/g, '');
+  // Vẫn không ra 12 số → vớt vát: nhặt cụm 12 chữ số bất kỳ trong cả chuỗi.
+  // Thà lấy được mỗi số căn cước còn hơn bắt cộng tác viên gõ lại từ đầu.
+  if (cccd.length !== 12) {
+    var v = s.match(/(?:^|\D)(\d{12})(?:\D|$)/);
+    if (v) return { so_cccd: v[1], cmnd_cu: '', ho_ten: '', ngay_sinh: '',
+                    gioi_tinh: '', noi_thuong_tru: '', ngay_cap: '' };
+  }
+
   var g = String(p[4] || '').trim();
   return {
-    so_cccd: String(p[0] || '').replace(/\D/g, ''),
+    so_cccd: cccd,
     cmnd_cu: String(p[1] || '').replace(/\D/g, ''),
     ho_ten: String(p[2] || '').replace(/\s+/g, ' ').trim(),
     ngay_sinh: ngay(p[3]),
@@ -387,8 +411,32 @@ $('nut_qr').addEventListener('click', function () {
   }
   hien('man_quet');
   $('loi_quet').classList.remove('hien');
-  mayQuet = new Html5Qrcode('vungquet');
-  mayQuet.start({ facingMode: 'environment' }, { fps: 10, qrbox: { width: 250, height: 250 } },
+  denDangBat = false; $('nut_den').textContent = 'Bật đèn';
+
+  // Bộ giải mã CÓ SẴN TRONG MÁY (BarcodeDetector) khoẻ hơn hẳn bộ chạy bằng JavaScript,
+  // nhất là khi mã in đè lên hoa văn nền của thẻ căn cước. Máy nào không có thì tự rơi về bộ cũ.
+  mayQuet = new Html5Qrcode('vungquet', {
+    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
+    verbose: false
+  });
+
+  mayQuet.start(
+    { facingMode: { ideal: 'environment' } },
+    {
+      fps: 15,
+      // Khung quét TỰ CO THEO MÀN HÌNH thay vì cứng 250px. Khung cứng làm mã QR
+      // của thẻ căn cước (ô nhỏ ở góc) lọt vào vùng quá bé, không đủ điểm ảnh để giải.
+      qrbox: function (w, h) { var c = Math.floor(Math.min(w, h) * 0.8); return { width: c, height: c }; },
+      aspectRatio: 1.0,
+      // ĐÂY LÀ CHỖ QUYẾT ĐỊNH: mặc định camera chỉ mở ~640x480, mã QR căn cước dày đặc
+      // (hơn 40 ô mỗi chiều) nên mỗi ô chưa tới 3 điểm ảnh — không tài nào giải nổi.
+      // Xin 1920x1080 và bắt lấy nét liên tục.
+      videoConstraints: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1920 }, height: { ideal: 1080 },
+        advanced: [{ focusMode: 'continuous' }]
+      }
+    },
     function (text) { dungQuet(function () { nhanQR(text, 'qr_camera'); }); },
     function () {}
   ).catch(function (e) {
@@ -397,6 +445,22 @@ $('nut_qr').addEventListener('click', function () {
     o.textContent = 'Không mở được camera: ' + e + '. Dùng nút máy ảnh, hoặc điền tay.';
     o.classList.add('hien');
   });
+});
+
+// Đèn pin — thứ chữa được nhiều ca nhất: mặt thẻ có lớp ép bóng, chụp ngoài trời
+// hay dưới đèn tuýp đều loá thành một vệt trắng đè lên mã.
+var denDangBat = false;
+$('nut_den').addEventListener('click', function () {
+  if (!mayQuet) return;
+  denDangBat = !denDangBat;
+  var nut = this;
+  mayQuet.applyVideoConstraints({ advanced: [{ torch: denDangBat }] })
+    .then(function () { nut.textContent = denDangBat ? 'Tắt đèn' : 'Bật đèn'; })
+    .catch(function () {
+      denDangBat = false;
+      nut.textContent = 'Máy không có đèn';
+      nut.disabled = true;
+    });
 });
 
 function dungQuet(xong) {
@@ -409,7 +473,9 @@ $('nut_huy').addEventListener('click', function () { dungQuet(function () { hien
 
 // ---------- Nút máy ảnh: lấy từ ảnh thẻ (ảnh KHÔNG rời khỏi máy) ----------
 $('nut_anh').addEventListener('click', function () {
-  if (typeof Html5Qrcode === 'undefined') {
+  // KHÔNG chặn khi thư viện chưa tải được nữa: máy đời mới có bộ giải mã sẵn,
+  // vẫn đọc được ảnh dù mất mạng giữa chừng không lấy được thư viện.
+  if (typeof Html5Qrcode === 'undefined' && typeof BarcodeDetector === 'undefined') {
     baoDai('vang', '<b>Chưa tải được bộ quét mã</b> (có thể do mạng). Bạn điền tay giúp nhé.'); return;
   }
   $('file_anh').click();
@@ -417,18 +483,95 @@ $('nut_anh').addEventListener('click', function () {
 $('file_anh').addEventListener('change', function () {
   var f = this.files && this.files[0]; this.value = '';
   if (!f) return;
-  var doc = new Html5Qrcode('anhtam');
-  doc.scanFile(f, false)
-    .then(function (t) { try { doc.clear(); } catch (e) {} f = null; nhanQR(t, 'qr_anh'); })
-    .catch(function () {
-      try { doc.clear(); } catch (e) {}
-      f = null;
-      hien('form');
-      baoDai('vang', '<b>Không đọc được mã QR trong ảnh.</b><br>' +
-        'Chụp lại thẳng mặt thẻ có mã QR, đủ sáng, tránh loá. ' +
-        'Hoặc <b>điền tay các ô bên dưới</b>.');
-    });
+  docAnhNhieuLuot(f).then(function (t) {
+    f = null;
+    if (t) { nhanQR(t, 'qr_anh'); return; }
+    hien('form');
+    baoDai('vang', '<b>Không đọc được mã QR trong ảnh.</b><br>' +
+      'Đã thử 4 cách vẫn không ra. Chụp lại <b>chỉ riêng ô mã QR</b> cho đầy khung ảnh, ' +
+      'đừng chụp cả tấm thẻ — mã sẽ to lên gấp nhiều lần. Tránh loá và giữ máy thật yên.<br>' +
+      'Hoặc <b>điền tay các ô bên dưới</b>.');
+  });
 });
+
+/**
+ * Đọc mã trong ẢNH bằng BỐN cách, thử lần lượt tới khi được.
+ * Bản cũ chỉ thử đúng một lượt rồi bỏ cuộc — mã QR thẻ căn cước in đè lên hoa văn nền,
+ * lại hay bị loá và chụp xa, nên một lượt trượt là chuyện thường.
+ * TOÀN BỘ chạy trong máy người dùng, ảnh KHÔNG rời khỏi máy (NĐ 356/2025).
+ */
+function docAnhNhieuLuot(file) {
+  return thuMayGiaiSan(file)                                   // 1. bộ giải có sẵn trong máy
+    .then(function (t) { return t || thuThuVien(file); })      // 2. bộ giải JavaScript, ảnh gốc
+    .then(function (t) { return t || bienDoiRoiThu(file, 2, false); })  // 3. phóng to gấp đôi
+    .then(function (t) { return t || bienDoiRoiThu(file, 3, true); });  // 4. phóng to + tăng tương phản
+}
+
+/** Bộ giải mã cài sẵn trong máy — nhanh và khoẻ hơn bộ chạy bằng JavaScript. */
+function thuMayGiaiSan(nguon) {
+  if (typeof BarcodeDetector === 'undefined') return Promise.resolve('');
+  return createImageBitmap(nguon)
+    .then(function (anh) {
+      var may = new BarcodeDetector({ formats: ['qr_code'] });
+      return may.detect(anh).then(function (ds) {
+        try { anh.close(); } catch (e) {}
+        return (ds && ds.length && ds[0].rawValue) ? ds[0].rawValue : '';
+      });
+    })
+    .catch(function () { return ''; });
+}
+
+function thuThuVien(nguon) {
+  if (typeof Html5Qrcode === 'undefined') return Promise.resolve('');
+  var doc = new Html5Qrcode('anhtam');
+  return doc.scanFile(nguon, false)
+    .then(function (t) { try { doc.clear(); } catch (e) {} return t || ''; })
+    .catch(function () { try { doc.clear(); } catch (e) {} return ''; });
+}
+
+/**
+ * Phóng ảnh to lên rồi thử lại. Lý do: điện thoại chụp cả tấm thẻ thì ô mã QR
+ * chỉ chiếm một góc nhỏ, mỗi ô vuông trong mã chưa được 2 điểm ảnh. Phóng to bằng
+ * phép nội suy mượt giúp bộ giải bắt được biên các ô.
+ * `tangTuongPhan` ép ảnh về gần đen/trắng — ăn thua khi mã bị mờ hoặc chìm vào hoa văn.
+ */
+function bienDoiRoiThu(file, heSo, tangTuongPhan) {
+  return createImageBitmap(file).then(function (anh) {
+    var r = Math.min(heSo, Math.floor(4000 / Math.max(anh.width, anh.height)) || 1);
+    if (r < 1) r = 1;
+    var c = document.createElement('canvas');
+    c.width = anh.width * r; c.height = anh.height * r;
+    var ctx = c.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(anh, 0, 0, c.width, c.height);
+    try { anh.close(); } catch (e) {}
+
+    if (tangTuongPhan) {
+      var d = ctx.getImageData(0, 0, c.width, c.height), a = d.data;
+      // Xám hoá rồi kéo giãn quanh ngưỡng trung bình — không dùng ngưỡng cứng
+      // vì ảnh chụp ngoài trời và trong nhà sáng tối rất khác nhau.
+      var tong = 0;
+      for (var i = 0; i < a.length; i += 4) {
+        a[i] = a[i + 1] = a[i + 2] = (a[i] * 0.299 + a[i + 1] * 0.587 + a[i + 2] * 0.114) | 0;
+        tong += a[i];
+      }
+      var tb = tong / (a.length / 4);
+      for (var j = 0; j < a.length; j += 4) {
+        var v = (a[j] - tb) * 2.2 + tb;
+        v = v < 0 ? 0 : (v > 255 ? 255 : v);
+        a[j] = a[j + 1] = a[j + 2] = v;
+      }
+      ctx.putImageData(d, 0, 0);
+    }
+
+    return new Promise(function (ok) { c.toBlob(function (b) { ok(b); }, 'image/png'); });
+  }).then(function (blob) {
+    if (!blob) return '';
+    var f2 = new File([blob], 'qr.png', { type: 'image/png' });
+    return thuMayGiaiSan(f2).then(function (t) { return t || thuThuVien(f2); });
+  }).catch(function () { return ''; });
+}
 
 // tự chèn dấu / cho ô ngày
 ['ngay_sinh', 'ngay_phong_van', 'ngay_di_lam'].forEach(function (id) {
