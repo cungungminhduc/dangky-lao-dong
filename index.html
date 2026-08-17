@@ -233,6 +233,18 @@ function thoat(s) {
   });
 }
 
+/**
+ * Số điện thoại di động Việt Nam: ĐÚNG 10 chữ số, bắt đầu bằng 0, số thứ hai là 3/5/7/8/9.
+ * Cả tính năng "gửi danh sách tên + SĐT cho người đón gọi" sống chết ở chỗ số gọi được.
+ */
+function sdtHopLe(s) { return /^0[35789]\d{8}$/.test(String(s || '')); }
+function loiSdt(s) {
+  s = String(s || '');
+  if (!s) return 'Chưa nhập số điện thoại';
+  if (s.length !== 10) return 'Số điện thoại phải đúng 10 chữ số, đang có ' + s.length + ' số';
+  return 'Số điện thoại phải bắt đầu bằng 03, 05, 07, 08 hoặc 09';
+}
+
 // ---------- Nạp danh sách nhà máy ----------
 maCT = decodeURIComponent((location.search.match(/[?&]ct=([^&]+)/) || [])[1] || '');
 
@@ -581,10 +593,14 @@ $('form').addEventListener('submit', function (ev) {
   ev.preventDefault();
   var loi = '', cccd = $('so_cccd').value.replace(/\D/g, ''),
       ten = $('ho_ten').value.trim().replace(/\s+/g, ' '),
-      ct = $('ma_ct').value, nn = $('nguoi_nhap').value.trim();
+      ct = $('ma_ct').value, nn = $('nguoi_nhap').value.trim(),
+      sdt = $('sdt').value.replace(/\D/g, '');
   if (!ct) loi = 'Chưa chọn nhà máy';
   else if (ten.length < 3 || ten.indexOf(' ') < 0) loi = 'Nhập đầy đủ họ và tên';
   else if (cccd.length !== 12) loi = cccd.length ? 'Số CCCD đang có ' + cccd.length + ' chữ số, cần đúng 12' : 'Chưa nhập số CCCD';
+  // Số điện thoại là thứ người đón dùng để GỌI — sai một chữ số là mất công cả dây chuyền.
+  // Trước đây ô này không kiểm gì cả, đã lọt một số chỉ có 9 chữ số vào bảng.
+  else if (!sdtHopLe(sdt)) loi = loiSdt(sdt);
   else if (nn.length < 2) loi = 'Nhập tên người tuyển dụng (để nhóm biết ai vừa đăng ký)';
   else if (!$('dong_y').checked) loi = 'Cần tích ô đồng ý mới đăng ký được';
   var o = $('loi_form');
@@ -601,7 +617,7 @@ $('form').addEventListener('submit', function (ev) {
     ngay_phong_van: $('ngay_phong_van').value.trim(),
     ngay_di_lam: $('ngay_di_lam').value.trim(),
     gioi_tinh: gt ? gt.value : '',
-    sdt: $('sdt').value.replace(/\D/g, ''),
+    sdt: sdt,
     noi_thuong_tru: $('noi_thuong_tru').value.trim(),
     ghi_chu: $('ghi_chu').value.trim(),
     nguoi_nhap: nn,
