@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Danh sách đón lao động</title>
+<style>
+  :root{
+    --nen:#f2f4f6; --the:#fff; --chu:#1b2430; --mo:#9aa3ad; --vien:#e9edf1;
+    --xanh:#12b76a; --xanh-dam:#0e9257;
+    --tot:#0f7a3d; --tot-nen:#e7f7ee;
+    --canh:#8a6300; --canh-nen:#fff6e0;
+    --loi:#b3261e; --loi-nen:#fdeceb;
+    --tv:#0b6b57; --ct:#6b4bbd;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--nen);color:var(--chu);
+       font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+  .boc{max-width:560px;margin:0 auto;padding-bottom:34px}
+  .an{display:none !important}
+
+  .dinh{background:var(--the);padding:14px 16px;border-bottom:1px solid var(--vien);text-align:center}
+  .dinh b{display:block;font-size:17px;font-weight:700;letter-spacing:.3px}
+  .dinh small{display:block;margin-top:3px;font-size:12.5px;color:var(--mo)}
+
+  /* thanh lọc: tất cả / chưa gọi / đã gọi */
+  .loc{display:flex;gap:8px;padding:12px 14px 4px}
+  .loc button{flex:1;padding:10px 4px;border:1px solid var(--vien);border-radius:9px;
+        background:var(--the);font-family:inherit;font-size:13.5px;font-weight:600;
+        color:var(--chu);cursor:pointer}
+  .loc button.chon{background:var(--chu);color:#fff;border-color:var(--chu)}
+
+  .nhom{margin:14px 14px 0}
+  .nhom > h2{margin:0 0 8px;font-size:14px;font-weight:700;letter-spacing:.4px;
+        display:flex;align-items:center;gap:8px}
+  .nhom > h2 span{padding:2px 10px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.6px}
+  .nhom > h2 span.tv{background:#e6f4f0;color:var(--tv)}
+  .nhom > h2 span.ct{background:#efeafa;color:var(--ct)}
+
+  .the{background:var(--the);border:1px solid var(--vien);border-radius:11px;
+       margin-bottom:9px;padding:13px 14px}
+  .the.xong{background:#fafcfb;border-color:#dcece4}
+  .dau{display:flex;align-items:baseline;gap:9px}
+  .dau b{font-size:16.5px;font-weight:650;flex:1;min-width:0;word-break:break-word}
+  .dau i{font-style:normal;font-size:11.5px;color:var(--mo);flex:none}
+
+  .vet{margin-top:6px;font-size:12.5px;color:var(--mo)}
+  .vet .da{color:var(--tot);font-weight:600}
+  .vet .khong{color:var(--canh);font-weight:600}
+  .vet .den{color:var(--tv);font-weight:600}
+
+  .tacvu{display:flex;gap:8px;margin-top:11px}
+  .goi{flex:1;display:flex;align-items:center;justify-content:center;gap:8px;
+       padding:13px;border-radius:9px;background:var(--xanh);color:#fff;
+       font-size:16px;font-weight:600;text-decoration:none}
+  .goi:active{background:var(--xanh-dam)}
+  .goi svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:2;
+       stroke-linecap:round;stroke-linejoin:round}
+  .goi.tat{background:#eceff3;color:var(--mo);pointer-events:none}
+  .kq{flex:0 0 auto;padding:13px 12px;border:1px solid var(--vien);border-radius:9px;
+      background:var(--the);font-family:inherit;font-size:13.5px;font-weight:600;
+      color:var(--chu);cursor:pointer}
+  .kq:active{background:#f1f4f7}
+
+  .bao{margin:14px;padding:14px;border-radius:10px;font-size:14.5px;line-height:1.55}
+  .bao.loi{background:var(--loi-nen);color:var(--loi)}
+  .bao.canh{background:var(--canh-nen);color:var(--canh)}
+  .bao.mo{background:var(--the);color:var(--mo);text-align:center;border:1px solid var(--vien)}
+
+  .chan{margin:18px 14px 0;font-size:11.5px;color:var(--mo);line-height:1.6}
+  .lam{position:fixed;left:0;right:0;bottom:0;background:var(--chu);color:#fff;
+       text-align:center;padding:11px;font-size:13.5px;transform:translateY(100%);
+       transition:transform .18s}
+  .lam.hien{transform:none}
+</style>
+</head>
+<body>
+<div class="boc">
+  <div class="dinh">
+    <b id="tieu">Đang tải…</b>
+    <small id="phu"></small>
+  </div>
+
+  <div class="loc an" id="loc">
+    <button type="button" data-loc="tat" class="chon">Tất cả</button>
+    <button type="button" data-loc="chua">Chưa gọi</button>
+    <button type="button" data-loc="da">Đã gọi</button>
+  </div>
+
+  <div id="than"></div>
+
+  <div class="chan an" id="chan">
+    Trang chỉ hiện tên và số điện thoại, không hiện số căn cước.<br>
+    Link này riêng của bạn — chuyển cho người khác là họ xem được toàn bộ danh sách.
+  </div>
+</div>
+
+<div class="lam" id="lam"></div>
+
+<script>
+// ====== CẤU HÌNH ======
+var URL_API   = 'https://script.google.com/macros/s/AKfycby1EldZql-1j9H3vaoZdK2e7CfEHZAyyHW-SiTkY4rFWUrb-jHODY68x-OWGVAFlKzU/exec';
+var TOKEN_API = 'd905baa65db6457e830d8f40';
+// ======================
+
+var $ = function (id) { return document.getElementById(id); };
+var MA = decodeURIComponent((location.search.match(/[?&]ma=([^&]+)/) || [])[1] || '');
+var NGAY = decodeURIComponent((location.search.match(/[?&]ngay=([^&]+)/) || [])[1] || '');
+var duLieu = null, boLoc = 'tat';
+
+function goiAPI(body) {
+  return fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                          body: JSON.stringify(body) }).then(function (r) { return r.json(); });
+}
+
+function thoat(s) {
+  return String(s == null ? '' : s).replace(/[<>&"]/g, function (m) {
+    return { '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[m];
+  });
+}
+
+function nhay(tin) {
+  var o = $('lam');
+  o.textContent = tin;
+  o.classList.add('hien');
+  clearTimeout(nhay.h);
+  nhay.h = setTimeout(function () { o.classList.remove('hien'); }, 2200);
+}
+
+// ---------- Tải danh sách ----------
+function tai() {
+  if (!MA) { loi('Link thiếu mã truy cập. Xin người phụ trách gửi lại link.'); return; }
+  goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_don', ma: MA, ngay: NGAY })
+    .then(function (kq) {
+      if (!kq.ok) { loi(kq.loi || 'Không xem được danh sách.'); return; }
+      duLieu = kq;
+      ve();
+    })
+    .catch(function () {
+      loi('Không tải được. Kiểm tra mạng rồi tải lại trang.');
+    });
+}
+
+function loi(tin) {
+  $('tieu').textContent = 'Không mở được';
+  $('phu').textContent = '';
+  $('than').innerHTML = '<div class="bao loi">' + thoat(tin) + '</div>';
+}
+
+// ---------- Vẽ ----------
+function ve() {
+  var tong = 0, chuaGoi = 0;
+  duLieu.nhom.forEach(function (n) {
+    tong += n.ds.length;
+    n.ds.forEach(function (x) { if (!x.so_lan_goi) chuaGoi++; });
+  });
+
+  $('tieu').textContent = 'Đón ngày ' + duLieu.ngay_hien_thi;
+  $('phu').textContent = tong + ' lao động · còn ' + chuaGoi + ' người chưa gọi' +
+                         (duLieu.ten_nguoi ? ' · ' + duLieu.ten_nguoi : '');
+  $('loc').classList.toggle('an', !tong);
+  $('chan').classList.remove('an');
+
+  if (!tong) {
+    $('than').innerHTML = '<div class="bao mo">Ngày này chưa có ai đăng ký.</div>';
+    return;
+  }
+
+  var h = '';
+  duLieu.nhom.forEach(function (n) {
+    var ds = n.ds.filter(function (x) {
+      return boLoc === 'tat' || (boLoc === 'chua' ? !x.so_lan_goi : x.so_lan_goi > 0);
+    });
+    if (!ds.length) return;
+    h += '<div class="nhom"><h2>' + thoat(n.ten_cong_ty) +
+         ' <span class="' + (n.loai === 'chính thức' ? 'ct' : 'tv') + '">' + thoat(n.loai).toUpperCase() + '</span>' +
+         ' <i style="font-style:normal;font-weight:400;color:var(--mo);font-size:12.5px">' + ds.length + '</i></h2>';
+    ds.forEach(function (x) { h += theNguoi(x); });
+    h += '</div>';
+  });
+  $('than').innerHTML = h || '<div class="bao mo">Không có ai trong mục này.</div>';
+  noiTacVu();
+}
+
+function theNguoi(x) {
+  var coSdt = x.sdt && x.sdt.length >= 9;
+  var vet = '';
+  if (x.da_don) {
+    vet += '<span class="den">Đã đến công ty</span> · ';
+  }
+  if (x.so_lan_goi) {
+    vet += '<span class="' + (x.ket_qua_goi === 'khong nghe' ? 'khong' : 'da') + '">' +
+           (x.ket_qua_goi === 'khong nghe' ? 'Không nghe máy' : 'Đã gọi') + '</span>' +
+           ' · ' + thoat(x.lan_goi_cuoi) + (x.so_lan_goi > 1 ? ' · ' + x.so_lan_goi + ' lần' : '') +
+           (x.nguoi_goi ? ' · ' + thoat(x.nguoi_goi) : '');
+  } else if (!vet) {
+    vet = 'Chưa gọi';
+  }
+
+  return '<div class="the' + (x.so_lan_goi ? ' xong' : '') + '" data-ld="' + thoat(x.ma_ld) + '">' +
+    '<div class="dau"><b>' + thoat(x.ho_ten || '(chưa có tên)') + '</b><i>' + thoat(x.ma_ld) + '</i></div>' +
+    '<div class="vet">' + vet + '</div>' +
+    '<div class="tacvu">' +
+      (coSdt
+        ? '<a class="goi" href="tel:' + thoat(x.sdt) + '" data-goi="' + thoat(x.ma_ld) + '">' +
+          '<svg viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.2a2 2 0 0 1 2.1-.5c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg>' +
+          thoat(dinhDangSdt(x.sdt)) + '</a>'
+        : '<span class="goi tat">Chưa có số điện thoại</span>') +
+      (coSdt ? '<button type="button" class="kq" data-kq="' + thoat(x.ma_ld) + '">Không nghe</button>' : '') +
+    '</div></div>';
+}
+
+function dinhDangSdt(s) {
+  return s.length === 10 ? s.slice(0, 4) + ' ' + s.slice(4, 7) + ' ' + s.slice(7) : s;
+}
+
+// ---------- Bấm gọi & ghi vết ----------
+function noiTacVu() {
+  // Chạm số → máy quay số NGAY (thẻ <a href="tel:">), đồng thời báo về hệ thống.
+  // Không chặn sự kiện mặc định, để cuộc gọi không bị chậm vì chờ mạng.
+  Array.prototype.forEach.call(document.querySelectorAll('[data-goi]'), function (a) {
+    a.addEventListener('click', function () { ghiVet(a.getAttribute('data-goi'), ''); });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('[data-kq]'), function (b) {
+    b.addEventListener('click', function () { ghiVet(b.getAttribute('data-kq'), 'khong nghe'); });
+  });
+}
+
+function ghiVet(maLD, ketQua) {
+  capNhatTaiCho(maLD, ketQua);
+  nhay(ketQua ? 'Đã ghi: không nghe máy' : 'Đã ghi lại lượt gọi');
+  goiAPI({ token: TOKEN_API, hanh_dong: 'danh_dau_goi', ma: MA, ma_ld: maLD, ket_qua: ketQua })
+    .then(function (kq) {
+      if (!kq.ok) nhay('Chưa ghi được lên hệ thống: ' + (kq.loi || ''));
+    })
+    .catch(function () { nhay('Mất mạng — lượt gọi này chưa lên hệ thống'); });
+}
+
+/** Vẽ lại ngay trên máy để người đón thấy phản hồi tức thì, không phải chờ mạng. */
+function capNhatTaiCho(maLD, ketQua) {
+  duLieu.nhom.forEach(function (n) {
+    n.ds.forEach(function (x) {
+      if (x.ma_ld !== maLD) return;
+      if (!ketQua) x.so_lan_goi = (x.so_lan_goi || 0) + 1;
+      else if (!x.so_lan_goi) x.so_lan_goi = 1;
+      x.ket_qua_goi = ketQua;
+      x.lan_goi_cuoi = new Date().toTimeString().substring(0, 5);
+      x.nguoi_goi = duLieu.ten_nguoi || '';
+    });
+  });
+  ve();
+}
+
+// ---------- Bộ lọc ----------
+Array.prototype.forEach.call(document.querySelectorAll('[data-loc]'), function (b) {
+  b.addEventListener('click', function () {
+    boLoc = b.getAttribute('data-loc');
+    Array.prototype.forEach.call(document.querySelectorAll('[data-loc]'), function (o) {
+      o.classList.toggle('chon', o === b);
+    });
+    ve();
+  });
+});
+
+tai();
+</script>
+</body>
+</html>
