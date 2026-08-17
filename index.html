@@ -155,8 +155,8 @@
       <span>Nhà máy</span>
       <select id="ma_ct"><option value="">Vui lòng chọn nhà máy</option></select>
     </div>
-    <div class="hang"><span>Ngày phỏng vấn</span><input id="ngay_phong_van" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
-    <div class="hang"><span>Ngày đi làm</span><input id="ngay_di_lam" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
+    <div class="hang"><span id="nhan_ngay">Ngày đi làm</span>
+      <input id="ngay_lam_pv" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
     <div class="hang"><span>Tên</span><input id="ho_ten" placeholder="Xin vui lòng nhập tên" autocomplete="off"></div>
     <div class="hang"><span>Giới tính</span>
       <div class="gt">
@@ -165,7 +165,7 @@
       </div>
     </div>
     <div class="hang"><span>Ngày sinh</span><input id="ngay_sinh" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
-    <div class="hang"><span>Mobile</span><input id="sdt" inputmode="tel" maxlength="15" placeholder="Xin vui lòng nhập số điện thoại" autocomplete="off"></div>
+    <div class="hang"><span>Mobile</span><input id="sdt" inputmode="numeric" maxlength="10" placeholder="10 số, ví dụ 0912345678" autocomplete="off"></div>
     <div class="hang"><span>CCCD</span><input id="so_cccd" inputmode="numeric" maxlength="14" placeholder="Xin vui lòng nhập số CCCD" autocomplete="off"></div>
     <div class="hang"><span>Thường trú</span><input id="noi_thuong_tru" placeholder="Theo thẻ căn cước" autocomplete="off"></div>
     <div class="hang"><span>Ghi chú</span><input id="ghi_chu" placeholder="Xin vui lòng điền vào ghi chú" autocomplete="off"></div>
@@ -238,6 +238,21 @@ function thoat(s) {
  * Cả tính năng "gửi danh sách tên + SĐT cho người đón gọi" sống chết ở chỗ số gọi được.
  */
 function sdtHopLe(s) { return /^0[35789]\d{8}$/.test(String(s || '')); }
+
+/**
+ * Kiểm ngày dd/mm/yyyy có THẬT SỰ tồn tại không — chặn 31/02, 45/13…
+ * Trả về số ngày cách hôm nay (âm = quá khứ), hoặc null nếu ngày sai.
+ */
+function ngayCachHomNay(s) {
+  var m = String(s || '').match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!m) return null;
+  var ng = +m[1], th = +m[2], nam = +m[3];
+  var d = new Date(nam, th - 1, ng);
+  // Ngày không tồn tại thì Date tự nhảy sang tháng sau — bắt bằng cách đối chiếu lại
+  if (d.getDate() !== ng || d.getMonth() !== th - 1 || d.getFullYear() !== nam) return null;
+  var nay = new Date(); nay.setHours(0, 0, 0, 0);
+  return Math.round((d - nay) / 86400000);
+}
 function loiSdt(s) {
   s = String(s || '');
   if (!s) return 'Chưa nhập số điện thoại';
@@ -281,6 +296,10 @@ function chonMang(loai) {
   });
   $('hang_ct').classList.remove('an');
   $('ten_ct').textContent = loai === 'chinh_thuc' ? 'LAO ĐỘNG CHÍNH THỨC' : 'LAO ĐỘNG THỜI VỤ';
+  // MỘT ô ngày duy nhất, đổi nhãn theo mảng: chính thức thì đó là ngày PHỎNG VẤN,
+  // thời vụ thì là ngày ĐI LÀM. Người nhập không phải phân vân điền ô nào,
+  // và không còn cảnh bỏ trống cả hai ô như trước.
+  $('nhan_ngay').textContent = loai === 'chinh_thuc' ? 'Ngày phỏng vấn' : 'Ngày đi làm';
   maCT = ''; tenCT = '';
 }
 
@@ -575,7 +594,7 @@ function thuThuVien(nguon) {
 
 
 // tự chèn dấu / cho ô ngày
-['ngay_sinh', 'ngay_phong_van', 'ngay_di_lam'].forEach(function (id) {
+['ngay_sinh', 'ngay_lam_pv'].forEach(function (id) {
   $(id).addEventListener('input', function () {
     var s = this.value.replace(/\D/g, '').substring(0, 8);
     this.value = s.length > 4 ? s.substring(0, 2) + '/' + s.substring(2, 4) + '/' + s.substring(4)
@@ -594,18 +613,36 @@ $('form').addEventListener('submit', function (ev) {
   var loi = '', cccd = $('so_cccd').value.replace(/\D/g, ''),
       ten = $('ho_ten').value.trim().replace(/\s+/g, ' '),
       ct = $('ma_ct').value, nn = $('nguoi_nhap').value.trim(),
-      sdt = $('sdt').value.replace(/\D/g, '');
+      sdt = $('sdt').value.replace(/\D/g, ''),
+      ngay = $('ngay_lam_pv').value.trim(),
+      tenNgay = loaiCT === 'chinh_thuc' ? 'Ngày phỏng vấn' : 'Ngày đi làm',
+      cach = ngayCachHomNay(ngay);
   if (!ct) loi = 'Chưa chọn nhà máy';
   else if (ten.length < 3 || ten.indexOf(' ') < 0) loi = 'Nhập đầy đủ họ và tên';
   else if (cccd.length !== 12) loi = cccd.length ? 'Số CCCD đang có ' + cccd.length + ' chữ số, cần đúng 12' : 'Chưa nhập số CCCD';
   // Số điện thoại là thứ người đón dùng để GỌI — sai một chữ số là mất công cả dây chuyền.
   // Trước đây ô này không kiểm gì cả, đã lọt một số chỉ có 9 chữ số vào bảng.
   else if (!sdtHopLe(sdt)) loi = loiSdt(sdt);
+  // BẮT BUỘC có ngày: không có ngày thì người này không nằm trong báo cáo của ngày nào cả,
+  // người đón sẽ không bao giờ biết mà chờ. Đây từng là lỗ hổng thật — nửa số dòng bỏ trống.
+  else if (!ngay) loi = 'Chưa nhập ' + tenNgay.toLowerCase();
+  else if (cach === null) loi = tenNgay + ' không hợp lệ — nhập dạng dd/mm/yyyy';
   else if (nn.length < 2) loi = 'Nhập tên người tuyển dụng (để nhóm biết ai vừa đăng ký)';
   else if (!$('dong_y').checked) loi = 'Cần tích ô đồng ý mới đăng ký được';
   var o = $('loi_form');
   o.textContent = loi; o.classList.toggle('hien', !!loi);
   if (loi) { o.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
+
+  // Ngày cách quá xa gần như luôn là GÕ NHẦM THÁNG. Đã gặp thật: nhập 17/08 mà
+  // ghi ngày đi làm 18/09 — người đó biến mất khỏi báo cáo suốt một tháng.
+  // Hỏi lại một câu, không chặn cứng, vì vẫn có ca hẹn xa thật.
+  if (cach > 45 || cach < -1) {
+    if (!confirm(tenNgay + ' là ' + ngay + ', tức ' +
+        (cach > 0 ? 'còn ' + cach + ' ngày nữa' : 'đã qua ' + (-cach) + ' ngày') +
+        '.\n\nCó đúng không? Kiểm lại tháng xem có gõ nhầm.')) {
+      $('ngay_lam_pv').focus(); return;
+    }
+  }
 
   var nut = $('nut_dk');
   nut.disabled = true; nut.textContent = 'Đang gửi…';
@@ -614,8 +651,10 @@ $('form').addEventListener('submit', function (ev) {
     token: TOKEN_API, hanh_dong: 'dang_ky', ma_ct: ct,
     so_cccd: cccd, ho_ten: ten,
     ngay_sinh: $('ngay_sinh').value.trim(),
-    ngay_phong_van: $('ngay_phong_van').value.trim(),
-    ngay_di_lam: $('ngay_di_lam').value.trim(),
+    // MỘT ô trên màn hình, nhưng vẫn ghi vào ĐÚNG HAI CỘT riêng trong bảng —
+    // vì báo cáo đếm thời vụ theo ngày đi làm, chính thức theo ngày phỏng vấn.
+    ngay_phong_van: loaiCT === 'chinh_thuc' ? ngay : '',
+    ngay_di_lam: loaiCT === 'chinh_thuc' ? '' : ngay,
     gioi_tinh: gt ? gt.value : '',
     sdt: sdt,
     noi_thuong_tru: $('noi_thuong_tru').value.trim(),
