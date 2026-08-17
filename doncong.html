@@ -236,6 +236,20 @@ function thoat(s) {
   });
 }
 
+/**
+ * Số điện thoại di động Việt Nam: ĐÚNG 10 chữ số, bắt đầu bằng 0, số thứ hai là 3/5/7/8/9.
+ * VÌ SAO PHẢI CHẶT: cả tính năng "gửi danh sách tên + SĐT cho người đón gọi" sống chết
+ * ở chỗ số gọi được. Trong dữ liệu thật đã lọt một số CHỈ CÓ 9 CHỮ SỐ — người đón bấm gọi
+ * là máy báo sai số, coi như mất công cả dây chuyền. Thà chặn lúc nhập còn hơn.
+ */
+function sdtHopLe(s) { return /^0[35789]\d{8}$/.test(String(s || '')); }
+function loiSdt(s) {
+  s = String(s || '');
+  if (!s) return 'Chưa nhập số điện thoại.';
+  if (s.length !== 10) return 'Số điện thoại phải đúng 10 chữ số. Đang nhập ' + s.length + ' số.';
+  return 'Số điện thoại phải bắt đầu bằng 03, 05, 07, 08 hoặc 09.';
+}
+
 // ---------- Hàng đợi khi mất sóng ----------
 function docHangDoi() { try { return JSON.parse(localStorage.getItem(KHOA_CHO) || '[]'); } catch (e) { return []; } }
 function ghiHangDoi(ds) {
@@ -633,7 +647,7 @@ $('nut_moi_gui').addEventListener('click', function () {
   var ct = $('moi_ct').value;
   if (!ct) { alert('Chọn công ty đã.'); $('moi_ct').focus(); return; }
   var sdt = $('moi_sdt').value.replace(/\D/g, '');
-  if (sdt.length < 9) { alert('Số điện thoại chưa đúng.'); $('moi_sdt').focus(); return; }
+  if (!sdtHopLe(sdt)) { alert(loiSdt(sdt)); $('moi_sdt').focus(); return; }
   var nguoiDK = $('moi_nguoi_dk').value.trim().replace(/\s+/g, ' ');
   if (nguoiDK.length < 2) { alert('Ghi tên người đăng ký.'); $('moi_nguoi_dk').focus(); return; }
 
