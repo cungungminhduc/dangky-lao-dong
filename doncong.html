@@ -139,10 +139,13 @@
     Thẻ cấp từ 01/7/2024 mã QR ở <b>mặt sau</b>.<br>
     Thẻ bị <b>loá bóng</b> thì nghiêng thẻ đi một chút, hoặc bật đèn.</div>
   <div id="vungquet"></div>
+  <div id="tt_quet" style="margin:10px 14px 0;font-size:13.5px;color:#9aa3ad;line-height:1.5"></div>
   <div class="loi-o" id="loi_quet"></div>
   <div id="anhtam" style="display:none"></div>
   <input type="file" id="file_anh" accept="image/*" class="an">
 
+  <button type="button" class="nut" id="nut_chup_quet">QUÉT NGAY</button>
+  <div id="chan_doan" style="margin:14px;font-size:11.5px;color:#b9c0c8;line-height:1.6"></div>
   <button type="button" class="nut phu" id="nut_den">Bật đèn</button>
   <button type="button" class="nut phu" id="nut_bao_cao">Gửi bảng tổng hợp vào nhóm ngay</button>
   <button type="button" class="nut phu" id="nut_doi_ten">Đổi người đón</button>
@@ -343,13 +346,61 @@ function batCamera() {
       }
     },
     function (text) { xuLyQuet(text); }, function () {}
-  ).catch(function (e) {
+  ).then(function () {
+    ttQuet('Camera đang mở. Đưa ô mã QR vào giữa khung rồi bấm <b>QUÉT NGAY</b>.');
+    veChanDoan();
+    // Sau 10 giây tự đọc chưa ra thì NÓI RA, đừng để người đón đứng chờ vô hạn ở cổng.
+    hetGioTuQuet = setTimeout(function () {
+      ttQuet('Tự đọc <b>chưa ra</b> sau 10 giây. Đưa mã lại gần hơn rồi bấm <b>QUÉT NGAY</b>, ' +
+             'hoặc bật đèn nếu thẻ bị loá.');
+    }, 10000);
+  }).catch(function (e) {
     mayQuet = null;
     var o = $('loi_quet');
     o.textContent = 'Không mở được camera: ' + e + '. Dùng nút máy ảnh hoặc nút bút chì ở trên.';
     o.classList.add('hien');
+    veChanDoan();
   });
 }
+
+var hetGioTuQuet = null;
+function ttQuet(html) { var o = $('tt_quet'); if (o) o.innerHTML = html; }
+
+/** Dòng chẩn đoán — vẫn không quét được thì chụp màn hình gửi lại, biết ngay hỏng ở đâu. */
+function veChanDoan() {
+  var d = [];
+  var v = document.querySelector('#vungquet video');
+  d.push('Camera: ' + (v && v.videoWidth ? v.videoWidth + '×' + v.videoHeight : 'chưa mở được'));
+  d.push('Bộ giải của máy: ' + (typeof BarcodeDetector !== 'undefined' ? 'có' : 'KHÔNG có'));
+  if (/Zalo/i.test(navigator.userAgent || '')) {
+    d.push('⚠ Đang mở trong Zalo — nên bấm "Mở bằng trình duyệt" (Chrome) cho camera chạy đủ');
+  }
+  var o = $('chan_doan'); if (o) o.innerHTML = d.join(' · ');
+}
+
+// ---------- QUÉT NGAY: chụp khung hình đang thấy rồi giải ở độ phân giải GỐC ----------
+// Quét tự động chỉ soi phần trong khung ngắm ở độ phân giải thư viện tự chọn.
+// Bấm nút thì lấy TRỌN khung hình gốc của camera rồi thử đủ 6 cách.
+$('nut_chup_quet').addEventListener('click', function () {
+  var v = document.querySelector('#vungquet video');
+  if (!v || !v.videoWidth) { ttQuet('Camera chưa sẵn sàng, chờ một giây rồi bấm lại.'); return; }
+  if (hetGioTuQuet) { clearTimeout(hetGioTuQuet); hetGioTuQuet = null; }
+
+  var nut = this;
+  nut.disabled = true; nut.textContent = 'Đang quét…';
+
+  var c = document.createElement('canvas');
+  c.width = v.videoWidth; c.height = v.videoHeight;
+  c.getContext('2d').drawImage(v, 0, 0);
+
+  giaiMaTuNguon(c, function (b) { ttQuet(b); }).then(function (t) {
+    nut.disabled = false; nut.textContent = 'QUÉT NGAY';
+    if (t) { ttQuet('<b>Đọc được rồi.</b>'); xuLyQuet(t); return; }
+    ttQuet('<b>Đã thử đủ 6 cách, vẫn không đọc được khung hình này.</b><br>' +
+           'Đưa mã <b>sát hơn nữa</b> cho đầy khung · <b>bật đèn</b> nếu thẻ loá · ' +
+           'hoặc bấm nút bút chì nhập tay 12 số.');
+  });
+});
 
 // Đèn pin — ở cổng nhà máy lúc sáng sớm hoặc chiều muộn thì đây là thứ cứu nhiều ca nhất.
 var denDangBat = false;
@@ -362,6 +413,7 @@ function bamDen() {
     .catch(function () { denDangBat = false; nut.textContent = 'Máy không có đèn'; nut.disabled = true; });
 }
 function dungCamera(xong) {
+  if (hetGioTuQuet) { clearTimeout(hetGioTuQuet); hetGioTuQuet = null; }
   if (!mayQuet) { if (xong) xong(); return; }
   var m = mayQuet; mayQuet = null;
   m.stop().then(function () { try { m.clear(); } catch (e) {} if (xong) xong(); })
@@ -390,12 +442,31 @@ $('file_anh').addEventListener('change', function () {
  * Đọc mã trong ẢNH bằng BỐN cách, thử lần lượt tới khi được.
  * Bản cũ chỉ thử một lượt rồi bỏ cuộc. Toàn bộ chạy trong máy, ảnh KHÔNG rời khỏi máy.
  */
-function docAnhNhieuLuot(file) {
-  return thuMayGiaiSan(file)
-    .then(function (t) { return t || thuThuVien(file); })
-    .then(function (t) { return t || bienDoiRoiThu(file, 2, false); })
-    .then(function (t) { return t || bienDoiRoiThu(file, 3, true); });
+/**
+ * Thử giải mã một ảnh (tệp ảnh HOẶC khung hình vừa chụp từ camera) bằng SÁU cách,
+ * dừng ngay khi được. `baoBuoc` báo đang chạy tới bước nào — đứng ở cổng nhà máy
+ * mà màn hình im lìm thì không biết máy còn sống hay đã treo.
+ */
+function giaiMaTuNguon(nguon, baoBuoc) {
+  var buoc = [
+    ['bộ giải của máy', function () { return thuMayGiaiSan(nguon); }],
+    ['bộ giải dự phòng', function () { return thuThuVien(nguon); }],
+    ['cắt lấy giữa khung', function () { return bienDoiRoiThu(nguon, 2, false, 0.55); }],
+    ['phóng to', function () { return bienDoiRoiThu(nguon, 2, false, 1); }],
+    ['tăng tương phản', function () { return bienDoiRoiThu(nguon, 3, true, 1); }],
+    ['cắt giữa + tăng tương phản', function () { return bienDoiRoiThu(nguon, 3, true, 0.55); }]
+  ];
+  var i = 0;
+  function tiep() {
+    if (i >= buoc.length) return Promise.resolve('');
+    var b = buoc[i++];
+    baoBuoc('Đang thử: ' + b[0] + ' (' + i + '/' + buoc.length + ')');
+    return b[1]().then(function (t) { return t || tiep(); });
+  }
+  return tiep();
 }
+
+function docAnhNhieuLuot(nguon) { return giaiMaTuNguon(nguon, function () {}); }
 
 function thuMayGiaiSan(nguon) {
   if (typeof BarcodeDetector === 'undefined') return Promise.resolve('');
@@ -418,16 +489,22 @@ function thuThuVien(nguon) {
 }
 
 /** Phóng to (và tuỳ chọn tăng tương phản) rồi thử lại — cứu ảnh chụp xa hoặc mờ. */
-function bienDoiRoiThu(file, heSo, tangTuongPhan) {
+function bienDoiRoiThu(file, heSo, tangTuongPhan, phanGiua) {
   return createImageBitmap(file).then(function (anh) {
-    var r = Math.min(heSo, Math.floor(4000 / Math.max(anh.width, anh.height)) || 1);
+    // Cắt lấy phần giữa: mã QR gần như luôn nằm giữa vì người dùng ngắm vào đó.
+    // Bỏ rìa rồi phóng to phần còn lại = mỗi ô vuông của mã được nhiều điểm ảnh hơn.
+    var tl = phanGiua || 1;
+    var sw = Math.floor(anh.width * tl), sh = Math.floor(anh.height * tl);
+    var sx = Math.floor((anh.width - sw) / 2), sy = Math.floor((anh.height - sh) / 2);
+
+    var r = Math.min(heSo, Math.floor(4000 / Math.max(sw, sh)) || 1);
     if (r < 1) r = 1;
     var c = document.createElement('canvas');
-    c.width = anh.width * r; c.height = anh.height * r;
+    c.width = sw * r; c.height = sh * r;
     var ctx = c.getContext('2d');
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(anh, 0, 0, c.width, c.height);
+    ctx.drawImage(anh, sx, sy, sw, sh, 0, 0, c.width, c.height);
     try { anh.close(); } catch (e) {}
 
     if (tangTuongPhan) {
