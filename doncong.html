@@ -95,26 +95,12 @@
     <div class="hang"><span>Người đi đón</span><input id="nguoi_don" placeholder="Ví dụ: Dương" autocomplete="off"></div>
   </div>
 
-  <div class="khoi">
-    <h2 style="margin:0;padding:12px 16px 4px;font-size:12.5px;font-weight:600;color:var(--mo);text-transform:uppercase;letter-spacing:.5px">Nơi đến làm việc</h2>
-    <label class="chon"><input type="radio" name="dd" value="dk" checked>
-      <span><b>Tại chính công ty đã đăng ký</b><small>Mỗi người đến đúng công ty ghi trong phiếu của họ</small></span></label>
-    <label class="chon"><input type="radio" name="dd" value="khac">
-      <span><b>Công ty khác</b><small>Được hẹn chuyển sang nơi khác — người đón tự điền</small></span></label>
-    <div class="hang an" id="hang_diem"><span>Nơi đến</span>
-      <input id="diem_khac" list="ds_nm" placeholder="Chọn hoặc gõ tên công ty" autocomplete="off">
-      <datalist id="ds_nm"></datalist></div>
-  </div>
-
-  <div class="khoi">
-    <div class="hang"><span>Nhà máy</span>
-      <select id="ma_ct"><option value="">Chọn nhà máy</option></select></div>
-  </div>
   <div style="padding:10px 16px;font-size:13px;color:var(--mo)">
-    Nhà máy chỉ dùng khi gặp người <b>chưa từng đăng ký</b> — lúc đó hệ thống đăng ký và
-    đánh dấu đón luôn trong một lượt. Người đã đăng ký thì hệ thống tự biết nhà máy của họ.
+    Mỗi lượt: <b>chụp thẻ căn cước</b> → xem thông tin → chọn nơi đến → bấm <b>ĐÃ ĐÓN</b>.
+    Chụp xong chưa ghi gì cả, còn xem lại được.
   </div>
-  <button type="button" class="nut" id="nut_bat_dau">Bắt đầu quét</button>
+  <button type="button" class="nut" id="nut_bat_dau">Bắt đầu</button>
+  <datalist id="ds_nm"></datalist>
 </div>
 
 <!-- ===== BƯỚC 2: QUÉT ===== -->
@@ -135,25 +121,72 @@
 
   <div id="o_kq"></div>
 
-  <div class="nhac">Đưa <b>RIÊNG Ô MÃ QR</b> lại gần cho đầy khung — đừng lấy cả tấm thẻ.
-    Thẻ cấp từ 01/7/2024 mã QR ở <b>mặt sau</b>.<br>
-    Thẻ bị <b>loá bóng</b> thì nghiêng thẻ đi một chút, hoặc bật đèn.</div>
-  <div id="vungquet"></div>
+  <div class="nhac">Bấm nút dưới rồi <b>chụp mặt thẻ có mã QR</b>.
+    Chụp được <b>riêng ô mã QR</b> cho gần đầy khung thì chắc ăn nhất.<br>
+    Thẻ cấp từ 01/7/2024 mã QR ở <b>mặt sau</b>.</div>
   <div id="tt_quet" style="margin:10px 14px 0;font-size:13.5px;color:#9aa3ad;line-height:1.5"></div>
   <div class="loi-o" id="loi_quet"></div>
   <div id="anhtam" style="display:none"></div>
   <input type="file" id="file_anh" accept="image/*" class="an">
 
-  <button type="button" class="nut" id="nut_chup_quet">QUÉT NGAY</button>
-  <div id="chan_doan" style="margin:14px;font-size:11.5px;color:#b9c0c8;line-height:1.6"></div>
-  <button type="button" class="nut phu" id="nut_den">Bật đèn</button>
+  <button type="button" class="nut" id="nut_chup_the">CHỤP THẺ CĂN CƯỚC</button>
   <button type="button" class="nut phu" id="nut_bao_cao">Gửi bảng tổng hợp vào nhóm ngay</button>
   <button type="button" class="nut phu" id="nut_doi_ten">Đổi người đón</button>
 
   <footer>
-    Đây là <b>nhật ký điều phối</b>, không phải bằng chứng pháp lý.<br>
-    Chỉ chấp nhận thẻ của người đã đăng ký trước.
+    Đây là <b>nhật ký điều phối</b>, không phải bằng chứng pháp lý.
   </footer>
+</div>
+
+<!-- ===== BƯỚC 3A: ĐÃ ĐĂNG KÝ — xác nhận nơi đến rồi mới ghi ===== -->
+<div id="man_xn" class="an">
+  <div style="text-align:center;padding:18px 16px 4px">
+    <b style="font-size:17px" id="xn_ten">—</b>
+    <div style="font-size:13px;color:var(--mo);margin-top:3px" id="xn_phu">—</div>
+  </div>
+  <div class="khoi"><div id="xn_ttin"></div></div>
+
+  <div class="khoi">
+    <h2 style="margin:0;padding:12px 16px 4px;font-size:12.5px;font-weight:600;color:var(--mo);text-transform:uppercase;letter-spacing:.5px">Nơi đến làm việc</h2>
+    <label class="chon"><input type="radio" name="xnd" value="dk" checked>
+      <span><b id="xn_nhan_dk">Đúng nơi đã đăng ký</b><small>Lấy sẵn theo phiếu của người này</small></span></label>
+    <label class="chon"><input type="radio" name="xnd" value="khac">
+      <span><b>Nơi khác</b><small>Được chuyển sang công ty khác — điền tên bên dưới</small></span></label>
+    <div class="hang an" id="xn_hang_khac"><span>Nơi đến</span>
+      <input id="xn_diem_khac" list="ds_nm" placeholder="Chọn hoặc gõ tên công ty" autocomplete="off"></div>
+  </div>
+
+  <button type="button" class="nut" id="nut_da_don">ĐÃ ĐÓN</button>
+  <button type="button" class="nut phu" id="nut_xn_huy">Bỏ qua người này</button>
+</div>
+
+<!-- ===== BƯỚC 3B: NGƯỜI MỚI — đăng ký tại chỗ rồi đón luôn ===== -->
+<div id="man_moi" class="an">
+  <div style="text-align:center;padding:18px 16px 4px">
+    <b style="font-size:17px" id="moi_ten">—</b>
+    <div style="font-size:13px;color:var(--canh);margin-top:3px">Chưa có trong danh sách — đăng ký tại chỗ</div>
+  </div>
+  <div class="khoi"><div id="moi_ttin"></div></div>
+
+  <div class="khoi">
+    <h2 style="margin:0;padding:12px 16px 4px;font-size:12.5px;font-weight:600;color:var(--mo);text-transform:uppercase;letter-spacing:.5px">Mảng</h2>
+    <label class="chon"><input type="radio" name="ml" value="thoi_vu" checked>
+      <span><b>Thời vụ</b><small>Đi làm ngay theo ngày</small></span></label>
+    <label class="chon"><input type="radio" name="ml" value="chinh_thuc">
+      <span><b>Chính thức</b><small>Vào phỏng vấn để ký hợp đồng</small></span></label>
+  </div>
+
+  <div class="khoi">
+    <div class="hang"><span>Công ty</span>
+      <select id="moi_ct"><option value="">Chọn công ty</option></select></div>
+    <div class="hang"><span>Số điện thoại</span>
+      <input id="moi_sdt" inputmode="numeric" maxlength="11" placeholder="Số của lao động"></div>
+    <div class="hang"><span>Người đăng ký</span>
+      <input id="moi_nguoi_dk" placeholder="Ai giới thiệu người này" autocomplete="off"></div>
+  </div>
+
+  <button type="button" class="nut" id="nut_moi_gui">ĐĂNG KÝ VÀ ĐÃ ĐÓN</button>
+  <button type="button" class="nut phu" id="nut_moi_huy">Bỏ qua người này</button>
 </div>
 
 <!-- ===== DANH SÁCH ĐÃ QUÉT ===== -->
@@ -176,14 +209,17 @@ var TOKEN_API = 'd905baa65db6457e830d8f40';
 // ======================
 
 var $ = function (id) { return document.getElementById(id); };
-var mayQuet = null, nguoiDon = '', demDaDon = 0, dangBan = false, vuaQuet = {};
+var nguoiDon = '', demDaDon = 0, dangBan = false;
 var KHOA_CHO = 'hang_doi_don';
-var diemDon = '', maCT = '', tenCT = '', dsCT = [];
-// Dữ liệu đọc được từ mã QR của lượt quét hiện tại — dùng khi phải đăng ký luôn cho người chưa có phiếu
+var dsCT = [];
+// Dữ liệu đọc được từ mã QR của thẻ vừa chụp
 var qrHienTai = null;
+// Người đang xử lý dở: { cccd, q (dữ liệu thẻ), tra (kết quả tra cứu) }.
+// Giữ lại giữa hai màn hình vì bây giờ TRA rồi mới GHI, không ghi ngay như bản cũ.
+var nguoiHienTai = null;
 
 function hien(el) {
-  ['man_ten', 'man_quet', 'man_ds'].forEach(function (i) { $(i).classList.add('an'); });
+  ['man_ten', 'man_quet', 'man_xn', 'man_moi', 'man_ds'].forEach(function (i) { $(i).classList.add('an'); });
   if (el) $(el).classList.remove('an');
   $('nut_ds').classList.toggle('an', el !== 'man_quet');
   window.scrollTo(0, 0);
@@ -260,32 +296,35 @@ function tachQR(chuoi) {
 goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_cong_ty' })
   .then(function (kq) {
     dsCT = (kq && kq.danh_sach) || [];
-    var sel = $('ma_ct');
-    [['thoi_vu', 'TH\u1edcI V\u1ee4'], ['chinh_thuc', 'CH\u00cdNH TH\u1ee8C']].forEach(function (n) {
-      var nhom = dsCT.filter(function (c) { return c.loai === n[0]; });
-      if (!nhom.length) return;
-      var g = document.createElement('optgroup');
-      g.label = n[1];
-      nhom.forEach(function (c) {
-        var o = document.createElement('option');
-        o.value = c.ma_ct; o.textContent = c.ten_cong_ty;
-        g.appendChild(o);
-      });
-      sel.appendChild(g);
-    });
     var dl = $('ds_nm');
     dsCT.forEach(function (c) {
       var o = document.createElement('option'); o.value = c.ten_cong_ty; dl.appendChild(o);
     });
-    try { var m = localStorage.getItem('don_ma_ct'); if (m) sel.value = m; } catch (e) {}
+    veChonCongTy();
   })
   .catch(function () {});
 
-// ---------- Chọn điểm đón ----------
-[].forEach.call(document.querySelectorAll('input[name=dd]'), function (r) {
+/** Ô chọn công ty ở màn hình NGƯỜI MỚI chỉ hiện công ty ĐÚNG MẢNG đang chọn. */
+function veChonCongTy() {
+  var loai = (document.querySelector('input[name=ml]:checked') || {}).value || 'thoi_vu';
+  var sel = $('moi_ct');
+  sel.innerHTML = '<option value="">Chọn công ty</option>';
+  dsCT.filter(function (c) { return c.loai === loai; }).forEach(function (c) {
+    var o = document.createElement('option');
+    o.value = c.ma_ct; o.textContent = c.ten_cong_ty;
+    sel.appendChild(o);
+  });
+}
+[].forEach.call(document.querySelectorAll('input[name=ml]'), function (r) {
+  r.addEventListener('change', veChonCongTy);
+});
+
+// ---------- Nơi đến ở màn hình XÁC NHẬN ----------
+[].forEach.call(document.querySelectorAll('input[name=xnd]'), function (r) {
   r.addEventListener('change', function () {
-    $('hang_diem').classList.toggle('an', r.value !== 'khac' || !r.checked);
-    if (r.value === 'khac' && r.checked) $('diem_khac').focus();
+    var khac = (document.querySelector('input[name=xnd]:checked') || {}).value === 'khac';
+    $('xn_hang_khac').classList.toggle('an', !khac);
+    if (khac) $('xn_diem_khac').focus();
   });
 });
 
@@ -295,153 +334,54 @@ try { var l = localStorage.getItem('nguoi_don'); if (l) $('nguoi_don').value = l
 $('nut_bat_dau').addEventListener('click', function () {
   var t = $('nguoi_don').value.trim().replace(/\s+/g, ' ');
   if (t.length < 2) { alert('Nhập tên người đi đón trước đã.'); $('nguoi_don').focus(); return; }
-  var kieu = (document.querySelector('input[name=dd]:checked') || {}).value;
-  diemDon = kieu === 'khac' ? $('diem_khac').value.trim().replace(/\s+/g, ' ') : '';
-  if (kieu === 'khac' && diemDon.length < 2) {
-    alert('B\u1ea1n ch\u1ecdn "C\u00f4ng ty kh\u00e1c" th\u00ec ph\u1ea3i ghi t\u00ean n\u01a1i \u0111\u1ebfn.');
-    $('diem_khac').focus(); return;
-  }
-  maCT = $('ma_ct').value;
-  tenCT = maCT ? ($('ma_ct').options[$('ma_ct').selectedIndex] || {}).text || '' : '';
   nguoiDon = t;
-  try {
-    localStorage.setItem('nguoi_don', t);
-    if (maCT) localStorage.setItem('don_ma_ct', maCT);
-  } catch (e) {}
+  try { localStorage.setItem('nguoi_don', t); } catch (e) {}
   $('ht_ten').textContent = t;
-  $('ht_diem').innerHTML = (diemDon ? '\u0110\u1ebfn <b>' + thoat(diemDon) + '</b> \u00b7 ' : 'T\u1ea1i c\u00f4ng ty \u0111\u0103ng k\u00fd \u00b7 ') +
-                           '\u0110\u00e3 \u0111\u00f3n: <b id="ht_dem">' + demDaDon + '</b>';
+  $('ht_diem').innerHTML = 'Đã đón: <b id="ht_dem">' + demDaDon + '</b>';
   hien('man_quet');
   ghiHangDoi(docHangDoi());
   dayHangDoi();
-  batCamera();
 });
-$('nut_doi_ten').addEventListener('click', function () { dungCamera(function () { hien('man_ten'); }); });
-$('nut_den').addEventListener('click', function () { bamDen(); });
+$('nut_doi_ten').addEventListener('click', function () { hien('man_ten'); });
 
-// ---------- Camera ----------
-function batCamera() {
-  if (typeof Html5Qrcode === 'undefined') {
-    veKetQua('xau', 'Thiếu bộ giải mã', 'Không tải được thư viện quét QR', 'Dùng nút bút chì ở trên để nhập số CCCD.');
-    return;
-  }
-  if (mayQuet) return;
-  // Bộ giải mã có sẵn trong máy khoẻ hơn hẳn bộ chạy bằng JavaScript khi mã in đè hoa văn.
-  mayQuet = new Html5Qrcode('vungquet', {
-    experimentalFeatures: { useBarCodeDetectorIfSupported: true },
-    verbose: false
-  });
-  mayQuet.start(
-    { facingMode: { ideal: 'environment' } },
-    {
-      fps: 15,
-      qrbox: function (w, h) { var c = Math.floor(Math.min(w, h) * 0.8); return { width: c, height: c }; },
-      aspectRatio: 1.0,
-      // Mặc định camera chỉ mở ~640x480 — mã QR căn cước dày đặc nên mỗi ô chưa tới
-      // 3 điểm ảnh, không giải nổi. Xin 1920x1080 và bắt lấy nét liên tục.
-      videoConstraints: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: 1920 }, height: { ideal: 1080 },
-        advanced: [{ focusMode: 'continuous' }]
-      }
-    },
-    function (text) { xuLyQuet(text); }, function () {}
-  ).then(function () {
-    ttQuet('Camera đang mở. Đưa ô mã QR vào giữa khung rồi bấm <b>QUÉT NGAY</b>.');
-    veChanDoan();
-    // Sau 10 giây tự đọc chưa ra thì NÓI RA, đừng để người đón đứng chờ vô hạn ở cổng.
-    hetGioTuQuet = setTimeout(function () {
-      ttQuet('Tự đọc <b>chưa ra</b> sau 10 giây. Đưa mã lại gần hơn rồi bấm <b>QUÉT NGAY</b>, ' +
-             'hoặc bật đèn nếu thẻ bị loá.');
-    }, 10000);
-  }).catch(function (e) {
-    mayQuet = null;
-    var o = $('loi_quet');
-    o.textContent = 'Không mở được camera: ' + e + '. Dùng nút máy ảnh hoặc nút bút chì ở trên.';
-    o.classList.add('hien');
-    veChanDoan();
-  });
-}
-
-var hetGioTuQuet = null;
 function ttQuet(html) { var o = $('tt_quet'); if (o) o.innerHTML = html; }
 
-/** Dòng chẩn đoán — vẫn không quét được thì chụp màn hình gửi lại, biết ngay hỏng ở đâu. */
-function veChanDoan() {
-  var d = [];
-  var v = document.querySelector('#vungquet video');
-  d.push('Camera: ' + (v && v.videoWidth ? v.videoWidth + '×' + v.videoHeight : 'chưa mở được'));
-  d.push('Bộ giải của máy: ' + (typeof BarcodeDetector !== 'undefined' ? 'có' : 'KHÔNG có'));
-  if (/Zalo/i.test(navigator.userAgent || '')) {
-    d.push('⚠ Đang mở trong Zalo — nên bấm "Mở bằng trình duyệt" (Chrome) cho camera chạy đủ');
-  }
-  var o = $('chan_doan'); if (o) o.innerHTML = d.join(' · ');
-}
-
-// ---------- QUÉT NGAY: chụp khung hình đang thấy rồi giải ở độ phân giải GỐC ----------
-// Quét tự động chỉ soi phần trong khung ngắm ở độ phân giải thư viện tự chọn.
-// Bấm nút thì lấy TRỌN khung hình gốc của camera rồi thử đủ 6 cách.
-$('nut_chup_quet').addEventListener('click', function () {
-  var v = document.querySelector('#vungquet video');
-  if (!v || !v.videoWidth) { ttQuet('Camera chưa sẵn sàng, chờ một giây rồi bấm lại.'); return; }
-  if (hetGioTuQuet) { clearTimeout(hetGioTuQuet); hetGioTuQuet = null; }
-
-  var nut = this;
-  nut.disabled = true; nut.textContent = 'Đang quét…';
-
-  var c = document.createElement('canvas');
-  c.width = v.videoWidth; c.height = v.videoHeight;
-  c.getContext('2d').drawImage(v, 0, 0);
-
-  giaiMaTuNguon(c, function (b) { ttQuet(b); }).then(function (t) {
-    nut.disabled = false; nut.textContent = 'QUÉT NGAY';
-    if (t) { ttQuet('<b>Đọc được rồi.</b>'); xuLyQuet(t); return; }
-    ttQuet('<b>Đã thử đủ 6 cách, vẫn không đọc được khung hình này.</b><br>' +
-           'Đưa mã <b>sát hơn nữa</b> cho đầy khung · <b>bật đèn</b> nếu thẻ loá · ' +
-           'hoặc bấm nút bút chì nhập tay 12 số.');
-  });
-});
-
-// Đèn pin — ở cổng nhà máy lúc sáng sớm hoặc chiều muộn thì đây là thứ cứu nhiều ca nhất.
-var denDangBat = false;
-function bamDen() {
-  if (!mayQuet) return;
-  denDangBat = !denDangBat;
-  var nut = $('nut_den');
-  mayQuet.applyVideoConstraints({ advanced: [{ torch: denDangBat }] })
-    .then(function () { nut.textContent = denDangBat ? 'Tắt đèn' : 'Bật đèn'; })
-    .catch(function () { denDangBat = false; nut.textContent = 'Máy không có đèn'; nut.disabled = true; });
-}
-function dungCamera(xong) {
-  if (hetGioTuQuet) { clearTimeout(hetGioTuQuet); hetGioTuQuet = null; }
-  if (!mayQuet) { if (xong) xong(); return; }
-  var m = mayQuet; mayQuet = null;
-  m.stop().then(function () { try { m.clear(); } catch (e) {} if (xong) xong(); })
-          .catch(function () { if (xong) xong(); });
-}
-
-// ---------- Lấy từ ảnh thẻ ----------
-$('nut_anh').addEventListener('click', function () {
+// ---------- Chụp thẻ ----------
+// ĐÃ BỎ hẳn quét trực tiếp bằng camera: chụp ảnh vừa chắc hơn vừa cho người đón
+// xem lại thông tin trước khi ghi, thay vì vừa đưa thẻ vào khung là đã ghi mất rồi.
+$('nut_chup_the').addEventListener('click', function () {
   if (typeof Html5Qrcode === 'undefined' && typeof BarcodeDetector === 'undefined') {
-    alert('Chưa tải được bộ quét mã.'); return;
+    alert('Chưa tải được bộ đọc mã. Dùng nút bút chì ở trên để nhập số căn cước.'); return;
   }
   $('file_anh').click();
 });
+$('nut_anh').addEventListener('click', function () { $('nut_chup_the').click(); });
+
 $('file_anh').addEventListener('change', function () {
   var f = this.files && this.files[0]; this.value = '';
   if (!f) return;
-  docAnhNhieuLuot(f).then(function (t) {
+  $('nut_chup_the').disabled = true;
+  ttQuet('<b>Đang đọc ảnh…</b>');
+  giaiMaTuNguon(f, function (b) { ttQuet('<b>Đang đọc ảnh…</b><br>' + b); }).then(function (t) {
     f = null;
-    if (t) { xuLyQuet(t); return; }
-    veKetQua('xau', 'Không đọc được ảnh', 'Đã dò khắp ảnh vẫn không thấy mã QR',
-      'Chụp lại CHỈ RIÊNG ô mã QR cho gần đầy khung, đừng chụp cả tấm thẻ. Hoặc bấm nút bút chì nhập tay.');
+    $('nut_chup_the').disabled = false;
+    if (!t) {
+      ttQuet('');
+      veKetQua('xau', 'Không đọc được ảnh', 'Đã dò khắp ảnh vẫn không thấy mã QR',
+        'Chụp lại CHỈ RIÊNG ô mã QR cho gần đầy khung. Hoặc bấm nút bút chì nhập tay 12 số.');
+      return;
+    }
+    ttQuet('');
+    var q = tachQR(t); q.qr_tho = t;
+    if (q.so_cccd.length !== 12) {
+      veKetQua('xau', 'Không phải thẻ căn cước', 'Mã đọc được không hợp lệ', 'Chụp lại mặt thẻ có mã QR.');
+      return;
+    }
+    traCuu(q.so_cccd, q);
   });
 });
 
-/**
- * Đọc mã trong ẢNH bằng BỐN cách, thử lần lượt tới khi được.
- * Bản cũ chỉ thử một lượt rồi bỏ cuộc. Toàn bộ chạy trong máy, ảnh KHÔNG rời khỏi máy.
- */
+
 /**
  * ĐỌC MÃ QR TRONG ẢNH THẺ — bản dò theo Ô.
  *
@@ -557,74 +497,165 @@ function thuCanvas_(c) {
 }
 
 // ---------- Nhập tay ----------
+// ---------- Nhập tay 12 số khi thẻ không đọc được ----------
 $('nut_tay').addEventListener('click', function () {
   var s = prompt('Nhập 12 số CCCD của người được đón:');
   if (s === null) return;
   var cccd = String(s).replace(/\D/g, '');
   if (cccd.length !== 12) { alert('Số CCCD phải đủ 12 chữ số. Bạn nhập ' + cccd.length + ' số.'); return; }
-  qrHienTai = null;
-  dangBan = true;
-  guiDon(cccd);
+  traCuu(cccd, null);
 });
 
-// ---------- Xử lý một lượt quét ----------
-function xuLyQuet(chuoi) {
+/**
+ * BƯỚC GIỮA — tra trước, ghi sau.
+ * Gọi `tra_cuu_don` (CHỈ ĐỌC, không ghi gì) rồi rẽ hai nhánh:
+ *   - đã đăng ký  → màn hình xác nhận, nơi đến LẤY SẴN theo phiếu của họ
+ *   - người mới   → màn hình đăng ký tại chỗ
+ * Bản cũ chụp xong là ghi luôn, sai một cái là phải vào Sheet sửa tay.
+ */
+function traCuu(cccd, q) {
   if (dangBan) return;
-  qrHienTai = tachQR(chuoi);
-  qrHienTai.qr_tho = chuoi;
-  var cccd = qrHienTai.so_cccd;
-  if (cccd.length !== 12) {
-    veKetQua('xau', 'Không phải thẻ căn cước', 'Mã vừa quét không hợp lệ', 'Đưa đúng mặt thẻ có mã QR vào khung.');
-    return;
-  }
-  // Camera bắn ~10 khung/giây, chặn đọc lại cùng một thẻ trong 20 giây
-  var giay = Date.now();
-  if (vuaQuet[cccd] && giay - vuaQuet[cccd] < 20000) return;
-  vuaQuet[cccd] = giay;
   dangBan = true;
-  guiDon(cccd);
+  qrHienTai = q;
+  nguoiHienTai = { cccd: cccd, q: q, tra: null };
+  veKetQua('canh', 'Đang tra…', '***' + cccd.slice(-4), 'Chờ một giây.');
+
+  goiAPI({ token: TOKEN_API, hanh_dong: 'tra_cuu_don', so_cccd: cccd })
+    .then(function (kq) {
+      dangBan = false;
+      if (!kq.ok) { veKetQua('xau', 'Không tra được', kq.loi || 'Lỗi không rõ', 'Thử lại hoặc nhập tay.'); return; }
+      nguoiHienTai.tra = kq;
+      $('o_kq').innerHTML = '';
+      if (kq.ma === 'CHUA_DANG_KY') veManMoi(kq); else veManXacNhan(kq);
+    })
+    .catch(function () {
+      dangBan = false;
+      veKetQua('canh', 'Mất mạng', '***' + cccd.slice(-4),
+        'Không tra được vì đang mất sóng. Có sóng rồi chụp lại thẻ này.');
+    });
 }
 
-function guiDon(cccd, tuDangKy) {
-  var body = { token: TOKEN_API, hanh_dong: 'da_don', so_cccd: cccd,
-               nguoi_don: nguoiDon, diem_don: diemDon };
-  if (tuDangKy) {
-    body.tu_dang_ky = true;
-    body.ma_ct = maCT;
-    if (qrHienTai && qrHienTai.so_cccd === cccd) {
-      body.ho_ten = qrHienTai.ho_ten; body.ngay_sinh = qrHienTai.ngay_sinh;
-      body.gioi_tinh = qrHienTai.gioi_tinh; body.noi_thuong_tru = qrHienTai.noi_thuong_tru;
-      body.ngay_cap = qrHienTai.ngay_cap; body.cmnd_cu = qrHienTai.cmnd_cu;
-      body.qr_tho = qrHienTai.qr_tho; body.nguon_nhap = 'qr';
-    } else {
-      body.ho_ten = tuDangKy.ho_ten; body.nguon_nhap = 'tay';
-    }
+function dong_(nhan, gt) {
+  return '<div class="hang"><span>' + thoat(nhan) + '</span>' +
+         '<b style="flex:1;text-align:right;font-weight:600">' + thoat(gt || '—') + '</b></div>';
+}
+
+// ---------- 3A. Đã đăng ký ----------
+function veManXacNhan(kq) {
+  $('xn_ten').textContent = kq.ho_ten || '(chưa có tên)';
+  $('xn_phu').textContent = kq.ma_ld + ' · ' + kq.cccd_che +
+    (kq.ma === 'DA_DON_TRUOC_DO' ? ' · ĐÃ ĐÓN TRƯỚC ĐÓ' : '');
+
+  var t = dong_('Công ty đã đăng ký', kq.ten_cong_ty) +
+          dong_('Mảng', kq.loai === 'chinh_thuc' ? 'Chính thức' : 'Thời vụ') +
+          dong_('Ngày đăng ký', kq.ngay_dk) +
+          dong_(kq.loai === 'chinh_thuc' ? 'Ngày phỏng vấn' : 'Ngày đi làm',
+                (kq.loai === 'chinh_thuc' ? kq.ngay_phong_van : kq.ngay_di_lam) || 'chưa ghi') +
+          dong_('Số điện thoại', kq.sdt) +
+          dong_('Người đăng ký', kq.nguoi_nhap);
+  if (kq.ma === 'DA_DON_TRUOC_DO') {
+    t += dong_('Đã đón lúc', (kq.gio_don || '?') + ' · ' + (kq.nguoi_don_cu || '?'));
   }
+  $('xn_ttin').innerHTML = t;
+
+  // Nơi đến LẤY SẴN theo phiếu — người đón chỉ phải đụng vào khi có thay đổi.
+  $('xn_nhan_dk').textContent = 'Đúng nơi đã đăng ký: ' + (kq.diem_don_dk || kq.ten_cong_ty || '—');
+  var r = document.querySelector('input[name=xnd][value=dk]');
+  if (r) r.checked = true;
+  $('xn_hang_khac').classList.add('an');
+  $('xn_diem_khac').value = '';
+
+  $('nut_da_don').textContent = kq.ma === 'DA_DON_TRUOC_DO' ? 'GHI ĐÈ LƯỢT ĐÓN NÀY' : 'ĐÃ ĐÓN';
+  hien('man_xn');
+}
+
+$('nut_xn_huy').addEventListener('click', function () { nguoiHienTai = null; hien('man_quet'); });
+$('nut_moi_huy').addEventListener('click', function () { nguoiHienTai = null; hien('man_quet'); });
+
+$('nut_da_don').addEventListener('click', function () {
+  if (!nguoiHienTai) { hien('man_quet'); return; }
+  var khac = (document.querySelector('input[name=xnd]:checked') || {}).value === 'khac';
+  var diem = '';
+  if (khac) {
+    diem = $('xn_diem_khac').value.trim().replace(/\s+/g, ' ');
+    if (diem.length < 2) { alert('Chọn "Nơi khác" thì phải ghi tên nơi đến.'); $('xn_diem_khac').focus(); return; }
+  }
+  guiDon({ so_cccd: nguoiHienTai.cccd, diem_don: diem });
+});
+
+// ---------- 3B. Người mới ----------
+function veManMoi(kq) {
+  var q = nguoiHienTai.q;
+  $('moi_ten').textContent = (q && q.ho_ten) || '(chưa có tên — nhập tay)';
+  $('moi_ttin').innerHTML =
+    dong_('Số căn cước', kq.cccd_che) +
+    dong_('Ngày sinh', q && q.ngay_sinh) +
+    dong_('Giới tính', q && q.gioi_tinh) +
+    dong_('Thường trú', q && q.noi_thuong_tru);
+  $('moi_sdt').value = '';
+  $('moi_nguoi_dk').value = nguoiDon;      // hay gặp nhất là chính người đón giới thiệu
+  veChonCongTy();
+  hien('man_moi');
+}
+
+$('nut_moi_gui').addEventListener('click', function () {
+  if (!nguoiHienTai) { hien('man_quet'); return; }
+  var q = nguoiHienTai.q;
+  var ten = (q && q.ho_ten) || '';
+  if (ten.length < 3) {
+    ten = prompt('Thẻ không đọc được họ tên. Nhập HỌ VÀ TÊN:');
+    if (ten === null) return;
+    ten = String(ten).trim().replace(/\s+/g, ' ');
+    if (ten.length < 3) { alert('Họ tên chưa hợp lệ.'); return; }
+  }
+  var ct = $('moi_ct').value;
+  if (!ct) { alert('Chọn công ty đã.'); $('moi_ct').focus(); return; }
+  var sdt = $('moi_sdt').value.replace(/\D/g, '');
+  if (sdt.length < 9) { alert('Số điện thoại chưa đúng.'); $('moi_sdt').focus(); return; }
+  var nguoiDK = $('moi_nguoi_dk').value.trim().replace(/\s+/g, ' ');
+  if (nguoiDK.length < 2) { alert('Ghi tên người đăng ký.'); $('moi_nguoi_dk').focus(); return; }
+
+  var body = {
+    so_cccd: nguoiHienTai.cccd, tu_dang_ky: true, ma_ct: ct,
+    ho_ten: ten, sdt: sdt, nguoi_dang_ky: nguoiDK, diem_don: ''
+  };
+  if (q) {
+    body.ngay_sinh = q.ngay_sinh; body.gioi_tinh = q.gioi_tinh;
+    body.noi_thuong_tru = q.noi_thuong_tru; body.ngay_cap = q.ngay_cap;
+    body.cmnd_cu = q.cmnd_cu; body.qr_tho = q.qr_tho; body.nguon_nhap = 'qr_anh';
+  } else {
+    body.nguon_nhap = 'tay';
+  }
+  guiDon(body);
+});
+
+// ---------- Gửi lên hệ thống ----------
+function guiDon(them) {
+  var body = { token: TOKEN_API, hanh_dong: 'da_don', nguoi_don: nguoiDon };
+  for (var k in them) if (them.hasOwnProperty(k)) body[k] = them[k];
+  var cccd = body.so_cccd;
+
+  hien('man_quet');
+  nguoiHienTai = null;
+  veKetQua('canh', 'Đang gửi…', '***' + cccd.slice(-4), 'Chờ một giây.');
+
   goiAPI(body).then(function (kq) {
-    dangBan = false;
     if (kq.ma === 'DANG_KY_VA_DON') {
       demDaDon++; $('ht_dem').textContent = demDaDon;
-      veKetQua('tot', '\u0110\u0102NG K\u00dd V\u00c0 \u0110\u00c3 \u0110\u00d3N \u2014 ' + (kq.ten_cong_ty || ''), kq.ho_ten,
-        'M\u00e3 ' + kq.ma_ld + ' \u00b7 \u0110\u00f3n t\u1ea1i ' + (kq.diem_don_thuc || '?') + ' \u00b7 ' + (kq.gio || ''));
-      themLichSu('tot', kq.ho_ten, '\u0111\u0103ng k\u00fd + \u0111\u00f3n \u00b7 ' + (kq.ten_cong_ty || ''));
-      guiTinNhan();
-      return;
-    }
-    if (kq.ma === 'KHONG_CO_TRONG_DS') {
-      xuLyChuaDangKy(cccd);
-      return;
-    }
-    if (kq.ma === 'DA_DON') {
+      veKetQua('tot', 'ĐĂNG KÝ VÀ ĐÃ ĐÓN — ' + (kq.ten_cong_ty || ''), kq.ho_ten,
+        'Mã ' + kq.ma_ld + ' · Đón tại ' + (kq.diem_don_thuc || '?') + ' · ' + (kq.gio || ''));
+      themLichSu('tot', kq.ho_ten, 'đăng ký + đón · ' + (kq.ten_cong_ty || ''));
+    } else if (kq.ma === 'DA_DON') {
       demDaDon++; $('ht_dem').textContent = demDaDon;
-      veKetQua('tot', kq.ten_cong_ty || '\u0110\u00e3 \u0111\u00f3n', kq.ho_ten,
-        'M\u00e3 ' + kq.ma_ld + ' \u00b7 \u0110K ' + (kq.ngay_dk || '?') +
-        '\n\u0110\u1ebfn t\u1ea1i: ' + (kq.diem_don_thuc || '?') +
-        (kq.doi_diem ? ' (KH\u00c1C n\u01a1i \u0111\u0103ng k\u00fd: ' + kq.diem_don_dk + ')' : ''));
-      themLichSu('tot', kq.ho_ten, (kq.ten_cong_ty || '') + ' \u00b7 ' + (kq.diem_don_thuc || ''));
+      veKetQua('tot', kq.ten_cong_ty || 'Đã đón', kq.ho_ten,
+        'Mã ' + kq.ma_ld + ' · ĐK ' + (kq.ngay_dk || '?') +
+        '\nĐến tại: ' + (kq.diem_don_thuc || '?') +
+        (kq.doi_diem ? ' (KHÁC nơi đăng ký: ' + kq.diem_don_dk + ')' : ''));
+      themLichSu('tot', kq.ho_ten, (kq.ten_cong_ty || '') + ' · ' + (kq.diem_don_thuc || ''));
     } else if (kq.ma === 'DA_DON_TRUOC_DO') {
-      veKetQua('canh', '\u0110\u00e3 \u0111\u00f3n tr\u01b0\u1edbc \u0111\u00f3 \u2014 ' + (kq.ten_cong_ty || ''), kq.ho_ten,
-        '\u0110\u00e3 \u0111\u00e1nh d\u1ea5u l\u00fac ' + (kq.gio_don || '?') + ' t\u1ea1i ' + (kq.diem_don_thuc || '?') +
-        ', b\u1edfi ' + (kq.nguoi_don_cu || '?'));
+      veKetQua('canh', 'Đã đón trước đó — ' + (kq.ten_cong_ty || ''), kq.ho_ten,
+        'Đã đánh dấu lúc ' + (kq.gio_don || '?') + ' tại ' + (kq.diem_don_thuc || '?') +
+        ', bởi ' + (kq.nguoi_don_cu || '?'));
       themLichSu('canh', kq.ho_ten, kq.ten_cong_ty || kq.cccd_che);
     } else {
       veKetQua('xau', 'Lỗi', 'Chưa ghi nhận được', kq.loi || 'Không rõ lỗi');
@@ -632,42 +663,13 @@ function guiDon(cccd, tuDangKy) {
     guiTinNhan();
   }).catch(function () {
     // Mất sóng — không báo hỏng, xếp hàng đợi và tự gửi lại khi có mạng
-    dangBan = false;
     xepHangDoi(body);
     veKetQua('canh', 'Đã ghi tạm — chờ sóng', 'CCCD …' + cccd.slice(-4),
-      'Điện thoại đang mất mạng. Lượt quét này đã lưu và sẽ tự gửi khi có sóng. Cứ quét tiếp bình thường.');
+      'Điện thoại đang mất mạng. Lượt này đã lưu và sẽ tự gửi khi có sóng. Cứ làm tiếp bình thường.');
     themLichSu('canh', 'Chờ gửi', '…' + cccd.slice(-4));
   });
 }
 
-/**
- * Quét trúng người CHƯA TỪNG ĐĂNG KÝ.
- * Hỏi người đón một câu; đồng ý thì đăng ký và đánh dấu đón trong cùng một lượt.
- */
-function xuLyChuaDangKy(cccd) {
-  if (!maCT) {
-    veKetQua('xau', 'Ch\u01b0a \u0111\u0103ng k\u00fd', 'Kh\u00f4ng c\u00f3 trong danh s\u00e1ch',
-      'Mu\u1ed1n \u0111\u0103ng k\u00fd lu\u00f4n t\u1ea1i ch\u1ed7 th\u00ec b\u1ea5m "\u0110\u1ed5i ng\u01b0\u1eddi \u0111\u00f3n" \u1edf d\u01b0\u1edbi v\u00e0 ch\u1ecdn nh\u00e0 m\u00e1y tr\u01b0\u1edbc.');
-    themLichSu('xau', 'Ch\u01b0a \u0111\u0103ng k\u00fd', '***' + cccd.slice(-4));
-    return;
-  }
-  var ten = (qrHienTai && qrHienTai.so_cccd === cccd) ? qrHienTai.ho_ten : '';
-  if (!ten) {
-    ten = prompt('Ng\u01b0\u1eddi n\u00e0y ch\u01b0a \u0111\u0103ng k\u00fd.\n\nNh\u1eadp H\u1eccVA T\u00caN \u0111\u1ec3 \u0111\u0103ng k\u00fd v\u00e0 \u0111\u00e1nh d\u1ea5u \u0111\u00f3n lu\u00f4n:'.replace('H\u1eccVA', 'H\u1ecc V\u00c0'));
-    if (ten === null) { veKetQua('canh', '\u0110\u00e3 hu\u1ef7', 'Kh\u00f4ng ghi g\u00ec', 'Ng\u01b0\u1eddi n\u00e0y v\u1eabn ch\u01b0a c\u00f3 trong danh s\u00e1ch.'); return; }
-    ten = String(ten).trim().replace(/\s+/g, ' ');
-    if (ten.length < 3) { alert('H\u1ecd t\u00ean ch\u01b0a h\u1ee3p l\u1ec7.'); return; }
-  } else {
-    var hoi = 'NG\u01af\u1edcI N\u00c0Y CH\u01afA T\u1eeaNG \u0110\u0102NG K\u00dd\n\n' + ten + '\n***' + cccd.slice(-4) +
-              '\n\n\u0110\u0103ng k\u00fd cho "' + tenCT + '" v\u00e0 \u0111\u00e1nh d\u1ea5u \u0110\u00c3 \u0110\u00d3N lu\u00f4n?';
-    if (!confirm(hoi)) {
-      veKetQua('canh', '\u0110\u00e3 hu\u1ef7', ten, 'Kh\u00f4ng ghi g\u00ec. Ng\u01b0\u1eddi n\u00e0y v\u1eabn ch\u01b0a c\u00f3 trong danh s\u00e1ch.');
-      return;
-    }
-  }
-  dangBan = true;
-  guiDon(cccd, { ho_ten: ten });
-}
 
 function veKetQua(loai, nhan, ten, phu) {
   $('o_kq').innerHTML = '<div class="kq ' + loai + '">' +
