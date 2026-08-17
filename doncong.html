@@ -496,6 +496,28 @@ function thuCanvas_(c) {
   });
 }
 
+/** Bộ giải mã cài sẵn trong máy — nhanh và khoẻ hơn bộ chạy bằng JavaScript. */
+function thuMayGiaiSan(nguon) {
+  if (typeof BarcodeDetector === 'undefined') return Promise.resolve('');
+  return createImageBitmap(nguon)
+    .then(function (anh) {
+      var may = new BarcodeDetector({ formats: ['qr_code'] });
+      return may.detect(anh).then(function (ds) {
+        try { anh.close(); } catch (e) {}
+        return (ds && ds.length && ds[0].rawValue) ? ds[0].rawValue : '';
+      });
+    })
+    .catch(function () { return ''; });
+}
+
+function thuThuVien(nguon) {
+  if (typeof Html5Qrcode === 'undefined') return Promise.resolve('');
+  var doc = new Html5Qrcode('anhtam');
+  return doc.scanFile(nguon, false)
+    .then(function (t) { try { doc.clear(); } catch (e) {} return t || ''; })
+    .catch(function () { try { doc.clear(); } catch (e) {} return ''; });
+}
+
 // ---------- Nhập tay ----------
 // ---------- Nhập tay 12 số khi thẻ không đọc được ----------
 $('nut_tay').addEventListener('click', function () {
