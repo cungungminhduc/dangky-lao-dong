@@ -301,6 +301,9 @@ $('nut_doi_mang').addEventListener('click', function () { hien('man_mang'); });
 
 try { var l = localStorage.getItem('nguoi_nhap'); if (l) $('nguoi_nhap').value = l; } catch (e) {}
 
+// Mở trang là hỏi ngay: có phiếu nào lần trước gửi hỏng còn treo không?
+setTimeout(xemPhieuCho, 400);
+
 // ---------- Tách chuỗi QR trên thẻ căn cước ----------
 // 7 trường ngăn bằng |: sốCCCD | sốCMND9 | họ tên | ddMMyyyy sinh | giới tính | nơi thường trú | ddMMyyyy cấp
 // Lấy ĐỦ cả 7 trường; số CMND cũ và ngày cấp không hiện trên biểu mẫu nhưng vẫn lưu vào Sheet.
@@ -506,12 +509,47 @@ function guiDangKy(d, ten, nut) {
     if (kq.ok && (kq.ma === 'THANH_CONG' || kq.ma === 'DANG_KY_LAI' || kq.ma === 'TRUNG_KHAC_CT')) {
       luuDanhSach({ ma_ld: kq.ma_ld, ho_ten: ten, cccd_che: kq.cccd_che, ten_cong_ty: kq.ten_cong_ty || tenCT });
     }
+    // Máy chủ đã trả lời rành mạch (nhận hoặc từ chối) → phiếu không còn treo
+    boPhieu();
     veTinhTrang(kq);
     goiAPI({ token: TOKEN_API, hanh_dong: 'gui_tin' }).catch(function () {});
   }).catch(function () {
-    veTinhTrang({ ok: false, loi: 'Không gửi được. Kiểm tra mạng rồi bấm Xác nhận nộp lại.' });
+    // Mất mạng giữa chừng: CẤT PHIẾU LẠI trong máy để không mất công gõ,
+    // lần mở trang sau sẽ hiện nút gửi lại. Máy chủ vẫn soát trùng như thường
+    // nên gửi lại không bao giờ sinh dòng kép.
+    catPhieu(d);
+    veTinhTrang({ ok: false, ma: 'MAT_MANG',
+      loi: 'Không gửi được — phiếu đã được CẤT LẠI TRONG MÁY. Có mạng thì mở lại trang này, hệ thống sẽ nhắc gửi lại.' });
     nut.disabled = false; nut.textContent = 'Xác nhận nộp';
   });
+}
+
+// ---------- Lưới an toàn: phiếu chưa gửi được ----------
+function catPhieu(d) {
+  try { localStorage.setItem('phieu_cho', JSON.stringify(d)); } catch (e) {}
+}
+function boPhieu() {
+  try { localStorage.removeItem('phieu_cho'); } catch (e) {}
+}
+function xemPhieuCho() {
+  var d = null;
+  try { d = JSON.parse(localStorage.getItem('phieu_cho') || 'null'); } catch (e) {}
+  if (!d || !d.so_cccd) return;
+  var o = $('canh_bao');
+  o.innerHTML = '<b>Còn 1 phiếu chưa gửi được:</b> ' + thoat(d.ho_ten) + ' (***' + d.so_cccd.slice(-4) + ')' +
+    '<br><button type="button" id="nut_guilai" style="margin-top:8px;padding:8px 14px;border:0;border-radius:7px;' +
+    'background:var(--xanh);color:#fff;font-family:inherit;font-size:14px;font-weight:600;cursor:pointer">Gửi lại ngay</button>' +
+    '<button type="button" id="nut_bophieu" style="margin-top:8px;margin-left:8px;padding:8px 14px;border:0;' +
+    'border-radius:7px;background:#e3e7eb;font-family:inherit;font-size:14px;cursor:pointer">Bỏ phiếu này</button>';
+  o.className = 'canhbao hien vang';
+  hien('form');
+  $('nut_guilai').addEventListener('click', function () {
+    var nut = $('nut_dk');
+    nut.disabled = true; nut.textContent = 'Đang gửi lại…';
+    o.className = 'canhbao';
+    guiDangKy(d, d.ho_ten, nut);
+  });
+  $('nut_bophieu').addEventListener('click', function () { boPhieu(); o.className = 'canhbao'; });
 }
 
 function veTinhTrang(kq) {
