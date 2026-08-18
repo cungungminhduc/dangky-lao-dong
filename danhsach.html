@@ -73,6 +73,25 @@
        text-align:center;padding:11px;font-size:13.5px;transform:translateY(100%);
        transition:transform .18s}
   .lam.hien{transform:none}
+
+  /* màn hình mở khoá */
+  .khoa{padding:34px 14px}
+  .o-khoa{background:var(--the);border:1px solid var(--vien);border-radius:14px;
+          padding:26px 20px;text-align:center;color:var(--mo)}
+  .o-khoa svg{color:var(--mo);margin-bottom:10px}
+  .o-khoa b{display:block;font-size:16.5px;color:var(--chu);margin-bottom:5px}
+  .o-khoa small{display:block;font-size:13.5px;line-height:1.5;margin-bottom:18px}
+  .o-khoa input{width:100%;max-width:230px;padding:14px;border:1px solid var(--vien);
+        border-radius:10px;font:600 25px/1 inherit;text-align:center;letter-spacing:9px;
+        color:var(--chu);background:var(--nen)}
+  .o-khoa input:focus{outline:0;border-color:var(--xanh);background:var(--the)}
+  .o-khoa button{width:100%;max-width:230px;margin-top:14px;padding:15px;border:0;border-radius:10px;
+        background:var(--xanh);color:#fff;font:600 16.5px inherit;cursor:pointer}
+  .o-khoa button:active{background:var(--xanh-dam)}
+  .o-khoa button[disabled]{opacity:.5}
+  .o-khoa p{font-size:12.5px;line-height:1.6;margin:16px 0 0}
+  .loi-pin{margin-top:12px;font-size:14px;color:var(--loi);font-weight:600;display:block}
+  .loi-pin.an{display:none}
 </style>
 </head>
 <body>
@@ -80,6 +99,21 @@
   <div class="dinh">
     <b id="tieu">Đang tải…</b>
     <small id="phu"></small>
+  </div>
+
+  <div class="khoa an" id="man_khoa">
+    <div class="o-khoa">
+      <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor"
+           stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+      <b>Danh sách có số điện thoại của lao động</b>
+      <small id="khoa_ai">Nhập mã mở khoá của bạn để xem.</small>
+      <input id="o_pin" inputmode="numeric" maxlength="6" placeholder="• • • • • •" autocomplete="off">
+      <div class="loi-pin an" id="loi_pin"></div>
+      <button type="button" id="nut_mo">MỞ KHOÁ</button>
+      <p>Mã do người phụ trách gửi riêng, khác với đường link.<br>
+         Mở một lần là máy nhớ tới hết ngày.</p>
+    </div>
   </div>
 
   <div class="loc an" id="loc">
@@ -128,11 +162,68 @@ function nhay(tin) {
   nhay.h = setTimeout(function () { o.classList.remove('hien'); }, 2200);
 }
 
+// ---------- Vé mở khoá: gõ mã một lần, nhớ tới hết ngày ----------
+// Vé do máy chủ cấp, tính theo NGÀY. Sang ngày mới là vé chết, phải gõ lại —
+// nên link cũ chuyền tay cho người khác cũng vô dụng nếu không có mã.
+var KHOA_VE = 'don_ve_' + MA;
+function docVe() {
+  try {
+    var v = JSON.parse(localStorage.getItem(KHOA_VE) || 'null');
+    return (v && v.ngay === homNay()) ? v.ve : '';
+  } catch (e) { return ''; }
+}
+function luuVe(ve, ngay) {
+  try { localStorage.setItem(KHOA_VE, JSON.stringify({ ve: ve, ngay: ngay })); } catch (e) {}
+}
+function homNay() {
+  var d = new Date();
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+
+function hienManKhoa(tenNguoi) {
+  $('tieu').textContent = 'Cần mở khoá';
+  $('phu').textContent = tenNguoi ? 'Link của ' + tenNguoi : '';
+  if (tenNguoi) $('khoa_ai').textContent = 'Chào ' + tenNguoi + '. Nhập mã mở khoá để xem danh sách.';
+  $('man_khoa').classList.remove('an');
+  $('than').innerHTML = '';
+  $('loc').classList.add('an');
+  $('chan').classList.add('an');
+  setTimeout(function () { $('o_pin').focus(); }, 250);
+}
+
+function moKhoa() {
+  var pin = $('o_pin').value.replace(/\D/g, '');
+  var o = $('loi_pin'), nut = $('nut_mo');
+  if (pin.length < 4) { o.textContent = 'Nhập đủ mã mở khoá.'; o.classList.remove('an'); return; }
+  nut.disabled = true; nut.textContent = 'Đang kiểm…';
+  o.classList.add('an');
+  goiAPI({ token: TOKEN_API, hanh_dong: 'mo_khoa', ma: MA, pin: pin })
+    .then(function (kq) {
+      nut.disabled = false; nut.textContent = 'MỞ KHOÁ';
+      if (!kq.ok) {
+        $('o_pin').value = '';
+        o.textContent = kq.loi || 'Không mở được.'; o.classList.remove('an');
+        return;
+      }
+      luuVe(kq.ve, kq.ngay_ve);
+      $('man_khoa').classList.add('an');
+      tai();
+    })
+    .catch(function () {
+      nut.disabled = false; nut.textContent = 'MỞ KHOÁ';
+      o.textContent = 'Mất mạng. Thử lại.'; o.classList.remove('an');
+    });
+}
+$('nut_mo').addEventListener('click', moKhoa);
+$('o_pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') moKhoa(); });
+
 // ---------- Tải danh sách ----------
 function tai() {
   if (!MA) { loi('Link thiếu mã truy cập. Xin người phụ trách gửi lại link.'); return; }
-  goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_don', ma: MA, ngay: NGAY })
+  goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_don', ma: MA, ngay: NGAY, ve: docVe() })
     .then(function (kq) {
+      // Chưa mở khoá, hoặc vé đã hết hạn sang ngày mới → hỏi mã, không báo là lỗi
+      if (!kq.ok && kq.ma === 'CAN_MO_KHOA') { hienManKhoa(kq.ten_nguoi); return; }
       if (!kq.ok) { loi(kq.loi || 'Không xem được danh sách.'); return; }
       duLieu = kq;
       ve();
@@ -230,7 +321,7 @@ function noiTacVu() {
 function ghiVet(maLD, ketQua) {
   capNhatTaiCho(maLD, ketQua);
   nhay(ketQua ? 'Đã ghi: không nghe máy' : 'Đã ghi lại lượt gọi');
-  goiAPI({ token: TOKEN_API, hanh_dong: 'danh_dau_goi', ma: MA, ma_ld: maLD, ket_qua: ketQua })
+  goiAPI({ token: TOKEN_API, hanh_dong: 'danh_dau_goi', ma: MA, ve: docVe(), ma_ld: maLD, ket_qua: ketQua })
     .then(function (kq) {
       if (!kq.ok) nhay('Chưa ghi được lên hệ thống: ' + (kq.loi || ''));
     })
