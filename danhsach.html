@@ -4,51 +4,527 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="robots" content="noindex,nofollow">
-<title>Danh sách đón — đã chuyển sang trang đón</title>
+<title>Danh sách gọi &amp; tình trạng vào làm</title>
 <!--
-  Trang này ĐÃ NGHỈ HƯU từ bản 3.0.
+  TRANG DANH SÁCH — bản 3.3
 
-  Trước đây nó mở bằng link riêng dạng ?ma=<mã bí mật>. Mã đó nằm ngay trên thanh địa
-  chỉ: chụp màn hình, chuyển tiếp Zalo, hay chỉ cần đưa điện thoại cho người bên cạnh
-  xem là mất — mà mình không hề biết đã mất. Nay danh sách nằm trong trang đón, sau
-  một lần đăng nhập bằng số căn cước + mật khẩu được cấp.
+  Đây là trang DUY NHẤT trong hệ thống có mật khẩu, và có lý do rõ ràng:
 
-  Vẫn giữ file này thay vì xoá, vì link cũ đã gửi vào nhóm Zalo từ nhiều tháng trước.
-  Xoá đi thì người đón bấm vào chỉ thấy 404 rồi đứng ngơ ngác ở cổng nhà máy; để lại
-  thì họ đọc được một câu và bấm sang đúng chỗ.
+    - Trang đăng ký và trang đón chỉ làm việc với MỘT người đang đứng trước mặt, muốn
+      biết gì cũng phải có thẻ căn cước trong tay. Chúng phải mở được ngay ở cổng nhà máy,
+      bắt gõ mật khẩu chỉ tổ vướng việc.
+    - Trang này thì khác hẳn: nó bày TÊN + SỐ ĐIỆN THOẠI của hàng chục người cùng lúc,
+      không cần thẻ của ai cả. Lọt ra ngoài là mất cả danh sách.
+
+  Bản trước bảo vệ bằng mã trong link (?ma=...). Mã đó nằm ngay trên thanh địa chỉ: chụp
+  màn hình, chuyển tiếp Zalo, hay đưa điện thoại cho người bên cạnh xem là mất — mà mình
+  không hề biết đã mất. Nay là MỘT link chung, vào phải đăng nhập bằng số căn cước.
+
+  Ba việc gộp trong một trang, vì ngoài thực địa chúng là một mạch liền:
+      xem ai chưa đến  →  gọi cho họ  →  báo cuối cùng họ có vào làm hay không
 -->
 <style>
-  :root{--nen:#f4f6f8;--chu:#1f2933;--mo:#7b8794;--xanh:#1f9d55}
-  *{box-sizing:border-box}
+  :root{
+    --nen:#f4f6f8; --the:#ffffff; --vien:#e6e9ed; --chu:#1f2933; --mo:#7b8794;
+    --xanh:#1f9d55; --xanh-nhat:#f2f9f4; --do:#c0392b; --do-nhat:#fdecea;
+    --vang-nhat:#fff8e6; --xam-nut:#eef1f4;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;background:var(--nen);color:var(--chu);
-    font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
-  .boc{max-width:520px;margin:0 auto;padding:40px 18px}
-  .the{background:#fff;border:1px solid #e6e9ed;border-radius:14px;padding:22px 18px}
-  h1{font-size:19px;margin:0 0 10px}
-  p{margin:0 0 12px;font-size:14.5px}
-  .mo{color:var(--mo);font-size:13.5px}
-  a.nut{display:block;text-align:center;background:var(--xanh);color:#fff;text-decoration:none;
-    padding:14px;border-radius:11px;font-weight:700;margin-top:16px}
-  ul{margin:0 0 12px;padding-left:20px;font-size:14.5px}
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .boc{max-width:560px;margin:0 auto;padding-bottom:26px}
+  .an{display:none !important}
+
+  .dinh{text-align:center;padding:20px 16px 8px}
+  .dinh b{font-size:17.5px}
+  .dinh .phu{font-size:13px;color:var(--mo);margin-top:3px}
+
+  .nut{display:block;width:calc(100% - 28px);margin:14px;padding:15px;border:0;border-radius:12px;
+    background:var(--xanh);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
+  .nut.phu{background:var(--xam-nut);color:#3c4753}
+  .nut:disabled{opacity:.55}
+
+  .o{padding:0 16px}
+  .o input{width:100%;padding:13px 12px;font-size:16px;border:1px solid #d9dde2;
+    border-radius:10px;margin-top:6px;background:#fff}
+  .nhan{font-size:13.5px;color:var(--mo);margin-top:14px}
+  .loi{margin:12px 16px 0;padding:10px 12px;border-radius:9px;background:var(--do-nhat);
+    color:#8a1c13;font-size:13.5px}
+  .mach{padding:4px 16px 18px;font-size:12.5px;color:var(--mo);line-height:1.55}
+
+  .doi-ngay{display:flex;gap:8px;padding:0 14px}
+  .doi-ngay button{flex:1;padding:11px;border:1px solid var(--vien);background:#fff;border-radius:10px;
+    font-size:14.5px;font-weight:600;color:#3c4753;cursor:pointer}
+  .doi-ngay button.dang{background:var(--chu);border-color:var(--chu);color:#fff}
+  .tim{display:block;width:calc(100% - 28px);margin:10px 14px 0;padding:11px 12px;font-size:15px;
+    border:1px solid #d9dde2;border-radius:10px;background:#fff}
+
+  .ten-ct{margin:16px 14px 0;font-weight:700;font-size:14px;color:#3c4753}
+  .hang{margin:8px 14px 0;padding:11px 12px;border-radius:12px;background:var(--the);
+    border:1px solid var(--vien)}
+  .hang.xong{background:var(--xanh-nhat);border-color:#bfe0c9}
+  .hang.hong{background:var(--do-nhat);border-color:#f0b3ae}
+  .d1{display:flex;align-items:center;gap:9px}
+  .d1 b{flex:1;min-width:0;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .goi{flex:none;display:inline-block;padding:8px 14px;border-radius:9px;background:var(--xanh);
+    color:#fff;text-decoration:none;font-size:13.5px;font-weight:700}
+  .d2{font-size:12.5px;color:var(--mo);margin-top:4px}
+  .the-nn{display:inline-block;font-size:11.5px;padding:2px 7px;border-radius:20px;margin-top:4px}
+  .the-nn.v{background:#e6f4ea;color:#166534}
+  .the-nn.x{background:var(--do-nhat);color:#8a1c13}
+  .d3{display:flex;gap:6px;margin-top:9px}
+  .d3 button{flex:1;padding:9px 6px;border:1px solid #d9dde2;background:#fff;border-radius:9px;
+    font-size:13.5px;font-weight:600;color:#3c4753;cursor:pointer}
+  .d3 button.chon-v{background:var(--xanh);border-color:var(--xanh);color:#fff}
+  .d3 button.chon-x{background:var(--do);border-color:var(--do);color:#fff}
+  .nghe{display:flex;gap:6px;margin-top:7px;padding-top:7px;border-top:1px dashed var(--vien)}
+  .nghe span{flex:1;font-size:12.5px;color:var(--mo);align-self:center}
+  .nghe button{padding:6px 10px;border:1px solid #d9dde2;background:#fff;border-radius:8px;
+    font-size:12.5px;cursor:pointer}
+  .trong{margin:16px 14px;padding:16px;background:var(--the);border:1px solid var(--vien);
+    border-radius:12px;color:var(--mo);font-size:14px;text-align:center}
+
+  .thanh{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--vien);padding:10px 14px;
+    box-shadow:0 -3px 12px rgba(0,0,0,.06)}
+  .thanh .doi{display:flex;gap:8px;margin-top:8px}
+  .thanh .doi button{flex:1;padding:12px;border:0;border-radius:10px;font-size:14.5px;
+    font-weight:700;cursor:pointer}
+  .thanh .doi .g1{background:var(--xam-nut);color:#3c4753}
+  .thanh .doi .g2{background:var(--xanh);color:#fff}
+
+  .lop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;z-index:60}
+  .lop .hop{background:#fff;width:100%;border-radius:16px 16px 0 0;padding:16px 14px 22px;
+    max-width:560px;margin:0 auto}
+  .lop .hop b{display:block;text-align:center;margin-bottom:10px}
+  .lop .hop button{display:block;width:100%;padding:13px;margin-top:8px;border:1px solid var(--vien);
+    background:#fff;border-radius:10px;font-size:15px;cursor:pointer}
 </style>
 </head>
 <body>
 <div class="boc">
-  <div class="the">
-    <h1>Link này đã ngừng dùng</h1>
-    <p>Danh sách đón nay nằm ngay trong <b>trang đón</b>, chung một link cho tất cả mọi người.</p>
-    <ul>
-      <li>Tên đăng nhập: <b>số căn cước 12 số</b> của bạn</li>
-      <li>Mật khẩu: do người phụ trách cấp</li>
-    </ul>
-    <p class="mo">Chưa có mật khẩu thì nhắn người phụ trách. Đăng nhập một lần dùng được nhiều ngày
-    trên chính máy này, không phải gõ lại mỗi sáng.</p>
-    <a class="nut" href="doncong.html">Sang trang đón</a>
+
+<!-- ===== ĐĂNG NHẬP ===== -->
+<div id="man_dn">
+  <div class="dinh">
+    <b>DANH SÁCH GỌI</b>
+    <div class="phu">Xem ai chưa đến, gọi cho họ, báo tình trạng vào làm</div>
+  </div>
+  <div class="o">
+    <div class="nhan">Số căn cước của bạn (12 số)</div>
+    <input id="dn_cccd" inputmode="numeric" maxlength="12" autocomplete="username" placeholder="Ví dụ 024303008090">
+    <div class="nhan">Mật khẩu</div>
+    <input id="dn_mk" type="password" autocomplete="current-password" placeholder="Mật khẩu được cấp">
+  </div>
+  <div class="loi an" id="dn_loi"></div>
+  <button type="button" class="nut" id="nut_dn">Đăng nhập</button>
+  <div class="mach">
+    Trang này có tên và số điện thoại của nhiều người nên phải đăng nhập.
+    Trang quét thẻ để đón thì không cần — mở thẳng <a href="doncong.html">tại đây</a>.<br><br>
+    Quên mật khẩu thì nhắn người phụ trách đặt lại; hệ thống không lưu mật khẩu nguyên văn
+    nên không ai đọc lại được. Đăng nhập một lần dùng được nhiều ngày trên chính máy này.
   </div>
 </div>
+
+<!-- ===== DANH SÁCH ===== -->
+<div id="man_ds" class="an">
+  <div class="dinh">
+    <b>DANH SÁCH GỌI</b>
+    <div class="phu" id="tom">—</div>
+  </div>
+  <div class="doi-ngay">
+    <button type="button" id="ng_mai">Ngày mai</button>
+    <button type="button" id="ng_nay">Hôm nay</button>
+  </div>
+  <input id="tim" class="tim" placeholder="Gõ tên hoặc số điện thoại để lọc nhanh" autocomplete="off">
+  <div id="noi"></div>
+  <div class="thanh an" id="thanh">
+    <div style="font-size:13.5px;color:#3c4753"><b id="dem">0</b> người đã chọn tình trạng, chưa gửi</div>
+    <div class="doi">
+      <button type="button" class="g1" id="gui_le">Gửi lần lượt</button>
+      <button type="button" class="g2" id="gui_gop">Gửi gộp 1 tin</button>
+    </div>
+  </div>
+  <a class="nut phu" href="doncong.html" style="text-decoration:none;text-align:center">Sang trang quét thẻ để đón</a>
+  <button type="button" class="nut phu" id="nut_thoat">Đăng xuất</button>
+</div>
+
+</div>
+
 <script>
-  // Tự chuyển sau 6 giây — người đang vội ở cổng nhà máy khỏi phải đọc hết rồi mới bấm.
-  setTimeout(function () { location.replace('doncong.html'); }, 6000);
+// ====== CẤU HÌNH ======
+var URL_API   = 'https://script.google.com/macros/s/AKfycby1EldZql-1j9H3vaoZdK2e7CfEHZAyyHW-SiTkY4rFWUrb-jHODY68x-OWGVAFlKzU/exec';
+var TOKEN_API = 'd905baa65db6457e830d8f40';
+// ======================
+
+var $ = function (id) { return document.getElementById(id); };
+var KHOA_PHIEN = 'phien_ds_v3';
+
+function layPhien() { try { return localStorage.getItem(KHOA_PHIEN) || ''; } catch (e) { return ''; } }
+function datPhien(p) {
+  try { p ? localStorage.setItem(KHOA_PHIEN, p) : localStorage.removeItem(KHOA_PHIEN); } catch (e) {}
+}
+
+/**
+ * Mọi lượt gọi tự kèm VÉ ĐĂNG NHẬP, và tự đá về màn đăng nhập khi vé hết hạn hoặc bị thu hồi.
+ * Gắn ở một chỗ duy nhất như thế này thì không có đường nào quên kèm vé.
+ */
+function goiAPI(body) {
+  var b = body || {};
+  if (!b.phien) b.phien = layPhien();
+  return fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                          body: JSON.stringify(b) })
+    .then(function (r) { return r.json(); })
+    .then(function (kq) {
+      if (kq && kq.ma === 'HET_PHIEN') { datPhien(''); veManDangNhap('Phiên đăng nhập đã hết. Xin đăng nhập lại.'); }
+      return kq;
+    });
+}
+
+function thoat(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function hien(el) {
+  ['man_dn', 'man_ds'].forEach(function (i) { $(i).classList.add('an'); });
+  $(el).classList.remove('an');
+  window.scrollTo(0, 0);
+}
+
+// ============================================================
+// ĐĂNG NHẬP
+// ============================================================
+var taiKhoan = null;
+
+function veManDangNhap(loi) {
+  taiKhoan = null;
+  if (loi) { $('dn_loi').textContent = loi; $('dn_loi').classList.remove('an'); }
+  else { $('dn_loi').classList.add('an'); }
+  $('dn_mk').value = '';
+  hien('man_dn');
+}
+
+function vaoTrong(kq) {
+  taiKhoan = { ten_nguoi: kq.ten_nguoi || '', cong_ty: kq.cong_ty || [] };
+  napLyDo(kq.ly_do);
+  hien('man_ds');
+  moNgay(ngayCong(1));            // mặc định NGÀY MAI — người đón cần gọi trước cho hôm sau
+}
+
+$('nut_dn').addEventListener('click', function () {
+  var cccd = ($('dn_cccd').value || '').replace(/\D/g, '');
+  var mk = $('dn_mk').value || '';
+  if (cccd.length !== 12) { baoLoi('Số căn cước phải đủ 12 chữ số.'); return; }
+  if (!mk) { baoLoi('Chưa nhập mật khẩu.'); return; }
+  var n = this; n.disabled = true; n.textContent = 'Đang kiểm tra…';
+  $('dn_loi').classList.add('an');
+  goiAPI({ token: TOKEN_API, hanh_dong: 'dang_nhap', so_cccd: cccd, mat_khau: mk, phien: '-' })
+    .then(function (kq) {
+      if (kq && kq.ok) { datPhien(kq.phien); vaoTrong(kq); return; }
+      baoLoi((kq && kq.loi) || 'Không đăng nhập được.');
+    })
+    .catch(function () { baoLoi('Không nối được máy chủ. Kiểm tra mạng rồi thử lại.'); })
+    .then(function () { n.disabled = false; n.textContent = 'Đăng nhập'; });
+});
+function baoLoi(t) { $('dn_loi').textContent = t; $('dn_loi').classList.remove('an'); }
+$('dn_mk').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('nut_dn').click(); });
+
+$('nut_thoat').addEventListener('click', function () {
+  if (!confirm('Đăng xuất khỏi máy này?')) return;
+  datPhien('');
+  veManDangNhap('');
+});
+
+// Mở trang: còn vé thì vào thẳng, không bắt gõ lại mật khẩu mỗi sáng.
+(function khoiDong() {
+  if (!layPhien()) { veManDangNhap(''); return; }
+  goiAPI({ token: TOKEN_API, hanh_dong: 'cong_ty_cua_toi' })
+    .then(function (kq) { if (kq && kq.ok) vaoTrong(kq); else veManDangNhap(''); })
+    .catch(function () { veManDangNhap('Không nối được máy chủ. Thử lại khi có mạng.'); });
+})();
+
+// ============================================================
+// LÝ DO KHÔNG VÀO LÀM — do máy chủ gửi xuống, khai trong tab CAUHINH
+// ============================================================
+/*
+ * Cố ý không viết cứng ở đây: viết cứng thì mỗi lần muốn thêm một lý do lại phải sửa mã,
+ * tải file lên GitHub, chờ cập nhật — trong khi sửa một ô trong Sheet là xong.
+ * Danh sách dưới chỉ là cái đỡ tạm, phòng khi máy chủ chưa kịp trả về.
+ */
+var LY_DO = [
+  ['truot_phong_van', 'Trượt phỏng vấn'],
+  ['khong_du_suc_khoe', 'Không đủ sức khoẻ'],
+  ['tu_bo_ve', 'Tự bỏ về'],
+  ['cong_ty_khong_nhan', 'Công ty không nhận'],
+  ['khac', 'Lý do khác']
+];
+var TEN_LY_DO = {};
+/**
+ * Tên hiện ra của một lý do. Lý do CŨ đã bị xoá khỏi cấu hình thì vẫn còn nằm trong các
+ * bản ghi đã lưu — không có tên nữa, nhưng đừng bày mã thô "tu_bo_ve" ra cho người đọc:
+ * thay gạch dưới bằng khoảng trắng là đọc được ngay.
+ */
+function tenLyDo(ma) {
+  if (!ma) return '';
+  return TEN_LY_DO[ma] || String(ma).replace(/_/g, ' ');
+}
+function napLyDo(ds) {
+  if (ds && ds.length) LY_DO = ds.map(function (c) { return [c.ma, c.ten]; });
+  TEN_LY_DO = {};
+  LY_DO.forEach(function (c) { TEN_LY_DO[c[0]] = c[1]; });
+}
+napLyDo(null);
+
+// ============================================================
+// DANH SÁCH THEO NGÀY
+// ============================================================
+var ngayXem = '', dsNgay = [], chonTT = {};
+
+function ngayCong(n) {
+  var d = new Date(); d.setDate(d.getDate() + n);
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
+}
+
+function moNgay(ngay) {
+  ngayXem = ngay;
+  chonTT = {};
+  $('ng_nay').classList.toggle('dang', ngay === ngayCong(0));
+  $('ng_mai').classList.toggle('dang', ngay === ngayCong(1));
+  $('tom').textContent = 'Đang tải…';
+  $('noi').innerHTML = '';
+  $('thanh').classList.add('an');
+  goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_don', ngay: ngay })
+    .then(function (kq) {
+      if (!kq) return;
+      if (!kq.ok) { $('tom').textContent = kq.loi || 'Không lấy được danh sách.'; return; }
+      dsNgay = kq.nhom || [];
+      ve(kq);
+    })
+    .catch(function () { $('tom').textContent = 'Không nối được máy chủ.'; });
+}
+$('ng_nay').addEventListener('click', function () { moNgay(ngayCong(0)); });
+$('ng_mai').addEventListener('click', function () { moNgay(ngayCong(1)); });
+
+function ve(kq) {
+  var tong = 0, daDon = 0;
+  dsNgay.forEach(function (g) {
+    tong += g.ds.length;
+    g.ds.forEach(function (r) { if (r.da_don) daDon++; });
+  });
+  $('tom').textContent = kq.ngay_hien_thi + ' — ' + tong + ' người, đã đón ' + daDon +
+    ' · xếp A→Z theo tên';
+  if (!tong) {
+    $('noi').innerHTML = '<div class="trong">Ngày này chưa có ai trong danh sách.</div>';
+    return;
+  }
+  var h = '';
+  dsNgay.forEach(function (g) {
+    h += '<div class="ten-ct">' + thoat(g.ten_cong_ty) +
+         ' <span style="font-weight:400;color:var(--mo)">· ' + thoat(g.loai) + ' · ' + g.ds.length + ' người</span></div>';
+    g.ds.forEach(function (r) { h += veHang(r); });
+  });
+  $('noi').innerHTML = h;
+}
+
+function veHang(r) {
+  var cu = r.tinh_trang_lam, the = '';
+  if (cu === 'da_vao_lam') the = '<span class="the-nn v">đã báo: vào làm</span>';
+  else if (cu === 'khong_vao_lam') the = '<span class="the-nn x">đã báo: không vào làm — ' +
+        thoat(tenLyDo(r.ly_do_khong_lam)) + '</span>';
+
+  var vet = [];
+  if (r.da_don) vet.push('đã đón'); else vet.push('CHƯA ĐÓN');
+  if (r.so_lan_goi) vet.push('gọi ' + r.so_lan_goi + ' lần');
+  if (r.ket_qua_goi) vet.push(r.ket_qua_goi === 'nghe' ? 'nghe máy' : 'không nghe');
+
+  var lop = 'hang' + (cu === 'da_vao_lam' ? ' xong' : (cu === 'khong_vao_lam' ? ' hong' : ''));
+  var h = '<div class="' + lop + '" data-ma="' + thoat(r.ma_ld) + '"' +
+          ' data-tim="' + thoat((r.ho_ten || '') + ' ' + (r.sdt || '')) + '">' +
+    '<div class="d1"><b>' + thoat(r.ho_ten || '(chưa có tên)') + '</b>' +
+      (r.sdt ? '<a class="goi" href="tel:' + thoat(r.sdt) + '" data-goi="' + thoat(r.ma_ld) + '">Gọi</a>' : '') +
+    '</div>' +
+    '<div class="d2">' + thoat(r.sdt || 'chưa có SĐT') + ' · ' + thoat(vet.join(' · ')) + '</div>' +
+    the +
+    '<div class="nghe an"><span>Gọi xong rồi chứ?</span>' +
+      '<button type="button" data-kq="nghe" data-ma="' + thoat(r.ma_ld) + '">Nghe máy</button>' +
+      '<button type="button" data-kq="khong_nghe" data-ma="' + thoat(r.ma_ld) + '">Không nghe</button></div>';
+
+  // Chưa đón thì chưa nói chuyện vào làm được — không bày nút ra cho rối.
+  if (r.da_don) {
+    h += '<div class="d3">' +
+      '<button type="button" data-tt="da_vao_lam" data-ma="' + thoat(r.ma_ld) + '">Vào làm</button>' +
+      '<button type="button" data-tt="khong_vao_lam" data-ma="' + thoat(r.ma_ld) + '">Không</button></div>';
+  }
+  return h + '</div>';
+}
+
+// ---------- Bấm trong danh sách ----------
+$('noi').addEventListener('click', function (e) {
+  var t = e.target;
+  var nutGoi = t.closest ? t.closest('a[data-goi]') : null;
+  if (nutGoi) {                       // để thẻ <a> tự mở máy gọi, mình chỉ ghi vết
+    danhDauGoi(nutGoi.getAttribute('data-goi'), '');
+    var o = nutGoi.closest('.hang').querySelector('.nghe');
+    if (o) o.classList.remove('an');   // gọi xong quay lại là có sẵn hai nút để ghi kết quả
+    return;
+  }
+  var nutKQ = t.closest ? t.closest('button[data-kq]') : null;
+  if (nutKQ) { danhDauGoi(nutKQ.getAttribute('data-ma'), nutKQ.getAttribute('data-kq')); return; }
+
+  var nutTT = t.closest ? t.closest('button[data-tt]') : null;
+  if (!nutTT) return;
+  var ma = nutTT.getAttribute('data-ma'), tt = nutTT.getAttribute('data-tt');
+  if (chonTT[ma] && chonTT[ma].tinh_trang === tt) { delete chonTT[ma]; veLai(ma); return; }
+  if (tt === 'da_vao_lam') { chonTT[ma] = { tinh_trang: tt, ly_do: '' }; veLai(ma); return; }
+  hoiLyDo(function (ly) {
+    if (!ly) return;
+    chonTT[ma] = { tinh_trang: 'khong_vao_lam', ly_do: ly };
+    veLai(ma);
+  });
+});
+
+/** Vẽ lại một hàng tại chỗ — nhanh hơn dựng lại cả danh sách, và không mất chỗ đang cuộn. */
+function veLai(ma) {
+  var o = $('noi').querySelector('.hang[data-ma="' + ma + '"]');
+  if (!o) return;
+  var c = chonTT[ma];
+  var nut = o.querySelectorAll('.d3 button');
+  for (var i = 0; i < nut.length; i++) {
+    var tt = nut[i].getAttribute('data-tt');
+    nut[i].className = (c && c.tinh_trang === tt) ? (tt === 'da_vao_lam' ? 'chon-v' : 'chon-x') : '';
+  }
+  var d2 = o.querySelector('.d2');
+  if (d2) {
+    var goc = d2.getAttribute('data-goc') || d2.innerHTML;
+    d2.setAttribute('data-goc', goc);
+    d2.innerHTML = goc + (c && c.tinh_trang === 'khong_vao_lam'
+      ? ' · <b style="color:var(--do)">' + thoat(tenLyDo(c.ly_do)) + '</b>' : '');
+  }
+  demChon();
+}
+function demChon() {
+  var n = Object.keys(chonTT).length;
+  $('dem').textContent = n;
+  $('thanh').classList.toggle('an', n === 0);
+}
+
+function hoiLyDo(xong) {
+  var lop = document.createElement('div');
+  lop.className = 'lop';
+  lop.innerHTML = '<div class="hop"><b>Vì sao không vào làm?</b>' +
+    LY_DO.map(function (c) { return '<button type="button" data-ly="' + thoat(c[0]) + '">' + thoat(c[1]) + '</button>'; }).join('') +
+    '<button type="button" data-ly="" style="margin-top:14px;color:var(--mo)">Bỏ qua</button></div>';
+  lop.addEventListener('click', function (e) {
+    if (e.target === lop) { document.body.removeChild(lop); xong(''); return; }
+    var b = e.target.closest ? e.target.closest('button[data-ly]') : null;
+    if (!b) return;
+    document.body.removeChild(lop);
+    xong(b.getAttribute('data-ly'));
+  });
+  document.body.appendChild(lop);
+}
+
+// ---------- Vết gọi điện ----------
+/*
+ * NÓI THẲNG: trang web chỉ biết người đón đã BẤM nút gọi, KHÔNG biết cuộc gọi có kết nối
+ * hay không — điện thoại không cho trang web biết điều đó. Vì vậy mới có thêm hai nút
+ * "nghe máy / không nghe" để người đón tự ghi kết quả thật sau khi gọi xong.
+ */
+function danhDauGoi(ma, ketQua) {
+  goiAPI({ token: TOKEN_API, hanh_dong: 'danh_dau_goi', ma_ld: ma, ket_qua: ketQua })
+    .then(function (kq) {
+      if (!kq || !kq.ok) return;
+      var o = $('noi').querySelector('.hang[data-ma="' + ma + '"] .d2');
+      if (!o) return;
+      var p = (o.getAttribute('data-goc') || o.innerHTML).split(' · ');
+      var moi = [p[0], p[1] || ''];
+      if (kq.so_lan_goi) moi.push('gọi ' + kq.so_lan_goi + ' lần');
+      if (kq.ket_qua_goi) moi.push(kq.ket_qua_goi === 'nghe' ? 'nghe máy' : 'không nghe');
+      var t = moi.filter(function (x) { return x; }).join(' · ');
+      o.setAttribute('data-goc', t);
+      o.innerHTML = t;
+      veLai(ma);
+    })
+    .catch(function () { /* mất sóng thì thôi, vết gọi không đáng để chặn việc */ });
+}
+
+// ---------- Lọc nhanh ----------
+/*
+ * Danh sách 60-70 người thì cuộn tìm một cái tên là chuyện mất kiên nhẫn, nhất là lúc
+ * đứng ở cổng nhà máy. Bỏ dấu hai bên trước khi so, để gõ "uyen" vẫn ra "Uyên" —
+ * không ai gõ dấu lúc vội.
+ */
+function boDau(s) {
+  s = String(s || '').toLowerCase();
+  return s.normalize ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd') : s;
+}
+/**
+ * Khớp theo ĐẦU TỪ, không phải khớp bất kỳ đâu trong chuỗi.
+ * Đo thật trên 65 người: khớp giữa chuỗi thì gõ "uyen" ra 7 người, vì "Nguyễn" cũng chứa
+ * "uyen" — đúng thứ mình tìm lại nằm lẫn giữa đám nhiễu. Khớp đầu từ thì ra đúng 1,
+ * mà gõ "ngo uyen" vẫn ra. Riêng cụm có chữ SỐ thì cho khớp giữa chuỗi, vì người ta hay
+ * nhớ 3-4 số cuối.
+ */
+function hopLoc(t, cum) {
+  var tu = t.split(' ');
+  for (var c = 0; c < cum.length; c++) {
+    var q = cum[c], trung = false;
+    for (var i = 0; i < tu.length && !trung; i++) if (tu[i].indexOf(q) === 0) trung = true;
+    if (!trung && /[0-9]/.test(q) && t.indexOf(q) >= 0) trung = true;
+    if (!trung) return false;
+  }
+  return true;
+}
+$('tim').addEventListener('input', function () {
+  var cum = boDau(this.value.trim()).split(/\s+/).filter(function (x) { return x; });
+  var hang = $('noi').querySelectorAll('.hang');
+  for (var i = 0; i < hang.length; i++) {
+    var t = boDau(hang[i].getAttribute('data-tim') || '');
+    hang[i].style.display = (!cum.length || hopLoc(t, cum)) ? '' : 'none';
+  }
+  // Khối công ty nào không còn ai thì ẩn luôn tiêu đề, khỏi trơ ra giữa danh sách.
+  var tieu = $('noi').querySelectorAll('.ten-ct');
+  for (var k = 0; k < tieu.length; k++) {
+    var co = false, n = tieu[k].nextElementSibling;
+    while (n && n.classList.contains('hang')) {
+      if (n.style.display !== 'none') { co = true; break; }
+      n = n.nextElementSibling;
+    }
+    tieu[k].style.display = co ? '' : 'none';
+  }
+});
+
+// ---------- Gửi tình trạng ----------
+/*
+ * Hai kiểu gửi, vì hai tình huống thật khác nhau:
+ *   GỬI LẦN LƯỢT : mỗi người một tin. Hợp lúc báo lẻ tẻ trong lúc còn ở nhà máy.
+ *   GỬI GỘP      : một tin cho cả loạt. Hợp lúc cuối buổi chốt danh sách, nhóm Zalo
+ *                  đỡ bị dội hai chục tin liền.
+ * Tình trạng chọn xong nằm trong máy tới khi bấm gửi, nên chọn nhầm sửa lại được,
+ * và mất mạng giữa chừng cũng không mất công chọn.
+ */
+function gui(gop) {
+  var ds = Object.keys(chonTT).map(function (m) {
+    return { ma_ld: m, tinh_trang: chonTT[m].tinh_trang, ly_do: chonTT[m].ly_do };
+  });
+  if (!ds.length) return;
+  var n1 = $('gui_le'), n2 = $('gui_gop');
+  n1.disabled = n2.disabled = true;
+  var cu = (gop ? n2 : n1).textContent;
+  (gop ? n2 : n1).textContent = 'Đang gửi…';
+  goiAPI({ token: TOKEN_API, hanh_dong: 'bao_tinh_trang', ds: ds, gop: gop })
+    .then(function (kq) {
+      if (!kq) return;
+      if (!kq.ok) { alert(kq.loi || 'Không gửi được.'); return; }
+      var t = 'Đã ghi ' + kq.da_ghi + ' người, gửi ' + kq.so_tin + ' tin vào nhóm Zalo.';
+      if (kq.hong && kq.hong.length) t += '\n\nCó ' + kq.hong.length + ' người không ghi được:\n- ' + kq.hong.join('\n- ');
+      alert(t);
+      moNgay(ngayXem);
+    })
+    .catch(function () { alert('Không gửi được — kiểm tra mạng rồi thử lại.'); })
+    .then(function () { n1.disabled = n2.disabled = false; (gop ? n2 : n1).textContent = cu; });
+}
+$('gui_le').addEventListener('click', function () { gui(false); });
+$('gui_gop').addEventListener('click', function () { gui(true); });
 </script>
 </body>
 </html>
