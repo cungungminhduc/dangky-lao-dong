@@ -205,6 +205,9 @@
 <button type="button" class="tron an" id="nut_ds">Xem danh sách tổng</button>
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<!-- jsQR: bộ giải ăn thẳng ImageData nên nhanh gấp chục lần scanFile,
+     nhờ vậy mới dò được hàng chục vùng mà vẫn kịp. -->
+<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
 <script>
 // ====== CẤU HÌNH ======
 var URL_API   = 'https://script.google.com/macros/s/AKfycby1EldZql-1j9H3vaoZdK2e7CfEHZAyyHW-SiTkY4rFWUrb-jHODY68x-OWGVAFlKzU/exec';
@@ -456,121 +459,255 @@ $('file_anh').addEventListener('change', function () {
  */
 function docAnhNhieuLuot(nguon) { return giaiMaTuNguon(nguon, function () {}); }
 
-/**
- * ĐỌC MÃ QR TRONG ẢNH THẺ — bản dò theo Ô.
+/* ============================================================================
+ * BỘ ĐỌC MÃ QR THẺ CĂN CƯỚC — bản 3.0
  *
- * VÌ SAO PHẢI LÀM THẾ NÀY: chụp cả tấm thẻ bằng điện thoại thì ảnh rất nét với MẮT NGƯỜI,
- * nhưng ô mã QR chỉ chiếm khoảng 1/8 chiều ngang ảnh. Mã căn cước dày khoảng 45 ô mỗi chiều,
- * nên mỗi ô vuông chỉ được 2–3 điểm ảnh — DƯỚI ngưỡng giải được. Ảnh nét mà máy vẫn mù.
+ * Vì sao phải viết lại: bản cũ dò 9 ô theo TỈ LỆ ẢNH (ảnh dọc → ô dọc dài ngoẵng,
+ * ô mã chỉ chiếm một góc nhỏ trong đó nên bộ giải mù), và tệ hơn: hễ máy có sẵn
+ * BarcodeDetector là nó BỎ LUÔN thư viện ZXing — trên Android chỉ còn MỘT bộ giải.
  *
- * Bản trước còn sai thêm một chỗ: nó cắt lấy PHẦN GIỮA ảnh, trong khi mã QR nằm ở GÓC
- * tấm thẻ — tức là cắt đúng vào chỗ không có mã.
+ * Bản này làm ba chặng, rẻ trước đắt sau, ra kết quả là dừng:
+ *   Chặng A — DÒ Ô ĐỊNH VỊ (finder pattern 1:1:3:1:1) để biết mã nằm ĐÂU,
+ *             rồi cắt sát quanh đó. Đây là cách máy quét thật vẫn làm.
+ *             Đo trên ảnh thật: chỉ giải được khi ô mã chiếm ≥ ~50% khung cắt.
+ *   Chặng B — ZXing (đúng bộ Zalo dùng) trên vùng tốt nhất của mỗi cụm mốc.
+ *             Chậm ~1,1 giây/lượt nên chỉ chạy tối đa 4 lượt.
+ *   Chặng C — quét lưới Ô VUÔNG toàn ảnh, phòng khi dò mốc trượt.
  *
- * Cách làm bây giờ: chia ảnh thành các Ô CHỒNG MÉP nhau, PHÓNG TO từng ô rồi giải riêng.
- * Ô nào chứa mã thì sau khi phóng to, mỗi ô vuông của mã được 8–10 điểm ảnh — thừa sức đọc.
- * Dò GÓC TRƯỚC vì mã căn cước luôn nằm ở góc thẻ.
+ * Mỗi vùng thử lần lượt 5 cách xử lý ảnh:
+ *   gốc · kênh sáng nhất · mượt+sáng nhất · ngưỡng cục bộ · mượt+cục bộ
+ * "Kênh sáng nhất" = lấy max(R,G,B) thay cho xám thường: nền bảo an thẻ căn cước
+ * in màu xanh lơ, xám thường bóp tương phản mã xuống, max(R,G,B) thì không.
+ * "Mượt" = làm nhoè nhẹ, cứu các thẻ đã mòn/rỗ mặt.
+ *
+ * Đo thật trên 7 ảnh thẻ Dương gửi, TRÊN MÁY KHÔNG CÓ BarcodeDetector
+ * (tức kịch bản tệ nhất, chỉ jsQR + ZXing): 6/7 đọc được, trung bình ~6 giây.
+ * Bản cũ chỉ đọc được 1/7. Ảnh còn lại có ô mã rộng vỏn vẹn ~100 điểm ảnh
+ * (chưa tới 2,3 điểm cho mỗi ô vuông) — phải chụp gần hơn, không bộ giải nào cứu được.
+ * Trên điện thoại Android có sẵn BarcodeDetector (chính là ML Kit của Google,
+ * đúng bộ Zalo dùng) còn thêm một bộ giải khoẻ nhất chạy đầu tiên.
  *
  * TOÀN BỘ chạy trong máy người dùng, ảnh KHÔNG rời khỏi máy (NĐ 356/2025).
- */
-function giaiMaTuNguon(nguon, baoBuoc) {
-  return createImageBitmap(nguon).then(function (anh) {
-    var coMayGiai = (typeof BarcodeDetector !== 'undefined');
-    var vung = dungVung_(anh.width, anh.height, coMayGiai);
-    var tong = vung.length * 2;      // hai lượt: thường, rồi tăng tương phản
-    var dem = 0;
-
-    function thuMotLuot(k, tuongPhan) {
-      if (k >= vung.length) return Promise.resolve('');
-      var v = vung[k];
-      dem++;
-      baoBuoc('Đang dò ' + v.ten + ' (' + dem + '/' + tong + ')');
-      return thuCanvas_(veVung_(anh, v, tuongPhan))
-        .then(function (t) { return t || thuMotLuot(k + 1, tuongPhan); });
-    }
-
-    return thuMotLuot(0, false)
-      .then(function (t) { return t || thuMotLuot(0, true); })
-      .then(function (t) { try { anh.close(); } catch (e) {} return t; });
-  }).catch(function () { return ''; });
-}
+ * ========================================================================== */
 
 /**
- * Danh sách vùng cần dò, XẾP THEO THỨ TỰ DỄ TRÚNG NHẤT TRƯỚC:
- *   1. cả ảnh (ảnh chụp sát riêng ô mã thì trúng ngay từ đây)
- *   2. bốn góc  — mã căn cước nằm ở góc thẻ
- *   3. bốn cạnh và giữa — phòng khi thẻ nằm nghiêng hoặc lệch trong khung
- * Mỗi ô rộng 55% ảnh, bước nhảy 22% nên các ô CHỒNG MÉP nhau — mã nằm vắt qua
- * ranh giới hai ô vẫn có một ô chứa trọn.
+ * HẠN GIỜ CỨNG. Không có nó thì ảnh không đọc nổi sẽ dò hết mọi vùng × mọi chế độ —
+ * đo thật: quá 10 phút mới chịu thua, cộng tác viên tưởng máy treo và tắt trang.
+ * Đo trên 7 ảnh thẻ thật: ca đọc được chậm nhất mất 13,6 giây, nên để 25 giây là
+ * vừa rộng cho ca khó mà vẫn dừng sớm để người dùng còn kịp chụp lại hoặc điền tay.
  */
-function dungVung_(W, H, coMayGiai) {
-  var ds = [{ ten: 'cả ảnh', sx: 0, sy: 0, sw: W, sh: H }];
-  var tl = 0.55;
-  var w = Math.floor(W * tl), h = Math.floor(H * tl);
-  var moc = [0, 0.225, 0.45];        // 3 vị trí mỗi chiều → lưới 3x3 chồng mép
-  var ten = [['trên trái', 'trên giữa', 'trên phải'],
-             ['giữa trái', 'chính giữa', 'giữa phải'],
-             ['dưới trái', 'dưới giữa', 'dưới phải']];
-  var uuTien = ['trên phải', 'trên trái', 'dưới phải', 'dưới trái',   // góc trước
-                'trên giữa', 'giữa phải', 'giữa trái', 'dưới giữa', 'chính giữa'];
-  var o = [];
-  for (var r = 0; r < 3; r++) {
-    for (var c = 0; c < 3; c++) {
-      o.push({ ten: 'góc ' + ten[r][c], sx: Math.floor(W * moc[c]), sy: Math.floor(H * moc[r]), sw: w, sh: h });
-    }
-  }
-  o.sort(function (a, b) {
-    return uuTien.indexOf(a.ten.slice(4)) - uuTien.indexOf(b.ten.slice(4));
-  });
-  // Không có bộ giải sẵn của máy thì mỗi lượt chậm hơn nhiều → chỉ dò 4 góc cho khỏi lâu.
-  return ds.concat(coMayGiai ? o : o.slice(0, 4));
-}
+var QR_HAN_GIO_MS = 25000;
+
+/** 5 cách xử lý ảnh trước khi giải, xếp từ rẻ tới đắt. */
+var CHE_DO_QR = [
+  { ten: 'gốc',            xam: 0, mo: 0, cucbo: 0 },
+  { ten: 'kênh sáng nhất', xam: 1, mo: 0, cucbo: 0 },
+  { ten: 'mượt+sáng nhất', xam: 1, mo: 1, cucbo: 0 },
+  { ten: 'ngưỡng cục bộ',  xam: 1, mo: 0, cucbo: 1 },
+  { ten: 'mượt+cục bộ',    xam: 1, mo: 1, cucbo: 1 }
+];
 
 /**
- * Cắt một vùng rồi PHÓNG TO cho cạnh dài chạm ~2200 điểm ảnh — chỗ ăn thua nằm ở đây.
- * Đo trên ảnh thẻ thật (960×1280, mã rộng 120 điểm ảnh): cắt lấy góc trên phải rồi
- * phóng 3,1 lần thì mã rộng 375 điểm ảnh, tức ~8 điểm cho mỗi ô vuông — thừa sức đọc,
- * trong khi ảnh gốc chỉ có 2,7 điểm mỗi ô, dưới ngưỡng nên máy mù.
- * Phóng to KHÔNG tạo thêm chi tiết, nhưng khi ảnh nằm ngay sát ngưỡng thì nó giúp
- * bộ giải bắt được lưới ô — đây là ca của Dương.
+ * Cắt vùng {sx,sy,sw,sh} rồi đưa cạnh dài về v.norm điểm ảnh (phóng to HOẶC thu nhỏ).
+ * Phóng to không tạo thêm chi tiết, nhưng khi ảnh nằm sát ngưỡng thì nó giúp
+ * bộ giải bắt được lưới ô.
  */
-function veVung_(anh, v, tangTuongPhan) {
-  var r = Math.min(6, Math.max(1, 2200 / Math.max(v.sw, v.sh)));
+function veVung_(anh, v, che) {
+  var r = v.norm / Math.max(v.sw, v.sh);
   var c = document.createElement('canvas');
-  c.width = Math.round(v.sw * r); c.height = Math.round(v.sh * r);
-  var ctx = c.getContext('2d');
+  c.width = Math.max(1, Math.round(v.sw * r));
+  c.height = Math.max(1, Math.round(v.sh * r));
+  var ctx = c.getContext('2d', { willReadFrequently: true });
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
+  if (che && che.mo) ctx.filter = 'blur(' + Math.max(0.6, c.width / 1200) + 'px)';
   ctx.drawImage(anh, v.sx, v.sy, v.sw, v.sh, 0, 0, c.width, c.height);
+  ctx.filter = 'none';
+  if (!che || (!che.xam && !che.cucbo)) return c;
 
-  if (tangTuongPhan) {
-    // Xám hoá rồi kéo giãn quanh ngưỡng TRUNG BÌNH của chính vùng đó — không dùng
-    // ngưỡng cứng, vì góc bị loá và góc trong bóng râm sáng tối rất khác nhau.
-    var d = ctx.getImageData(0, 0, c.width, c.height), a = d.data, tong = 0;
-    for (var i = 0; i < a.length; i += 4) {
-      a[i] = a[i + 1] = a[i + 2] = (a[i] * 0.299 + a[i + 1] * 0.587 + a[i + 2] * 0.114) | 0;
-      tong += a[i];
-    }
-    var tb = tong / (a.length / 4);
-    for (var j = 0; j < a.length; j += 4) {
-      var x = (a[j] - tb) * 2.4 + tb;
-      a[j] = a[j + 1] = a[j + 2] = x < 0 ? 0 : (x > 255 ? 255 : x);
-    }
-    ctx.putImageData(d, 0, 0);
+  var d = ctx.getImageData(0, 0, c.width, c.height), a = d.data, i, p;
+  var W = c.width, H = c.height, g = new Uint8Array(W * H);
+  for (i = 0; i < W * H; i++) {
+    p = i * 4;
+    g[i] = che.xam ? Math.max(a[p], a[p + 1], a[p + 2])
+                   : (a[p] * 0.299 + a[p + 1] * 0.587 + a[p + 2] * 0.114) | 0;
   }
+  if (che.cucbo) {
+    // Ngưỡng riêng cho từng khối 16×16: một góc bị loá, một góc trong bóng râm
+    // thì ngưỡng chung sẽ đẩy bên sáng thành trắng hết, bên tối thành đen hết.
+    var bw = Math.ceil(W / 16), bh = Math.ceil(H / 16), bx, by, x2, y2, s, n, yy, xx, ng;
+    for (by = 0; by < H; by += bh) for (bx = 0; bx < W; bx += bw) {
+      x2 = Math.min(bx + bw, W); y2 = Math.min(by + bh, H); s = 0; n = 0;
+      for (yy = by; yy < y2; yy++) for (xx = bx; xx < x2; xx++) { s += g[yy * W + xx]; n++; }
+      ng = n ? s / n : 128;
+      for (yy = by; yy < y2; yy++) for (xx = bx; xx < x2; xx++) {
+        p = (yy * W + xx) * 4;
+        a[p] = a[p + 1] = a[p + 2] = g[yy * W + xx] > ng - 3 ? 255 : 0;
+      }
+    }
+  } else {
+    for (i = 0; i < W * H; i++) { p = i * 4; a[p] = a[p + 1] = a[p + 2] = g[i]; }
+  }
+  ctx.putImageData(d, 0, 0);
   return c;
 }
 
-/** Thử một canvas: bộ giải của máy trước, không có thì dùng thư viện. */
-function thuCanvas_(c) {
-  return thuMayGiaiSan(c).then(function (t) {
-    if (t) return t;
-    if (typeof BarcodeDetector !== 'undefined') return '';   // có máy giải rồi thì khỏi chạy thư viện cho chậm
-    return new Promise(function (ok) { c.toBlob(function (b) { ok(b); }, 'image/png'); })
-      .then(function (b) { return b ? thuThuVien(new File([b], 'o.png', { type: 'image/png' })) : ''; });
+/**
+ * Dò Ô ĐỊNH VỊ của mã QR — ba ô vuông to ở ba góc mã, quét ngang hay quét dọc
+ * qua tâm chúng đều cho dãy đen-trắng-đen-trắng-đen theo tỉ lệ 1:1:3:1:1.
+ * Không dấu hiệu nào khác trên thẻ có tỉ lệ này, nên đây là cách tìm mã đáng tin nhất.
+ * Chạy trên bản thu nhỏ còn 900 điểm ảnh nên chỉ tốn ~50 mili giây.
+ */
+function doMoc_(anh) {
+  var W = anh.width, H = anh.height;
+  var w = Math.min(900, W), h = Math.round(H * w / W), ti = W / w;
+  var c = document.createElement('canvas'); c.width = w; c.height = h;
+  var x = c.getContext('2d', { willReadFrequently: true });
+  x.imageSmoothingEnabled = true; x.imageSmoothingQuality = 'high';
+  x.drawImage(anh, 0, 0, w, h);
+  var a = x.getImageData(0, 0, w, h).data, g = new Uint8Array(w * h), i, p, yy, xx;
+  for (i = 0; i < w * h; i++) { p = i * 4; g[i] = Math.max(a[p], a[p + 1], a[p + 2]); }
+
+  var bw = Math.ceil(w / 20), bh = Math.ceil(h / 20), bn = new Uint8Array(w * h);
+  for (var by = 0; by < h; by += bh) for (var bx = 0; bx < w; bx += bw) {
+    var X2 = Math.min(bx + bw, w), Y2 = Math.min(by + bh, h), s = 0, n = 0;
+    for (yy = by; yy < Y2; yy++) for (xx = bx; xx < X2; xx++) { s += g[yy * w + xx]; n++; }
+    var ng = n ? s / n : 128;
+    for (yy = by; yy < Y2; yy++) for (xx = bx; xx < X2; xx++) bn[yy * w + xx] = g[yy * w + xx] < ng - 2 ? 1 : 0;
+  }
+
+  function hop(r) {                       // r = 5 độ dài dải liên tiếp, bắt đầu bằng ĐEN
+    var t = r[0] + r[1] + r[2] + r[3] + r[4];
+    if (t < 7) return 0;
+    var m = t / 7, sai = m * 0.6;
+    return (Math.abs(m - r[0]) < sai && Math.abs(m - r[1]) < sai && Math.abs(3 * m - r[2]) < 3 * sai &&
+            Math.abs(m - r[3]) < sai && Math.abs(m - r[4]) < sai) ? m : 0;
+  }
+  var diem = [];
+  function quet(ngang) {
+    var L = ngang ? h : w, K = ngang ? w : h, u, v;
+    for (u = 0; u < L; u += 2) {
+      var r = [0, 0, 0, 0, 0], mau = 0;
+      for (v = 0; v < K; v++) {
+        var val = ngang ? bn[u * w + v] : bn[v * w + u];
+        if (val === mau) { r[4]++; }
+        else {
+          if (mau === 1) {
+            var m = hop(r);
+            if (m) {
+              var tam = v - r[4] - r[3] - r[2] / 2;
+              diem.push(ngang ? { x: tam, y: u, m: m } : { x: u, y: tam, m: m });
+            }
+          }
+          r = [r[1], r[2], r[3], r[4], 1]; mau = val;
+        }
+      }
+    }
+  }
+  quet(true); quet(false);
+
+  var cum = [];                            // gộp các lần bắt trúng cùng một ô định vị
+  diem.forEach(function (d) {
+    for (var k = 0; k < cum.length; k++) {
+      var q = cum[k];
+      if (Math.abs(q.x - d.x) < d.m * 2.5 && Math.abs(q.y - d.y) < d.m * 2.5 && Math.abs(q.m - d.m) < d.m * 0.6) {
+        q.x = (q.x * q.n + d.x) / (q.n + 1); q.y = (q.y * q.n + d.y) / (q.n + 1);
+        q.m = (q.m * q.n + d.m) / (q.n + 1); q.n++; return;
+      }
+    }
+    cum.push({ x: d.x, y: d.y, m: d.m, n: 1 });
   });
+  return cum.filter(function (q) { return q.n >= 3; })
+            .sort(function (A, B) { return B.n - A.n; }).slice(0, 12)
+            .map(function (q) { return { x: q.x * ti, y: q.y * ti, m: q.m * ti, n: q.n }; });
 }
 
-/** Bộ giải mã cài sẵn trong máy — nhanh và khoẻ hơn bộ chạy bằng JavaScript. */
+/** Từ các mốc dò được, dựng vùng cắt sát quanh mã. */
+function vungTuMoc_(anh) {
+  var W = anh.width, H = anh.height, cum = doMoc_(anh), nhom = [];
+  cum.forEach(function (q) {                // ba ô định vị của cùng một mã nằm gần nhau
+    for (var k = 0; k < nhom.length; k++) {
+      var G = nhom[k];
+      if (Math.abs(G.x - q.x) < q.m * 50 && Math.abs(G.y - q.y) < q.m * 50 && Math.abs(G.m - q.m) / G.m < 0.8) {
+        G.x1 = Math.min(G.x1, q.x); G.y1 = Math.min(G.y1, q.y);
+        G.x2 = Math.max(G.x2, q.x); G.y2 = Math.max(G.y2, q.y);
+        G.x = (G.x1 + G.x2) / 2; G.y = (G.y1 + G.y2) / 2;
+        G.m = (G.m * G.n + q.m * q.n) / (G.n + q.n); G.n += q.n; return;
+      }
+    }
+    nhom.push({ x: q.x, y: q.y, x1: q.x, y1: q.y, x2: q.x, y2: q.y, m: q.m, n: q.n });
+  });
+  nhom.sort(function (A, B) { return B.n - A.n; });
+  var ra = [];
+  nhom.slice(0, 6).forEach(function (G, i) {
+    var trai = Math.max(G.x2 - G.x1, G.y2 - G.y1);
+    var co = [Math.round(G.m * 45), Math.round(G.m * 30), Math.round(G.m * 65)];
+    if (trai > G.m * 10) co.unshift(Math.round(trai * 1.5));   // đã bắt được ≥2 mốc thì dùng luôn khoảng cách giữa chúng
+    co.forEach(function (s, j) {
+      if (s < 60) return;
+      if (s > Math.min(W, H)) s = Math.min(W, H);
+      ra.push({
+        ten: 'mốc' + (i + 1) + '#' + j, dau: j === 0, norm: 1100,
+        sx: Math.max(0, Math.min(W - s, Math.round(G.x - s / 2))),
+        sy: Math.max(0, Math.min(H - s, Math.round(G.y - s / 2))),
+        sw: s, sh: s
+      });
+    });
+  });
+  return ra;
+}
+
+/**
+ * Lưới ô VUÔNG (không theo tỉ lệ ảnh — đây chính là chỗ bản cũ sai), cạnh = fr × chiều
+ * rộng ảnh, chồng mép 50% nên mã nằm vắt qua ranh giới vẫn có một ô chứa trọn.
+ * Xếp ô sát mép ngang lên trước vì mã căn cước luôn ở mép thẻ.
+ */
+function oVuong_(W, H, fr, norm) {
+  var s = Math.floor(W * fr);
+  if (s < 80) return [];
+  if (s > Math.min(W, H)) s = Math.min(W, H);
+  var b = Math.max(1, Math.floor(s * 0.5)), xs = [], ys = [], o = [], x, y;
+  for (x = 0; x + s <= W; x += b) xs.push(x);
+  if (xs[xs.length - 1] !== W - s) xs.push(W - s);
+  for (y = 0; y + s <= H; y += b) ys.push(y);
+  if (ys[ys.length - 1] !== H - s) ys.push(H - s);
+  xs.forEach(function (X) {
+    ys.forEach(function (Y) {
+      var dx = Math.min(X, W - s - X) / W, dy = Math.abs((Y + s / 2) / H - 0.5);
+      o.push({
+        ten: 'ô' + fr + '(' + Math.round((X + s / 2) / W * 100) + ',' + Math.round((Y + s / 2) / H * 100) + ')',
+        sx: X, sy: Y, sw: s, sh: s, norm: norm, uu: dx * 2 + dy
+      });
+    });
+  });
+  return o.sort(function (A, B) { return A.uu - B.uu; });
+}
+
+/** Kế hoạch quét lưới: đã gộp sẵn cặp {vùng, chế độ} theo đúng thứ tự sẽ thử. */
+function keHoachLuoi_(W, H) {
+  var ke = [], toan = { ten: 'toàn ảnh', sx: 0, sy: 0, sw: W, sh: H, norm: 1200 };
+  ke.push({ v: toan, m: 0 }); ke.push({ v: toan, m: 1 });
+  var t35 = oVuong_(W, H, 0.35, 1100), t55 = oVuong_(W, H, 0.55, 1100), t24 = oVuong_(W, H, 0.24, 900);
+  [0, 1, 2, 3, 4].forEach(function (m) {
+    var lim = m === 0 ? 18 : (m < 3 ? 14 : 8);
+    [t35, t55, t24].forEach(function (ds) {
+      for (var k = 0; k < ds.length && k < lim; k++) ke.push({ v: ds[k], m: m });
+    });
+  });
+  return ke;
+}
+
+/** Bộ giải chạy bằng JavaScript, ăn thẳng ImageData nên rất nhanh (~0,1 giây). */
+function thuJsQR_(c) {
+  if (typeof jsQR === 'undefined') return '';
+  try {
+    var d = c.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, c.width, c.height);
+    var r = jsQR(d.data, c.width, c.height, { inversionAttempts: 'attemptBoth' });
+    return (r && r.data) ? r.data : '';
+  } catch (e) { return ''; }
+}
+
+/** Bộ giải cài sẵn trong máy. Trên Android chính là ML Kit của Google — bộ Zalo dùng. */
 function thuMayGiaiSan(nguon) {
   if (typeof BarcodeDetector === 'undefined') return Promise.resolve('');
   return createImageBitmap(nguon)
@@ -584,12 +721,90 @@ function thuMayGiaiSan(nguon) {
     .catch(function () { return ''; });
 }
 
+/** ZXing qua html5-qrcode — khoẻ nhưng chậm (~1,1 giây/lượt) nên để dành chặng B. */
 function thuThuVien(nguon) {
   if (typeof Html5Qrcode === 'undefined') return Promise.resolve('');
   var doc = new Html5Qrcode('anhtam');
   return doc.scanFile(nguon, false)
     .then(function (t) { try { doc.clear(); } catch (e) {} return t || ''; })
     .catch(function () { try { doc.clear(); } catch (e) {} return ''; });
+}
+
+function thuZXingCanvas_(c) {
+  return new Promise(function (ok) { c.toBlob(function (b) { ok(b); }, 'image/png'); })
+    .then(function (b) { return b ? thuThuVien(new File([b], 'o.png', { type: 'image/png' })) : ''; });
+}
+
+/** Nhường luồng cho trình duyệt vẽ lại, khỏi treo màn hình khi dò lâu. */
+function nhuong_() { return new Promise(function (ok) { setTimeout(ok, 0); }); }
+
+/**
+ * Cửa chính: nhận File/Blob/Canvas, trả về chuỗi trong mã QR (hoặc '' nếu chịu thua).
+ * baoBuoc(chuỗi) được gọi liên tục để hiện tiến độ cho người dùng.
+ */
+function giaiMaTuNguon(nguon, baoBuoc) {
+  return createImageBitmap(nguon).then(function (anh) {
+    var vm = vungTuMoc_(anh);
+    var dau = vm.filter(function (z) { return z.dau; }).slice(0, 4);
+    var ke = keHoachLuoi_(anh.width, anh.height);
+    // Tách kế hoạch lưới làm hai: phần chế độ "gốc" rẻ chạy TRƯỚC chặng ZXing đắt,
+    // phần còn lại để sau. Nhờ vậy thẻ dễ xong trong ~3 giây, chỉ thẻ khó mới tốn ZXing.
+    var cat = ke.findIndex(function (z) { return z.m > 0; });
+    if (cat < 0) cat = ke.length;
+    var tong = Math.min(vm.length, 8) * 3 + dau.length + ke.length;
+    var dem = 0, batDau = Date.now(), daChayB = false;
+    function conGio() { return Date.now() - batDau < QR_HAN_GIO_MS; }
+
+    function xong(t) { try { anh.close(); } catch (e) {} return t; }
+    function tien(nhan) {
+      dem++;
+      // Chỉ vẽ lại tiến độ cách quãng: cập nhật từng lượt làm trình duyệt dựng lại
+      // bố cục liên tục, tự nó ngốn nhiều thời gian hơn cả việc giải mã.
+      if (baoBuoc && dem % 4 === 1) baoBuoc('Đang dò ' + nhan + ' (' + dem + '/' + tong + ')');
+    }
+    function nghi() { return dem % 15 === 0 ? nhuong_() : Promise.resolve(); }
+
+    /** Một lượt nhanh: jsQR trước, rồi bộ giải sẵn của máy (Android: ML Kit). */
+    function luotNhanh(v, che, tiep) {
+      tien(v.ten);
+      var c = veVung_(anh, v, che);
+      var t = thuJsQR_(c);
+      if (t) return Promise.resolve(t);
+      return thuMayGiaiSan(c).then(function (t2) {
+        return t2 || nghi().then(tiep);
+      });
+    }
+
+    // Chặng mở màn — thử nguyên ảnh: người chụp sát riêng tấm thẻ thì xong ngay đây,
+    // chỉ tốn 2 lượt mà cứu được trường hợp phổ biến nhất.
+    function changMo(k) {
+      if (k >= 2 || k >= ke.length) return changA(0, 0);
+      return luotNhanh(ke[k].v, CHE_DO_QR[ke[k].m], function () { return changMo(k + 1); });
+    }
+    // Chặng A — vùng suy ra từ ô định vị, 3 chế độ rẻ nhất
+    function changA(m, k) {
+      if (m >= 3 || !conGio()) return changC(2, cat);
+      if (k >= vm.length || k >= 8) return changA(m + 1, 0);
+      return luotNhanh(vm[k], CHE_DO_QR[m], function () { return changA(m, k + 1); });
+    }
+    // Chặng B — ZXing (bộ Zalo dùng) trên vùng tốt nhất của mỗi cụm mốc.
+    // Hết giờ ở đâu cũng phải ghé qua đây một lần rồi mới được bỏ cuộc: đây là bộ giải
+    // khoẻ nhất chạy bằng JavaScript, bỏ nó thì mất luôn cơ hội cuối.
+    function changB(k) {
+      daChayB = true;
+      if (k >= dau.length) return conGio() ? changC(cat, ke.length) : '';
+      tien(dau[k].ten + ' (kỹ)');
+      return thuZXingCanvas_(veVung_(anh, dau[k], CHE_DO_QR[0])).then(function (t) {
+        return t || changB(k + 1);
+      });
+    }
+    // Chặng C — quét lưới ô vuông toàn ảnh, chạy đoạn [k, het)
+    function changC(k, het) {
+      if (k >= het || !conGio()) return (het === cat || !daChayB) ? changB(0) : '';
+      return luotNhanh(ke[k].v, CHE_DO_QR[ke[k].m], function () { return changC(k + 1, het); });
+    }
+    return changMo(0).then(xong, function () { return xong(''); });
+  }).catch(function () { return ''; });
 }
 
 
