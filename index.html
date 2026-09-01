@@ -204,10 +204,14 @@
 
 <button type="button" class="tron an" id="nut_ds">Xem danh sách tổng</button>
 
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <!-- jsQR: bộ giải ăn thẳng ImageData nên nhanh gấp chục lần scanFile,
      nhờ vậy mới dò được hàng chục vùng mà vẫn kịp. -->
 <script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+<!-- ZXing bản WASM — CHÍNH BỘ MÃ C++ mà Zalo dùng, biên dịch sang WebAssembly.
+     Đã BỎ html5-qrcode (ZXing viết lại bằng JavaScript): đo trên 4 ảnh thẻ thật
+     ngày 01/09 thì bản JavaScript đọc được 0/4, bản WASM đọc 4/4 và nhanh gấp ~20 lần
+     (~40ms/lượt thay vì ~1,1 giây). Bỏ nó còn tiết kiệm 330KB tải về. -->
+<script src="https://unpkg.com/zxing-wasm@3.1.3/dist/iife/reader/index.js"></script>
 <script>
 // ====== CẤU HÌNH ======
 var URL_API   = 'https://script.google.com/macros/s/AKfycby1EldZql-1j9H3vaoZdK2e7CfEHZAyyHW-SiTkY4rFWUrb-jHODY68x-OWGVAFlKzU/exec';
@@ -430,7 +434,8 @@ function traTinhTrang(cccd) {
 $('nut_anh').addEventListener('click', function () {
   // KHÔNG chặn khi thư viện chưa tải được nữa: máy đời mới có bộ giải mã sẵn,
   // vẫn đọc được ảnh dù mất mạng giữa chừng không lấy được thư viện.
-  if (typeof Html5Qrcode === 'undefined' && typeof BarcodeDetector === 'undefined') {
+  if (typeof jsQR === 'undefined' && typeof ZXingWASM === 'undefined' &&
+      typeof BarcodeDetector === 'undefined') {
     baoDai('vang', '<b>Chưa tải được bộ quét mã</b> (có thể do mạng). Bạn điền tay giúp nhé.'); return;
   }
   $('file_anh').click();
@@ -466,8 +471,24 @@ function thoatHTML_(s) {
 function docAnhNhieuLuot(nguon) { return giaiMaTuNguon(nguon, function () {}); }
 
 /* ============================================================================
- * BỘ ĐỌC MÃ QR THẺ CĂN CƯỚC — bản 3.1
+ * BỘ ĐỌC MÃ QR THẺ CĂN CƯỚC — bản 3.2
  *
+ * Bản 3.2 (01/09) đổi BỘ GIẢI, không phải đổi cách dò.
+ * Dương gửi 4 ảnh thẻ mà Zalo đọc được còn trang thì không. Đo lại trên đúng thuật toán
+ * của trang: bản 3.1 đọc được 1/4, mỗi ca trượt ngồi dò 17–25 giây rồi mới chịu thua.
+ *
+ * Nguyên nhân gốc: `html5-qrcode` là ZXing VIẾT LẠI BẮNG JAVASCRIPT, yếu hơn hẳn bản
+ * C++ gốc mà Zalo dùng. Đo thật: cắt sát ô mã rồi đưa cho nó ở 24 cỡ × 5 chế độ khác
+ * nhau, thẻ Đặng Thành Luân vẫn 0/120 lượt. Cùng tấm ảnh đó, ZXing bản WASM đọc
+ * được. Không phải dò sai chỗ — là đưa đúng chỗ mà bộ giải không đủ khoẻ.
+ *
+ *   Bản 3.1 (html5-qrcode)  : 1/4 thẻ · 17–25 giây mỗi ca trượt
+ *   Bản 3.2 (ZXing-WASM)    : 4/4 thẻ · chậm nhất 4,6 giây · 2/4 xong trong 0,1 giây
+ *
+ * Bản WASM còn rẻ tới mức (~40ms/lượt thay vì ~1,1 giây) nên không phải để dành nó
+ * cho một chặng riêng nữa: nay nó chạy ở MỌI lượt, ngay cạnh jsQR.
+ *
+ * ---------------------------------------------------------------------------
  * Bản 3.0 (29/08) đưa số thẻ đọc được từ 1/7 lên 6/7 trên máy tính và Android,
  * nhưng iPhone thì trượt sạch. Ba chỗ, cả ba chỉ hỏng trên Safari của iOS:
  *
@@ -493,13 +514,19 @@ function docAnhNhieuLuot(nguon) { return giaiMaTuNguon(nguon, function () {}); }
  * sẵn BarcodeDetector là nó BỎ LUÔN thư viện ZXing — trên Android chỉ còn MỘT bộ giải.
  *
  * Bốn chặng, rẻ trước đắt sau, ra kết quả là dừng:
- *   Mở màn — thử nguyên ảnh: ai chụp sát riêng tấm thẻ thì xong ngay, chỉ tốn 2 lượt.
+ *   Chặng 0 — đưa THẮNG tệp ảnh gốc cho ZXing-WASM. Không canvas, không thu nhỏ,
+ *             không cắt vùng. Đo thật: 2/4 thẻ xong ngay ở đây trong ~40–110ms.
+ *             Đây cũng là đường an toàn nhất cho iPhone: không đụng canvas thì
+ *             không bao giờ chạm trần bộ nhớ canvas của Safari.
+ *   Chặng 1 — nguyên ảnh qua canvas, 2 chế độ. Cứu ca WASM chưa tải kịp và ca
+ *             phải đổi cách xám hoá mới đọc được.
  *   Chặng A — DÒ Ô ĐỊNH VỊ (finder pattern 1:1:3:1:1) để biết mã nằm ĐÂU, rồi cắt sát
  *             quanh đó. Đây là cách máy quét thật vẫn làm. Đo trên ảnh thật: chỉ giải
  *             được khi ô mã chiếm ≥ ~50% khung cắt.
- *   Chặng B — ZXing (đúng bộ Zalo dùng) trên vùng tốt nhất của mỗi cụm mốc.
- *             Chậm ~1,1 giây/lượt nên chỉ chạy tối đa 4 lượt.
  *   Chặng C — quét lưới Ô VUÔNG toàn ảnh, phòng khi dò mốc trượt.
+ *
+ * Mỗi lượt ở chặng 1/A/C chạy ba bộ giải nối tiếp:
+ *   jsQR (~10ms) → ZXing-WASM (~40ms) → bộ giải sẵn của máy (Android: ML Kit của Google).
  *
  * Mỗi vùng thử lần lượt 5 cách xử lý ảnh:
  *   gốc · kênh sáng nhất · mượt+sáng nhất · ngưỡng cục bộ · mượt+cục bộ
@@ -806,25 +833,82 @@ function thuMayGiaiSan(nguon) {
     .catch(function () { return ''; });
 }
 
-/** ZXing qua html5-qrcode — khoẻ nhưng chậm (~1,1 giây/lượt) nên để dành chặng B. */
-function thuThuVien(nguon) {
-  if (typeof Html5Qrcode === 'undefined') return Promise.resolve('');
-  var doc;
-  try { doc = new Html5Qrcode('anhtam'); } catch (e) { return Promise.resolve(''); }
-  return doc.scanFile(nguon, false)
-    .then(function (t) { try { doc.clear(); } catch (e) {} return t || ''; })
-    .catch(function () { try { doc.clear(); } catch (e) {} return ''; });
+/* ----------------------------------------------------------------------------
+ * ZXing bản WASM — CHÍNH bộ mã C++ mà Zalo dùng, biên dịch sang WebAssembly.
+ *
+ * Thay cho html5-qrcode (ZXing viết lại bằng JavaScript) từ 01/09/2026.
+ * Đo trên 4 ảnh thẻ THẬT Dương gửi ngày 29/08 — cả 4 ảnh Zalo đọc được:
+ *     bản JavaScript (html5-qrcode) : 0/4, mỗi lượt ~1,1 giây
+ *     bản WASM                      : 4/4, mỗi lượt ~40 mili giây
+ * Nhanh gấp ~25 lần nên không còn phải "để dành" nó cho một chặng riêng như bản 3.1:
+ * nay nó chạy ở MỌI lượt, ngay cạnh jsQR.
+ * -------------------------------------------------------------------------- */
+var ZX_BAN = '3.1.3';
+var zxSan = false, zxHong = false, zxCho = null;
+// Chặng 0 có THẬT SỰ chạy được bộ giải hay không — chưa tải kịp thì còn được thử lại một lần.
+var qrDaThuTep = false;
+
+/**
+ * Nạp bộ giải NGAY KHI MỞ TRANG, chạy nền, không chặn gì cả.
+ * Tệp .wasm nặng ~1,1 MB — nghe thì to, nhưng nó tải trong lúc người dùng còn đang
+ * chọn nhà máy và giơ máy chụp thẻ, nên tới lúc cần thì đã có sẵn. Bù lại đã bỏ
+ * html5-qrcode nặng 330 KB. Tải hỏng cũng không sao: jsQR và bộ giải sẵn của máy
+ * vẫn chạy, nút gõ tay 12 số luôn còn đó.
+ */
+function zxNap_() {
+  if (zxCho) return zxCho;
+  if (typeof ZXingWASM === 'undefined') { zxHong = true; return (zxCho = Promise.resolve(false)); }
+  try {
+    zxCho = ZXingWASM.prepareZXingModule({
+      // Ghim tệp .wasm về CÙNG MỘT nhà (unpkg) với jsQR. Mặc định thư viện lấy ở
+      // jsdelivr — thêm một nhà là thêm một chỗ hỏng, mà hỏng thì hỏng câm.
+      overrides: {
+        locateFile: function (t, p) {
+          return /\.wasm$/.test(t)
+            ? 'https://unpkg.com/zxing-wasm@' + ZX_BAN + '/dist/reader/' + t
+            : p + t;
+        }
+      },
+      fireImmediately: true
+    }).then(function () { zxSan = true; return true; },
+            function () { zxHong = true; return false; });
+  } catch (e) { zxHong = true; zxCho = Promise.resolve(false); }
+  return zxCho;
+}
+zxNap_();
+
+// tryHarder: chịu khó dò lâu hơn · tryRotate: thẻ cầm nghiêng · tryInvert: ảnh âm bản
+// · tryDownscale: tự thu nhỏ thử thêm vài cỡ (chính nó cứu ảnh chụp quá gần).
+var ZX_TUY = {
+  tryHarder: true, tryRotate: true, tryInvert: true, tryDownscale: true,
+  formats: ['QRCode'], maxNumberOfSymbols: 1
+};
+
+function zxRa_(ds) { return (ds && ds.length && ds[0].text) ? ds[0].text : ''; }
+
+/**
+ * Giải THẲNG từ tệp ảnh gốc — không qua canvas, không thu nhỏ.
+ * Đây vừa là đường nhanh nhất (2/4 ảnh xong ngay ở đây, ~40–110ms), vừa là đường
+ * an toàn nhất cho iPhone: không đụng tới canvas thì không bao giờ chạm trần bộ nhớ
+ * canvas của Safari — đúng cái bẫy đã làm hỏng bản 3.0.
+ */
+function thuWasmFile_(nguon) {
+  return zxNap_().then(function (ok) {
+    if (!ok) return '';
+    qrDaThuTep = true;
+    try { return ZXingWASM.readBarcodes(nguon, ZX_TUY).then(zxRa_, function () { return ''; }); }
+    catch (e) { return ''; }
+  });
 }
 
-function thuZXingCanvas_(c) {
-  return new Promise(function (ok) {
-    try { c.toBlob(function (b) { ok(b); }, 'image/png'); } catch (e) { ok(null); }
-  }).then(function (b) {
-    if (!b) return '';
-    var f;
-    try { f = new File([b], 'o.png', { type: 'image/png' }); } catch (e) { f = b; }
-    return thuThuVien(f);
-  });
+/** Giải một vùng đã cắt ra canvas. Chưa nạp xong thì bỏ qua, đừng bắt cả dây chuyền đứng chờ. */
+function thuWasmCanvas_(c) {
+  if (!zxSan) return Promise.resolve('');
+  var d;
+  try { d = c.getContext('2d', { willReadFrequently: true }).getImageData(0, 0, c.width, c.height); }
+  catch (e) { return Promise.resolve(''); }
+  try { return ZXingWASM.readBarcodes(d, ZX_TUY).then(zxRa_, function () { return ''; }); }
+  catch (e) { return Promise.resolve(''); }
 }
 
 /** Nhường luồng cho trình duyệt vẽ lại, khỏi treo màn hình khi dò lâu. */
@@ -864,8 +948,30 @@ function qrMoiTruong_() {
   return 'ảnh:' + (typeof createImageBitmap !== 'undefined' ? 'bitmap' : 'img') +
          ' · máy giải sẵn:' + (typeof BarcodeDetector !== 'undefined' ? 'có' : 'không') +
          ' · jsQR:' + (typeof jsQR !== 'undefined' ? 'có' : 'KHÔNG') +
-         ' · ZXing:' + (typeof Html5Qrcode !== 'undefined' ? 'có' : 'KHÔNG') +
+         ' · ZXing-WASM:' + (zxSan ? 'sẵn sàng'
+              : typeof ZXingWASM === 'undefined' ? 'KHÔNG TẢI ĐƯỢC'
+              : zxHong ? 'HỎNG' : 'đang tải') +
          ' · lọc canvas:' + (coLoc ? 'có' : 'không');
+}
+
+/**
+ * Chờ bộ giải WASM tối đa `han` mili giây rồi đi tiếp — KHÔNG đứng chờ vô hạn.
+ * Ở cổng nhà máy sóng có thể yếu, tệp .wasm 1,1 MB về chậm; bắt cộng tác viên nhìn
+ * màn hình đứng im là họ tắt trang. Chờ hụt cũng không mất gì: jsQR chạy ngay được,
+ * và khi WASM về tới nơi thì các lượt sau tự khắc dùng nó.
+ */
+function thuWasmFileHan_(nguon, han) {
+  if (typeof ZXingWASM === 'undefined' || zxHong) return Promise.resolve('');
+  if (zxSan) return thuWasmFile_(nguon);
+  return new Promise(function (ok) {
+    var da = false;
+    var h = setTimeout(function () { if (!da) { da = true; ok(''); } }, han);
+    zxNap_().then(function (s) {
+      if (da) return;
+      clearTimeout(h); da = true;
+      ok(s ? thuWasmFile_(nguon) : '');
+    }, function () { if (!da) { clearTimeout(h); da = true; ok(''); } });
+  });
 }
 
 /**
@@ -873,68 +979,78 @@ function qrMoiTruong_() {
  * baoBuoc(chuỗi) được gọi cách quãng để hiện tiến độ cho người dùng.
  */
 function giaiMaTuNguon(nguon, baoBuoc) {
-  return napAnh_(nguon).then(function (A) {
-    var vm = vungTuMoc_(A);
-    var dau = vm.filter(function (z) { return z.dau; }).slice(0, 4);
-    var ke = keHoachLuoi_(A.W, A.H);
-    // Tách kế hoạch lưới làm hai: phần chế độ "gốc" rẻ chạy TRƯỚC chặng ZXing đắt,
-    // phần còn lại để sau. Nhờ vậy thẻ dễ xong trong ~3 giây, chỉ thẻ khó mới tốn ZXing.
-    var cat = -1;
-    for (var q = 0; q < ke.length; q++) if (ke[q].m > 0) { cat = q; break; }
-    if (cat < 0) cat = ke.length;
-    var tong = Math.min(vm.length, 8) * 3 + dau.length + ke.length;
-    var dem = 0, batDau = Date.now(), daChayB = false;
+  qrDaThuTep = false;
+  // CHẶNG 0 — đưa THẲNG tệp ảnh gốc cho ZXing-WASM.
+  // Không canvas, không thu nhỏ, không cắt vùng. Vừa nhanh nhất (~40–110ms), vừa là
+  // đường an toàn nhất cho iPhone: không đụng canvas thì không bao giờ chạm trần bộ nhớ
+  // canvas của Safari. Đo trên 4 ảnh thẻ thật: 2/4 xong ngay tại đây.
+  if (baoBuoc) baoBuoc('Đang đọc nguyên ảnh…');
+  return thuWasmFileHan_(nguon, 2500).then(function (t0) {
+    if (t0) return t0;
+    return napAnh_(nguon).then(function (A) {
+      var vm = vungTuMoc_(A);
+      var ke = keHoachLuoi_(A.W, A.H);
+      var tong = Math.min(vm.length, 10) * 3 + ke.length + 1;
+      var dem = 0, batDau = Date.now(), daThuTep = qrDaThuTep;
 
-    function conGio() { return Date.now() - batDau < QR_HAN_GIO_MS; }
-    function xong(t) { try { A.dong(); } catch (e) {} traKhung_(); return t; }
-    function tien(nhan) {
-      dem++;
-      // Chỉ vẽ lại tiến độ cách quãng: cập nhật từng lượt làm trình duyệt dựng lại
-      // bố cục liên tục, tự nó ngốn nhiều thời gian hơn cả việc giải mã.
-      if (baoBuoc && dem % 4 === 1) baoBuoc('Đang dò ' + nhan + ' (' + dem + '/' + tong + ')');
-    }
-    function nghi() { return dem % 15 === 0 ? nhuong_() : Promise.resolve(); }
+      function conGio() { return Date.now() - batDau < QR_HAN_GIO_MS; }
+      function xong(t) { try { A.dong(); } catch (e) {} traKhung_(); return t; }
+      function tien(nhan) {
+        dem++;
+        // Chỉ vẽ lại tiến độ cách quãng: cập nhật từng lượt làm trình duyệt dựng lại
+        // bố cục liên tục, tự nó ngốn nhiều thời gian hơn cả việc giải mã.
+        if (baoBuoc && dem % 4 === 1) baoBuoc('Đang dò ' + nhan + ' (' + dem + '/' + tong + ')');
+      }
+      function nghi() { return dem % 15 === 0 ? nhuong_() : Promise.resolve(); }
 
-    /** Một lượt nhanh: jsQR trước, rồi bộ giải sẵn của máy (Android: ML Kit). */
-    function luotNhanh(v, che, tiep) {
-      tien(v.ten);
-      var c = veVung_(A, v, che);
-      var t = thuJsQR_(c);
-      if (t) return Promise.resolve(t);
-      return thuMayGiaiSan(c).then(function (t2) {
-        return t2 || nghi().then(tiep);
-      });
-    }
+      /**
+       * Một lượt: jsQR (~10ms) → ZXing-WASM (~40ms) → bộ giải sẵn của máy (Android: ML Kit).
+       * Bản 3.1 phải để ZXing riêng ra một chặng cuối vì bản JavaScript tốn ~1,1 giây mỗi
+       * lượt, chạy khắp nơi thì không kịp. Bản WASM rẻ tới mức cho chạy ở MỌI lượt —
+       * và chính nó là bộ đọc được cả 4 thẻ khó.
+       */
+      function luot(v, che, tiep) {
+        tien(v.ten);
+        var c = veVung_(A, v, che);
+        var t = thuJsQR_(c);
+        if (t) return Promise.resolve(t);
+        return thuWasmCanvas_(c).then(function (t2) {
+          if (t2) return t2;
+          return thuMayGiaiSan(c).then(function (t3) {
+            return t3 || nghi().then(tiep);
+          });
+        });
+      }
 
-    // Chặng mở màn — thử nguyên ảnh: người chụp sát riêng tấm thẻ thì xong ngay đây,
-    // chỉ tốn 2 lượt mà cứu được trường hợp phổ biến nhất.
-    function changMo(k) {
-      if (k >= 2 || k >= ke.length) return changA(0, 0);
-      return luotNhanh(ke[k].v, CHE_DO_QR[ke[k].m], function () { return changMo(k + 1); });
-    }
-    // Chặng A — vùng suy ra từ ô định vị, 3 chế độ rẻ nhất
-    function changA(m, k) {
-      if (m >= 3 || !conGio()) return changC(2, cat);
-      if (k >= vm.length || k >= 10) return changA(m + 1, 0);   // 10 = cụm 1 (7 vùng) + 3 vùng của cụm 2
-      return luotNhanh(vm[k], CHE_DO_QR[m], function () { return changA(m, k + 1); });
-    }
-    // Chặng B — ZXing trên vùng tốt nhất của mỗi cụm mốc.
-    // Hết giờ ở đâu cũng phải ghé qua đây một lần rồi mới được bỏ cuộc: đây là bộ giải
-    // khoẻ nhất chạy bằng JavaScript, bỏ nó thì mất luôn cơ hội cuối.
-    function changB(k) {
-      daChayB = true;
-      if (k >= dau.length) return conGio() ? changC(cat, ke.length) : '';
-      tien(dau[k].ten + ' (kỹ)');
-      return thuZXingCanvas_(veVung_(A, dau[k], CHE_DO_QR[0])).then(function (t) {
-        return t || changB(k + 1);
-      });
-    }
-    // Chặng C — quét lưới ô vuông toàn ảnh, chạy đoạn [k, het)
-    function changC(k, het) {
-      if (k >= het || !conGio()) return (het === cat || !daChayB) ? changB(0) : '';
-      return luotNhanh(ke[k].v, CHE_DO_QR[ke[k].m], function () { return changC(k + 1, het); });
-    }
-    return changMo(0).then(xong, function () { return xong(''); });
+      // Chặng 1 — nguyên ảnh qua canvas, 2 chế độ. Cứu ca WASM chưa tải kịp,
+      // và ca ảnh cần đổi cách xám hoá (nền bảo an xanh lơ) mới đọc được.
+      function chang1(k) {
+        if (k >= 2 || k >= ke.length) return thuLaiTep();
+        return luot(ke[k].v, CHE_DO_QR[ke[k].m], function () { return chang1(k + 1); });
+      }
+      // Nếu lúc mở màn WASM chưa về kịp thì tới đây nó thường đã về — thử lại đường
+      // "thẳng từ tệp" đúng MỘT lần, vì đó là đường khoẻ nhất trong cả dây chuyền.
+      function thuLaiTep() {
+        if (daThuTep || !zxSan) return changA(0, 0);
+        daThuTep = true;
+        tien('nguyên tệp ảnh');
+        return thuWasmFile_(nguon).then(function (t) { return t || changA(0, 0); });
+      }
+      // Chặng A — vùng suy ra từ ô định vị (finder pattern), 3 chế độ rẻ nhất
+      function changA(m, k) {
+        if (m >= 3 || !conGio()) return changC(2);
+        if (k >= vm.length || k >= 10) return changA(m + 1, 0);   // 10 = cụm 1 (7 vùng) + 3 vùng của cụm 2
+        return luot(vm[k], CHE_DO_QR[m], function () { return changA(m, k + 1); });
+      }
+      // Chặng C — quét lưới ô vuông toàn ảnh, phòng khi dò mốc trượt.
+      // `ke` đã xếp sẵn rẻ trước đắt sau (hết chế độ 0 mới sang chế độ 1…) nên
+      // không phải cắt làm hai đoạn như bản 3.1 nữa.
+      function changC(k) {
+        if (k >= ke.length || !conGio()) return '';
+        return luot(ke[k].v, CHE_DO_QR[ke[k].m], function () { return changC(k + 1); });
+      }
+      return chang1(0).then(xong, function () { return xong(''); });
+    });
   }).catch(function () { traKhung_(); return ''; });
 }
 
