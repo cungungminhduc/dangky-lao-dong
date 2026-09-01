@@ -49,6 +49,27 @@
   .hang input::placeholder{color:#c6ced6}
   .hang input:focus,.hang select:focus{outline:0}
   .hang.sai{background:#fff5f4}
+  /* Nút mở màn chọn nhà máy — trông y như ô select cũ để không ai phải học lại,
+     nhưng bấm vào thì mở ra danh sách CÓ Ô LỌC thay vì cuộn tay giữa 17 nhà máy. */
+  .honm{flex:1;min-width:0;display:flex;align-items:center;justify-content:flex-end;gap:6px;
+        border:0;background:transparent;padding:15px 0;font:inherit;font-size:15.5px;
+        color:var(--chu);cursor:pointer;text-align:right}
+  .honm .mui{flex:none;color:#c3cad2;font-size:19px;line-height:1}
+  .honm b{font-weight:400;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .honm.trong b{color:#c6ced6}
+  .timnm{display:block;width:calc(100% - 28px);margin:10px 14px 0;padding:12px;font-size:15.5px;
+         font-family:inherit;border:1px solid #d9dde2;border-radius:10px;background:#fff}
+  .nmhang{display:flex;align-items:center;gap:10px;padding:14px 16px;border-top:1px solid #f2f4f6;
+          width:100%;background:transparent;border-left:0;border-right:0;border-bottom:0;
+          font:inherit;text-align:left;color:var(--chu);cursor:pointer}
+  .nmhang:first-child{border-top:0}
+  .nmhang:active{background:#f6f8fa}
+  .nmhang.dang{background:var(--tot-nen)}
+  .nmhang .t{flex:1;min-width:0}
+  .nmhang .t b{display:block;font-size:15.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nmhang .t span{display:block;font-size:12.5px;color:var(--mo);margin-top:2px}
+  .nmhang .dau{flex:none;color:var(--tot);font-weight:700}
+  .nmtrong{padding:18px 16px;text-align:center;color:var(--mo);font-size:14px}
 
   .gt{display:flex;gap:20px;justify-content:flex-end;flex:1;padding:12px 0}
   .gt label{display:flex;align-items:center;gap:8px;font-size:15px;margin:0;cursor:pointer}
@@ -153,7 +174,12 @@
   <div class="khoi">
     <div class="hang" id="hang_ct">
       <span>Nhà máy</span>
-      <select id="ma_ct"><option value="">Vui lòng chọn nhà máy</option></select>
+      <button type="button" class="honm trong" id="nut_chon_nm">
+        <b id="nm_nhan">Vui lòng chọn nhà máy</b><span class="mui">›</span></button>
+      <!-- Ô select vẫn nằm đây, chỉ bị ẩn đi: nó là NƠI GIỮ GIÁ TRỊ THẬT.
+           Nhờ vậy toàn bộ mã cũ (chonMang, chonNhaMay, bộ nghe sự kiện change, lúc gửi)
+           không phải sửa một dòng nào, chỉ thêm màn chọn có ô lọc ở phía trước. -->
+      <select id="ma_ct" class="an"><option value="">Vui lòng chọn nhà máy</option></select>
     </div>
     <div class="hang"><span id="nhan_ngay">Ngày đi làm</span>
       <input id="ngay_lam_pv" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
@@ -189,6 +215,15 @@
 <input type="file" id="file_anh" accept="image/*" class="an">
 <div id="anhtam"></div>
 
+<!-- ===== CHỌN NHÀ MÁY (có ô lọc) ===== -->
+<div id="man_nm" class="an">
+  <div style="text-align:center;padding:16px 0 6px"><b style="font-size:17px">CHỌN NHÀ MÁY</b>
+    <div style="font-size:13px;color:var(--mo);margin-top:3px" id="nm_tom">—</div></div>
+  <input id="nm_tim" class="timnm" placeholder="Gõ tên nhà máy để tìm — không cần dấu" autocomplete="off">
+  <div class="khoi"><div id="nm_noi"></div></div>
+  <button type="button" class="nut phu" id="nut_nm_huy">Quay lại</button>
+</div>
+
 <!-- ===== TÌNH TRẠNG ===== -->
 <div id="man_tt" class="an"></div>
 
@@ -223,7 +258,7 @@ var maCT = '', tenCT = '', loaiCT = '', qrTho = '', nguonNhap = 'tay';
 var dsCT = [], ngayCap = '', cmndCu = '';
 
 function hien(el) {
-  ['man_mang', 'form', 'man_tt', 'man_ds'].forEach(function (i) { $(i).classList.add('an'); });
+  ['man_mang', 'form', 'man_nm', 'man_tt', 'man_ds'].forEach(function (i) { $(i).classList.add('an'); });
   if (el) $(el).classList.remove('an');
   $('nut_ds').classList.toggle('an', el !== 'form');
   window.scrollTo(0, 0);
@@ -308,13 +343,98 @@ function chonMang(loai) {
   // và không còn cảnh bỏ trống cả hai ô như trước.
   $('nhan_ngay').textContent = loai === 'chinh_thuc' ? 'Ngày phỏng vấn' : 'Ngày đi làm';
   maCT = ''; tenCT = '';
+  veNhanNhaMay();
 }
+
+// ============================================================
+// CHỌN NHÀ MÁY — danh sách xếp A→Z (máy chủ xếp sẵn) + ô lọc không dấu
+// ============================================================
+/*
+ * Vì sao không để nguyên ô select: đến khoảng chục nhà máy trở lên thì bảng chọn của điện
+ * thoại chỉ còn là một dải cuộn dài, không gõ tìm được. Cộng tác viên đứng ngoài đường,
+ * một tay cầm thẻ căn cước, cuộn tìm tên nhà máy giữa danh sách dài là chỗ mất thời gian
+ * và chọn nhầm. Ô select vẫn nằm nguyên trong trang để giữ giá trị, chỉ bị ẩn đi.
+ */
+
+/** Bỏ dấu để lọc: gõ "vu hao" ra "VŨ HÀO". Khớp theo ĐẦU TỪ nên gõ "an" không lôi cả "Giang". */
+function khongDauNM(s) {
+  // Dải dấu thanh và chữ đ viết bằng MÃ \uXXXX chứ không dán ký tự thật vào regex:
+  // ký tự tổ hợp dán thẳng rất dễ bị một lần lưu khác bảng mã làm hỏng lặng lẽ — lúc đó
+  // ô lọc vẫn chạy nhưng gõ không dấu không ra ai, mà không báo lỗi gì cả.
+  if (!String.prototype.normalize) return String(s || '').toLowerCase();
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+    .replace(/\u0111/g, 'd').replace(/\u0110/g, 'D').toLowerCase();
+}
+function khopNM(chuoi, cum) {
+  if (!cum) return true;
+  var tu = khongDauNM(chuoi).split(/[\s\-_.]+/);
+  return khongDauNM(cum).split(/\s+/).filter(String).every(function (c) {
+    return tu.some(function (t) { return t.indexOf(c) === 0; });
+  });
+}
+
+/** Chữ hiện trên hàng "Nhà máy" của biểu mẫu. */
+function veNhanNhaMay() {
+  var co = !!maCT;
+  $('nm_nhan').textContent = co ? tenCT : 'Vui lòng chọn nhà máy';
+  $('nut_chon_nm').classList.toggle('trong', !co);
+}
+
+function dsNhaMayCuaMang() {
+  return dsCT.filter(function (c) { return c.loai === loaiCT; });
+}
+
+function veDsNhaMay() {
+  var ds = dsNhaMayCuaMang();
+  var cum = $('nm_tim').value || '';
+  var h = '', hienRa = 0;
+  ds.forEach(function (c) {
+    if (!khopNM(c.ten_cong_ty + ' ' + c.ma_ct, cum)) return;
+    hienRa++;
+    h += '<button type="button" class="nmhang' + (c.ma_ct === maCT ? ' dang' : '') + '"'
+      +   ' data-ma="' + thoat(c.ma_ct) + '">'
+      +   '<span class="t"><b>' + thoat(c.ten_cong_ty) + '</b><span>' + thoat(c.ma_ct) + '</span></span>'
+      +   (c.ma_ct === maCT ? '<span class="dau">✓</span>' : '')
+      + '</button>';
+  });
+  if (!hienRa) {
+    h = '<div class="nmtrong">' + (cum ? 'Không có nhà máy nào khớp "' + thoat(cum) + '".'
+      : 'Chưa khai nhà máy nào cho mảng này.') + '</div>';
+  }
+  $('nm_noi').innerHTML = h;
+  [].forEach.call($('nm_noi').querySelectorAll('.nmhang'), function (b) {
+    b.addEventListener('click', function () {
+      var c = dsCT.filter(function (x) { return x.ma_ct === b.getAttribute('data-ma'); })[0];
+      if (c) chonNhaMay(c);
+    });
+  });
+}
+
+function moChonNhaMay() {
+  var ds = dsNhaMayCuaMang();
+  $('nm_tom').textContent = (loaiCT === 'chinh_thuc' ? 'Chính thức' : 'Thời vụ')
+    + ' · ' + ds.length + ' nhà máy · xếp A→Z';
+  // Ô lọc chỉ hiện khi danh sách đủ dài để phải cuộn. Vài nhà máy mà bày thêm ô nhập
+  // thì chỉ tổ chật màn hình và làm bàn phím bật lên che mất danh sách.
+  $('nm_tim').classList.toggle('an', ds.length <= 6);
+  $('nm_tim').value = '';
+  veDsNhaMay();
+  hien('man_nm');
+}
+
+$('nut_chon_nm').addEventListener('click', moChonNhaMay);
+$('nm_tim').addEventListener('input', veDsNhaMay);
+$('nut_nm_huy').addEventListener('click', function () { hien('form'); });
 
 function chonNhaMay(c) {
   if (!c) return;
   maCT = c.ma_ct; tenCT = c.ten_cong_ty;
   $('ma_ct').value = maCT;
   $('ten_ct').textContent = tenCT.toUpperCase();
+  veNhanNhaMay();
+  // Bắn sự kiện change của ô select ẩn: bộ nghe cũ vẫn chạy nguyên (tra tình trạng ngay
+  // khi đã có đủ 12 số CCCD). Nhờ vậy thêm màn chọn mới mà không đụng vào luồng cũ.
+  try { $('ma_ct').dispatchEvent(new Event('change')); } catch (e) {}
   hien('form');
 }
 
