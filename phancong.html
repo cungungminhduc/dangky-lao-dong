@@ -263,9 +263,16 @@ function vaoTrong(kq) {
   // nằm ở MÁY CHỦ: pc_bang và pc_luu đều tự kiểm vai trò, sửa mã trang này không lách được.
   if (!kq.phan_cong_duoc) {
     datPhien('');
-    veManDangNhap('Tài khoản này là ' + (kq.ten_chuc_vu || 'nhân viên đón')
-      + ' nên không mở được trang phân công — chỉ trưởng nhóm và quản trị mới vào được. '
-      + 'Nếu bạn cần xem danh sách để gọi thì mở trang danh sách.');
+    // Nói thẳng ô vai_tro đang ghi gì. Trước đây chỉ báo "bạn là nhân viên đón", trong khi
+    // người ta VỪA điền chức vụ xong — nghe như hệ thống hỏng, không ai biết đi sửa ở đâu.
+    veManDangNhap(kq.vai_tro_go_nham
+      ? 'Ô "vai_tro" của bạn trong bảng tính đang ghi "' + kq.vai_tro_go_nham + '", '
+        + 'hệ thống không hiểu là chức vụ nào nên vẫn xếp bạn là nhân viên đón. '
+        + 'Ô đó chỉ nhận đúng hai giá trị: truong_nhom hoặc quan_tri. Báo quản trị sửa lại.'
+      : 'Tài khoản này là ' + (kq.ten_chuc_vu || 'nhân viên đón')
+        + ' nên không mở được trang phân công — chỉ trưởng nhóm và quản trị mới vào được. '
+        + 'Nếu bạn cần được phân công, báo quản trị điền "truong_nhom" vào ô vai_tro của bạn. '
+        + 'Còn nếu bạn chỉ cần xem danh sách để gọi thì mở trang danh sách.');
     return;
   }
   taiKhoan = { ten_nguoi: kq.ten_nguoi || '', chuc_vu: kq.chuc_vu || '',
