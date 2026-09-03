@@ -81,6 +81,8 @@
   .nut:active{background:var(--xanh-dam)}
   .nut[disabled]{opacity:.5}
   .nut.phu{background:#eceff3;color:var(--chu)}
+  .nut.sua{background:#8a6300}
+  .nut.sua:active{background:#6b4e00}
 
   /* nút tròn nổi góc phải */
   .tron{position:fixed;right:14px;bottom:22px;width:82px;height:82px;border-radius:50%;
@@ -209,6 +211,8 @@
   </div>
 
   <button type="submit" class="nut" id="nut_dk">Xác nhận nộp</button>
+  <!-- Chỉ hiện khi máy chủ xác nhận: đúng người đăng ký gốc + phiếu còn trong hạn sửa. -->
+  <button type="button" class="nut sua an" id="nut_sua">ĐỔI phiếu sang nhà máy này</button>
   <button type="button" class="nut phu" id="nut_doi_mang">Đổi mảng / nhà máy</button>
 </form>
 
@@ -526,13 +530,33 @@ function baoDai(mau, html) {
 }
 
 // ---------- Tra tình trạng (chỉ tra, không ghi) ----------
+/**
+ * Phiếu cũ đang chờ SỬA sang nhà máy này (nếu có). Máy chủ chỉ trả về khi CHÍNH người
+ * đăng ký gốc đang thao tác và phiếu còn trong hạn sửa — trang không tự quyết định gì.
+ */
+var phieuSua = null;
+
 function traTinhTrang(cccd) {
-  goiAPI({ token: TOKEN_API, hanh_dong: 'kiem_tra', so_cccd: cccd, ma_ct: maCT })
+  phieuSua = null;
+  $('nut_sua').classList.add('an');
+  goiAPI({ token: TOKEN_API, hanh_dong: 'kiem_tra', so_cccd: cccd, ma_ct: maCT,
+           nguoi_nhap: ($('nguoi_nhap').value || '').trim() })
     .then(function (kq) {
       if (!kq.ok) return;
       if (kq.ma === 'TRUNG') { veTinhTrang(kq); return; }
       var tin = '';
       if (kq.ma === 'CAN_XAC_NHAN') {
+        if (kq.co_the_sua) {
+          // Chính người đăng ký gốc → mời SỬA phiếu cũ thay vì đẻ phiếu thứ hai.
+          phieuSua = { ma_ld: kq.ma_ld_sua, cong_ty_cu: kq.cong_ty_cu, ho_ten: kq.ho_ten };
+          $('nut_sua').textContent = 'ĐỔI phiếu ' + kq.ma_ld_sua + ' sang ' + (tenCT || 'nhà máy này');
+          $('nut_sua').classList.remove('an');
+          baoDai('vang', '<b>Người này đang có phiếu ở "' + thoat(kq.cong_ty_cu) + '"</b> ('
+            + thoat(kq.ma_ld_sua) + ', do chính bạn đăng ký).<br>'
+            + 'Bấm nút <b>ĐỔI phiếu</b> bên dưới để chuyển phiếu đó sang đây — '
+            + 'không đẻ thêm phiếu mới. Còn sửa được <b>' + kq.con_sua_ngay + ' ngày</b> nữa.');
+          return;
+        }
         baoDai('vang', '<b>Người này vừa đăng ký ở công ty khác:</b><br>' + thoat(kq.trung_voi) +
           '<br>Vẫn đăng ký được — bấm <b>Xác nhận nộp</b> rồi máy sẽ hỏi lại một lần nữa.');
         return;
@@ -1294,6 +1318,39 @@ function guiDangKy(d, ten, nut) {
 }
 
 // ---------- Lưới an toàn: phiếu chưa gửi được ----------
+/**
+ * ĐỔI nhà máy cho phiếu cũ. Ghi đè đúng phiếu đó, KHÔNG tạo phiếu mới.
+ * Mọi điều kiện (đúng người, còn hạn, chưa đón, cùng mảng) đều do MÁY CHỦ xét lại —
+ * ở đây chỉ hỏi lại cho chắc rồi gửi đi.
+ */
+$('nut_sua').addEventListener('click', function () {
+  if (!phieuSua) return;
+  var nn = ($('nguoi_nhap').value || '').trim();
+  if (!nn) { alert('Điền tên người tuyển dụng trước đã.'); $('nguoi_nhap').focus(); return; }
+  if (!confirm('ĐỔI NHÀ MÁY CHO PHIẾU CŨ\n\n' + (phieuSua.ho_ten || '') + ' — ' + phieuSua.ma_ld +
+      '\n\nTừ:  ' + phieuSua.cong_ty_cu + '\nSang: ' + (tenCT || 'nhà máy này') +
+      '\n\nPhiếu cũ bị GHI ĐÈ, không tạo phiếu mới. Đồng ý?')) return;
+
+  var n = this; n.disabled = true; n.textContent = 'Đang đổi…';
+  goiAPI({ token: TOKEN_API, hanh_dong: 'sua_dang_ky', ma_ld: phieuSua.ma_ld, ma_ct: maCT,
+           nguoi_nhap: nn,
+           ngay_di_lam: loaiCT === 'chinh_thuc' ? '' : ($('ngay_lam_pv').value || '').trim(),
+           ngay_phong_van: loaiCT === 'chinh_thuc' ? ($('ngay_lam_pv').value || '').trim() : '',
+           ghi_chu: ($('ghi_chu').value || '').trim() })
+    .then(function (kq) {
+      if (kq && kq.ok) {
+        phieuSua = null;
+        $('nut_sua').classList.add('an');
+        goiAPI({ token: TOKEN_API, hanh_dong: 'gui_tin' }).catch(function () {});
+      }
+      veTinhTrang(kq);
+    })
+    .catch(function () {
+      alert('Không nối được máy chủ. Phiếu CHƯA đổi — thử lại khi có mạng.');
+    })
+    .then(function () { n.disabled = false; n.textContent = 'ĐỔI phiếu sang nhà máy này'; });
+});
+
 function catPhieu(d) {
   try { localStorage.setItem('phieu_cho', JSON.stringify(d)); } catch (e) {}
 }
