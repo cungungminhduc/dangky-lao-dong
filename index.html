@@ -1385,13 +1385,22 @@ function veTinhTrang(kq) {
   else if (kq.ok && kq.ma === 'TRUNG_KHAC_CT'){ loai = 'tot'; dau = '✓'; tieu = 'Đã đăng ký (có trùng)';
       mo = kq.ho_ten;
       them = '<p style="color:var(--canh)">(!) Cũng đang đăng ký tại: ' + thoat(kq.trung_voi) + '</p>'; }
+  else if (kq.ok && kq.ma === 'DA_SUA')      { loai = 'tot';  dau = '✓'; tieu = 'Đã đổi nhà máy';
+      mo = kq.ho_ten + ' — ' + kq.cccd_che;
+      them = '<p>Từ <b>' + thoat(kq.cong_ty_cu || '?') + '</b> sang <b>' +
+             thoat(kq.ten_cong_ty || '?') + '</b>' +
+             (kq.ngay_di_lam ? ', đi làm ' + thoat(kq.ngay_di_lam) : '') +
+             '</p><p style="color:var(--mo);font-size:13.5px">Phiếu cũ đã được ghi đè, ' +
+             'không tạo phiếu mới.</p>'; }
   else if (kq.ok && kq.ma === 'TRUNG')       { loai = 'canh'; dau = '!'; tieu = 'Trùng — chưa đăng ký được';
       mo = kq.ho_ten + (kq.con_khoa_ngay ? ' — còn ' + kq.con_khoa_ngay + ' ngày nữa mới đăng ký lại được' : '');
       them = '<p><b>Đã được "' + thoat(kq.nguoi_nhap_cu || 'không rõ') + '"</b> đăng ký tại <b>' +
              thoat(kq.ten_cong_ty_cu || '?') + '</b>' + (kq.ngay_dk ? ' ngày ' + thoat(kq.ngay_dk) : '') + '</p>'; }
   else { loai = 'xau'; dau = '×'; tieu = 'Chưa đăng ký được'; mo = kq.loi || 'Có lỗi xảy ra'; ma = ''; }
 
-  if (kq.ten_cong_ty && kq.ma !== 'TRUNG' && kq.ma !== 'TRUNG_KHAC_CT') them += '<p>' + thoat(kq.ten_cong_ty) + '</p>';
+  if (kq.ten_cong_ty && kq.ma !== 'TRUNG' && kq.ma !== 'TRUNG_KHAC_CT' && kq.ma !== 'DA_SUA') {
+    them += '<p>' + thoat(kq.ten_cong_ty) + '</p>';
+  }
   if (kq.canh_bao_cheo) them += '<p style="color:var(--canh)">(!) ' + thoat(kq.canh_bao_cheo) + '</p>';
 
   $('man_tt').className = 'tt ' + loai;
