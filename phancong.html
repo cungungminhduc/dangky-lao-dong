@@ -13,13 +13,15 @@
     truong_nhom  — thấy đúng NHÓM của mình: chỉ chọn được công ty và nhân viên cùng nhóm
     (trống)      — nhân viên đón, KHÔNG vào được trang này
 
-  Trưởng nhóm chốt "ngày mai ai phụ trách công ty nào" rồi bấm Gửi. Máy chủ làm hai việc
-  trong một lượt:
+  PHÂN CÔNG LÀ THƯỜNG TRỰC (bản 3.15): chốt MỘT LẦN rồi thôi. Bảng đã chốt có hiệu lực
+  mọi ngày cho tới khi chính trưởng nhóm sửa lại — không phải vào bấm lại mỗi sáng.
+  Máy chủ tự gửi bảng đó vào nhóm mỗi ngày đúng giờ khai ở ô `gio_phan_cong`.
+
+  Trưởng nhóm chỉ mở trang này KHI CÓ THAY ĐỔI. Bấm Gửi thì máy chủ làm hai việc:
     1. Sửa quyền xem danh sách lao động — người được tích mở trang danh sách là thấy ngay,
-       KHÔNG phải đăng nhập lại; người bị bỏ ra thì quyền rút xuống, còn sống thêm ÂN HẠN
-       (mặc định hết ngày mai) để họ báo nốt việc đang làm dở.
-    2. Bắn MỘT tin vào nhóm trưởng nhóm: ai phụ trách đâu, kèm số điện thoại — để khi có
-       việc phát sinh ở cổng nhà máy thì cả nhóm biết gọi ai.
+       KHÔNG phải đăng nhập lại, và quyền đó KHÔNG hết hạn; người bị bỏ ra thì quyền còn
+       sống thêm ÂN HẠN (mặc định hết ngày mai) để họ báo nốt việc đang làm dở.
+    2. Bắn thêm MỘT tin vào nhóm trưởng nhóm ngay lúc đó, để cả nhóm biết bảng vừa đổi.
 
   BẢO MẬT: đăng nhập bằng số CCCD + mật khẩu, y hệt trang danh sách.
   Trang này KHÔNG cấp được chức vụ cho ai, và KHÔNG đụng được sang nhóm khác.
@@ -120,7 +122,7 @@
 <div id="man_dn">
   <div class="dinh">
     <b>PHÂN CÔNG ĐÓN</b>
-    <div class="phu">Chốt ngày mai ai phụ trách công ty nào</div>
+    <div class="phu">Chốt ai phụ trách nhà máy nào — dùng mãi tới khi sửa lại</div>
   </div>
   <div class="o">
     <div class="nhan">Số căn cước của bạn (12 số)</div>
@@ -404,6 +406,8 @@ function veCongTy() {
     + (congTy.length > 1 ? 'Danh sách nhà máy xếp <b>A→Z theo tên</b>.<br>' : '')
     + 'Người <b>cố định</b> (nền vàng) do quản trị khai trong bảng tính, '
     + 'trang này không gỡ được — cứ để yên.<br>'
+    + 'Bảng này là <b>thường trực</b>: chốt một lần rồi dùng mãi, mỗi ngày máy tự gửi lại '
+    + 'vào nhóm. Chỉ mở trang này khi <b>có thay đổi</b>.<br>'
     + 'Bỏ tích một người thì quyền của họ <b>không mất ngay</b>: còn dùng được tới hết '
     + (anHan === 1 ? 'ngày mai' : anHan + ' ngày nữa') + ', đủ để họ báo nốt việc đang làm dở.</div>';
   $('ct_noi').innerHTML = h;
@@ -515,7 +519,8 @@ $('nut_chot').addEventListener('click', function () {
     if (d.bot.length > 6) ds += '\n· … và ' + (d.bot.length - 6) + ' người nữa';
     if (!confirm('Những người sau sẽ THÔI phụ trách:\n\n' + ds
       + '\n\nHọ vẫn xem được danh sách tới hết '
-      + (anHan === 1 ? 'ngày mai' : anHan + ' ngày nữa') + ' rồi mới mất quyền.\n\nĐồng ý chốt?')) return;
+      + (anHan === 1 ? 'ngày mai' : anHan + ' ngày nữa') + ' rồi mới mất quyền.'
+      + '\n\nNhững người còn lại giữ quyền vô thời hạn tới khi bạn sửa lại.\n\nĐồng ý chốt?')) return;
   }
 
   var goi = congTy.map(function (c) {
@@ -536,15 +541,17 @@ function veKetQua(kq) {
   $('xong_phu').textContent = 'Ngày ' + (kq.ngay_hien_thi || kq.ngay);
   var h = '<div class="xong">'
     + '<b>Quyền đã sửa xong.</b><br>'
-    + 'Cấp mới: <b>' + (kq.cap_moi || 0) + '</b> · gia hạn: <b>' + (kq.gia_han || 0) + '</b> · '
+    + 'Cấp mới: <b>' + (kq.cap_moi || 0) + '</b> · bật lại: <b>' + (kq.gia_han || 0) + '</b> · '
     + 'gỡ: <b>' + (kq.go_bo || 0) + '</b><br>'
     + (kq.go_bo ? 'Người bị gỡ còn xem được tới hết ngày <b>'
         + String(kq.het_han_ngay || '').split('-').reverse().join('/') + '</b>.<br>' : '')
-    + 'Người được phân mở trang danh sách là thấy ngay, <b>không phải đăng nhập lại</b>.'
+    + 'Người được phân mở trang danh sách là thấy ngay, <b>không phải đăng nhập lại</b>, '
+    + 'và quyền đó <b>không hết hạn</b>.<br>'
+    + 'Bảng này giữ nguyên hiệu lực mọi ngày tới khi bạn sửa lại — <b>không phải vào bấm mỗi sáng</b>.'
     + '</div>';
   if (kq.chua_khai_nhom) {
     h += '<div class="xong xau"><b>Chưa gửi được thông báo.</b><br>'
-      + 'Chưa khai nhóm Zalo nhận bảng phân công (ô <b>zalo_chat_id_truong_nhom</b> trong '
+      + 'Chưa khai nhóm Zalo nhận bảng phân công (ô <b>nhom_phan_cong</b> trong '
       + 'bảng tính). Quyền thì đã sửa xong rồi, chỉ là cả nhóm chưa được báo.</div>';
   } else {
     h += '<div class="xong"><b>Đã gửi ' + (kq.so_tin || 0)
