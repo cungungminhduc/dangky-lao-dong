@@ -115,8 +115,22 @@
     border:1px solid var(--vien);border-radius:9px}
   .cuon-x table{border-collapse:collapse;font-size:12.5px;white-space:nowrap}
   .cuon-x th,.cuon-x td{padding:6px 9px;border-bottom:1px solid var(--vien);text-align:left}
-  .cuon-x th{background:#eef1f4;font-weight:700;position:sticky;top:0}
+  .cuon-x th{background:#eef1f4;font-weight:700;position:sticky;top:0;
+    cursor:pointer;user-select:none;-webkit-user-select:none}
+  .cuon-x th:active{background:#dfe5ea}
+  .cuon-x td{cursor:cell;user-select:none;-webkit-user-select:none}
+  .cuon-x td.chon{background:#cfe4ff}
+  .cuon-x th.chon{background:#a9ccf5}
   .cuon-x tr:last-child td{border-bottom:0}
+  .mach-x{margin-top:8px;font-size:12px;color:var(--mo);line-height:1.5}
+  .thanh-chon{position:sticky;bottom:0;z-index:20;background:#fff;
+    border-top:1px solid var(--vien);padding:10px 14px;box-shadow:0 -3px 12px rgba(0,0,0,.08)}
+  .thanh-chon .doi{display:flex;gap:8px;margin-top:8px}
+  .thanh-chon .doi button{flex:1;padding:12px;border:0;border-radius:10px;font-size:14.5px;
+    font-weight:700;cursor:pointer}
+  .thanh-chon .doi .c1{background:var(--xam-nut);color:#3c4753}
+  .thanh-chon .doi .c2{background:var(--xanh);color:#fff}
+  .thanh-chon .doi .c2.xong{background:#1b7f45}
   .text-x{margin-top:10px;width:100%;min-height:96px;padding:10px;font-size:13px;
     line-height:1.5;border:1px solid var(--vien);border-radius:9px;background:#fbfcfd;
     color:var(--chu);font-family:inherit;resize:vertical}
@@ -193,6 +207,13 @@
   </div>
   <div id="x_noi"></div>
   <button type="button" class="nut phu" id="x_ve">Quay lại danh sách gọi</button>
+  <div class="thanh-chon an" id="x_thanh">
+    <div style="font-size:13.5px;color:#3c4753" id="x_tt_chon">—</div>
+    <div class="doi">
+      <button type="button" class="c1" id="x_bo_chon">Bỏ chọn</button>
+      <button type="button" class="c2" id="x_chep_chon" data-ten="Sao chép phần đang chọn">Sao chép phần đang chọn</button>
+    </div>
+  </div>
 </div>
 
 </div>
@@ -290,25 +311,86 @@ $('nut_thoat').addEventListener('click', function () {
 })();
 
 // ============================================================
-// LẤY DỮ LIỆU CHO NHÀ MÁY (bản 3.16)
+// LẤY DỮ LIỆU CHO NHÀ MÁY (bản 3.17)
 // ============================================================
+//
+// BA VIỆC PHẢI ĐÚNG, Dương chỉ ra sau khi dùng bản 3.16:
+//
+//   1. CHỌN ĐƯỢC TỪNG PHẦN như trong Excel — một cột, một vùng, không phải cả bảng.
+//      Bấm tiêu đề cột = chọn cả cột; kéo qua các ô = chọn vùng chữ nhật.
+//   2. Nút "Sao chép DỮ LIỆU" chỉ chép DỮ LIỆU, KHÔNG chép dòng tiêu đề — vì biểu mẫu
+//      nhà máy đã có sẵn tiêu đề rồi, dán thêm một dòng nữa là phải xoá tay.
+//   3. Dán ra phải GIỮ NGUYÊN NHƯ ĐANG HIỆN: chữ Times New Roman, và số căn cước /
+//      số điện thoại / ngày sinh không bị Excel diễn giải lại.
+//
+// VÌ SAO PHẢI CHÉP DẠNG HTML CHỨ KHÔNG CHỈ TEXT: dán chuỗi ngăn bằng Tab vào Excel thì
+// Excel tự đoán kiểu từng ô — "024300009486" thành SỐ 24300009486 (mất mã tỉnh),
+// "01/02/1998" thành ngày theo định dạng máy (có máy hiểu là 02/01). Chép kèm dạng
+// text/html có `mso-number-format:"\@"` là bảo Excel: ô này là CHỮ, đừng đụng vào.
+// Vẫn chép kèm text/plain để dán vào Zalo, Notepad vẫn ra chữ thường.
+
+var FONT_XUAT = 'Times New Roman', CO_CHU_XUAT = 13;
+var DU_LIEU_XUAT = null;          // kết quả lần lấy gần nhất
+var vungChon = null;              // {i, r1, c1, r2, c2} — i = khối công ty thứ mấy
+var dangKeo = false;
+
+/** Bọc giá trị cho an toàn khi nhét vào HTML. */
+function thoatHTML(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
 
 /**
- * SAO CHÉP — BA LỚP, không được phép im lặng không làm gì.
+ * Dựng bảng HTML để dán vào Excel / Word.
  *
- * Trang này chạy trong trình duyệt NHÚNG TRONG ZALO là chính. Ở đó
- * navigator.clipboard rất hay bị chặn (không phải https "an toàn" theo cách trình duyệt
- * đó hiểu, hoặc không có quyền). Chỉ dùng một lớp thì nút bấm xong không có gì xảy ra và
- * người dùng đứng ở cổng nhà máy không biết là đã hỏng — kiểu hỏng khó chịu nhất.
- *
- *   Lớp 1: navigator.clipboard.writeText
- *   Lớp 2: <textarea> + document.execCommand('copy')  — cách cũ, chạy được ở nhiều chỗ hơn
- *   Lớp 3: BÔI ĐEN SẴN vùng text và bảo người dùng tự bấm giữ để chép
+ * MỌI Ô đều đặt `mso-number-format:"\@"` (định dạng CHỮ). Cố ý làm thế cho TẤT CẢ chứ
+ * không chỉ mấy cột số: đó là cách duy nhất bảo đảm "dán ra đúng như đang hiện". Ô nào
+ * để Excel tự đoán là ô đó có ngày sai hoặc mất số 0 đầu, mà lại hỏng lặng lẽ.
  */
-function saoChep(text, nut, oText) {
-  // Lấy nhãn gốc từ data-ten chứ không từ textContent: bấm hai lần nhanh thì lần sau
-  // sẽ chụp phải chính chữ "Đã sao chép" và nút kẹt luôn ở đó.
+function dungHTMLBang(cot, hang, coTieuDe) {
+  var chung = 'font-family:\'' + FONT_XUAT + '\',serif;font-size:' + CO_CHU_XUAT + 'pt;'
+            + 'mso-number-format:"\\@";border:1px solid #000000;padding:3px 6px;'
+            + 'vertical-align:middle;';
+  var h = '<table border="1" cellspacing="0" cellpadding="3" '
+        + 'style="border-collapse:collapse;font-family:\'' + FONT_XUAT + '\',serif;'
+        + 'font-size:' + CO_CHU_XUAT + 'pt">';
+  if (coTieuDe && cot && cot.length) {
+    h += '<tr>' + cot.map(function (c) {
+      return '<th style="' + chung + 'font-weight:bold;background:#e8eaed">' + thoatHTML(c) + '</th>';
+    }).join('') + '</tr>';
+  }
+  h += hang.map(function (r) {
+    return '<tr>' + r.map(function (v) {
+      return '<td style="' + chung + '">' + thoatHTML(v) + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+  return h + '</table>';
+}
+
+/** Bảng → chuỗi ngăn bằng ký tự Tab (bản dự phòng, và để dán vào chỗ không nhận HTML). */
+function dungTSV(cot, hang, coTieuDe) {
+  var ds = coTieuDe && cot && cot.length ? [cot.slice()] : [];
+  ds = ds.concat(hang);
+  return ds.map(function (h) {
+    // Ô có Tab hoặc xuống dòng sẽ làm vỡ cột khi dán — nơi thường trú hay dính.
+    return h.map(function (v) { return String(v == null ? '' : v).replace(/[\t\r\n]+/g, ' '); }).join('\t');
+  }).join('\n');
+}
+
+/**
+ * CHÉP HAI DẠNG một lượt — ba lớp, không được phép im lặng không làm gì.
+ *
+ * Trang này chạy trong trình duyệt NHÚNG TRONG ZALO là chính, ở đó navigator.clipboard
+ * rất hay bị chặn. Chỉ dùng một lớp thì nút bấm xong không có gì xảy ra và người dùng
+ * đứng ở cổng nhà máy không biết là đã hỏng — kiểu hỏng khó chịu nhất.
+ *
+ *   Lớp 1: navigator.clipboard.write   — đặt được CẢ text/html lẫn text/plain
+ *   Lớp 2: vùng contenteditable ẩn + execCommand('copy') — trình duyệt tự sinh cả hai dạng
+ *   Lớp 3: bôi đen sẵn vùng chữ, bảo người dùng bấm giữ → Sao chép (chỉ còn text)
+ */
+function chepBang(html, text, nut, oText) {
   function xong() {
+    if (!nut) return;
     nut.textContent = '✓ Đã sao chép';
     nut.classList.add('xong');
     setTimeout(function () {
@@ -317,47 +399,147 @@ function saoChep(text, nut, oText) {
     }, 1800);
   }
   function tuChep() {
-    // Lớp 3 — bày sẵn ra để người dùng bấm giữ → Sao chép
     if (oText) { oText.focus(); oText.select(); try { oText.setSelectionRange(0, 99999); } catch (e) {} }
-    nut.textContent = 'Bấm giữ vùng chữ → Sao chép';
-    setTimeout(function () { nut.textContent = nut.getAttribute('data-ten'); }, 3500);
+    if (nut) {
+      nut.textContent = 'Bấm giữ vùng chữ → Sao chép';
+      setTimeout(function () { nut.textContent = nut.getAttribute('data-ten'); }, 3500);
+    }
   }
   try {
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(xong, function () { chepCu(text) ? xong() : tuChep(); });
+    if (window.ClipboardItem && navigator.clipboard && navigator.clipboard.write) {
+      var it = {};
+      it['text/html'] = new Blob([html], { type: 'text/html' });
+      it['text/plain'] = new Blob([text], { type: 'text/plain' });
+      navigator.clipboard.write([new ClipboardItem(it)])
+        .then(xong, function () { chepGiauHTML(html, text) ? xong() : tuChep(); });
       return;
     }
   } catch (e) {}
-  if (chepCu(text)) xong(); else tuChep();
+  if (chepGiauHTML(html, text)) xong(); else tuChep();
 }
 
-function chepCu(text) {
+/**
+ * Lớp 2 — dựng một vùng contenteditable ẩn chứa BẢNG THẬT rồi bảo trình duyệt chép.
+ * Trình duyệt sẽ tự đặt cả text/html lẫn text/plain lên bảng nháy, nên dán vào Excel
+ * vẫn ra bảng có định dạng. Đây là lý do không dùng <textarea> như bản 3.16: textarea
+ * chỉ giữ được chữ trơn.
+ */
+function chepGiauHTML(html, text) {
+  try {
+    var o = document.createElement('div');
+    o.setAttribute('contenteditable', 'true');
+    o.innerHTML = html;
+    o.style.cssText = 'position:fixed;left:-9999px;top:0;white-space:pre;opacity:0';
+    document.body.appendChild(o);
+    var r = document.createRange(); r.selectNodeContents(o);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+    var ok = document.execCommand('copy');
+    s.removeAllRanges();
+    document.body.removeChild(o);
+    if (ok) return true;
+  } catch (e) {}
+  // Cùng lắm thì chép được chữ trơn còn hơn không chép được gì
   try {
     var t = document.createElement('textarea');
-    t.value = text;
-    t.setAttribute('readonly', '');
-    t.style.position = 'fixed'; t.style.left = '-9999px'; t.style.top = '0';
+    t.value = text; t.setAttribute('readonly', '');
+    t.style.cssText = 'position:fixed;left:-9999px;top:0';
     document.body.appendChild(t);
     t.select(); t.setSelectionRange(0, 99999);
-    var ok = document.execCommand('copy');
+    var ok2 = document.execCommand('copy');
     document.body.removeChild(t);
-    return !!ok;
-  } catch (e) { return false; }
+    return !!ok2;
+  } catch (e2) { return false; }
 }
 
-/** Bảng → chuỗi ngăn bằng ký tự Tab: dán vào Excel / Google Sheets là tự tách cột. */
-function dungTSV(cot, hang) {
-  return [cot.join('\t')].concat(hang.map(function (h) {
-    // Ô có Tab hoặc xuống dòng sẽ làm vỡ cột khi dán — nơi thường trú hay dính.
-    return h.map(function (v) { return String(v == null ? '' : v).replace(/[\t\r\n]+/g, ' '); }).join('\t');
-  })).join('\n');
+// ------------------------------------------------------------
+// CHỌN VÙNG KIỂU EXCEL
+// ------------------------------------------------------------
+
+function oChon(i, r, c) {
+  vungChon = { i: i, r1: r, c1: c, r2: r, c2: c };
 }
+function noiChon(i, r, c) {
+  if (!vungChon || vungChon.i !== i) return;
+  vungChon.r2 = r; vungChon.c2 = c;
+}
+function boChon() { vungChon = null; veChon(); }
+
+/** Tô lại các ô đang chọn + cập nhật thanh dưới đáy. */
+function veChon() {
+  Array.prototype.forEach.call($('x_noi').querySelectorAll('td.chon,th.chon'),
+    function (e) { e.classList.remove('chon'); });
+  var thanh = $('x_thanh');
+  if (!vungChon || !DU_LIEU_XUAT) { thanh.classList.add('an'); return; }
+
+  var v = chuanVung();
+  var bang = $('x_bang_' + v.i);
+  if (!bang) { thanh.classList.add('an'); return; }
+  for (var r = v.r1; r <= v.r2; r++) {
+    var tr = bang.querySelectorAll('tbody tr')[r];
+    if (!tr) continue;
+    for (var c = v.c1; c <= v.c2; c++) if (tr.cells[c]) tr.cells[c].classList.add('chon');
+  }
+  // Tô luôn tiêu đề của các cột đang chọn, để nhìn ra đang lấy cột nào
+  var th = bang.querySelectorAll('thead th');
+  for (var c2 = v.c1; c2 <= v.c2; c2++) if (th[c2]) th[c2].classList.add('chon');
+
+  var soO = (v.r2 - v.r1 + 1) * (v.c2 - v.c1 + 1);
+  var tenCot = DU_LIEU_XUAT.nhom[v.i].cot.slice(v.c1, v.c2 + 1).join(', ');
+  $('x_tt_chon').innerHTML = 'Đang chọn <b>' + soO + '</b> ô · '
+    + (v.r2 - v.r1 + 1) + ' dòng × ' + (v.c2 - v.c1 + 1) + ' cột<br>'
+    + '<span style="color:#7b8794">' + thoat(tenCot) + '</span>';
+  thanh.classList.remove('an');
+}
+
+/** Vùng đã chuẩn hoá: r1<=r2, c1<=c2 (người ta kéo ngược cũng phải đúng). */
+function chuanVung() {
+  return { i: vungChon.i,
+           r1: Math.min(vungChon.r1, vungChon.r2), r2: Math.max(vungChon.r1, vungChon.r2),
+           c1: Math.min(vungChon.c1, vungChon.c2), c2: Math.max(vungChon.c1, vungChon.c2) };
+}
+
+/** Dữ liệu của vùng đang chọn → {cot, hang}. KHÔNG kèm tiêu đề. */
+function layVung() {
+  if (!vungChon || !DU_LIEU_XUAT) return null;
+  var v = chuanVung();
+  var g = DU_LIEU_XUAT.nhom[v.i];
+  return {
+    cot: g.cot.slice(v.c1, v.c2 + 1),
+    hang: g.hang.slice(v.r1, v.r2 + 1).map(function (r) { return r.slice(v.c1, v.c2 + 1); })
+  };
+}
+
+function chepVungDangChon(nut) {
+  var d = layVung();
+  if (!d) return;
+  chepBang(dungHTMLBang(d.cot, d.hang, false), dungTSV(d.cot, d.hang, false), nut, null);
+}
+
+/**
+ * Ctrl+C khi đang chọn vùng — chặn hành vi mặc định của trình duyệt (nó chỉ chép chữ
+ * trơn của phần bôi đen) và tự đặt CẢ HAI dạng lên bảng nháy.
+ */
+document.addEventListener('copy', function (e) {
+  if (!vungChon || $('man_xuat').classList.contains('an')) return;
+  var d = layVung();
+  if (!d || !e.clipboardData) return;
+  e.clipboardData.setData('text/html', dungHTMLBang(d.cot, d.hang, false));
+  e.clipboardData.setData('text/plain', dungTSV(d.cot, d.hang, false));
+  e.preventDefault();
+});
+
+// ------------------------------------------------------------
+// Màn LẤY DỮ LIỆU
+// ------------------------------------------------------------
 
 $('nut_xuat').addEventListener('click', function () { moManXuat(); });
-$('x_ve').addEventListener('click', function () { hien('man_ds'); });
+$('x_ve').addEventListener('click', function () { boChon(); hien('man_ds'); });
+$('x_chep_chon').addEventListener('click', function () { chepVungDangChon(this); });
+$('x_bo_chon').addEventListener('click', function () { boChon(); });
 
 function moManXuat() {
   hien('man_xuat');
+  boChon();
   $('x_tom').textContent = 'Đang tải…';
   $('x_noi').innerHTML = '';
   // KHÔNG gửi tham số ngày — máy chủ tự chốt hôm nay, không có đường lấy dữ liệu cũ.
@@ -365,6 +547,9 @@ function moManXuat() {
     .then(function (kq) {
       if (!kq) return;
       if (!kq.ok) { $('x_tom').textContent = kq.loi || 'Không lấy được dữ liệu.'; return; }
+      DU_LIEU_XUAT = kq;
+      if (kq.font) FONT_XUAT = kq.font;
+      if (kq.co_chu) CO_CHU_XUAT = kq.co_chu;
       veXuat(kq);
     })
     .catch(function () { $('x_tom').textContent = 'Không nối được máy chủ.'; });
@@ -380,17 +565,25 @@ function veXuat(kq) {
 
   var h = '';
   kq.nhom.forEach(function (g, i) {
-    var bang = '<table><tr>' + g.cot.map(function (c) { return '<th>' + thoat(c) + '</th>'; }).join('') + '</tr>'
-      + g.hang.map(function (r) {
-          return '<tr>' + r.map(function (v) { return '<td>' + thoat(v) + '</td>'; }).join('') + '</tr>';
-        }).join('') + '</table>';
-    h += '<div class="khoi-x">'
+    var bang = '<table id="x_bang_' + i + '"><thead><tr>'
+      + g.cot.map(function (c, ci) {
+          return '<th data-c="' + ci + '" title="Bấm để chọn cả cột">' + thoat(c) + '</th>';
+        }).join('')
+      + '</tr></thead><tbody>'
+      + g.hang.map(function (r, ri) {
+          return '<tr>' + r.map(function (v, ci) {
+            return '<td data-r="' + ri + '" data-c="' + ci + '">' + thoat(v) + '</td>';
+          }).join('') + '</tr>';
+        }).join('')
+      + '</tbody></table>';
+    h += '<div class="khoi-x" data-i="' + i + '">'
       +   '<div class="ten">' + thoat(g.ten_cong_ty) + '</div>'
       +   '<div class="dem">' + g.so + ' người đã vào làm hôm nay</div>'
       +   '<div class="doi-x">'
-      +     '<button type="button" data-ten="Sao chép BẢNG" data-i="' + i + '" data-loai="bang">Sao chép BẢNG</button>'
+      +     '<button type="button" data-ten="Sao chép DỮ LIỆU" data-i="' + i + '" data-loai="bang">Sao chép DỮ LIỆU</button>'
       +     '<button type="button" class="b2" data-ten="Sao chép TIN NHẮN" data-i="' + i + '" data-loai="text">Sao chép TIN NHẮN</button>'
       +   '</div>'
+      +   '<div class="mach-x">Bấm <b>tiêu đề cột</b> để chọn cả cột · <b>kéo</b> qua các ô để chọn một vùng, rồi bấm Sao chép (hoặc Ctrl+C).</div>'
       +   '<div class="cuon-x">' + bang + '</div>'
       +   '<textarea class="text-x" id="x_text_' + i + '" readonly>' + thoat(g.text_zalo) + '</textarea>'
       + '</div>';
@@ -399,12 +592,84 @@ function veXuat(kq) {
 
   Array.prototype.forEach.call($('x_noi').querySelectorAll('.doi-x button'), function (b) {
     b.addEventListener('click', function () {
-      var g = kq.nhom[Number(b.getAttribute('data-i'))];
-      var laBang = b.getAttribute('data-loai') === 'bang';
-      var oText = $('x_text_' + b.getAttribute('data-i'));
-      saoChep(laBang ? dungTSV(g.cot, g.hang) : g.text_zalo, b, oText);
+      var i = Number(b.getAttribute('data-i'));
+      var g = kq.nhom[i];
+      if (b.getAttribute('data-loai') === 'text') {
+        chepBang('<pre style="font-family:\'' + FONT_XUAT + '\',serif">' + thoatHTML(g.text_zalo) + '</pre>',
+                 g.text_zalo, b, $('x_text_' + i));
+        return;
+      }
+      // CHỈ DỮ LIỆU, không kèm dòng tiêu đề — biểu mẫu nhà máy đã có tiêu đề sẵn.
+      chepBang(dungHTMLBang(g.cot, g.hang, false), dungTSV(g.cot, g.hang, false), b, $('x_text_' + i));
     });
   });
+
+  ganChonVung();
+}
+
+/** Gắn các sự kiện chọn vùng cho mọi bảng trong màn. */
+function ganChonVung() {
+  var noi = $('x_noi');
+
+  function oCua(el) {
+    var td = el && el.closest ? el.closest('td[data-r]') : null;
+    if (!td) return null;
+    var khoi = td.closest('.khoi-x');
+    return { i: Number(khoi.getAttribute('data-i')),
+             r: Number(td.getAttribute('data-r')), c: Number(td.getAttribute('data-c')) };
+  }
+
+  noi.addEventListener('mousedown', function (e) {
+    var th = e.target.closest ? e.target.closest('th[data-c]') : null;
+    if (th) {
+      // Bấm tiêu đề = chọn CẢ CỘT (chỉ phần dữ liệu, không lấy dòng tiêu đề)
+      var khoi = th.closest('.khoi-x');
+      var i = Number(khoi.getAttribute('data-i'));
+      var c = Number(th.getAttribute('data-c'));
+      vungChon = { i: i, r1: 0, c1: c, r2: DU_LIEU_XUAT.nhom[i].hang.length - 1, c2: c };
+      veChon();
+      e.preventDefault();
+      return;
+    }
+    var o = oCua(e.target);
+    if (!o) return;
+    dangKeo = true;
+    oChon(o.i, o.r, o.c);
+    veChon();
+    e.preventDefault();          // không để trình duyệt bôi đen chữ chồng lên
+  });
+
+  noi.addEventListener('mouseover', function (e) {
+    if (!dangKeo) return;
+    var o = oCua(e.target);
+    if (!o) return;
+    noiChon(o.i, o.r, o.c);
+    veChon();
+  });
+
+  document.addEventListener('mouseup', function () { dangKeo = false; });
+
+  // Trên điện thoại: chạm rồi rê. elementFromPoint cho biết đang rê qua ô nào.
+  noi.addEventListener('touchstart', function (e) {
+    var t = e.touches[0];
+    var o = oCua(document.elementFromPoint(t.clientX, t.clientY));
+    if (!o) return;
+    dangKeo = true;
+    oChon(o.i, o.r, o.c);
+    veChon();
+  }, { passive: true });
+
+  noi.addEventListener('touchmove', function (e) {
+    if (!dangKeo) return;
+    var t = e.touches[0];
+    var o = oCua(document.elementFromPoint(t.clientX, t.clientY));
+    if (!o) return;
+    noiChon(o.i, o.r, o.c);
+    veChon();
+    e.preventDefault();          // đang chọn vùng thì đừng cuộn trang theo
+  }, { passive: false });
+
+  noi.addEventListener('touchend', function () { dangKeo = false; });
 }
 
 // ============================================================
