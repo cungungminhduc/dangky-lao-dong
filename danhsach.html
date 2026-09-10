@@ -20,8 +20,13 @@
   màn hình, chuyển tiếp Zalo, hay đưa điện thoại cho người bên cạnh xem là mất — mà mình
   không hề biết đã mất. Nay là MỘT link chung, vào phải đăng nhập bằng số căn cước.
 
-  Ba việc gộp trong một trang, vì ngoài thực địa chúng là một mạch liền:
+  Bốn việc gộp trong một trang, vì ngoài thực địa chúng là một mạch liền:
       xem ai chưa đến  →  gọi cho họ  →  báo cuối cùng họ có vào làm hay không
+      →  LẤY DỮ LIỆU của người đã vào làm để đưa nhà máy (bản 3.16)
+
+  Việc thứ tư ở CÙNG trang này chứ không đẻ trang mới: nó dùng lại đúng đăng nhập và
+  đúng phạm vi công ty đã có, và không thêm một link nữa phải canh giữ. Người phụ trách
+  vốn đã cầm link này rồi.
 -->
 <style>
   :root{
@@ -95,6 +100,29 @@
   .thanh .doi .g1{background:var(--xam-nut);color:#3c4753}
   .thanh .doi .g2{background:var(--xanh);color:#fff}
 
+  /* ----- Màn LẤY DỮ LIỆU ----- */
+  .khoi-x{margin:14px;padding:12px;background:var(--the);border:1px solid var(--vien);border-radius:12px}
+  .khoi-x .ten{font-weight:700;font-size:15px}
+  .khoi-x .dem{font-size:12.5px;color:var(--mo);margin-top:2px}
+  .doi-x{display:flex;gap:8px;margin-top:10px}
+  .doi-x button{flex:1;padding:12px 8px;border:0;border-radius:10px;font-size:14px;
+    font-weight:700;cursor:pointer;background:var(--xanh);color:#fff}
+  .doi-x button.b2{background:#2d6cdf}
+  .doi-x button.xong{background:#1b7f45}
+  /* Bảng PHẢI cuộn ngang trong khung của nó — 13 cột thì màn điện thoại không đủ rộng,
+     mà để cả trang trượt ngang thì các màn khác cũng lệch theo. */
+  .cuon-x{margin-top:10px;overflow-x:auto;-webkit-overflow-scrolling:touch;
+    border:1px solid var(--vien);border-radius:9px}
+  .cuon-x table{border-collapse:collapse;font-size:12.5px;white-space:nowrap}
+  .cuon-x th,.cuon-x td{padding:6px 9px;border-bottom:1px solid var(--vien);text-align:left}
+  .cuon-x th{background:#eef1f4;font-weight:700;position:sticky;top:0}
+  .cuon-x tr:last-child td{border-bottom:0}
+  .text-x{margin-top:10px;width:100%;min-height:96px;padding:10px;font-size:13px;
+    line-height:1.5;border:1px solid var(--vien);border-radius:9px;background:#fbfcfd;
+    color:var(--chu);font-family:inherit;resize:vertical}
+  .nhac-x{margin:0 14px;padding:10px 12px;border-radius:9px;background:var(--vang-nhat);
+    font-size:12.5px;color:#6b5a1e;line-height:1.5}
+
   .lop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;z-index:60}
   .lop .hop{background:#fff;width:100%;border-radius:16px 16px 0 0;padding:16px 14px 22px;
     max-width:560px;margin:0 auto}
@@ -147,8 +175,24 @@
       <button type="button" class="g2" id="gui_gop">Gửi gộp 1 tin</button>
     </div>
   </div>
+  <button type="button" class="nut" id="nut_xuat" style="background:#2d6cdf">LẤY DỮ LIỆU CHO NHÀ MÁY</button>
   <a class="nut phu" href="doncong.html" style="text-decoration:none;text-align:center">Sang trang quét thẻ để đón</a>
   <button type="button" class="nut phu" id="nut_thoat">Đăng xuất</button>
+</div>
+
+<!-- ===== LẤY DỮ LIỆU CHO NHÀ MÁY ===== -->
+<div id="man_xuat" class="an">
+  <div class="dinh">
+    <b>LẤY DỮ LIỆU CHO NHÀ MÁY</b>
+    <div class="phu" id="x_tom">—</div>
+  </div>
+  <div class="nhac-x">
+    Chỉ ra người <b>ĐÃ XÁC NHẬN VÀO LÀM</b> trong <b>hôm nay</b>. Người mới được đón mà
+    chưa bấm "đã vào làm" thì chưa có ở đây, và không lấy được dữ liệu của ngày cũ.<br>
+    Bảng có <b>số căn cước đầy đủ và số điện thoại</b> — chỉ gửi cho đúng người cần.
+  </div>
+  <div id="x_noi"></div>
+  <button type="button" class="nut phu" id="x_ve">Quay lại danh sách gọi</button>
 </div>
 
 </div>
@@ -188,7 +232,7 @@ function thoat(s) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 function hien(el) {
-  ['man_dn', 'man_ds'].forEach(function (i) { $(i).classList.add('an'); });
+  ['man_dn', 'man_ds', 'man_xuat'].forEach(function (i) { $(i).classList.add('an'); });
   $(el).classList.remove('an');
   window.scrollTo(0, 0);
 }
@@ -244,6 +288,124 @@ $('nut_thoat').addEventListener('click', function () {
     .then(function (kq) { if (kq && kq.ok) vaoTrong(kq); else veManDangNhap(''); })
     .catch(function () { veManDangNhap('Không nối được máy chủ. Thử lại khi có mạng.'); });
 })();
+
+// ============================================================
+// LẤY DỮ LIỆU CHO NHÀ MÁY (bản 3.16)
+// ============================================================
+
+/**
+ * SAO CHÉP — BA LỚP, không được phép im lặng không làm gì.
+ *
+ * Trang này chạy trong trình duyệt NHÚNG TRONG ZALO là chính. Ở đó
+ * navigator.clipboard rất hay bị chặn (không phải https "an toàn" theo cách trình duyệt
+ * đó hiểu, hoặc không có quyền). Chỉ dùng một lớp thì nút bấm xong không có gì xảy ra và
+ * người dùng đứng ở cổng nhà máy không biết là đã hỏng — kiểu hỏng khó chịu nhất.
+ *
+ *   Lớp 1: navigator.clipboard.writeText
+ *   Lớp 2: <textarea> + document.execCommand('copy')  — cách cũ, chạy được ở nhiều chỗ hơn
+ *   Lớp 3: BÔI ĐEN SẴN vùng text và bảo người dùng tự bấm giữ để chép
+ */
+function saoChep(text, nut, oText) {
+  // Lấy nhãn gốc từ data-ten chứ không từ textContent: bấm hai lần nhanh thì lần sau
+  // sẽ chụp phải chính chữ "Đã sao chép" và nút kẹt luôn ở đó.
+  function xong() {
+    nut.textContent = '✓ Đã sao chép';
+    nut.classList.add('xong');
+    setTimeout(function () {
+      nut.textContent = nut.getAttribute('data-ten');
+      nut.classList.remove('xong');
+    }, 1800);
+  }
+  function tuChep() {
+    // Lớp 3 — bày sẵn ra để người dùng bấm giữ → Sao chép
+    if (oText) { oText.focus(); oText.select(); try { oText.setSelectionRange(0, 99999); } catch (e) {} }
+    nut.textContent = 'Bấm giữ vùng chữ → Sao chép';
+    setTimeout(function () { nut.textContent = nut.getAttribute('data-ten'); }, 3500);
+  }
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(xong, function () { chepCu(text) ? xong() : tuChep(); });
+      return;
+    }
+  } catch (e) {}
+  if (chepCu(text)) xong(); else tuChep();
+}
+
+function chepCu(text) {
+  try {
+    var t = document.createElement('textarea');
+    t.value = text;
+    t.setAttribute('readonly', '');
+    t.style.position = 'fixed'; t.style.left = '-9999px'; t.style.top = '0';
+    document.body.appendChild(t);
+    t.select(); t.setSelectionRange(0, 99999);
+    var ok = document.execCommand('copy');
+    document.body.removeChild(t);
+    return !!ok;
+  } catch (e) { return false; }
+}
+
+/** Bảng → chuỗi ngăn bằng ký tự Tab: dán vào Excel / Google Sheets là tự tách cột. */
+function dungTSV(cot, hang) {
+  return [cot.join('\t')].concat(hang.map(function (h) {
+    // Ô có Tab hoặc xuống dòng sẽ làm vỡ cột khi dán — nơi thường trú hay dính.
+    return h.map(function (v) { return String(v == null ? '' : v).replace(/[\t\r\n]+/g, ' '); }).join('\t');
+  })).join('\n');
+}
+
+$('nut_xuat').addEventListener('click', function () { moManXuat(); });
+$('x_ve').addEventListener('click', function () { hien('man_ds'); });
+
+function moManXuat() {
+  hien('man_xuat');
+  $('x_tom').textContent = 'Đang tải…';
+  $('x_noi').innerHTML = '';
+  // KHÔNG gửi tham số ngày — máy chủ tự chốt hôm nay, không có đường lấy dữ liệu cũ.
+  goiAPI({ token: TOKEN_API, hanh_dong: 'xuat_du_lieu' })
+    .then(function (kq) {
+      if (!kq) return;
+      if (!kq.ok) { $('x_tom').textContent = kq.loi || 'Không lấy được dữ liệu.'; return; }
+      veXuat(kq);
+    })
+    .catch(function () { $('x_tom').textContent = 'Không nối được máy chủ.'; });
+}
+
+function veXuat(kq) {
+  $('x_tom').textContent = 'Hôm nay ' + (kq.ngay_hien_thi || '') + ' · ' + kq.tong + ' người đã vào làm';
+  if (!kq.tong) {
+    $('x_noi').innerHTML = '<div class="trong">Chưa có ai được xác nhận <b>ĐÃ VÀO LÀM</b> hôm nay.'
+      + '<br><br>Người mới được đón mà chưa bấm "đã vào làm" ở màn danh sách thì chưa lên đây.</div>';
+    return;
+  }
+
+  var h = '';
+  kq.nhom.forEach(function (g, i) {
+    var bang = '<table><tr>' + g.cot.map(function (c) { return '<th>' + thoat(c) + '</th>'; }).join('') + '</tr>'
+      + g.hang.map(function (r) {
+          return '<tr>' + r.map(function (v) { return '<td>' + thoat(v) + '</td>'; }).join('') + '</tr>';
+        }).join('') + '</table>';
+    h += '<div class="khoi-x">'
+      +   '<div class="ten">' + thoat(g.ten_cong_ty) + '</div>'
+      +   '<div class="dem">' + g.so + ' người đã vào làm hôm nay</div>'
+      +   '<div class="doi-x">'
+      +     '<button type="button" data-ten="Sao chép BẢNG" data-i="' + i + '" data-loai="bang">Sao chép BẢNG</button>'
+      +     '<button type="button" class="b2" data-ten="Sao chép TIN NHẮN" data-i="' + i + '" data-loai="text">Sao chép TIN NHẮN</button>'
+      +   '</div>'
+      +   '<div class="cuon-x">' + bang + '</div>'
+      +   '<textarea class="text-x" id="x_text_' + i + '" readonly>' + thoat(g.text_zalo) + '</textarea>'
+      + '</div>';
+  });
+  $('x_noi').innerHTML = h;
+
+  Array.prototype.forEach.call($('x_noi').querySelectorAll('.doi-x button'), function (b) {
+    b.addEventListener('click', function () {
+      var g = kq.nhom[Number(b.getAttribute('data-i'))];
+      var laBang = b.getAttribute('data-loai') === 'bang';
+      var oText = $('x_text_' + b.getAttribute('data-i'));
+      saoChep(laBang ? dungTSV(g.cot, g.hang) : g.text_zalo, b, oText);
+    });
+  });
+}
 
 // ============================================================
 // LÝ DO KHÔNG VÀO LÀM — do máy chủ gửi xuống, khai trong tab CAUHINH
