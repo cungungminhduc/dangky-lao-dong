@@ -203,7 +203,8 @@
   <div class="nhac-x">
     Chỉ ra người <b>ĐÃ XÁC NHẬN VÀO LÀM</b> trong <b>hôm nay</b>. Người mới được đón mà
     chưa bấm "đã vào làm" thì chưa có ở đây, và không lấy được dữ liệu của ngày cũ.<br>
-    Bảng có <b>số căn cước đầy đủ và số điện thoại</b> — chỉ gửi cho đúng người cần.
+    Bảng có <b>số căn cước đầy đủ và số điện thoại</b> — chỉ gửi cho đúng người cần.<br>
+    Dán ra <b>chỉ có dữ liệu</b>, không kèm viền hay phông chữ; số căn cước vẫn giữ đủ số 0 đầu.
   </div>
   <div id="x_noi"></div>
   <button type="button" class="nut phu" id="x_ve">Quay lại danh sách gọi</button>
@@ -329,7 +330,10 @@ $('nut_thoat').addEventListener('click', function () {
 // text/html có `mso-number-format:"\@"` là bảo Excel: ô này là CHỮ, đừng đụng vào.
 // Vẫn chép kèm text/plain để dán vào Zalo, Notepad vẫn ra chữ thường.
 
-var FONT_XUAT = 'Times New Roman', CO_CHU_XUAT = 13;
+// KEM_DINH_DANG = false: dán vào Excel CHỈ CÓ DỮ LIỆU — không viền, không nền, không
+// đổi phông. Ô nhận giữ nguyên định dạng sẵn có của biểu mẫu. Đây là mặc định từ bản
+// 3.18, sau khi Dương báo "dán vào excel thì nó theo cả các ô đen".
+var FONT_XUAT = 'Times New Roman', CO_CHU_XUAT = 13, KEM_DINH_DANG = false;
 var DU_LIEU_XUAT = null;          // kết quả lần lấy gần nhất
 var vungChon = null;              // {i, r1, c1, r2, c2} — i = khối công ty thứ mấy
 var dangKeo = false;
@@ -348,20 +352,33 @@ function thoatHTML(v) {
  * để Excel tự đoán là ô đó có ngày sai hoặc mất số 0 đầu, mà lại hỏng lặng lẽ.
  */
 function dungHTMLBang(cot, hang, coTieuDe) {
-  var chung = 'font-family:\'' + FONT_XUAT + '\',serif;font-size:' + CO_CHU_XUAT + 'pt;'
-            + 'mso-number-format:"\\@";border:1px solid #000000;padding:3px 6px;'
-            + 'vertical-align:middle;';
-  var h = '<table border="1" cellspacing="0" cellpadding="3" '
-        + 'style="border-collapse:collapse;font-family:\'' + FONT_XUAT + '\',serif;'
-        + 'font-size:' + CO_CHU_XUAT + 'pt">';
+  // CHỈ giữ mso-number-format. Đây là thứ DUY NHẤT không nhìn thấy được mà vẫn phải có:
+  // nó bảo Excel "ô này là CHỮ, đừng tự đoán kiểu". Bỏ nó đi thì "024300009486" thành
+  // số 24300009486 (mất mã tỉnh) và "01/02/1998" thành ngày theo định dạng máy —
+  // đúng cái bẫy số 2 của cả hệ này, mà lại hỏng lặng lẽ.
+  var oChu = 'mso-number-format:"\\@";';
+  var vien = '', nenTD = '', bangKieu = '', bangThuoc = 'cellspacing="0" cellpadding="0"';
+
+  if (KEM_DINH_DANG) {
+    // Chế độ CÓ ĐỊNH DẠNG: kẻ viền + phông chữ, cho ai muốn dán ra là có bảng sẵn.
+    oChu += 'font-family:\'' + FONT_XUAT + '\',serif;font-size:' + CO_CHU_XUAT + 'pt;'
+          + 'padding:3px 6px;vertical-align:middle;';
+    vien = 'border:1px solid #000000;';
+    nenTD = 'font-weight:bold;background:#e8eaed;';
+    bangKieu = ' style="border-collapse:collapse;font-family:\'' + FONT_XUAT + '\',serif;'
+             + 'font-size:' + CO_CHU_XUAT + 'pt"';
+    bangThuoc = 'border="1" cellspacing="0" cellpadding="3"';
+  }
+
+  var h = '<table ' + bangThuoc + bangKieu + '>';
   if (coTieuDe && cot && cot.length) {
     h += '<tr>' + cot.map(function (c) {
-      return '<th style="' + chung + 'font-weight:bold;background:#e8eaed">' + thoatHTML(c) + '</th>';
+      return '<th style="' + oChu + vien + nenTD + '">' + thoatHTML(c) + '</th>';
     }).join('') + '</tr>';
   }
   h += hang.map(function (r) {
     return '<tr>' + r.map(function (v) {
-      return '<td style="' + chung + '">' + thoatHTML(v) + '</td>';
+      return '<td style="' + oChu + vien + '">' + thoatHTML(v) + '</td>';
     }).join('') + '</tr>';
   }).join('');
   return h + '</table>';
@@ -550,6 +567,7 @@ function moManXuat() {
       DU_LIEU_XUAT = kq;
       if (kq.font) FONT_XUAT = kq.font;
       if (kq.co_chu) CO_CHU_XUAT = kq.co_chu;
+      KEM_DINH_DANG = !!kq.kem_dinh_dang;
       veXuat(kq);
     })
     .catch(function () { $('x_tom').textContent = 'Không nối được máy chủ.'; });
@@ -595,8 +613,8 @@ function veXuat(kq) {
       var i = Number(b.getAttribute('data-i'));
       var g = kq.nhom[i];
       if (b.getAttribute('data-loai') === 'text') {
-        chepBang('<pre style="font-family:\'' + FONT_XUAT + '\',serif">' + thoatHTML(g.text_zalo) + '</pre>',
-                 g.text_zalo, b, $('x_text_' + i));
+        // Bản TIN NHẮN dán vào Zalo — chữ trơn, không kèm định dạng gì cả.
+        chepBang('<pre>' + thoatHTML(g.text_zalo) + '</pre>', g.text_zalo, b, $('x_text_' + i));
         return;
       }
       // CHỈ DỮ LIỆU, không kèm dòng tiêu đề — biểu mẫu nhà máy đã có tiêu đề sẵn.
