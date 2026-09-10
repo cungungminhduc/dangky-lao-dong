@@ -1208,6 +1208,25 @@ function giaiMaTuNguon(nguon, baoBuoc) {
   });
 });
 
+/**
+ * Báo NGAY khi vừa gõ xong ngày hẹn, không đợi tới lúc bấm Gửi.
+ * Người nhập đang cầm thẻ căn cước của người ta trước mặt; biết sai ngay lúc gõ thì sửa
+ * một giây, còn để tới lúc bấm Gửi mới báo thì phải cuộn ngược lên tìm.
+ */
+$('ngay_lam_pv').addEventListener('blur', function () {
+  var o = $('loi_form'), ngay = this.value.trim();
+  var tenNgay = loaiCT === 'chinh_thuc' ? 'Ngày phỏng vấn' : 'Ngày đi làm';
+  if (!ngay) return;
+  var cach = ngayCachHomNay(ngay);
+  if (cach === null || cach >= 0) {
+    // Chỉ dọn đúng câu báo của chính ô này, không xoá lỗi của ô khác
+    if (o.textContent.indexOf('đã qua') >= 0) { o.textContent = ''; o.classList.remove('hien'); }
+    return;
+  }
+  o.textContent = tenNgay + ' là ' + ngay + ' — ngày này đã qua. Chọn hôm nay hoặc ngày sắp tới.';
+  o.classList.add('hien');
+});
+
 $('so_cccd').addEventListener('blur', function () {
   var c = this.value.replace(/\D/g, '');
   if (c.length === 12 && maCT) traTinhTrang(c);
@@ -1233,19 +1252,23 @@ $('form').addEventListener('submit', function (ev) {
   // người đón sẽ không bao giờ biết mà chờ. Đây từng là lỗ hổng thật — nửa số dòng bỏ trống.
   else if (!ngay) loi = 'Chưa nhập ' + tenNgay.toLowerCase();
   else if (cach === null) loi = tenNgay + ' không hợp lệ — nhập dạng dd/mm/yyyy';
+  // CHẶN CỨNG ngày đã qua (bản 3.19). Trước đây chỉ hỏi một câu confirm và người ta bấm
+  // qua; hậu quả là người đó rơi vào ô "quá hạn" và hôm sau người đón không thấy đâu cả.
+  // Hôm nay (cach = 0) VẪN đăng ký được — đón ngay trong ngày là chuyện thường.
+  else if (cach < 0) loi = tenNgay + ' là ' + ngay + ' — ngày này đã qua. Chọn hôm nay hoặc ngày sắp tới.';
   else if (nn.length < 2) loi = 'Nhập tên người tuyển dụng (để nhóm biết ai vừa đăng ký)';
   else if (!$('dong_y').checked) loi = 'Cần tích ô đồng ý mới đăng ký được';
   var o = $('loi_form');
   o.textContent = loi; o.classList.toggle('hien', !!loi);
   if (loi) { o.scrollIntoView({ behavior: 'smooth', block: 'center' }); return; }
 
-  // Ngày cách quá xa gần như luôn là GÕ NHẦM THÁNG. Đã gặp thật: nhập 17/08 mà
+  // Ngày cách quá xa gần như luôn là GÕ NHẦM THÁNG hoặc NĂM. Đã gặp thật: nhập 17/08 mà
   // ghi ngày đi làm 18/09 — người đó biến mất khỏi báo cáo suốt một tháng.
   // Hỏi lại một câu, không chặn cứng, vì vẫn có ca hẹn xa thật.
-  if (cach > 45 || cach < -1) {
-    if (!confirm(tenNgay + ' là ' + ngay + ', tức ' +
-        (cach > 0 ? 'còn ' + cach + ' ngày nữa' : 'đã qua ' + (-cach) + ' ngày') +
-        '.\n\nCó đúng không? Kiểm lại tháng xem có gõ nhầm.')) {
+  // (Ngày ĐÃ QUA thì chặn cứng ở phần soát lỗi bên trên, không hỏi nữa.)
+  if (cach > 45) {
+    if (!confirm(tenNgay + ' là ' + ngay + ', tức còn ' + cach + ' ngày nữa.'
+        + '\n\nCó đúng không? Kiểm lại tháng và năm xem có gõ nhầm.')) {
       $('ngay_lam_pv').focus(); return;
     }
   }
