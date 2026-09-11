@@ -92,6 +92,16 @@
   .nghe .kq-c{background:#c97a12;border-color:#c97a12;color:#fff}
   .hang.bo{background:#fff5f5}
   .hang.se-don{background:#f2fbf5}
+  /* CA LÀM VIỆC (3.21) — dải màu bên trái, KHÔNG tô cả nền.
+     Tô cả nền thì đè lên ba màu trạng thái đã có (đã vào làm / không vào làm / sẽ đón)
+     và hai tầng thông tin đánh nhau. Dải bên trái thì cộng thêm, không tranh chỗ.
+     MÀU KHÔNG BAO GIỜ LÀ TÍN HIỆU DUY NHẤT: chữ tên ca luôn in trong dòng .d2. */
+  .hang.ca-ngay{border-left:5px solid #f0a92a}
+  .hang.ca-dem{border-left:5px solid #3b3f8f}
+  .the-ca{display:inline-block;padding:1px 7px;border-radius:20px;font-size:11.5px;
+    font-weight:600;margin-left:6px;vertical-align:middle}
+  .the-ca.ngay{background:#fdf0d5;color:#8a5a06}
+  .the-ca.dem{background:#e4e5f5;color:#2b2e6b}
   .d3 button.chon-don{background:#1b7f45;border-color:#1b7f45;color:#fff}
   .da-gui{font-size:12px;color:#1b7f45;margin-top:5px}
   .cho{background:#fff8e6;border:1px solid #f0dcae;border-radius:9px;padding:9px 11px;
@@ -914,8 +924,17 @@ function ve(kq) {
     g.ds.forEach(function (r) { if (r.da_don) daDon++; });
   });
   ngayHienThiHienTai = kq.ngay_hien_thi || '';
+  // Đếm theo ca ngay trên đầu: người đón liếc một cái là biết hôm nay xe ngày mấy người,
+  // xe đêm mấy người — trước đây phải tự đếm tay giữa danh sách sáu chục dòng.
+  var caN = 0, caD = 0;
+  dsNgay.forEach(function (g) {
+    g.ds.forEach(function (r) {
+      if (r.ca_lam === 'ngay') caN++; else if (r.ca_lam === 'dem') caD++;
+    });
+  });
+  var duoiCa = (caN || caD) ? (' · ngày ' + caN + ' · đêm ' + caD) : '';
   $('tom').textContent = kq.ngay_hien_thi + ' — ' + tong + ' người, đã đón ' + daDon +
-    ' · xếp A→Z theo tên' + (kq.tu_nho_tam ? ' · lấy từ bộ nhớ tạm' : '');
+    duoiCa + ' · xếp A→Z theo tên' + (kq.tu_nho_tam ? ' · lấy từ bộ nhớ tạm' : '');
   if (!tong) {
     $('noi').innerHTML = '<div class="trong">Ngày này chưa có ai trong danh sách.</div>';
     return;
@@ -946,9 +965,14 @@ function veHang(r) {
   var lop = 'hang' + (cu === 'da_vao_lam' ? ' xong' : (cu === 'khong_vao_lam' ? ' hong' : ''));
   if (cg && cg.ket_qua === 'khong_di') lop += ' bo';
   if (chonDon[r.ma_ld]) lop += ' se-don';
+  if (r.ca_mau) lop += ' ' + r.ca_mau;
   var h = '<div class="' + lop + '" data-ma="' + thoat(r.ma_ld) + '"' +
-          ' data-tim="' + thoat((r.ho_ten || '') + ' ' + (r.sdt || '') + ' ' + (r.nguoi_dk || '')) + '">' +
+          // Gõ "dem" trong ô tìm là lọc ra cả ca đêm — tiện lúc cần gọi riêng một ca.
+          ' data-tim="' + thoat((r.ho_ten || '') + ' ' + (r.sdt || '') + ' ' +
+                                (r.nguoi_dk || '') + ' ' + (r.ca_lam || '')) + '">' +
     '<div class="d1"><b>' + thoat(r.ho_ten || '(chưa có tên)') + '</b>' +
+      // Chữ ca đứng ngay cạnh tên — người đón đọc một dòng là biết, không phải dò màu.
+      (r.ca_ten ? '<span class="the-ca ' + thoat(r.ca_lam) + '">' + thoat(r.ca_ten) + '</span>' : '') +
       (r.sdt ? '<a class="goi" href="tel:' + thoat(r.sdt) + '" data-goi="' + thoat(r.ma_ld) + '">Gọi</a>' : '') +
     '</div>' +
     '<div class="d2">' + thoat(r.sdt || 'chưa có SĐT') + ' · ' + thoat(vet.join(' · ')) + '</div>' +
@@ -1275,8 +1299,14 @@ function veLaiTatCa() {
     tong += g.ds.length;
     g.ds.forEach(function (r) { if (r.da_don) daDon++; });
   });
+  var cN = 0, cD = 0;
+  dsNgay.forEach(function (g) {
+    g.ds.forEach(function (r) {
+      if (r.ca_lam === 'ngay') cN++; else if (r.ca_lam === 'dem') cD++;
+    });
+  });
   $('tom').textContent = (ngayHienThiHienTai || '') + ' — ' + tong + ' người, đã đón ' + daDon +
-    ' · xếp A→Z theo tên';
+    ((cN || cD) ? (' · ngày ' + cN + ' · đêm ' + cD) : '') + ' · xếp A→Z theo tên';
   var h = '';
   dsNgay.forEach(function (g) {
     if (!g.ds.length) return;
