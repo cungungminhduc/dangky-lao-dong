@@ -101,6 +101,17 @@
   </div>
   <button type="button" class="nut" id="nut_bat_dau">Bắt đầu</button>
   <datalist id="ds_nm"></datalist>
+  <style>
+  /* Lưới nút to thay cho ô sổ xuống: đứng ở cổng nhà máy, một tay cầm điện thoại,
+     chạm một cái là xong — không phải bung menu rồi cuộn trong khung nhỏ. */
+  .goiy{display:flex;flex-wrap:wrap;gap:7px;margin-top:9px}
+  .goiy button{padding:9px 13px;border:1px solid #d9dde2;background:#fff;border-radius:9px;
+    font-size:14px;color:#3c4753;cursor:pointer}
+  .goiy button.chon{background:#2d6cdf;border-color:#2d6cdf;color:#fff;font-weight:600}
+  .goiy button.khac{border-style:dashed;color:var(--mo)}
+  .goiy .trong-goiy{font-size:13px;color:var(--mo);padding:4px 2px}
+  .da-chon{margin-top:9px;font-size:13.5px;color:#1b7f45;font-weight:600}
+  </style>
 </div>
 
 <!-- ===== BƯỚC 2: QUÉT ===== -->
@@ -154,8 +165,14 @@
       <span><b id="xn_nhan_dk">Đúng nơi đã đăng ký</b><small>Lấy sẵn theo phiếu của người này</small></span></label>
     <label class="chon"><input type="radio" name="xnd" value="khac">
       <span><b>Nơi khác</b><small>Được chuyển sang công ty khác — điền tên bên dưới</small></span></label>
-    <div class="hang an" id="xn_hang_khac"><span>Nơi đến</span>
-      <input id="xn_diem_khac" list="ds_nm" placeholder="Chọn hoặc gõ tên công ty" autocomplete="off"></div>
+    <div class="an" id="xn_hang_khac" style="padding:0 16px 14px">
+      <input id="xn_tim_ct" placeholder="Gõ vài chữ để tìm nhà máy — vd: vu" autocomplete="off"
+             style="width:100%;padding:11px 12px;border:1px solid var(--vien);border-radius:9px;font-size:15px">
+      <div id="xn_goiy" class="goiy"></div>
+      <input id="xn_diem_khac" class="an" placeholder="Gõ tên nơi đón" autocomplete="off"
+             style="width:100%;margin-top:8px;padding:11px 12px;border:1px solid var(--vien);border-radius:9px;font-size:15px">
+      <div id="xn_da_chon" class="da-chon an"></div>
+    </div>
   </div>
 
   <button type="button" class="nut" id="nut_da_don">ĐÃ ĐÓN</button>
@@ -324,6 +341,7 @@ goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_cong_ty' })
       var o = document.createElement('option'); o.value = c.ten_cong_ty; dl.appendChild(o);
     });
     veChonCongTy();
+    if (typeof veGoiYCT === 'function') veGoiYCT();
   })
   .catch(function () {});
 
@@ -342,12 +360,84 @@ function veChonCongTy() {
   r.addEventListener('change', veChonCongTy);
 });
 
-// ---------- Nơi đến ở màn hình XÁC NHẬN ----------
+// ---------- Nơi đến ở màn hình XÁC NHẬN (bản 3.20) ----------
+/*
+ * VÌ SAO ĐỔI: ô cũ là <input list="ds_nm"> — gõ tay tự do được, nên cùng một nhà máy mỗi
+ * lần vào một kiểu tên ("Vũ Hào", "vu hao", "Cty Vũ Hào"). Mà bản 3.20 so CHÍNH TÊN ĐÓ để
+ * quyết định có chấm 🔴 "khác nơi đăng ký" hay không — tên lệch thì ký hiệu mọc bừa, và
+ * người trong nhóm Zalo học cách lờ nó đi.
+ *
+ * Nay: chạm một nút là lấy đúng tên trong tab CONGTY. Chỉ khi nơi đón THẬT SỰ không có
+ * trong danh sách thì mới bấm "Khác" để gõ tay.
+ */
+var diemDaChon = '';          // tên nhà máy đã chạm chọn; rỗng = chưa chọn hoặc đang gõ tay
+
+function boDauCT(x) {
+  x = String(x || '').toLowerCase();
+  return x.normalize ? x.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd') : x;
+}
+
+/** Dựng lưới nút nhà máy theo chữ đang gõ. Luôn kèm nút "Khác" ở cuối. */
+function veGoiYCT() {
+  var q = boDauCT($('xn_tim_ct').value.trim());
+  var ds = dsCT.filter(function (c) {
+    if (!q) return true;
+    return boDauCT(c.ten_cong_ty).indexOf(q) >= 0 || boDauCT(c.ma_ct).indexOf(q) >= 0;
+  });
+  var h = '';
+  ds.forEach(function (c) {
+    h += '<button type="button" class="' + (diemDaChon === c.ten_cong_ty ? 'chon' : '') +
+         '" data-ct="' + thoat(c.ten_cong_ty) + '">' + thoat(c.ten_cong_ty) + '</button>';
+  });
+  if (!ds.length) h += '<div class="trong-goiy">Không có nhà máy nào khớp — bấm "Khác" để gõ tay.</div>';
+  h += '<button type="button" class="khac" data-ct="__khac__">Khác…</button>';
+  $('xn_goiy').innerHTML = h;
+}
+
+$('xn_tim_ct').addEventListener('input', veGoiYCT);
+
+$('xn_goiy').addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('button[data-ct]') : null;
+  if (!b) return;
+  var v = b.getAttribute('data-ct');
+  if (v === '__khac__') {
+    // Gõ tay: chỉ dành cho nơi THẬT SỰ không có trong danh sách công ty.
+    diemDaChon = '';
+    $('xn_diem_khac').classList.remove('an');
+    $('xn_da_chon').classList.add('an');
+    $('xn_diem_khac').focus();
+    veGoiYCT();
+    return;
+  }
+  diemDaChon = v;
+  $('xn_diem_khac').classList.add('an');
+  $('xn_diem_khac').value = '';
+  $('xn_da_chon').textContent = 'Nơi đón: ' + v;
+  $('xn_da_chon').classList.remove('an');
+  veGoiYCT();
+});
+
+/** Nơi đón người dùng đang chọn — nút bấm thắng, không thì lấy ô gõ tay. */
+function noiDonDangChon() {
+  if (diemDaChon) return diemDaChon;
+  return $('xn_diem_khac').value.trim().replace(/\s+/g, ' ');
+}
+
+/** Trả khối nơi đến về trạng thái sạch mỗi lần mở một người mới. */
+function datLaiNoiDen() {
+  diemDaChon = '';
+  $('xn_tim_ct').value = '';
+  $('xn_diem_khac').value = '';
+  $('xn_diem_khac').classList.add('an');
+  $('xn_da_chon').classList.add('an');
+  veGoiYCT();
+}
+
 [].forEach.call(document.querySelectorAll('input[name=xnd]'), function (r) {
   r.addEventListener('change', function () {
     var khac = (document.querySelector('input[name=xnd]:checked') || {}).value === 'khac';
     $('xn_hang_khac').classList.toggle('an', !khac);
-    if (khac) $('xn_diem_khac').focus();
+    if (khac) $('xn_tim_ct').focus();
   });
 });
 
@@ -1058,17 +1148,17 @@ function veManXacNhan(kq) {
   var r = document.querySelector('input[name=xnd][value=dk]');
   if (r) r.checked = true;
   $('xn_hang_khac').classList.add('an');
-  $('xn_diem_khac').value = '';
+  datLaiNoiDen();
 
   if (kq.ma === 'DA_DON_TRUOC_DO') {
     // Mở sẵn ô "Nơi khác": đón lại gần như luôn là đón ở CHỖ KHÁC, để họ đỡ phải bấm thêm.
     $('nut_da_don').textContent = 'ĐÓN LẠI Ở ĐÂY';
     var rk = document.querySelector('input[name=xnd][value=khac]');
     if (rk) { rk.checked = true; $('xn_hang_khac').classList.remove('an'); }
-    $('xn_diem_khac').placeholder = 'Đón lại tại công ty nào?';
+    $('xn_tim_ct').placeholder = 'Đón lại tại nhà máy nào? Gõ vài chữ để tìm';
   } else {
     $('nut_da_don').textContent = 'ĐÃ ĐÓN';
-    $('xn_diem_khac').placeholder = 'Chọn hoặc gõ tên công ty';
+    $('xn_tim_ct').placeholder = 'Gõ vài chữ để tìm nhà máy — vd: vu';
   }
   hien('man_xn');
 }
@@ -1081,15 +1171,19 @@ $('nut_da_don').addEventListener('click', function () {
   var khac = (document.querySelector('input[name=xnd]:checked') || {}).value === 'khac';
   var diem = '';
   if (khac) {
-    diem = $('xn_diem_khac').value.trim().replace(/\s+/g, ' ');
-    if (diem.length < 2) { alert('Chọn "Nơi khác" thì phải ghi tên nơi đến.'); $('xn_diem_khac').focus(); return; }
+    diem = noiDonDangChon();
+    if (diem.length < 2) {
+      alert('Chọn "Nơi khác" thì phải chỉ rõ nơi đến.\n\nChạm một nhà máy trong danh sách, hoặc bấm "Khác…" rồi gõ tên.');
+      $('xn_tim_ct').focus();
+      return;
+    }
   }
   // ĐÓN LẠI: người này đã được đón ở đâu đó rồi, nay sang công ty khác và mình đón lần nữa.
   // Bắt ghi rõ NƠI ĐÓN LẠI, vì cả ý nghĩa của việc đón lại nằm ở chỗ "họ đang ở đâu bây giờ" —
   // để nguyên nơi cũ thì ghi đè xong bảng vẫn chỉ về đúng chỗ cũ, chẳng để làm gì.
   var donLai = !!(nguoiHienTai.tra && nguoiHienTai.tra.ma === 'DA_DON_TRUOC_DO');
   if (donLai && !diem) {
-    alert('Đón lại thì phải ghi rõ đón ở đâu.\n\nChọn "Nơi khác" rồi gõ tên công ty bạn đang đón.');
+    alert('Đón lại thì phải chỉ rõ đón ở đâu.\n\nChọn "Nơi khác" rồi chạm nhà máy bạn đang đón.');
     return;
   }
   guiDon({ so_cccd: nguoiHienTai.cccd, diem_don: diem, don_lai: donLai });
