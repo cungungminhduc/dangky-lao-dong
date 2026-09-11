@@ -136,6 +136,11 @@
   .ds-hang .gio{margin-left:auto;font-size:12.5px;color:var(--mo);white-space:nowrap}
   .trong{padding:26px 16px;text-align:center;color:var(--mo);font-size:14.5px}
   .an{display:none}
+  .ca-chon{display:flex;gap:8px;flex:1}
+  .ca-chon button{flex:1;padding:11px 8px;border:1px solid #d9dde2;background:#fff;
+    border-radius:9px;font-size:14.5px;color:#3c4753;cursor:pointer}
+  .ca-chon button.chon[data-ca="ngay"]{background:#f0a92a;border-color:#f0a92a;color:#fff;font-weight:600}
+  .ca-chon button.chon[data-ca="dem"]{background:#3b3f8f;border-color:#3b3f8f;color:#fff;font-weight:600}
 </style>
 </head>
 <body>
@@ -185,6 +190,10 @@
     </div>
     <div class="hang"><span id="nhan_ngay">Ngày đi làm</span>
       <input id="ngay_lam_pv" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
+    <!-- CA LÀM VIỆC (bản 3.21) — chỉ mảng THỜI VỤ, và ở đó thì bắt buộc.
+         Hai nút to thay ô sổ xuống: cộng tác viên hay nhập bằng điện thoại, một tay. -->
+    <div class="hang an" id="hang_ca"><span>Ca làm việc</span>
+      <div class="ca-chon" id="ca_chon"></div></div>
     <div class="hang"><span>Tên</span><input id="ho_ten" placeholder="Xin vui lòng nhập tên" autocomplete="off"></div>
     <div class="hang"><span>Giới tính</span>
       <div class="gt">
@@ -312,6 +321,10 @@ maCT = decodeURIComponent((location.search.match(/[?&]ct=([^&]+)/) || [])[1] || 
 goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_cong_ty' })
   .then(function (kq) {
     dsCT = (kq && kq.danh_sach) || [];
+    // Danh sách ca đi chung cú gọi này (bản 3.21) — không đẻ thêm một cú mạng nữa,
+    // mỗi cú tốn 1,8 giây đã đo ở bản 3.20.
+    dsCa = (kq && kq.danh_sach_ca) || [];
+    capNhatOCa();
     if (maCT) {
       var tim = dsCT.filter(function (c) { return c.ma_ct.toLowerCase() === maCT.toLowerCase(); })[0];
       if (tim) { chonMang(tim.loai); chonNhaMay(tim); return; }
@@ -322,6 +335,48 @@ goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_cong_ty' })
   })
   .catch(function () { $('phu_de').textContent = 'Không kết nối được máy chủ'; hien('man_mang'); });
 
+// ---------- Ca làm việc (bản 3.21) ----------
+/*
+ * CHỈ mảng thời vụ mới có ca, và ở đó thì BẮT BUỘC — người đón cần biết ca để xếp xe và
+ * báo nhà máy. Mảng chính thức là phỏng vấn, ô này không hiện.
+ *
+ * Danh sách ca lấy từ máy chủ (ô CAUHINH `danh_sach_ca`), nên Dương thêm ca thứ ba là
+ * trang tự có thêm nút, không phải sửa file này.
+ */
+var dsCa = [], caDaChon = '';
+
+function veNutCa() {
+  var o = $('ca_chon');
+  if (!o) return;
+  o.innerHTML = dsCa.map(function (c) {
+    return '<button type="button" class="' + (caDaChon === c.ma ? 'chon' : '') +
+           '" data-ca="' + thoat(c.ma) + '">' + thoat(c.ten) + '</button>';
+  }).join('');
+}
+
+function chonCa(ma) {
+  caDaChon = ma;
+  veNutCa();
+  try { localStorage.setItem('ca_lam', ma); } catch (e) {}
+}
+
+document.addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('#ca_chon button[data-ca]') : null;
+  if (b) chonCa(b.getAttribute('data-ca'));
+});
+
+/** Hiện ô ca khi mảng là thời vụ, ẩn khi chính thức. */
+function capNhatOCa() {
+  var la = (loaiCT !== 'chinh_thuc');
+  $('hang_ca').classList.toggle('an', !la);
+  if (!la) caDaChon = '';                 // chính thức: không gửi ca nào lên
+  else if (!caDaChon) {
+    // Nhớ ca lần trước — cộng tác viên thường nhập cả loạt người cùng một ca.
+    try { caDaChon = localStorage.getItem('ca_lam') || ''; } catch (e) {}
+  }
+  veNutCa();
+}
+
 // ---------- Bước 1: chọn mảng ----------
 [].forEach.call(document.querySelectorAll('#man_mang button'), function (b) {
   b.addEventListener('click', function () { chonMang(b.getAttribute('data-loai')); hien('form'); });
@@ -329,6 +384,7 @@ goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_cong_ty' })
 
 function chonMang(loai) {
   loaiCT = loai;
+  capNhatOCa();
   var n = $('nhan_mang');
   n.textContent = loai === 'chinh_thuc' ? 'CHÍNH THỨC' : 'THỜI VỤ';
   n.className = loai === 'chinh_thuc' ? 'ct' : 'tv';
@@ -545,6 +601,27 @@ function traTinhTrang(cccd) {
       if (!kq.ok) return;
       if (kq.ma === 'TRUNG') { veTinhTrang(kq); return; }
       var tin = '';
+
+      // BẢN 3.21 — chính người đăng ký gốc đang thao tác, phiếu cũ còn trong hạn giữ chỗ.
+      // Dùng CHUNG nút với đường "đổi phiếu" cũ: cùng một hành động sua_dang_ky ở máy chủ,
+      // chỉ khác chữ trên nút và câu giải thích. Đẻ nút thứ hai chỉ làm màn hình rối.
+      if (kq.ma === 'CO_THE_MO_LAI' || kq.ma === 'CO_THE_SUA') {
+        phieuSua = { ma_ld: kq.ma_ld_sua, cong_ty_cu: kq.cong_ty_cu,
+                     ho_ten: kq.ho_ten, mo_lai: !!kq.co_the_mo_lai };
+        $('nut_sua').textContent = kq.co_the_mo_lai
+          ? ('MỞ LẠI phiếu ' + kq.ma_ld_sua)
+          : ('ĐỔI phiếu ' + kq.ma_ld_sua + ' sang ' + (tenCT || 'nhà máy này'));
+        $('nut_sua').classList.remove('an');
+        baoDai('vang', kq.co_the_mo_lai
+          ? ('<b>Người này đã báo KHÔNG ĐI</b> nên phiếu ' + thoat(kq.ma_ld_sua) +
+             ' ở "' + thoat(kq.cong_ty_cu) + '" đã huỷ — nhưng phiếu đó do chính bạn đăng ký.<br>' +
+             'Họ đổi ý thì bấm <b>MỞ LẠI phiếu</b> bên dưới, không cần đăng ký mới.')
+          : ('<b>Người này đang có phiếu ở "' + thoat(kq.cong_ty_cu) + '"</b> (' +
+             thoat(kq.ma_ld_sua) + ', do chính bạn đăng ký).<br>' +
+             'Bấm <b>ĐỔI phiếu</b> bên dưới để chuyển phiếu đó sang đây — không đẻ thêm phiếu mới.'));
+        return;
+      }
+
       if (kq.ma === 'CAN_XAC_NHAN') {
         if (kq.co_the_sua) {
           // Chính người đăng ký gốc → mời SỬA phiếu cũ thay vì đẻ phiếu thứ hai.
@@ -1273,6 +1350,14 @@ $('form').addEventListener('submit', function (ev) {
     }
   }
 
+  // Ca bắt buộc với thời vụ — chặn ở trang cho người ta biết ngay, máy chủ chặn lần nữa
+  // (soatCa_) vì ai mở F12 lên cũng bỏ qua được lớp này.
+  if (loaiCT !== 'chinh_thuc' && !caDaChon) {
+    alert('Chưa chọn ca làm việc.\n\nMảng thời vụ phải chọn ca ngày hay ca đêm — người đón cần biết để xếp xe.');
+    $('hang_ca').scrollIntoView({ block: 'center' });
+    return;
+  }
+
   var nut = $('nut_dk');
   nut.disabled = true; nut.textContent = 'Đang gửi…';
   var gt = document.querySelector('input[name=gt]:checked');
@@ -1284,6 +1369,7 @@ $('form').addEventListener('submit', function (ev) {
     // vì báo cáo đếm thời vụ theo ngày đi làm, chính thức theo ngày phỏng vấn.
     ngay_phong_van: loaiCT === 'chinh_thuc' ? ngay : '',
     ngay_di_lam: loaiCT === 'chinh_thuc' ? '' : ngay,
+    ca_lam: loaiCT === 'chinh_thuc' ? '' : caDaChon,
     gioi_tinh: gt ? gt.value : '',
     sdt: sdt,
     noi_thuong_tru: $('noi_thuong_tru').value.trim(),
@@ -1350,13 +1436,20 @@ $('nut_sua').addEventListener('click', function () {
   if (!phieuSua) return;
   var nn = ($('nguoi_nhap').value || '').trim();
   if (!nn) { alert('Điền tên người tuyển dụng trước đã.'); $('nguoi_nhap').focus(); return; }
-  if (!confirm('ĐỔI NHÀ MÁY CHO PHIẾU CŨ\n\n' + (phieuSua.ho_ten || '') + ' — ' + phieuSua.ma_ld +
-      '\n\nTừ:  ' + phieuSua.cong_ty_cu + '\nSang: ' + (tenCT || 'nhà máy này') +
-      '\n\nPhiếu cũ bị GHI ĐÈ, không tạo phiếu mới. Đồng ý?')) return;
+  var hoi = phieuSua.mo_lai
+    ? ('MỞ LẠI PHIẾU ĐÃ HUỶ\n\n' + (phieuSua.ho_ten || '') + ' — ' + phieuSua.ma_ld +
+       '\n\nPhiếu này đã huỷ vì người đó báo KHÔNG ĐI.\nMở lại sẽ đưa họ về danh sách chờ đón tại: ' +
+       (tenCT || 'nhà máy này') + '\n\nĐồng ý?')
+    : ('ĐỔI NHÀ MÁY CHO PHIẾU CŨ\n\n' + (phieuSua.ho_ten || '') + ' — ' + phieuSua.ma_ld +
+       '\n\nTừ:  ' + phieuSua.cong_ty_cu + '\nSang: ' + (tenCT || 'nhà máy này') +
+       '\n\nPhiếu cũ bị GHI ĐÈ, không tạo phiếu mới. Đồng ý?');
+  if (!confirm(hoi)) return;
 
-  var n = this; n.disabled = true; n.textContent = 'Đang đổi…';
+  var n = this; n.disabled = true;
+  n.textContent = phieuSua.mo_lai ? 'Đang mở lại…' : 'Đang đổi…';
   goiAPI({ token: TOKEN_API, hanh_dong: 'sua_dang_ky', ma_ld: phieuSua.ma_ld, ma_ct: maCT,
            nguoi_nhap: nn,
+           ca_lam: loaiCT === 'chinh_thuc' ? '' : caDaChon,
            ngay_di_lam: loaiCT === 'chinh_thuc' ? '' : ($('ngay_lam_pv').value || '').trim(),
            ngay_phong_van: loaiCT === 'chinh_thuc' ? ($('ngay_lam_pv').value || '').trim() : '',
            ghi_chu: ($('ghi_chu').value || '').trim() })
