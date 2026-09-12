@@ -71,7 +71,19 @@
   .nmhang .dau{flex:none;color:var(--tot);font-weight:700}
   .nmtrong{padding:18px 16px;text-align:center;color:var(--mo);font-size:14px}
 
-  .gt{display:flex;gap:20px;justify-content:flex-end;flex:1;padding:12px 0}
+  /* GIỚI TÍNH (bản 3.21.1) — trước đây là hai ô tròn radio nhỏ xíu: khó chạm trên điện
+     thoại, và bấm xong KHÔNG thấy phản ứng gì nên người nhập không biết đã chọn chưa.
+     Nay là hai nút to như nút chọn ca.
+     GIỮ NGUYÊN thẻ <input type=radio> bên trong (chỉ ẩn đi) — nhờ vậy hai chỗ mã đang đọc
+     `input[name=gt]` không phải sửa dòng nào, và bàn phím / trình đọc màn hình vẫn dùng được. */
+  .gt{display:flex;gap:8px;flex:1;padding:8px 0}
+  .gt-nut{flex:1;margin:0}
+  .gt-nut input{position:absolute;opacity:0;width:0;height:0;pointer-events:none}
+  .gt-nut span{display:block;text-align:center;padding:11px 8px;border:1px solid #d9dde2;
+    background:#fff;border-radius:9px;font-size:14.5px;color:#3c4753;cursor:pointer}
+  /* Dùng `input:checked + span` chứ không dùng :has() — webview trong Zalo có thể còn cũ */
+  .gt-nut input:checked + span{background:#2d6cdf;border-color:#2d6cdf;color:#fff;font-weight:600}
+  .gt-nut input:focus-visible + span{outline:2px solid #2d6cdf;outline-offset:2px}
   .gt label{display:flex;align-items:center;gap:8px;font-size:15px;margin:0;cursor:pointer}
   .gt input{width:23px;height:23px;flex:none;accent-color:var(--xanh)}
 
@@ -131,9 +143,15 @@
         border-radius:8px;font-size:19px;font-weight:700;letter-spacing:.5px}
 
   /* ===== danh sách đã nhập trong ngày ===== */
-  .ds-hang{display:flex;gap:10px;align-items:baseline;padding:13px 16px;border-top:1px solid #f2f4f6;font-size:14.5px}
+  /* Hai dòng thay vì một (bản 3.21.1): thêm số điện thoại mà vẫn để một dòng thì tên dài
+     bị cắt mất trên màn hình điện thoại. Dòng trên là tên + giờ, dòng dưới là phần phụ. */
+  .ds-hang{padding:12px 16px;border-top:1px solid #f2f4f6;font-size:14.5px}
   .ds-hang:first-child{border-top:0}
+  .ds-hang .d1{display:flex;gap:10px;align-items:baseline}
   .ds-hang .gio{margin-left:auto;font-size:12.5px;color:var(--mo);white-space:nowrap}
+  .ds-hang .d2{margin-top:3px;font-size:12.5px;color:var(--mo)}
+  /* Số điện thoại chạm được là gọi luôn — hay cần lúc phải hỏi lại người vừa đăng ký. */
+  .ds-hang .d2 a{color:#2d6cdf;text-decoration:none;font-weight:600}
   .trong{padding:26px 16px;text-align:center;color:var(--mo);font-size:14.5px}
   .an{display:none}
   .ca-chon{display:flex;gap:8px;flex:1}
@@ -197,8 +215,8 @@
     <div class="hang"><span>Tên</span><input id="ho_ten" placeholder="Xin vui lòng nhập tên" autocomplete="off"></div>
     <div class="hang"><span>Giới tính</span>
       <div class="gt">
-        <label><input type="radio" name="gt" value="Nam"> Nam</label>
-        <label><input type="radio" name="gt" value="Nữ"> Nữ</label>
+        <label class="gt-nut"><input type="radio" name="gt" value="Nam"><span>Nam</span></label>
+        <label class="gt-nut"><input type="radio" name="gt" value="Nữ"><span>Nữ</span></label>
       </div>
     </div>
     <div class="hang"><span>Ngày sinh</span><input id="ngay_sinh" inputmode="numeric" maxlength="10" placeholder="dd/mm/yyyy"></div>
@@ -1409,7 +1427,8 @@ function guiDangKy(d, ten, nut) {
       return;
     }
     if (kq.ok && (kq.ma === 'THANH_CONG' || kq.ma === 'DANG_KY_LAI' || kq.ma === 'TRUNG_KHAC_CT')) {
-      luuDanhSach({ ma_ld: kq.ma_ld, ho_ten: ten, cccd_che: kq.cccd_che, ten_cong_ty: kq.ten_cong_ty || tenCT });
+      luuDanhSach({ ma_ld: kq.ma_ld, ho_ten: ten, cccd_che: kq.cccd_che,
+                    sdt: d.sdt, ten_cong_ty: kq.ten_cong_ty || tenCT });
     }
     // Máy chủ đã trả lời rành mạch (nhận hoặc từ chối) → phiếu không còn treo
     boPhieu();
@@ -1547,9 +1566,16 @@ $('nut_ds').addEventListener('click', function () {
                                       : 'Chưa đăng ký ai trong hôm nay';
   $('ds_noi').innerHTML = ds.length
     ? ds.map(function (m) {
-        return '<div class="ds-hang"><b>' + thoat(m.ho_ten) + '</b>' +
-               '<span style="color:var(--mo);font-size:13px">' + thoat(m.cccd_che || '') + ' · ' + thoat(m.ma_ld) + '</span>' +
-               '<span class="gio">' + thoat(m.gio) + '</span></div>';
+        // Phiếu lưu TRƯỚC bản 3.21.1 không có số điện thoại — bỏ qua, đừng để lòi chữ
+        // "undefined" ra màn hình.
+        var sdt = (m.sdt || '').replace(/\D/g, '');
+        var phu = [thoat(m.cccd_che || ''), thoat(m.ma_ld)].filter(function (x) { return x; }).join(' · ');
+        return '<div class="ds-hang">' +
+               '<div class="d1"><b>' + thoat(m.ho_ten) + '</b>' +
+                 '<span class="gio">' + thoat(m.gio) + '</span></div>' +
+               '<div class="d2">' + phu +
+                 (sdt ? ' · <a href="tel:' + thoat(sdt) + '">' + thoat(sdt) + '</a>' : '') +
+               '</div></div>';
       }).join('')
     : '<div class="trong">Danh sách này chỉ hiện những người <b>bạn</b> vừa đăng ký trên máy này hôm nay.<br>' +
       'Danh sách đầy đủ của cả đội xem trong nhóm Zalo hoặc Google Sheet.</div>';
