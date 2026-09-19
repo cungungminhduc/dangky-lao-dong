@@ -174,8 +174,8 @@ function guiAnh() {
         var guiLai = !(kq && LOI_KHONG_GUI_LAI.indexOf(kq.ma) >= 0);
         ttAnh('loi', thoat((kq && kq.loi) || 'Máy chủ không nhận ảnh') +
           (guiLai ? ' — bấm Gửi để thử lại.' : ''));
-      }, function () {
-        ttAnh('loi', 'Mất mạng, chưa gửi được — bấm Gửi để thử lại.');
+      }, function (e) {
+        ttAnh('loi', thoat((e && e.message) || 'Không nối được máy chủ.') + ' Chưa gửi được — bấm Gửi để thử lại.');
       });
   }).catch(function () {
     ttAnh('loi', 'Không đọc được ảnh này. Chụp lại giúp nhé.');

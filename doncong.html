@@ -128,7 +128,7 @@
   </div>
 
   <div class="thanh cho an" id="thanh_cho">
-    <span>Mất mạng — còn <b id="ht_cho">0</b> lượt chưa gửi được. Máy sẽ tự gửi lại khi có sóng.</span>
+    <span>Còn <b id="ht_cho">0</b> lượt đón chưa gửi được — máy tự gửi lại mỗi phút khi trang còn mở.</span>
   </div>
 
   <div id="o_kq"></div>
@@ -221,15 +221,10 @@
 
 <button type="button" class="tron an" id="nut_ds">Xem danh sách tổng</button>
 
-<!-- jsQR: bộ giải ăn thẳng ImageData nên nhanh gấp chục lần scanFile,
-     nhờ vậy mới dò được hàng chục vùng mà vẫn kịp. -->
-<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
-<!-- ZXing bản WASM — CHÍNH BỘ MÃ C++ mà Zalo dùng, biên dịch sang WebAssembly.
-     Đã BỎ html5-qrcode (ZXing viết lại bằng JavaScript): đo trên 4 ảnh thẻ thật
-     ngày 01/09 thì bản JavaScript đọc được 0/4, bản WASM đọc 4/4 và nhanh gấp ~20 lần
-     (~40ms/lượt thay vì ~1,1 giây). Bỏ nó còn tiết kiệm 330KB tải về. -->
-<script src="https://unpkg.com/zxing-wasm@3.1.3/dist/iife/reader/index.js"></script>
+<!-- Hai thư viện quét QR (jsQR + ZXing bản WASM) KHÔNG nạp ở đây nữa — bản 3.27 nạp NỀN trong mã
+     chính (tìm QR_NGUON), để unpkg chậm hay đứt không còn làm cả trang đứng im. -->
 <script src="cau-hinh.js"></script>
+<script src="goi-may-chu.js"></script>
 <script>
 // ====== CẤU HÌNH: URL_API + TOKEN_API nằm ở tệp cau-hinh.js, dùng chung cho cả 4 trang ======
 // Thiếu tệp đó (quên tải lên, mạng chập) hoặc tệp chưa điền link thì nói thẳng ra màn hình,
@@ -240,6 +235,13 @@ if (typeof URL_API === 'undefined' || typeof TOKEN_API === 'undefined' || !URL_A
   document.body.insertAdjacentHTML('afterbegin', '<div style="background:#b71c1c;color:#fff;padding:14px;' +
     'font-weight:bold;text-align:center">Trang chưa nối được máy chủ: không đọc được tệp cau-hinh.js ' +
     '(chưa tải lên, mạng chập, hoặc chưa điền URL_API).<br>Tải lại trang. Vẫn thấy dòng này thì báo quản trị.</div>');
+}
+// Bản 3.27: goi-may-chu.js lo hết giờ + thử lại + phân loại lỗi. Thiếu tệp thì trang VẪN chạy bằng
+// cách gọi cũ (goiAPI tự lùi), nhưng phải nói ra — không thì lại "mất mạng" mà không ai biết vì sao.
+if (typeof goiMayChu_ !== 'function') {
+  document.body.insertAdjacentHTML('afterbegin', '<div style="background:#e65100;color:#fff;padding:10px;' +
+    'text-align:center">Thiếu tệp goi-may-chu.js — trang vẫn dùng được nhưng dễ báo lỗi mạng khi máy chủ chậm. ' +
+    'Báo quản trị.</div>');
 }
 // ==========================================================================================
 
@@ -261,8 +263,9 @@ function hien(el) {
 }
 
 function goiAPI(body) {
-  return fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                          body: JSON.stringify(body) }).then(function (r) { return r.json(); });
+  return typeof goiMayChu_ === 'function' ? goiMayChu_(body)
+    : fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                       body: JSON.stringify(body) }).then(function (r) { return r.json(); });
 }
 
 function thoat(s) {
@@ -285,7 +288,14 @@ function loiSdt(s) {
   return 'Số điện thoại phải bắt đầu bằng 03, 05, 07, 08 hoặc 09.';
 }
 
-// ---------- Hàng đợi khi mất sóng ----------
+// ---------- Hàng đợi khi mất sóng / máy chủ bận ----------
+// Bản 3.27 vá 3 lỗi làm MẤT lượt đón (.scratch/lag-truy-cap/issues/04-hang-cho-don.md):
+//   1. mọi câu trả lời đều bị coi là đã gửi — kể cả ok:false (QUA_TAI, lỗi khoá) → mất lặng lẽ;
+//   2. chỉ gửi lại khi có sự kiện `online` → lỗi máy chủ lúc vẫn có sóng là nằm "chờ sóng" mãi;
+//   3. bắn cả hàng song song (tranh khoá 20 giây rồi hỏng) và ghi đè cả hàng → mất lượt mới xếp giữa chừng.
+// Lỗi TẠM = thử lại có thể qua: máy chủ bận/quá tải/trục trặc, hoặc sai token (cấu hình sẽ được sửa).
+var LOI_TAM = ['QUA_TAI', 'BAN', 'LOI_HE_THONG', 'SAI_TOKEN'];
+var dangDayHD = false;
 function docHangDoi() { try { return JSON.parse(localStorage.getItem(KHOA_CHO) || '[]'); } catch (e) { return []; } }
 function ghiHangDoi(ds) {
   try { localStorage.setItem(KHOA_CHO, JSON.stringify(ds)); } catch (e) {}
@@ -294,14 +304,37 @@ function ghiHangDoi(ds) {
 }
 function xepHangDoi(it) { var ds = docHangDoi(); ds.push(it); ghiHangDoi(ds); }
 function dayHangDoi() {
-  var ds = docHangDoi();
-  if (!ds.length) return;
-  var con = [];
-  Promise.all(ds.map(function (it) {
-    return goiAPI(it).then(function () {}).catch(function () { con.push(it); });
-  })).then(function () { ghiHangDoi(con); if (!con.length) guiTinNhan(); });
+  if (dangDayHD || !docHangDoi().length) return;
+  dangDayHD = true;
+  var ds = docHangDoi(), xong = 0, daGui = 0;
+  function tiep() {
+    if (xong >= ds.length) return ket();
+    var it = ds[xong];
+    return goiAPI(it).then(function (kq) {
+      if (kq && !kq.ok && LOI_TAM.indexOf(kq.ma) >= 0) return ket();   // tạm hỏng: giữ từ lượt này trở đi
+      if (kq && kq.ok) daGui++;
+      else {
+        // Máy chủ đã xét và TỪ CHỐI — gửi lại cũng vậy, nên bỏ khỏi hàng; nhưng phải nói ra.
+        var loi = (kq && kq.loi) || 'Máy chủ từ chối';
+        themLichSu('xau', 'KHÔNG ghi được …' + String(it.so_cccd || '').slice(-4), loi);
+        alert('Một lượt đón chờ gửi (CCCD …' + String(it.so_cccd || '').slice(-4) + ') bị máy chủ TỪ CHỐI:\n' +
+              loi + '\n\nLượt này CHƯA được ghi — quét lại thẻ người đó.');
+      }
+      xong++;
+      return tiep();
+    }, ket);   // mất mạng / hết giờ: giữ, lần sau thử tiếp
+  }
+  function ket() {
+    // Chỉ bỏ đúng số lượt đã xử lý ở ĐẦU hàng — lượt mới xếp vào trong lúc gửi vẫn còn nguyên.
+    ghiHangDoi(docHangDoi().slice(xong));
+    dangDayHD = false;
+    if (daGui) guiTinNhan();
+  }
+  tiep();
 }
 window.addEventListener('online', dayHangDoi);
+document.addEventListener('visibilitychange', function () { if (!document.hidden) dayHangDoi(); });
+setInterval(dayHangDoi, 60000);
 function guiTinNhan() { goiAPI({ token: TOKEN_API, hanh_dong: 'gui_tin' }).catch(function () {}); }
 
 // ---------- Tách chuỗi QR trên thẻ căn cước ----------
@@ -342,18 +375,32 @@ function tachQR(chuoi) {
 }
 
 // ---------- Nạp danh sách nhà máy ----------
-goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_cong_ty' })
-  .then(function (kq) {
-    dsCT = (kq && kq.danh_sach) || [];
-    if (kq && kq.anh) anhCH = kq.anh;
-    var dl = $('ds_nm');
-    dsCT.forEach(function (c) {
-      var o = document.createElement('option'); o.value = c.ten_cong_ty; dl.appendChild(o);
-    });
-    veChonCongTy();
-    if (typeof veGoiYCT === 'function') veGoiYCT();
-  })
-  .catch(function () {});
+// Bản 3.27: hiện NGAY từ bản nhớ (chung với trang đăng ký), lấy bản mới ngầm — napDsCongTy_ ở
+// goi-may-chu.js. Hàm dưới có thể chạy HAI lần (bản nhớ rồi bản mới) nên phải dựng lại, không nối thêm.
+function apDungDsCT(kq) {
+  dsCT = kq.danh_sach || [];
+  if (kq.anh) anhCH = kq.anh;
+  var dl = $('ds_nm');
+  dl.innerHTML = '';
+  dsCT.forEach(function (c) {
+    var o = document.createElement('option'); o.value = c.ten_cong_ty; dl.appendChild(o);
+  });
+  veChonCongTy();
+  if (typeof veGoiYCT === 'function') veGoiYCT();
+}
+
+// Không lấy được và chưa có bản nhớ → tự thử lại sau 30 giây, tối đa 3 lượt. Trang đón vẫn quét và
+// đánh dấu đón được; danh sách chỉ cần khi đăng ký người mới ngay tại cổng.
+var lanNapDsCT = 0;
+function napDsCT() {
+  lanNapDsCT++;
+  napDsCongTy_(apDungDsCT, function (loi, coNho) {
+    if (!coNho && lanNapDsCT < 3) setTimeout(napDsCT, 30000);
+  });
+}
+if (typeof napDsCongTy_ === 'function') napDsCT();
+else goiAPI({ token: TOKEN_API, hanh_dong: 'danh_sach_cong_ty' })   // thiếu goi-may-chu.js: cách cũ
+  .then(function (kq) { if (kq && kq.ok) apDungDsCT(kq); }, function () {});
 
 /** Ô chọn công ty ở màn hình NGƯỜI MỚI chỉ hiện công ty ĐÚNG MẢNG đang chọn. */
 function veChonCongTy() {
@@ -473,7 +520,8 @@ function ttQuet(html) { var o = $('tt_quet'); if (o) o.innerHTML = html; }
 // ĐÃ BỎ hẳn quét trực tiếp bằng camera: chụp ảnh vừa chắc hơn vừa cho người đón
 // xem lại thông tin trước khi ghi, thay vì vừa đưa thẻ vào khung là đã ghi mất rồi.
 $('nut_chup_the').addEventListener('click', function () {
-  if (typeof jsQR === 'undefined' && typeof ZXingWASM === 'undefined' &&
+  // Còn đang tải (bản 3.27 nạp nền) thì cứ mở chọn ảnh — chụp mất vài giây, đủ cho thư viện về.
+  if (!qrDangNap && typeof jsQR === 'undefined' && typeof ZXingWASM === 'undefined' &&
       typeof BarcodeDetector === 'undefined') {
     alert('Chưa tải được bộ đọc mã. Dùng nút bút chì ở trên để nhập số căn cước.'); return;
   }
@@ -885,30 +933,49 @@ var zxSan = false, zxHong = false, zxCho = null;
 var qrDaThuTep = false;
 
 /**
- * Nạp bộ giải NGAY KHI MỞ TRANG, chạy nền, không chặn gì cả.
- * Tệp .wasm nặng ~1,1 MB — nghe thì to, nhưng nó tải trong lúc người dùng còn đang
- * chọn nhà máy và giơ máy chụp thẻ, nên tới lúc cần thì đã có sẵn. Bù lại đã bỏ
- * html5-qrcode nặng 330 KB. Tải hỏng cũng không sao: jsQR và bộ giải sẵn của máy
- * vẫn chạy, nút gõ tay 12 số luôn còn đó.
+ * NẠP NỀN hai thư viện quét QR (bản 3.27). jsQR: giải thẳng ImageData, nhanh gấp chục lần scanFile.
+ * ZXing bản WASM: chính bộ mã C++ Zalo dùng — đo trên 4 ảnh thẻ thật ngày 01/09 đọc 4/4, bản
+ * JavaScript cũ (html5-qrcode) đọc 0/4.
+ *
+ * Trước 3.27 là hai thẻ script lấy thẳng từ unpkg, đặt TRƯỚC mã chính: trình duyệt dừng dựng
+ * trang tới khi tải xong — unpkg chậm hay đứt là cả trang đứng im. Nay trang chạy ngay; thư viện về
+ * lúc nào dùng lúc đó. Nguồn khai MỘT chỗ (QR_NGUON); tệp .wasm lấy CÙNG nhà với tệp JS — thêm một nhà
+ * là thêm một chỗ hỏng, mà hỏng thì hỏng câm.
+ */
+var QR_NGUON = 'https://unpkg.com/';
+var qrDangNap = 0;   // số thư viện còn đang trên đường về
+function napThuVien_(src) {
+  qrDangNap++;
+  return new Promise(function (ok) {
+    var s = document.createElement('script');
+    s.src = src; s.async = true;
+    s.onload = function () { qrDangNap--; ok(true); };
+    s.onerror = function () { qrDangNap--; ok(false); };
+    document.head.appendChild(s);
+  });
+}
+napThuVien_(QR_NGUON + 'jsqr@1.4.0/dist/jsQR.js');
+var zxTepCho = napThuVien_(QR_NGUON + 'zxing-wasm@' + ZX_BAN + '/dist/iife/reader/index.js');
+
+/**
+ * Dựng bộ giải WASM ngay khi tệp JS về, chạy nền. Tệp .wasm ~1,1 MB tải trong lúc người đón còn
+ * chờ người tới và giơ máy chụp thẻ. Tải hỏng cũng không sao: jsQR và bộ giải sẵn của máy vẫn chạy,
+ * nút gõ tay 12 số luôn còn đó.
  */
 function zxNap_() {
   if (zxCho) return zxCho;
-  if (typeof ZXingWASM === 'undefined') { zxHong = true; return (zxCho = Promise.resolve(false)); }
-  try {
-    zxCho = ZXingWASM.prepareZXingModule({
-      // Ghim tệp .wasm về CÙNG MỘT nhà (unpkg) với jsQR. Mặc định thư viện lấy ở
-      // jsdelivr — thêm một nhà là thêm một chỗ hỏng, mà hỏng thì hỏng câm.
+  zxCho = zxTepCho.then(function (coTep) {
+    if (!coTep || typeof ZXingWASM === 'undefined') { zxHong = true; return false; }
+    return ZXingWASM.prepareZXingModule({
       overrides: {
         locateFile: function (t, p) {
-          return /\.wasm$/.test(t)
-            ? 'https://unpkg.com/zxing-wasm@' + ZX_BAN + '/dist/reader/' + t
-            : p + t;
+          return /\.wasm$/.test(t) ? QR_NGUON + 'zxing-wasm@' + ZX_BAN + '/dist/reader/' + t : p + t;
         }
       },
       fireImmediately: true
     }).then(function () { zxSan = true; return true; },
             function () { zxHong = true; return false; });
-  } catch (e) { zxHong = true; zxCho = Promise.resolve(false); }
+  }).catch(function () { zxHong = true; return false; });
   return zxCho;
 }
 zxNap_();
@@ -983,10 +1050,10 @@ function qrMoiTruong_() {
   } catch (e) {}
   return 'ảnh:' + (typeof createImageBitmap !== 'undefined' ? 'bitmap' : 'img') +
          ' · máy giải sẵn:' + (typeof BarcodeDetector !== 'undefined' ? 'có' : 'không') +
-         ' · jsQR:' + (typeof jsQR !== 'undefined' ? 'có' : 'KHÔNG') +
+         ' · jsQR:' + (typeof jsQR !== 'undefined' ? 'có' : qrDangNap ? 'đang tải' : 'KHÔNG') +
          ' · ZXing-WASM:' + (zxSan ? 'sẵn sàng'
-              : typeof ZXingWASM === 'undefined' ? 'KHÔNG TẢI ĐƯỢC'
-              : zxHong ? 'HỎNG' : 'đang tải') +
+              : zxHong ? (typeof ZXingWASM === 'undefined' ? 'KHÔNG TẢI ĐƯỢC' : 'HỎNG')
+              : 'đang tải') +
          ' · lọc canvas:' + (coLoc ? 'có' : 'không');
 }
 
@@ -997,7 +1064,7 @@ function qrMoiTruong_() {
  * và khi WASM về tới nơi thì các lượt sau tự khắc dùng nó.
  */
 function thuWasmFileHan_(nguon, han) {
-  if (typeof ZXingWASM === 'undefined' || zxHong) return Promise.resolve('');
+  if (zxHong) return Promise.resolve('');   // tệp JS còn đang về (nạp nền) thì vẫn chờ trong hạn
   if (zxSan) return thuWasmFile_(nguon);
   return new Promise(function (ok) {
     var da = false;
@@ -1125,10 +1192,10 @@ function traCuu(cccd, q) {
       $('o_kq').innerHTML = '';
       if (kq.ma === 'CHUA_DANG_KY') veManMoi(kq); else veManXacNhan(kq);
     })
-    .catch(function () {
+    .catch(function (e) {
       dangBan = false;
-      veKetQua('canh', 'Mất mạng', '***' + cccd.slice(-4),
-        'Không tra được vì đang mất sóng. Có sóng rồi chụp lại thẻ này.');
+      veKetQua('canh', 'Chưa tra được', '***' + cccd.slice(-4),
+        ((e && e.message) || 'Không nối được máy chủ.') + ' Chụp lại thẻ này sau ít giây.');
     });
 }
 
@@ -1259,6 +1326,15 @@ function guiDon(them) {
   veKetQua('canh', 'Đang gửi…', '***' + cccd.slice(-4), 'Chờ một giây.');
 
   goiAPI(body).then(function (kq) {
+    // Máy chủ bận/trục trặc (bản 3.27): xếp hàng chờ tự gửi lại, như lúc mất sóng — máy chủ soát trùng
+    // nên lượt nào lỡ đã ghi thì lần gửi lại chỉ nhận "đã đón trước đó".
+    if (!kq.ok && LOI_TAM.indexOf(kq.ma) >= 0) {
+      xepHangDoi(body);
+      veKetQua('canh', 'Đã lưu tạm — máy chủ đang bận', 'CCCD …' + cccd.slice(-4),
+        (kq.loi || '') + ' Lượt này đã lưu trong máy và sẽ tự gửi lại. Cứ làm tiếp bình thường.');
+      themLichSu('canh', 'Chờ gửi', '…' + cccd.slice(-4));
+      return;
+    }
     if (kq.ma === 'DANG_KY_VA_DON') {
       demDaDon++; $('ht_dem').textContent = demDaDon;
       veKetQua('tot', 'ĐĂNG KÝ VÀ ĐÃ ĐÓN — ' + (kq.ten_cong_ty || ''), kq.ho_ten,
@@ -1288,11 +1364,13 @@ function guiDon(them) {
       veKetQua('xau', 'Lỗi', 'Chưa ghi nhận được', kq.loi || 'Không rõ lỗi');
     }
     guiTinNhan();
-  }).catch(function () {
-    // Mất sóng — không báo hỏng, xếp hàng đợi và tự gửi lại khi có mạng
+  }).catch(function (e) {
+    // Không có câu trả lời (mất sóng, hết giờ, Google trả trang lỗi) — không báo hỏng, xếp hàng đợi
+    // và tự gửi lại (mỗi phút, khi có mạng lại, khi mở lại trang).
     xepHangDoi(body);
-    veKetQua('canh', 'Đã ghi tạm — chờ sóng', 'CCCD …' + cccd.slice(-4),
-      'Điện thoại đang mất mạng. Lượt này đã lưu và sẽ tự gửi khi có sóng. Cứ làm tiếp bình thường.');
+    veKetQua('canh', 'Đã lưu tạm — chưa gửi được', 'CCCD …' + cccd.slice(-4),
+      ((e && e.message) || 'Không nối được máy chủ.') +
+      ' Lượt này đã lưu trong máy và sẽ tự gửi lại. Cứ làm tiếp bình thường.');
     themLichSu('canh', 'Chờ gửi', '…' + cccd.slice(-4));
   });
 }

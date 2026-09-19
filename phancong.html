@@ -187,6 +187,7 @@
 </div>
 
 <script src="cau-hinh.js"></script>
+<script src="goi-may-chu.js"></script>
 <script>
 // ====== CẤU HÌNH: URL_API + TOKEN_API nằm ở tệp cau-hinh.js, dùng chung cho cả 4 trang ======
 // Thiếu tệp đó (quên tải lên, mạng chập) hoặc tệp chưa điền link thì nói thẳng ra màn hình,
@@ -197,6 +198,13 @@ if (typeof URL_API === 'undefined' || typeof TOKEN_API === 'undefined' || !URL_A
   document.body.insertAdjacentHTML('afterbegin', '<div style="background:#b71c1c;color:#fff;padding:14px;' +
     'font-weight:bold;text-align:center">Trang chưa nối được máy chủ: không đọc được tệp cau-hinh.js ' +
     '(chưa tải lên, mạng chập, hoặc chưa điền URL_API).<br>Tải lại trang. Vẫn thấy dòng này thì báo quản trị.</div>');
+}
+// Bản 3.27: goi-may-chu.js lo hết giờ + thử lại + phân loại lỗi. Thiếu tệp thì trang VẪN chạy bằng
+// cách gọi cũ (goiAPI tự lùi), nhưng phải nói ra — không thì lại "mất mạng" mà không ai biết vì sao.
+if (typeof goiMayChu_ !== 'function') {
+  document.body.insertAdjacentHTML('afterbegin', '<div style="background:#e65100;color:#fff;padding:10px;' +
+    'text-align:center">Thiếu tệp goi-may-chu.js — trang vẫn dùng được nhưng dễ báo lỗi mạng khi máy chủ chậm. ' +
+    'Báo quản trị.</div>');
 }
 // ==========================================================================================
 
@@ -215,9 +223,10 @@ function datPhien(p) {
 function goiAPI(body) {
   var b = body || {};
   if (!b.phien) b.phien = layPhien();
-  return fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                          body: JSON.stringify(b) })
-    .then(function (r) { return r.json(); })
+  var goi = typeof goiMayChu_ === 'function' ? goiMayChu_(b)
+    : fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                       body: JSON.stringify(b) }).then(function (r) { return r.json(); });
+  return goi
     .then(function (kq) {
       if (kq && kq.ma === 'HET_PHIEN') { datPhien(''); veManDangNhap('Phiên đăng nhập đã hết. Xin đăng nhập lại.'); }
       return kq;
@@ -298,6 +307,7 @@ $('nut_dn').addEventListener('click', function () {
   if (!mk) { baoLoi('Chưa nhập mật khẩu.'); return; }
   var n = this; n.disabled = true; n.textContent = 'Đang kiểm tra…';
   $('dn_loi').classList.add('an');
+  bangLayTruoc = null;   // bảng lấy sẵn lúc mở trang (nếu còn) thuộc vé cũ
   goiAPI({ token: TOKEN_API, hanh_dong: 'dang_nhap', so_cccd: cccd, mat_khau: mk, phien: '-' })
     .then(function (kq) {
       if (kq && kq.ok) { datPhien(kq.phien); vaoTrong(kq); return; }
@@ -316,12 +326,35 @@ $('nut_thoat').addEventListener('click', function () {
 });
 
 // Mở trang: còn vé thì vào thẳng, không bắt gõ lại mật khẩu mỗi chiều.
-(function khoiDong() {
+// Bản 3.27: (1) lấy bảng ngày mai CÙNG LÚC với cú kiểm vé; bảng chỉ được VẼ sau khi vé được xác nhận
+// (moNgay dùng lại kết quả, không gọi lần hai). (2) Trục trặc thoáng qua KHÔNG đá về đăng nhập nữa —
+// vé còn hạn thì giữ, chỉ HET_PHIEN mới phải đăng nhập lại.
+var bangLayTruoc = null;   // { ngay, p } — cú lấy bảng bắn sẵn lúc mở trang
+function khoiDong() {
   if (!layPhien()) { veManDangNhap(''); return; }
+  var nut = $('nut_dn');
+  nut.disabled = true; nut.textContent = 'Đang vào…';
+  $('dn_loi').classList.add('an');
+  var ngay = ngayCong(1);
+  bangLayTruoc = { ngay: ngay, p: goiAPI({ token: TOKEN_API, hanh_dong: 'pc_bang', ngay: ngay }) };
+  bangLayTruoc.p.catch(function () {});   // lỗi của cú lấy sẵn do moNgay báo; đừng để lọt ra ngoài
   goiAPI({ token: TOKEN_API, hanh_dong: 'cong_ty_cua_toi' })
-    .then(function (kq) { if (kq && kq.ok) vaoTrong(kq); else veManDangNhap(''); })
-    .catch(function () { veManDangNhap('Không nối được máy chủ. Thử lại khi có mạng.'); });
-})();
+    .then(function (kq) {
+      if (kq && kq.ok) { vaoTrong(kq); return; }
+      bangLayTruoc = null;
+      if (kq && kq.ma === 'HET_PHIEN') return;   // goiAPI đã xoá vé và về màn đăng nhập
+      baoLoiVao((kq && kq.loi) || 'Máy chủ chưa trả lời được.');
+    }, function (e) { bangLayTruoc = null; baoLoiVao(e.message); })
+    .then(function () { nut.disabled = false; nut.textContent = 'Đăng nhập'; });
+}
+/** Vé còn đó, chỉ là chưa vào được lúc này: nói rõ + Thử lại. Muốn thì vẫn đăng nhập tay được. */
+function baoLoiVao(cau) {
+  $('dn_loi').innerHTML = thoat(cau) + ' Phiên đăng nhập vẫn còn — <a href="#" id="thu_lai_vao">Thử lại</a>';
+  $('dn_loi').classList.remove('an');
+  $('thu_lai_vao').addEventListener('click', function (e) { e.preventDefault(); khoiDong(); });
+  hien('man_dn');
+}
+khoiDong();
 
 // ============================================================
 // BẢNG PHÂN CÔNG
@@ -341,7 +374,11 @@ function moNgay(ngay) {
   $('ct_noi').innerHTML = '';
   $('ct_thanh').classList.add('an');
   hien('man_ct');
-  goiAPI({ token: TOKEN_API, hanh_dong: 'pc_bang', ngay: ngay })
+  // Mở trang lần đầu thì bảng ngày mai đã được bắn sẵn cùng cú kiểm vé (khoiDong) — dùng đúng một lần.
+  var p = (bangLayTruoc && bangLayTruoc.ngay === ngay) ? bangLayTruoc.p
+        : goiAPI({ token: TOKEN_API, hanh_dong: 'pc_bang', ngay: ngay });
+  bangLayTruoc = null;
+  p
     .then(function (kq) {
       if (!kq) return;
       if (!kq.ok) { $('ct_tom').textContent = kq.loi || 'Không lấy được bảng phân công.'; return; }
