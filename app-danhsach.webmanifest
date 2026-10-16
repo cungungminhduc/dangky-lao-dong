@@ -1,0 +1,15 @@
+{
+  "name": "Danh sách gọi — tuyển dụng",
+  "short_name": "DS gọi",
+  "description": "Xem ai chưa đến, gọi cho họ, báo tình trạng vào làm",
+  "lang": "vi",
+  "start_url": "danhsach.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f6f8",
+  "theme_color": "#1d5fbf",
+  "icons": [
+    { "src": "icon-ds-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-ds-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" }
+  ]
+}
