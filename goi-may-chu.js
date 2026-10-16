@@ -17,7 +17,9 @@
  */
 var GOI_CHI_DOC = ['danh_sach_cong_ty', 'kiem_tra', 'tra_cuu_don', 'cong_ty_cua_toi', 'danh_sach_don', 'pc_bang',
                    // 3.28 — trang báo quân số. qs_luu_nhap / qs_chot / qs_gui_lai là cú GHI: không thêm vào đây.
-                   'qs_don_vi', 'qs_mo', 'qs_xem_truoc', 'qs_trang_thai_gui', 'qs_tong_hop'];
+                   'qs_don_vi', 'qs_mo', 'qs_xem_truoc', 'qs_trang_thai_gui', 'qs_tong_hop',
+                   // 3.33 — trang dữ liệu tuyển. dlt_dang_ky_lai là cú GHI, dlt_xuat ghi vết: không thêm vào đây.
+                   'dlt_mo', 'dlt_kiem'];
 
 // Cú GHI mà gửi lại vô hại (bản 3.32): `dang_nhap` chỉ ghi mốc "đăng nhập lần cuối" + một dòng nhật ký,
 // vé mới thay vé cũ. Trước 3.32 nó bị tính là cú ghi: hạn 90 giây, không thử lại — Dương báo 16/10/2026
