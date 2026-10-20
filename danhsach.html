@@ -1178,9 +1178,12 @@ $('noi').addEventListener('click', function (e) {
     var ma = nutGoi.getAttribute('data-goi');
     var c = chonGoi[ma] || (chonGoi[ma] = { ket_qua: '', so_lan_them: 0 });
     c.so_lan_them++;
+    // 3.35 — Dương chốt 20/10/2026: đã gọi thì mặc định "Sẽ đi" (gửi là báo nhóm). Đã chọn kết quả
+    // khác rồi gọi lại thì giữ nguyên. Bấm lại "Sẽ đi" đang sáng = tắt, chỉ ghi số lần gọi.
+    if (!c.ket_qua) c.ket_qua = 'se_di';
     var o = nutGoi.closest('.hang').querySelector('.nghe');
     if (o) o.classList.remove('an');   // gọi xong quay lại là có sẵn bốn nút để ghi kết quả
-    ghiNho(); demChon();
+    ghiNho(); veLaiGoi(ma); demChon();
     return;
   }
   var nutKQ = t.closest ? t.closest('button[data-kq]') : null;
