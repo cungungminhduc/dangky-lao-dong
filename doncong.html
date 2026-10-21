@@ -200,7 +200,7 @@
     <div class="hang"><span>Công ty</span>
       <select id="moi_ct"><option value="">Chọn công ty</option></select></div>
     <div class="hang"><span>Số điện thoại</span>
-      <input id="moi_sdt" inputmode="numeric" maxlength="10" placeholder="10 số, ví dụ 0912345678"></div>
+      <input id="moi_sdt" inputmode="numeric" placeholder="10 số, ví dụ 0912345678"></div>
     <div class="hang"><span>Người đăng ký</span>
       <input id="moi_nguoi_dk" placeholder="Ai giới thiệu người này" autocomplete="off"></div>
   </div>
@@ -286,6 +286,16 @@ function loiSdt(s) {
   if (!s) return 'Chưa nhập số điện thoại.';
   if (s.length !== 10) return 'Số điện thoại phải đúng 10 chữ số. Đang nhập ' + s.length + ' số.';
   return 'Số điện thoại phải bắt đầu bằng 03, 05, 07, 08 hoặc 09.';
+}
+
+/**
+ * SĐT chép từ danh bạ hay có dấu cách / chấm / gạch ("0912 345 678") hoặc mã nước ("+84 912 345 678").
+ * Chỉ giữ chữ số, đổi 84 đầu về 0. KHÔNG cắt bớt số thừa: thừa thì để loiSdt báo "đang nhập 11 số" —
+ * cắt lặng lẽ có thể ra một số trông hợp lệ nhưng là số của người khác.
+ */
+function chuanSdt(s) {
+  s = String(s || '').replace(/\D/g, '');
+  return /^84[35789]\d{8}$/.test(s) ? '0' + s.substring(2) : s;
 }
 
 // ---------- Hàng đợi khi mất sóng / máy chủ bận ----------
@@ -1283,6 +1293,12 @@ function veManMoi(kq) {
   hien('man_moi');
 }
 
+// Dán SĐT từ danh bạ: trước đây ô có maxlength="10" nên "0912 345 678" bị cắt mất số cuối ngay lúc dán
+$('moi_sdt').addEventListener('input', function () {
+  var s = chuanSdt(this.value);
+  if (s !== this.value) this.value = s;
+});
+
 $('nut_moi_gui').addEventListener('click', function () {
   if (!nguoiHienTai) { hien('man_quet'); return; }
   var q = nguoiHienTai.q;
@@ -1295,7 +1311,7 @@ $('nut_moi_gui').addEventListener('click', function () {
   }
   var ct = $('moi_ct').value;
   if (!ct) { alert('Chọn công ty đã.'); $('moi_ct').focus(); return; }
-  var sdt = $('moi_sdt').value.replace(/\D/g, '');
+  var sdt = chuanSdt($('moi_sdt').value);
   if (!sdtHopLe(sdt)) { alert(loiSdt(sdt)); $('moi_sdt').focus(); return; }
   var nguoiDK = $('moi_nguoi_dk').value.trim().replace(/\s+/g, ' ');
   if (nguoiDK.length < 2) { alert('Ghi tên người đăng ký.'); $('moi_nguoi_dk').focus(); return; }

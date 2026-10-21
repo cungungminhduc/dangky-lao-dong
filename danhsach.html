@@ -55,6 +55,12 @@
   .o{padding:0 16px}
   .o input{width:100%;padding:13px 12px;font-size:16px;border:1px solid #d9dde2;
     border-radius:10px;margin-top:6px;background:#fff}
+  /* Nút Hiện/Ẩn mật khẩu nằm trong ô — gõ trên điện thoại hay sai một chữ mà không biết sai đâu */
+  .mk-o{position:relative}
+  .mk-o input{padding-right:70px}
+  .mk-o input::-ms-reveal{display:none}
+  .mk-hien{position:absolute;right:2px;top:6px;bottom:0;padding:0 14px;border:0;background:none;
+        font:inherit;font-size:14.5px;font-weight:600;color:#2d6cdf;cursor:pointer}
   .nhan{font-size:13.5px;color:var(--mo);margin-top:14px}
   .loi{margin:12px 16px 0;padding:10px 12px;border-radius:9px;background:var(--do-nhat);
     color:#8a1c13;font-size:13.5px}
@@ -183,7 +189,10 @@
     <div class="nhan">Số căn cước của bạn (12 số)</div>
     <input id="dn_cccd" inputmode="numeric" maxlength="12" autocomplete="username" placeholder="Ví dụ 024303008090">
     <div class="nhan">Mật khẩu</div>
-    <input id="dn_mk" type="password" autocomplete="current-password" placeholder="Mật khẩu được cấp">
+    <div class="mk-o">
+      <input id="dn_mk" type="password" autocomplete="current-password" placeholder="Mật khẩu được cấp">
+      <button type="button" class="mk-hien" id="nut_hien_mk" aria-label="Hiện mật khẩu" aria-pressed="false">Hiện</button>
+    </div>
   </div>
   <div class="loi an" id="dn_loi"></div>
   <button type="button" class="nut" id="nut_dn">Đăng nhập</button>
@@ -322,6 +331,7 @@ function veManDangNhap(loi) {
   if (loi) { $('dn_loi').textContent = loi; $('dn_loi').classList.remove('an'); }
   else { $('dn_loi').classList.add('an'); }
   $('dn_mk').value = '';
+  hienMatKhau(false);   // máy hay dùng chung — quay lại màn đăng nhập thì ẩn mật khẩu
   hien('man_dn');
 }
 
@@ -388,6 +398,16 @@ $('nut_dn').addEventListener('click', function () {
 });
 function baoLoi(t) { $('dn_loi').textContent = t; $('dn_loi').classList.remove('an'); }
 $('dn_mk').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('nut_dn').click(); });
+
+// Nút Hiện/Ẩn mật khẩu (21/10/2026)
+function hienMatKhau(bat) {
+  $('dn_mk').type = bat ? 'text' : 'password';
+  var nut = $('nut_hien_mk');
+  nut.textContent = bat ? 'Ẩn' : 'Hiện';
+  nut.setAttribute('aria-pressed', bat);
+  nut.setAttribute('aria-label', bat ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+}
+$('nut_hien_mk').addEventListener('click', function () { hienMatKhau($('dn_mk').type === 'password'); });
 
 $('nut_thoat').addEventListener('click', function () {
   if (!confirm('Đăng xuất khỏi máy này?')) return;
