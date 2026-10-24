@@ -122,6 +122,14 @@
   .xong.xau{background:var(--do-nhat);border-color:#f0b3ae}
   .xem-tin{margin:0 14px;padding:12px 13px;border-radius:10px;background:#fff;border:1px solid var(--vien);
     font:12.5px/1.65 ui-monospace,Consolas,monospace;white-space:pre-wrap;word-break:break-word;color:#3c4753}
+  /* 3.36: link về trang chủ · bảng cũ đang chờ bản mới thì mờ đi · dải "có thể đã có số mới" */
+  /* Dương 24/10/2026: nút quay lại phải nhìn ra ngay — biểu tượng to + chữ "Về Trang chủ" */
+  .ve-chu{display:inline-flex;align-items:center;gap:7px;margin:10px 0 0 14px;padding:7px 14px 7px 10px;border:1px solid #c9d8f2;
+    border-radius:22px;background:#eef4fd;color:#1d5fbf;font-size:15px;font-weight:700;text-decoration:none}
+  .ve-chu-ic{font-size:22px;line-height:1}
+  .cu-mo{opacity:.55}
+  .nhac button{margin-left:6px;padding:4px 10px;border:1px solid #e0c98a;border-radius:7px;background:#fff;
+    font:inherit;font-weight:600;color:#6b4e00;cursor:pointer}
 </style>
 <!-- 3.32: mở trong Zalo thì nhắc mở bằng Chrome (thiếu tệp thì trang vẫn chạy như cũ) -->
 <script src="ngoai-zalo.js" defer></script>
@@ -157,10 +165,13 @@
 
 <!-- ===== DANH SÁCH CÔNG TY ===== -->
 <div id="man_ct" class="an">
+  <a class="ve-chu" href="trangchu.html"><span class="ve-chu-ic" aria-hidden="true">🏠</span>Về Trang chủ</a>
   <div class="dinh">
     <b>PHÂN CÔNG ĐÓN</b>
     <div class="phu" id="ct_tom">—</div>
   </div>
+  <div class="nhac an" id="dai_moi">Bảng trên màn hình đã hơn 2 phút, có thể đã có thay đổi.
+    Chỗ bạn đang chọn dở vẫn giữ nguyên tới khi bấm Làm mới.<button type="button" id="nut_lam_moi_pc">Làm mới</button></div>
   <div class="doi-ngay">
     <button type="button" id="ng_mai">Ngày mai</button>
     <button type="button" id="ng_nay">Hôm nay</button>
@@ -204,6 +215,8 @@
 
 <script src="cau-hinh.js"></script>
 <script src="goi-may-chu.js"></script>
+<!-- 3.36: gói đầu của trang chủ + bản nhớ. Thiếu tệp thì trang chạy y như 3.35 (tự lấy bảng). -->
+<script src="goi-dau.js"></script>
 <script>
 // ====== CẤU HÌNH: URL_API + TOKEN_API nằm ở tệp cau-hinh.js, dùng chung cho cả 4 trang ======
 // Thiếu tệp đó (quên tải lên, mạng chập) hoặc tệp chưa điền link thì nói thẳng ra màn hình,
@@ -244,7 +257,11 @@ function goiAPI(body) {
                        body: JSON.stringify(b) }).then(function (r) { return r.json(); });
   return goi
     .then(function (kq) {
-      if (kq && kq.ma === 'HET_PHIEN') { datPhien(''); veManDangNhap('Phiên đăng nhập đã hết. Xin đăng nhập lại.'); }
+      if (kq && kq.ma === 'HET_PHIEN') {
+        dangXemTruoc = false;
+        if (typeof xoaHetBanNho_ === 'function') xoaHetBanNho_();   // 3.36: gói trang chủ + bản nhớ bảng
+        datPhien(''); veManDangNhap('Phiên đăng nhập đã hết. Xin đăng nhập lại.');
+      }
       return kq;
     });
 }
@@ -314,6 +331,7 @@ function vaoTrong(kq) {
   taiKhoan = { ten_nguoi: kq.ten_nguoi || '', chuc_vu: kq.chuc_vu || '',
                ten_chuc_vu: kq.ten_chuc_vu || '', ds_nhom: kq.ds_nhom || [],
                la_quan_tri: !!kq.la_quan_tri };
+  tkGoc = kq;                     // 3.36: cất kèm bản nhớ để lần mở sau vẽ trước được
   moNgay(ngayCong(1));            // mặc định NGÀY MAI — phân công là phân công cho hôm sau
 }
 
@@ -327,7 +345,11 @@ $('nut_dn').addEventListener('click', function () {
   bangLayTruoc = null;   // bảng lấy sẵn lúc mở trang (nếu còn) thuộc vé cũ
   goiAPI({ token: TOKEN_API, hanh_dong: 'dang_nhap', so_cccd: cccd, mat_khau: mk, phien: '-' })
     .then(function (kq) {
-      if (kq && kq.ok) { datPhien(kq.phien); vaoTrong(kq); return; }
+      if (kq && kq.ok) {
+        // 3.36: máy dùng chung — số lưu trong máy (gói trang chủ, bản nhớ) có thể của tài khoản trước
+        if (typeof xoaHetBanNho_ === 'function') xoaHetBanNho_();
+        datPhien(kq.phien); vaoTrong(kq); return;
+      }
       baoLoi((kq && kq.loi) || 'Không đăng nhập được.');
     })
     .catch(function () { baoLoi('Không nối được máy chủ. Kiểm tra mạng rồi thử lại.'); })
@@ -348,6 +370,7 @@ $('nut_hien_mk').addEventListener('click', function () { hienMatKhau($('dn_mk').
 
 $('nut_thoat').addEventListener('click', function () {
   if (!confirm('Đăng xuất khỏi máy này?')) return;
+  if (typeof xoaHetBanNho_ === 'function') xoaHetBanNho_();   // 3.36
   datPhien('');
   veManDangNhap('');
 });
@@ -357,31 +380,81 @@ $('nut_thoat').addEventListener('click', function () {
 // (moNgay dùng lại kết quả, không gọi lần hai). (2) Trục trặc thoáng qua KHÔNG đá về đăng nhập nữa —
 // vé còn hạn thì giữ, chỉ HET_PHIEN mới phải đăng nhập lại.
 var bangLayTruoc = null;   // { ngay, p } — cú lấy bảng bắn sẵn lúc mở trang
+var dangXemTruoc = false;  // 3.36: đang bày bảng lần trước, máy chủ chưa xác nhận vé → chưa cho chốt
+var tkGoc = null;          // 3.36: câu trả lời cong_ty_cua_toi, cất kèm bản nhớ bảng
 function khoiDong() {
   if (!layPhien()) { veManDangNhap(''); return; }
+  // 3.36: gói của trang chủ còn tươi (≤ 2 phút, đúng vé, đúng ngày mai) → vào thẳng, KHÔNG gọi máy chủ: vé vừa
+  // được máy chủ xác nhận lúc lấy gói. Vé bị thu hồi trong 2 phút đó thì lượt chốt bị máy chủ trả HET_PHIEN.
+  var g = goiTuoi(ngayCong(1));
+  if (g) { vaoTrong(g.tai_khoan); return; }
   var nut = $('nut_dn');
   nut.disabled = true; nut.textContent = 'Đang vào…';
   $('dn_loi').classList.add('an');
   var ngay = ngayCong(1);
+  // 3.36: có bảng lần trước (bản nhớ / gói cũ) và vé còn hạn theo đồng hồ máy → bày ngay, mờ, chưa cho chốt.
+  var cu = veConHan(layPhien()) ? banNhoMoDuoc() : null;
+  if (cu) xemTruoc(cu);
   bangLayTruoc = { ngay: ngay, p: goiAPI({ token: TOKEN_API, hanh_dong: 'pc_bang', ngay: ngay }) };
   bangLayTruoc.p.catch(function () {});   // lỗi của cú lấy sẵn do moNgay báo; đừng để lọt ra ngoài
   goiAPI({ token: TOKEN_API, hanh_dong: 'cong_ty_cua_toi' })
     .then(function (kq) {
-      if (kq && kq.ok) { vaoTrong(kq); return; }
+      if (kq && kq.ok) { dangXemTruoc = false; vaoTrong(kq); return; }
       bangLayTruoc = null;
       if (kq && kq.ma === 'HET_PHIEN') return;   // goiAPI đã xoá vé và về màn đăng nhập
       baoLoiVao((kq && kq.loi) || 'Máy chủ chưa trả lời được.');
     }, function (e) { bangLayTruoc = null; baoLoiVao(e.message); })
     .then(function () { nut.disabled = false; nut.textContent = 'Đăng nhập'; });
 }
-/** Vé còn đó, chỉ là chưa vào được lúc này: nói rõ + Thử lại. Muốn thì vẫn đăng nhập tay được. */
+/** Vé còn đó, chỉ là chưa vào được lúc này: nói rõ + Thử lại. Muốn thì vẫn đăng nhập tay được.
+ *  Đang bày bảng lần trước (3.36) thì GIỮ bảng trên màn hình, chỉ báo ở dòng tóm tắt. */
 function baoLoiVao(cau) {
-  $('dn_loi').innerHTML = thoat(cau) + ' Phiên đăng nhập vẫn còn — <a href="#" id="thu_lai_vao">Thử lại</a>';
-  $('dn_loi').classList.remove('an');
+  var o = dangXemTruoc ? $('ct_tom') : $('dn_loi');
+  o.innerHTML = (dangXemTruoc ? 'Chưa xác nhận được đăng nhập: ' : '') + thoat(cau) +
+    (dangXemTruoc ? ' Đang xem bảng lúc ' + thoat(gioXemTruoc()) + ', chưa chốt được — '
+                  : ' Phiên đăng nhập vẫn còn — ') + '<a href="#" id="thu_lai_vao">Thử lại</a>';
+  o.classList.remove('an');
   $('thu_lai_vao').addEventListener('click', function (e) { e.preventDefault(); khoiDong(); });
-  hien('man_dn');
+  if (!dangXemTruoc) hien('man_dn');
 }
-khoiDong();
+
+/* ---------- Gói đầu của trang chủ + bản nhớ bảng (bản 3.36, goi-dau.js) ----------
+ * Gói còn tươi (≤ 2 phút) → dùng luôn. Bản nhớ / gói cũ hơn → chỉ để BÀY TRƯỚC, mờ, nút chốt khoá tới khi có bảng
+ * mới. Thiếu goi-dau.js → như 3.35. Bản nhớ không chứa CCCD: máy chủ chỉ gửi khoá băm + 4 số cuối (như màn hình). */
+function goiTuoi(ngay) {
+  if (typeof layMucGoi_ !== 'function') return null;
+  var m = layMucGoi_(layPhien(), 'phan_cong');
+  return (m && m.kq.ngay === ngay && conTuoi_(m.luc) && m.tai_khoan) ? m : null;
+}
+function soCu(ngay) {
+  if (typeof layBanNho_ !== 'function') return null;
+  var p = layPhien(), nho = layBanNho_(KHOA_NHO_PHAN_CONG, p, ngay), g = layMucGoi_(p, 'phan_cong');
+  g = (g && g.kq.ngay === ngay) ? { ngay: ngay, luc: g.luc, kq: g.kq, tai_khoan: g.tai_khoan } : null;
+  var cu = moiHon_(nho, g);
+  return (cu && cu.tai_khoan && cu.tai_khoan.phan_cong_duoc) ? cu : null;
+}
+function banNhoMoDuoc() { return soCu(ngayCong(1)); }
+function gioXemTruoc() { var cu = soCu(ngayXem); return cu ? gioLuc_(cu.luc) : ''; }
+function xemTruoc(cu) {
+  dangXemTruoc = true;
+  ngayXem = cu.ngay;
+  hien('man_ct');
+  apBang(cu.kq, cu.ngay);
+  $('ct_noi').classList.add('cu-mo');
+  $('nut_chot').disabled = true;
+  $('ct_tom').textContent = 'Bảng lúc ' + gioLuc_(cu.luc) + ' — đang xác nhận đăng nhập…';
+}
+/** Vé còn hạn theo đồng hồ MÁY? Chỉ để quyết định có bày bảng lần trước không (giống danhsach.html). */
+function veConHan(phien) {
+  try {
+    var s = String(phien || '').split('.')[0].replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    return Number(atob(s).split('|')[1]) > new Date().getTime();
+  } catch (e) { return false; }
+}
+// Gọi SAU khi cả khối chạy xong — từ 3.36 khoiDong có thể vẽ bảng NGAY, mà biến khai phía dưới (banDau, chon…)
+// lúc này chưa được gán: gọi thẳng thì vẽ xong bị chính dòng khai biến đè mất (bài học 3.32).
+Promise.resolve().then(khoiDong);
 
 // ============================================================
 // BẢNG PHÂN CÔNG
@@ -394,48 +467,95 @@ var banDauDem = {}, chonDem = {};
 var coDinh = {};      // người phụ trách CỐ ĐỊNH — hiện ra để biết, không sửa được
 var anHan = 1, ctDangMo = null, laQuanTri = false, nhomToi = [];
 
+var lucSoPC = 0;       // 3.36: mốc của bảng đang trên màn hình — quay lại trang quá 2 phút thì lấy lại
+var dangTaiPC = false;
+
 function moNgay(ngay) {
   ngayXem = ngay;
   $('ng_nay').classList.toggle('dang', ngay === ngayCong(0));
   $('ng_mai').classList.toggle('dang', ngay === ngayCong(1));
-  $('ct_tom').textContent = 'Đang tải…';
   $('ct_tim').value = '';
-  $('ct_noi').innerHTML = '';
-  $('ct_thanh').classList.add('an');
+  $('dai_moi').classList.add('an');
   hien('man_ct');
+  // 3.36: gói trang chủ còn tươi → vẽ luôn, không gọi. Không thì bày bảng lần trước (mờ) trong lúc chờ bảng mới.
+  var tuGoi = goiTuoi(ngay);
+  var cu = tuGoi ? null : soCu(ngay);
+  if (cu) {
+    apBang(cu.kq, ngay);
+    $('ct_noi').classList.add('cu-mo');
+    $('ct_tom').textContent = 'Bảng lúc ' + gioLuc_(cu.luc) + ' — đang lấy bản mới…';
+  } else if (!tuGoi) {
+    $('ct_tom').textContent = 'Đang tải…';
+    $('ct_noi').innerHTML = '';
+    $('ct_thanh').classList.add('an');
+  }
+  dangTaiPC = true;
+  $('nut_chot').disabled = true;    // chưa có bảng mới thì chưa chốt: chốt trên bảng cũ là ghi đè thứ mình chưa thấy
   // Mở trang lần đầu thì bảng ngày mai đã được bắn sẵn cùng cú kiểm vé (khoiDong) — dùng đúng một lần.
-  var p = (bangLayTruoc && bangLayTruoc.ngay === ngay) ? bangLayTruoc.p
+  var p = tuGoi ? Promise.resolve(tuGoi.kq)
+        : (bangLayTruoc && bangLayTruoc.ngay === ngay) ? bangLayTruoc.p
         : goiAPI({ token: TOKEN_API, hanh_dong: 'pc_bang', ngay: ngay });
   bangLayTruoc = null;
   p
     .then(function (kq) {
       if (!kq) return;
       if (!kq.ok) { $('ct_tom').textContent = kq.loi || 'Không lấy được bảng phân công.'; return; }
-      congTy = kq.cong_ty || [];
-      danhBa = kq.danh_ba || [];
-      coDinh = kq.co_dinh || {};
-      anHan = Number(kq.an_han_ngay || 1);
-      laQuanTri = !!kq.la_quan_tri;
-      nhomToi = kq.ds_nhom || [];
-      tenTheoKhoa = {};
-      danhBa.forEach(function (o) { tenTheoKhoa[o.khoa] = o; });
-      banDau = {}; chon = {}; banDauDem = {}; chonDem = {};
-      congTy.forEach(function (c) {
-        banDau[c.ma_ct] = {}; chon[c.ma_ct] = {}; banDauDem[c.ma_ct] = {}; chonDem[c.ma_ct] = {};
-        ((kq.dang_co || {})[c.ma_ct] || []).forEach(function (k) {
-          banDau[c.ma_ct][k] = true; chon[c.ma_ct][k] = true;
-        });
-        ((kq.dang_co_dem || {})[c.ma_ct] || []).forEach(function (k) {
-          banDauDem[c.ma_ct][k] = true; chonDem[c.ma_ct][k] = true;
-        });
-      });
-      $('ct_tom').textContent = (kq.ten_chuc_vu || '') +
-        (laQuanTri ? ' · mọi nhóm' : (nhomToi.length ? ' · nhóm ' + nhomToi.join(', ').toUpperCase() : '')) +
-        ' · ngày ' + (kq.ngay_hien_thi || ngay) + ' · ' + congTy.length + ' công ty';
-      veCongTy();
+      apBang(kq, ngay);
+      $('ct_noi').classList.remove('cu-mo');
+      lucSoPC = tuGoi ? tuGoi.luc : new Date().getTime();
+      if (tuGoi) $('ct_tom').textContent += ' · số lúc ' + gioLuc_(tuGoi.luc);   // chốt 1: số từ gói luôn ghi giờ
+      else if (typeof luuBanNho_ === 'function') luuBanNho_(KHOA_NHO_PHAN_CONG, layPhien(), ngay, kq, tkGoc);
+      $('nut_chot').disabled = false;
     })
-    .catch(function () { $('ct_tom').textContent = 'Không nối được máy chủ.'; });
+    .catch(function () {
+      $('ct_tom').textContent = cu ? 'Không nối được máy chủ — đang xem bảng lúc ' + gioLuc_(cu.luc) + ', chưa chốt được.'
+                                   : 'Không nối được máy chủ.';
+    })
+    .then(function () { dangTaiPC = false; });
 }
+
+/** Dựng trạng thái + vẽ danh sách công ty từ một bảng pc_bang (bảng mới, gói hay bản nhớ). */
+function apBang(kq, ngay) {
+  congTy = kq.cong_ty || [];
+  danhBa = kq.danh_ba || [];
+  coDinh = kq.co_dinh || {};
+  anHan = Number(kq.an_han_ngay || 1);
+  laQuanTri = !!kq.la_quan_tri;
+  nhomToi = kq.ds_nhom || [];
+  tenTheoKhoa = {};
+  danhBa.forEach(function (o) { tenTheoKhoa[o.khoa] = o; });
+  banDau = {}; chon = {}; banDauDem = {}; chonDem = {};
+  congTy.forEach(function (c) {
+    banDau[c.ma_ct] = {}; chon[c.ma_ct] = {}; banDauDem[c.ma_ct] = {}; chonDem[c.ma_ct] = {};
+    ((kq.dang_co || {})[c.ma_ct] || []).forEach(function (k) {
+      banDau[c.ma_ct][k] = true; chon[c.ma_ct][k] = true;
+    });
+    ((kq.dang_co_dem || {})[c.ma_ct] || []).forEach(function (k) {
+      banDauDem[c.ma_ct][k] = true; chonDem[c.ma_ct][k] = true;
+    });
+  });
+  $('ct_tom').textContent = (kq.ten_chuc_vu || '') +
+    (laQuanTri ? ' · mọi nhóm' : (nhomToi.length ? ' · nhóm ' + nhomToi.join(', ').toUpperCase() : '')) +
+    ' · ngày ' + (kq.ngay_hien_thi || ngay) + ' · ' + congTy.length + ' công ty';
+  veCongTy();
+}
+
+/* 3.36 — LÀM MỚI NGẦM: quay lại trang mà bảng đã quá 2 phút thì lấy lại MỘT lượt. Đang chọn dở (chưa chốt) thì
+ * KHÔNG vẽ đè — chỉ hiện dải "Làm mới". Không có hẹn giờ nào: trần 40 lượt/phút là trần chung cả hệ. */
+function coThayDoiChuaChot() { var d = tinhDoi(); return !!(d.them.length || d.bot.length || d.doi_ca); }
+function khiQuayLai() {
+  if ($('man_ct').classList.contains('an') || dangXemTruoc || dangTaiPC || !lucSoPC) return;
+  var tuoi = typeof conTuoi_ === 'function' ? conTuoi_(lucSoPC) : (new Date().getTime() - lucSoPC < 120000);
+  if (tuoi) return;
+  if (coThayDoiChuaChot()) { $('dai_moi').classList.remove('an'); return; }
+  moNgay(ngayXem);
+}
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') khiQuayLai(); });
+window.addEventListener('pageshow', function (e) { if (e.persisted) khiQuayLai(); });
+$('nut_lam_moi_pc').addEventListener('click', function () {
+  if (coThayDoiChuaChot() && !confirm('Làm mới sẽ bỏ những chỗ bạn vừa chọn mà chưa chốt. Làm mới?')) return;
+  moNgay(ngayXem);
+});
 
 $('ng_mai').addEventListener('click', function () { if (ngayXem !== ngayCong(1)) moNgay(ngayCong(1)); });
 $('ng_nay').addEventListener('click', function () { if (ngayXem !== ngayCong(0)) moNgay(ngayCong(0)); });
@@ -533,6 +653,8 @@ function capNhatThanh() {
  * là 204 ô tích trên màn 375px, ngón tay không bấm nổi. Mỗi màn chỉ còn chừng chục dòng.
  */
 function moCongTy(maCT) {
+  // 3.36: đang bày bảng cũ, bảng mới sắp về đè lên — chọn lúc này là mất trắng khi bảng mới tới.
+  if (dangXemTruoc || dangTaiPC) { $('ct_tom').textContent = 'Đang lấy bảng mới nhất — vài giây nữa chọn được.'; return; }
   ctDangMo = maCT;
   var c = congTy.filter(function (x) { return x.ma_ct === maCT; })[0];
   if (!c) return;
@@ -621,6 +743,10 @@ $('nut_chot').addEventListener('click', function () {
     .then(function (kq) {
       if (!kq) return;
       if (!kq.ok) { alert(kq.loi || 'Không chốt được.'); return; }
+      // 3.36 chốt 2: gói trang chủ giữ bảng TRƯỚC lần chốt này → bỏ, mở lại không thấy như chưa chốt.
+      if (typeof boMucGoi_ === 'function') boMucGoi_('phan_cong');
+      // Bản nhớ bảng cũng là bảng trước khi chốt: bấm "Quay lại bảng" ngay sau đây không được bày lại nó.
+      if (typeof xoaBanNho_ === 'function') xoaBanNho_(KHOA_NHO_PHAN_CONG);
       veKetQua(kq);
     })
     .catch(function () { alert('Không nối được máy chủ. Bảng chưa được chốt, thử lại khi có mạng.'); })
