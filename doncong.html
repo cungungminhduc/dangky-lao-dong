@@ -1227,6 +1227,11 @@ function veManXacNhan(kq) {
                 (kq.loai === 'chinh_thuc' ? kq.ngay_phong_van : kq.ngay_di_lam) || 'chưa ghi') +
           dong_('Số điện thoại', kq.sdt) +
           dong_('Người đăng ký', kq.nguoi_nhap);
+  // 3.38: ghi chú người tuyển gõ lúc đăng ký — chỉ hiện khi có, chữ dài thì xuống dòng
+  if (kq.ghi_chu) {
+    t += '<div class="hang"><span>Ghi chú</span><b style="flex:1;text-align:right;font-weight:600;white-space:pre-line;color:#8a4b00">' +
+         thoat(kq.ghi_chu) + '</b></div>';
+  }
   if (kq.ma === 'DA_DON_TRUOC_DO') {
     t += dong_('Đã đón lúc', (kq.gio_don || '?') + ' · ' + (kq.nguoi_don_cu || '?'));
   }

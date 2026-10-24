@@ -15,6 +15,10 @@
   BẢO MẬT: đăng nhập CCCD + mật khẩu, CHUNG vé với trang danh sách / phân công / quân số. Máy chủ tự soát phiếu
   nào là của người đang đăng nhập (cột ten_tuyen ở tab NGUOI_DON). Trang chỉ nhận CCCD 4 số cuối; CCCD đầy đủ chỉ
   đi qua nút Sao chép Excel, mỗi lượt ghi vết NHATKY. Trang KHÔNG cất dữ liệu lao động vào bộ nhớ trình duyệt.
+
+  SỔ LAO ĐỘNG — bản 3.38. Đặc tả: .scratch/lao-dong-3.38/DAC-TA.md
+  Ba chế độ xem: Đã tuyển (như trên) · Đang làm · Đã nghỉ. Người tuyển chuyển "Đã vào làm" / "Đã nghỉ việc", sửa hoặc
+  huỷ lượt nhầm. Lao động đã vào làm nơi khác → cảnh báo + nút chuyển nghỉ có xác nhận (máy KHÔNG tự chuyển).
 -->
 <style>
   :root{
@@ -76,6 +80,17 @@
   .tt-khong_di{background:var(--do-nhat);color:#8a1c13}
   .tt-cho_don{background:#e3ecfb;color:#163f7a}
   .tt-chua_don{background:var(--xam-nut);color:#56606b}
+  .tt-dang_lam{background:#d4f0dd;color:#0f5a2e}
+  .tt-da_nghi{background:#ece4f7;color:#4b2f7a}
+  /* 3.38: ba chế độ xem + nút trên từng dòng + cảnh báo nơi khác */
+  .che-do{display:flex;gap:4px;margin:6px 14px 0;background:var(--xam-nut);padding:3px;border-radius:11px}
+  .che-do button{flex:1;padding:9px 4px;border:0;border-radius:9px;background:transparent;font-size:14px;font-weight:700;color:#3c4753;cursor:pointer}
+  .che-do button.dang{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);color:var(--chu)}
+  .nut-dong{padding:5px 10px;border:1px solid #c9d8f2;border-radius:8px;background:var(--lam-nhat);color:var(--lam);font-size:13px;font-weight:700;cursor:pointer;margin-right:4px}
+  .nut-dong.do{border-color:#f0c4be;background:var(--do-nhat);color:#8a1c13}
+  .canh-bao{display:block;margin-top:4px;padding:4px 8px;border-radius:8px;background:var(--vang-nhat);border:1px solid var(--vang-vien);color:#6b4e00;font-size:12.5px;white-space:normal;max-width:260px}
+  .hop input[type=text]{width:100%;padding:11px 10px;font-size:16px;border:1px solid #d9dde2;border-radius:10px;margin-top:4px;background:#fff}
+  .hop .nut-do{background:var(--do-nhat);color:#8a1c13;border:1px solid #f0c4be}
   .bang-thang{border-collapse:collapse;margin-top:6px;font-size:12.5px}
   .bang-thang td,.bang-thang th{padding:2px 10px 2px 0;text-align:left;white-space:nowrap}
   .bang-thang th{font-weight:600;color:#3c5d8f}
@@ -168,6 +183,12 @@
   </div>
   <div id="ds_nhac" class="nhac an"></div>
 
+  <div class="che-do" id="che_do">
+    <button type="button" data-cd="tuyen" class="dang">Đã tuyển</button>
+    <button type="button" data-cd="dang_lam">Đang làm</button>
+    <button type="button" data-cd="da_nghi">Đã nghỉ</button>
+  </div>
+
   <div class="loc">
     <div class="khoang" id="khoang">
       <button type="button" data-k="7" class="dang">7 ngày</button>
@@ -189,6 +210,8 @@
         <option value="khong_di">Báo không đi</option>
         <option value="chua_vao_lam">Đã đón, chưa vào làm</option>
         <option value="vao_lam">Đã vào làm</option>
+        <option value="dang_lam">Đang làm</option>
+        <option value="da_nghi">Đã nghỉ</option>
         <option value="cho_don">Chờ đón</option>
       </select>
     </div>
@@ -200,10 +223,10 @@
 
   <div class="khung-bang">
     <table class="ds">
-      <thead><tr>
+      <thead><tr id="ds_tieu_de">
         <th class="c0"><input type="checkbox" id="chon_het" aria-label="Chọn tất cả đang hiện"></th>
         <th class="c1">Họ tên</th><th>Năm sinh</th><th>SĐT</th><th>CCCD</th><th>Công ty</th>
-        <th>Ngày hẹn</th><th>Tình trạng</th><th>Người tuyển</th>
+        <th>Ngày hẹn</th><th>Tình trạng</th><th>Người tuyển</th><th>Chuyển</th>
       </tr></thead>
       <tbody id="ds_than"></tbody>
     </table>
@@ -242,6 +265,28 @@
     <div class="hai">
       <button type="button" class="phu" id="hop_dong">Đóng</button>
       <button type="button" id="hop_chinh">Kiểm tra luật</button>
+    </div>
+  </div>
+</div>
+
+<!-- HỘP LƯỢT LÀM (3.38): vào làm · nghỉ việc · sửa -->
+<div class="man-hop an" id="man_lam">
+  <div class="hop">
+    <h3 id="lam_tieu">Đã vào làm</h3>
+    <div class="phu" id="lam_phu"></div>
+    <div id="lam_khoi_ct"><label class="nh" for="lam_ct">Công ty</label><select id="lam_ct"></select></div>
+    <div id="lam_khoi_vao"><label class="nh" for="lam_vao">Ngày vào làm</label><input type="date" id="lam_vao"></div>
+    <div id="lam_khoi_nghi"><label class="nh" for="lam_nghi">Ngày nghỉ</label><input type="date" id="lam_nghi">
+      <label class="nh" for="lam_ly_do">Lý do nghỉ (không bắt buộc)</label><input type="text" id="lam_ly_do" maxlength="300" autocomplete="off"></div>
+    <div id="lam_khoi_ghi"><label class="nh" for="lam_ghi">Ghi chú</label><input type="text" id="lam_ghi" maxlength="300" autocomplete="off"></div>
+    <div id="lam_khoi_them" class="hai an">
+      <button type="button" class="phu" id="lam_mo_lai">Mở lại: vẫn đang làm</button>
+      <button type="button" class="nut-do" id="lam_huy">Huỷ lượt nhập nhầm</button>
+    </div>
+    <div id="lam_loi" class="loi an" style="margin:10px 0 0"></div>
+    <div class="hai">
+      <button type="button" class="phu" id="lam_dong">Đóng</button>
+      <button type="button" id="lam_luu">Lưu</button>
     </div>
   </div>
 </div>
@@ -287,7 +332,10 @@ function goiAPI(body, choMsg, che) {
         .then(function (r) { return r.json(); });
   return goi.then(function (kq) {
     if (che !== false) dongChe();
-    if (kq && kq.ma === 'HET_PHIEN') { datPhien(''); dongHop(true); veManDangNhap('Phiên đăng nhập đã hết. Xin đăng nhập lại.'); }
+    if (kq && kq.ma === 'HET_PHIEN') {
+      datPhien(''); dongHop(true); lamHop = null; $('man_lam').classList.add('an');
+      veManDangNhap('Phiên đăng nhập đã hết. Xin đăng nhập lại.');
+    }
     return kq;
   }, function (e) { if (che !== false) dongChe(); throw e; });
 }
@@ -356,7 +404,9 @@ var khoang = '7';
 var chon = {};                  // ma → true
 var dangHien = [];              // các dòng đang hiện sau lọc (đúng thứ tự trên màn)
 
-var TT_NHAN = { chua_don: 'Chưa đón được', khong_di: 'Báo không đi', chua_vao_lam: 'Đã đón, chưa vào làm', vao_lam: 'Đã vào làm', cho_don: 'Chờ đón' };
+var TT_NHAN = { chua_don: 'Chưa đón được', khong_di: 'Báo không đi', chua_vao_lam: 'Đã đón, chưa vào làm', vao_lam: 'Đã vào làm',
+                cho_don: 'Chờ đón', dang_lam: 'Đang làm', da_nghi: 'Đã nghỉ' };
+var cheDo = 'tuyen';            // 3.38: tuyen · dang_lam · da_nghi
 
 function taiDanhSach() {
   var b = { token: TOKEN_API, hanh_dong: 'dlt_mo', khoang: khoang };
@@ -383,10 +433,11 @@ function taiDanhSach() {
       nhac.push('Dữ liệu cập nhật lúc ' + hai(d.getHours()) + ':' + hai(d.getMinutes()) + ' ' + hai(d.getDate()) + '/' + hai(d.getMonth() + 1) +
         ' — máy chép khoảng 10 phút một lần, người vừa đón / vừa báo vào làm có thể chưa hiện.');
     } else nhac.push('⚠️ Máy chưa chép dữ liệu lần nào — báo quản trị chạy ⚙ Cài đặt và Bật chạy tự động.');
+    if (kq.lam_loi) nhac.push('⚠️ Sổ lao động (Đang làm / Đã nghỉ) chưa đọc được: ' + kq.lam_loi);
     $('ds_nhac').textContent = nhac.join('\n');
     $('ds_nhac').classList.remove('an');
     var ctCo = {};
-    (kq.ds || []).forEach(function (r) { ctCo[r.ma_ct] = r.ten_cong_ty; });
+    (kq.ds || []).concat(kq.lam || []).forEach(function (r) { ctCo[r.ma_ct] = r.ten_cong_ty; });
     var cu = $('loc_ct').value;
     $('loc_ct').innerHTML = '<option value="">Mọi công ty</option>' + Object.keys(ctCo)
       .sort(function (a, b) { return ctCo[a].localeCompare(ctCo[b], 'vi'); })
@@ -399,10 +450,19 @@ function taiDanhSach() {
 }
 function hienLoiDS(t) { $('ds_loi').textContent = t; $('ds_loi').classList.remove('an'); }
 
+/** Một lượt làm của sổ → dòng bảng. `ma` = mã kho của phiếu gốc, nên chọn → Đăng ký lại / Sao chép Excel dùng y như cũ. */
+function dongLam(l) {
+  return { ma: l.ma_kho_goc, ho_ten: l.ho_ten, nam_sinh: l.nam_sinh, sdt: l.sdt, cccd4: l.cccd4, ma_ct: l.ma_ct,
+           ten_cong_ty: l.ten_cong_ty, tt: l.trang_thai,
+           tt_nhan: l.trang_thai === 'da_nghi' ? 'Đã nghỉ ' + ngayVN(l.ngay_nghi) : 'Đang làm từ ' + ngayVN(l.ngay_vao_lam),
+           lam: l };
+}
 function locDong() {
   if (!duLieu) return [];
-  var ten = khoaTim($('loc_ten').value), ct = $('loc_ct').value, tt = $('loc_tt').value;
-  return (duLieu.ds || []).filter(function (r) {
+  var ten = khoaTim($('loc_ten').value), ct = $('loc_ct').value, tt = cheDo === 'tuyen' ? $('loc_tt').value : '';
+  var nguon = cheDo === 'tuyen' ? (duLieu.ds || [])
+    : (duLieu.lam || []).filter(function (l) { return l.trang_thai === cheDo; }).map(dongLam);
+  return nguon.filter(function (r) {
     if (ct && r.ma_ct !== ct) return false;
     if (tt && r.tt !== tt) return false;
     if (ten && khoaTim(r.ho_ten).indexOf(ten) < 0) return false;
@@ -410,18 +470,38 @@ function locDong() {
   });
 }
 
+/** Tổng của sổ (đang làm / đã nghỉ): theo công ty; đã nghỉ thì thêm số nghỉ trong tháng này. */
+function dungTongLam(ds) {
+  var tongCheDo = (duLieu.lam || []).filter(function (l) { return l.trang_thai === cheDo; }).length;
+  var h = '<span class="so">' + ds.length + '</span> ' + (cheDo === 'dang_lam' ? 'người đang làm' : 'lượt đã nghỉ');
+  if (ds.length !== tongCheDo) h += ' <span style="color:var(--mo)">(trong ' + tongCheDo + ')</span>';
+  if (cheDo === 'da_nghi') {
+    var thangNay = (duLieu.hom_nay || '').slice(0, 7);
+    h += ' · nghỉ trong tháng này: <b>' + ds.filter(function (r) { return (r.lam.ngay_nghi || '').slice(0, 7) === thangNay; }).length + '</b>';
+  }
+  var theoCT = {};
+  ds.forEach(function (r) { theoCT[r.ten_cong_ty] = (theoCT[r.ten_cong_ty] || 0) + 1; });
+  h += '<div>' + Object.keys(theoCT).sort(function (a, b) { return a.localeCompare(b, 'vi'); }).map(function (k) {
+    return '<span class="chip tt-' + cheDo + '">' + thoat(k) + ': ' + theoCT[k] + '</span>';
+  }).join('') + '</div>';
+  var canh = ds.filter(function (r) { return r.lam.canh_bao; }).length;
+  if (canh) h += '<div style="margin-top:4px;color:#6b4e00">⚠️ ' + canh + ' người đã vào làm ở nơi khác — xem cột Ghi chú.</div>';
+  return h;
+}
+
 /** Tổng kiểu SUBTOTAL: chỉ đếm các dòng ĐANG HIỆN. */
 function dungTong(ds) {
+  if (cheDo !== 'tuyen') return dungTongLam(ds);
   var dem = {}, thang = {};
   ds.forEach(function (r) {
     dem[r.tt] = (dem[r.tt] || 0) + 1;
     var t = (r.ngay_dk || '').slice(0, 7) || '?';
     var o = thang[t] = thang[t] || { tong: 0, vao_lam: 0 };
-    o.tong++; if (r.tt === 'vao_lam') o.vao_lam++;
+    o.tong++; if (r.tt === 'vao_lam' || r.tt === 'dang_lam' || r.tt === 'da_nghi') o.vao_lam++;
   });
   var h = '<span class="so">' + ds.length + '</span> người đang hiện';
   if (duLieu && ds.length !== (duLieu.ds || []).length) h += ' <span style="color:var(--mo)">(trong ' + duLieu.ds.length + ' người của khoảng ngày này)</span>';
-  h += '<div>' + ['vao_lam', 'chua_vao_lam', 'khong_di', 'chua_don', 'cho_don'].filter(function (k) { return dem[k]; })
+  h += '<div>' + ['dang_lam', 'vao_lam', 'da_nghi', 'chua_vao_lam', 'khong_di', 'chua_don', 'cho_don'].filter(function (k) { return dem[k]; })
     .map(function (k) { return '<span class="chip tt-' + k + '">' + TT_NHAN[k] + ': ' + dem[k] + '</span>'; }).join('') + '</div>';
   var ks = Object.keys(thang).sort().reverse();
   if (ks.length) {
@@ -432,27 +512,59 @@ function dungTong(ds) {
   return h;
 }
 
+var COT_THEO_CHE_DO = {
+  tuyen:    ['Năm sinh', 'SĐT', 'CCCD', 'Công ty', 'Ngày hẹn', 'Tình trạng', 'Người tuyển', 'Chuyển'],
+  dang_lam: ['Năm sinh', 'SĐT', 'Công ty', 'Ngày vào', 'Số ngày', 'Ghi chú', 'Chuyển'],
+  da_nghi:  ['Năm sinh', 'SĐT', 'Công ty', 'Ngày vào', 'Ngày nghỉ', 'Lý do', 'Ghi chú', 'Sửa']
+};
+function oSdt(r) { return '<td>' + (r.sdt ? '<a href="tel:' + thoat(r.sdt) + '">' + thoat(r.sdt) + '</a>' : '—') + '</td>'; }
+function nutDong(viec, i, chu, lop) { return '<button type="button" class="nut-dong' + (lop ? ' ' + lop : '') + '" data-viec="' + viec + '" data-i="' + i + '">' + chu + '</button>'; }
+
+/** Các ô sau cột Họ tên, theo chế độ xem. */
+function oTheoCheDo(r, i) {
+  if (cheDo === 'tuyen') {
+    // Đang làm → nút Nghỉ việc; còn lại → nút Vào làm (sổ tự chặn nếu người đó đang làm ở lượt khác)
+    var nut = r.tt === 'dang_lam' && r.ma_lam ? nutDong('nghi', i, 'Nghỉ việc', 'do') : nutDong('vao', i, 'Vào làm');
+    return '<td>' + thoat(r.nam_sinh) + '</td>' + oSdt(r) + '<td>' + thoat(r.cccd4) + '</td>' +
+      '<td>' + thoat(r.ten_cong_ty) + (r.ca ? ' · ' + thoat(r.ca) : '') + '</td>' +
+      '<td>' + thoat(r.ngay_hen) + '</td>' +
+      '<td><span class="nhan-tt tt-' + thoat(r.tt) + '">' + thoat(r.tt_nhan) + '</span></td>' +
+      '<td>' + thoat(r.nguoi_tuyen) + '</td><td>' + nut + '</td>';
+  }
+  var l = r.lam;
+  var ghi = thoat(l.ghi_chu || '') + (l.canh_bao ? '<span class="canh-bao">⚠️ Đã vào làm ở <b>' + thoat(l.canh_bao.ten_cong_ty) +
+    '</b> từ ' + ngayVN(l.canh_bao.ngay_vao_lam) + '</span>' : '');
+  var dau = '<td>' + thoat(l.nam_sinh) + '</td>' + oSdt(l) + '<td>' + thoat(l.ten_cong_ty) + '</td><td>' + ngayVN(l.ngay_vao_lam) + '</td>';
+  if (cheDo === 'dang_lam') {
+    return dau + '<td>' + thoat(l.so_ngay) + '</td><td style="white-space:normal">' + ghi + '</td><td>' +
+      (l.canh_bao ? nutDong('nghi_noi_khac', i, 'Chuyển sang Đã nghỉ', 'do') : nutDong('nghi', i, 'Nghỉ việc', 'do')) +
+      nutDong('sua', i, 'Sửa') + '</td>';
+  }
+  return dau + '<td>' + ngayVN(l.ngay_nghi) + '</td><td style="white-space:normal">' + thoat(l.ly_do_nghi) + '</td>' +
+    '<td style="white-space:normal">' + ghi + '</td><td>' + nutDong('sua', i, 'Sửa') + '</td>';
+}
+
 function ve() {
   dangHien = locDong();
   var thay = {};
   dangHien.forEach(function (r) { thay[r.ma] = true; });
   Object.keys(chon).forEach(function (m) { if (!thay[m]) delete chon[m]; });   // ẩn khỏi lọc = bỏ chọn, tránh đăng ký người không nhìn thấy
-  $('tong').innerHTML = dungTong(dangHien);
+  var tr = $('ds_tieu_de'), cot = COT_THEO_CHE_DO[cheDo];
+  while (tr.children.length > 1) tr.removeChild(tr.lastChild);          // giữ ô "chọn tất cả" cùng sự kiện của nó
+  tr.insertAdjacentHTML('beforeend', '<th class="c1">Họ tên</th>' + cot.map(function (c) { return '<th>' + c + '</th>'; }).join(''));
+  $('tong').innerHTML = duLieu ? dungTong(dangHien) : '—';
   if (!dangHien.length) {
-    $('ds_than').innerHTML = '<tr><td colspan="9" class="trong">' + (duLieu && duLieu.ds && duLieu.ds.length
-      ? 'Không ai khớp bộ lọc.' : 'Chưa có người nào bạn tuyển trong khoảng ngày này. Thử "30 ngày" hoặc "Tất cả".') + '</td></tr>';
+    var trong = cheDo === 'tuyen'
+      ? (duLieu && duLieu.ds && duLieu.ds.length ? 'Không ai khớp bộ lọc.' : 'Chưa có người nào bạn tuyển trong khoảng ngày này. Thử "30 ngày" hoặc "Tất cả".')
+      : (duLieu && duLieu.lam_loi ? 'Sổ lao động chưa đọc được — xem dòng báo phía trên.'
+        : cheDo === 'dang_lam' ? 'Chưa có ai đang làm trong sổ. Người đón báo vào làm, hoặc bạn bấm "Vào làm" ở mục Đã tuyển, là người đó hiện ở đây.'
+        : 'Chưa có ai đã nghỉ.');
+    $('ds_than').innerHTML = '<tr><td colspan="' + (cot.length + 2) + '" class="trong">' + trong + '</td></tr>';
   } else {
     $('ds_than').innerHTML = dangHien.map(function (r, i) {
       return '<tr data-i="' + i + '"' + (chon[r.ma] ? ' class="chon"' : '') + '>' +
         '<td class="c0"><input type="checkbox" data-ma="' + thoat(r.ma) + '"' + (chon[r.ma] ? ' checked' : '') + ' aria-label="Chọn ' + thoat(r.ho_ten) + '"></td>' +
-        '<td class="c1"><b>' + thoat(r.ho_ten) + '</b></td>' +
-        '<td>' + thoat(r.nam_sinh) + '</td>' +
-        '<td>' + (r.sdt ? '<a href="tel:' + thoat(r.sdt) + '">' + thoat(r.sdt) + '</a>' : '—') + '</td>' +
-        '<td>' + thoat(r.cccd4) + '</td>' +
-        '<td>' + thoat(r.ten_cong_ty) + (r.ca ? ' · ' + thoat(r.ca) : '') + '</td>' +
-        '<td>' + thoat(r.ngay_hen) + '</td>' +
-        '<td><span class="nhan-tt tt-' + thoat(r.tt) + '">' + thoat(r.tt_nhan) + '</span></td>' +
-        '<td>' + thoat(r.nguoi_tuyen) + '</td></tr>';
+        '<td class="c1"><b>' + thoat(r.ho_ten) + '</b></td>' + oTheoCheDo(r, i) + '</tr>';
     }).join('');
   }
   capNhatThanh();
@@ -497,6 +609,121 @@ $('khoang').addEventListener('click', function (e) {
   taiDanhSach();
 });
 $('nut_xem').addEventListener('click', taiDanhSach);
+
+// ============================================================
+// SỔ LAO ĐỘNG (3.38) — chế độ xem + hộp lượt làm
+// ============================================================
+$('che_do').addEventListener('click', function (e) {
+  var cd = e.target.getAttribute('data-cd'); if (!cd) return;
+  Array.prototype.forEach.call(this.children, function (b) { b.classList.toggle('dang', b === e.target); });
+  cheDo = cd;
+  // Sổ luôn tải đủ lượt làm của mình — khoảng ngày và tình trạng chỉ áp cho mục Đã tuyển
+  $('khoang').classList.toggle('an', cd !== 'tuyen');
+  $('hang_tu_den').classList.toggle('an', cd !== 'tuyen' || khoang !== 'tu_den');
+  $('loc_tt').classList.toggle('an', cd !== 'tuyen');
+  $('loc_ghi').classList.toggle('an', cd !== 'tuyen');
+  chon = {};
+  ve();
+});
+
+var lamHop = null;   // { viec: 'vao'|'nghi'|'sua', r: dòng, maYC, dangGui }
+function lamLoi(t) { $('lam_loi').textContent = t; $('lam_loi').classList.toggle('an', !t); }
+function moLam(viec, r, goiY) {
+  if (!duLieu) return;
+  var l = r.lam || null, nay = duLieu.hom_nay;
+  lamHop = { viec: viec, r: r, maYC: 'll-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10) };
+  $('lam_ct').innerHTML = (duLieu.cong_ty || []).map(function (c) {
+    return '<option value="' + thoat(c.ma_ct) + '">' + thoat(c.ten_cong_ty) + (c.loai === 'chinh_thuc' ? ' (chính thức)' : '') + '</option>';
+  }).join('');
+  var maCT = l ? l.ma_ct : r.ma_ct;
+  // Công ty của lượt có thể đã ngừng tuyển (không còn trong danh sách) — vẫn phải hiện đúng, không âm thầm đổi
+  if (maCT && !(duLieu.cong_ty || []).some(function (c) { return c.ma_ct === maCT; })) {
+    $('lam_ct').insertAdjacentHTML('afterbegin', '<option value="' + thoat(maCT) + '">' + thoat((l || r).ten_cong_ty) + '</option>');
+  }
+  $('lam_ct').value = maCT || '';
+  $('lam_vao').max = nay; $('lam_nghi').max = nay;
+  $('lam_vao').value = l ? l.ngay_vao_lam : nay;
+  $('lam_nghi').value = (l && l.ngay_nghi) || (goiY && goiY.ngay) || nay;
+  $('lam_ly_do').value = (l && l.ly_do_nghi) || (goiY && goiY.ly_do) || '';
+  $('lam_ghi').value = (l && l.ghi_chu) || '';
+  var laNghi = l && l.trang_thai === 'da_nghi';
+  $('lam_tieu').textContent = viec === 'vao' ? 'Chuyển: Đã vào làm' : viec === 'nghi' ? 'Chuyển: Đã nghỉ việc' : 'Sửa lượt làm';
+  $('lam_phu').textContent = r.ho_ten + (r.nam_sinh ? ' · ' + r.nam_sinh : '') +
+    (l ? ' · vào ' + ngayVN(l.ngay_vao_lam) + ' ở ' + l.ten_cong_ty : '') +
+    (goiY ? '\nĐã vào làm ở ' + goiY.ten_cong_ty + ' từ ' + ngayVN(goiY.ngay) + '. Kiểm lại ngày nghỉ rồi bấm Xác nhận.' : '');
+  $('lam_phu').style.whiteSpace = 'pre-line';
+  $('lam_khoi_ct').classList.toggle('an', viec === 'nghi');
+  $('lam_khoi_vao').classList.toggle('an', viec === 'nghi');
+  $('lam_khoi_nghi').classList.toggle('an', viec === 'vao' || (viec === 'sua' && !laNghi));
+  $('lam_khoi_ghi').classList.toggle('an', viec !== 'sua');
+  $('lam_khoi_them').classList.toggle('an', viec !== 'sua');
+  $('lam_mo_lai').classList.toggle('an', !laNghi);
+  $('lam_luu').textContent = viec === 'sua' ? 'Lưu' : 'Xác nhận';
+  khoaLam(false);
+  lamLoi('');
+  $('man_lam').classList.remove('an');
+}
+function dongLamHop() {
+  if (lamHop && lamHop.dangGui) return;
+  lamHop = null; $('man_lam').classList.add('an');
+}
+function khoaLam(co) {
+  if (lamHop) lamHop.dangGui = co;
+  ['lam_luu', 'lam_dong', 'lam_mo_lai', 'lam_huy'].forEach(function (id) { $(id).disabled = co; });
+}
+/** Gửi một cú ghi sổ. Thành công → đóng hộp, tải lại (giữ chế độ đang xem). Hỏng → giữ nguyên chữ đã nhập, nói thẳng. */
+function guiLam(body, cho) {
+  khoaLam(true); lamLoi('');
+  body.token = TOKEN_API;
+  goiAPI(body, cho).then(function (kq) {
+    if (!kq || kq.ma === 'HET_PHIEN') return;
+    khoaLam(false);
+    if (!kq.ok) { lamLoi(kq.loi || 'Không ghi được.'); return; }
+    lamHop = null; $('man_lam').classList.add('an');
+    taiDanhSach();
+  }, function (e) {
+    khoaLam(false);
+    lamLoi(cauLoi(e) + '\nKHÔNG RÕ đã ghi chưa. Bấm lại — máy chủ nhận ra lượt cũ, không ghi hai lần.');
+  });
+}
+$('lam_luu').addEventListener('click', function () {
+  if (!lamHop) return;
+  var r = lamHop.r, l = r.lam;
+  if (lamHop.viec === 'vao') {
+    if (!$('lam_ct').value) { lamLoi('Chọn công ty.'); return; }
+    if (!$('lam_vao').value) { lamLoi('Chọn ngày vào làm.'); return; }
+    guiLam({ hanh_dong: 'dlt_vao_lam', ma: r.ma, ma_ct: $('lam_ct').value, ngay_vao_lam: $('lam_vao').value, ma_yeu_cau: lamHop.maYC }, 'Đang ghi vào làm…');
+  } else if (lamHop.viec === 'nghi') {
+    if (!$('lam_nghi').value) { lamLoi('Chọn ngày nghỉ.'); return; }
+    guiLam({ hanh_dong: 'dlt_nghi', ma_lam: l ? l.ma_lam : r.ma_lam, ngay_nghi: $('lam_nghi').value, ly_do: $('lam_ly_do').value,
+             ma_yeu_cau: lamHop.maYC }, 'Đang ghi nghỉ việc…');
+  } else {
+    var b = { hanh_dong: 'dlt_sua_lam', ma_lam: l.ma_lam, ma_ct: $('lam_ct').value, ngay_vao_lam: $('lam_vao').value, ghi_chu: $('lam_ghi').value };
+    if (l.trang_thai === 'da_nghi') { b.ngay_nghi = $('lam_nghi').value; b.ly_do = $('lam_ly_do').value; }
+    guiLam(b, 'Đang lưu…');
+  }
+});
+$('lam_mo_lai').addEventListener('click', function () {
+  if (!lamHop || !lamHop.r.lam) return;
+  if (!confirm('Ghi ' + lamHop.r.ho_ten + ' là VẪN ĐANG LÀM (xoá ngày nghỉ)?')) return;
+  guiLam({ hanh_dong: 'dlt_sua_lam', ma_lam: lamHop.r.lam.ma_lam, mo_lai: true }, 'Đang mở lại…');
+});
+$('lam_huy').addEventListener('click', function () {
+  if (!lamHop || !lamHop.r.lam) return;
+  if (!confirm('Huỷ lượt làm này vì nhập nhầm? Lượt sẽ không hiện trong sổ nữa (vết vẫn giữ trên bảng tính).')) return;
+  guiLam({ hanh_dong: 'dlt_sua_lam', ma_lam: lamHop.r.lam.ma_lam, huy: true }, 'Đang huỷ lượt…');
+});
+$('lam_dong').addEventListener('click', dongLamHop);
+$('ds_than').addEventListener('click', function (e) {
+  var viec = e.target.getAttribute('data-viec'); if (!viec) return;
+  var r = dangHien[+e.target.getAttribute('data-i')]; if (!r) return;
+  if (viec === 'nghi_noi_khac') {
+    var cb = r.lam.canh_bao;
+    moLam('nghi', r, { ngay: cb.ngay_vao_lam, ten_cong_ty: cb.ten_cong_ty, ly_do: 'Sang làm ở ' + cb.ten_cong_ty });
+    return;
+  }
+  moLam(viec, r);
+});
 
 // ============================================================
 // SAO CHÉP EXCEL — dữ liệu đầy đủ theo CCCD + SĐT
