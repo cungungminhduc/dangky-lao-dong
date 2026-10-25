@@ -86,7 +86,10 @@
   .che-do{display:flex;gap:4px;margin:6px 14px 0;background:var(--xam-nut);padding:3px;border-radius:11px}
   .che-do button{flex:1;padding:9px 4px;border:0;border-radius:9px;background:transparent;font-size:14px;font-weight:700;color:#3c4753;cursor:pointer}
   .che-do button.dang{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);color:var(--chu)}
-  .nut-dong{padding:5px 10px;border:1px solid #c9d8f2;border-radius:8px;background:var(--lam-nhat);color:var(--lam);font-size:13px;font-weight:700;cursor:pointer;margin-right:4px}
+  .nut-dong{padding:7px 12px;border:1px solid #c9d8f2;border-radius:9px;background:var(--lam-nhat);color:var(--lam);font-size:13.5px;font-weight:700;cursor:pointer;margin-right:4px}
+  /* 25/10/2026: dòng "👉" chỉ việc cần làm + chữ phụ dưới hai nút đăng ký lại */
+  .goi-y{margin:8px 14px 0;padding:9px 12px;border-radius:10px;background:var(--xanh-nhat);border:1px solid #bfe0c9;color:#17663a;font-size:13.5px}
+  .ba-nut button small{display:block;font-size:11px;font-weight:500;opacity:.9;margin-top:1px}
   .nut-dong.do{border-color:#f0c4be;background:var(--do-nhat);color:#8a1c13}
   .canh-bao{display:block;margin-top:4px;padding:4px 8px;border-radius:8px;background:var(--vang-nhat);border:1px solid var(--vang-vien);color:#6b4e00;font-size:12.5px;white-space:normal;max-width:260px}
   .hop input[type=text]{width:100%;padding:11px 10px;font-size:16px;border:1px solid #d9dde2;border-radius:10px;margin-top:4px;background:#fff}
@@ -225,6 +228,7 @@
   <div id="ds_loi" class="loi an"></div>
 
   <div class="tong" id="tong">—</div>
+  <div class="goi-y" id="goi_y"></div>
 
   <div class="khung-bang">
     <table class="ds">
@@ -244,8 +248,8 @@
 <div class="thanh an" id="thanh">
   <div class="tt" id="thanh_tt">Chưa chọn ai — tích ô đầu dòng để đăng ký lại.</div>
   <div class="ba-nut">
-    <button type="button" id="nut_loat">Đăng ký cả loạt</button>
-    <button type="button" id="nut_luot">Đăng ký lần lượt</button>
+    <button type="button" id="nut_loat">Đăng ký cả loạt<small>cùng công ty, cùng ngày</small></button>
+    <button type="button" id="nut_luot">Đăng ký lần lượt<small>mỗi người chọn riêng</small></button>
     <button type="button" class="phu" id="nut_excel" data-ten="Sao chép Excel">Sao chép Excel</button>
   </div>
 </div>
@@ -490,7 +494,7 @@ function dungTongLam(ds) {
     return '<span class="chip tt-' + cheDo + '">' + thoat(k) + ': ' + theoCT[k] + '</span>';
   }).join('') + '</div>';
   var canh = ds.filter(function (r) { return r.lam.canh_bao; }).length;
-  if (canh) h += '<div style="margin-top:4px;color:#6b4e00">⚠️ ' + canh + ' người đã vào làm ở nơi khác — xem cột Ghi chú.</div>';
+  if (canh) h += '<div style="margin-top:4px;color:#6b4e00">⚠️ ' + canh + ' người đã vào làm ở nơi khác — xem dòng ⚠️ ngay dưới nút của người đó.</div>';
   return h;
 }
 
@@ -517,36 +521,45 @@ function dungTong(ds) {
   return h;
 }
 
+// Cột nút "Cập nhật" đứng NGAY SAU Họ tên (Dương 25/10/2026): trước đây nằm cuối bảng, phải kéo ngang mới bấm được.
 var COT_THEO_CHE_DO = {
-  tuyen:    ['Năm sinh', 'SĐT', 'CCCD', 'Công ty', 'Ngày hẹn', 'Tình trạng', 'Người tuyển', 'Chuyển'],
-  dang_lam: ['Năm sinh', 'SĐT', 'Công ty', 'Ngày vào', 'Số ngày', 'Ghi chú', 'Chuyển'],
-  da_nghi:  ['Năm sinh', 'SĐT', 'Công ty', 'Ngày vào', 'Ngày nghỉ', 'Lý do', 'Ghi chú', 'Sửa']
+  tuyen:    ['Cập nhật', 'Tình trạng', 'Năm sinh', 'SĐT', 'CCCD', 'Công ty', 'Ngày hẹn', 'Người tuyển'],
+  dang_lam: ['Cập nhật', 'Năm sinh', 'SĐT', 'Công ty', 'Ngày vào', 'Số ngày', 'Ghi chú'],
+  da_nghi:  ['Cập nhật', 'Năm sinh', 'SĐT', 'Công ty', 'Ngày vào', 'Ngày nghỉ', 'Lý do', 'Ghi chú']
+};
+// Dòng "👉" ngay trên bảng: nói thẳng việc cần làm ở từng chế độ xem — người mới mở không cần ai chỉ.
+var GOI_Y = {
+  tuyen:    '👉 Người nào <b>đã đi làm</b>: bấm nút <b>✅ Vào làm</b> ngay cạnh tên. Muốn <b>đăng ký lại</b>: tích ô ☐ đầu dòng rồi bấm nút xanh ở dưới cùng.',
+  dang_lam: '👉 Người nào <b>đã nghỉ</b>: bấm nút <b>🚪 Nghỉ việc</b> cạnh tên. Ghi sai thì bấm <b>✏️ Sửa</b>.',
+  da_nghi:  '👉 Muốn gọi người đã nghỉ <b>đi làm lại</b>: tích ô ☐ đầu dòng rồi bấm nút xanh ở dưới cùng. Ghi sai thì bấm <b>✏️ Sửa</b>.'
 };
 function oSdt(r) { return '<td>' + (r.sdt ? '<a href="tel:' + thoat(r.sdt) + '">' + thoat(r.sdt) + '</a>' : '—') + '</td>'; }
 function nutDong(viec, i, chu, lop) { return '<button type="button" class="nut-dong' + (lop ? ' ' + lop : '') + '" data-viec="' + viec + '" data-i="' + i + '">' + chu + '</button>'; }
 
-/** Các ô sau cột Họ tên, theo chế độ xem. */
+/** Các ô sau cột Họ tên, theo chế độ xem — ô đầu luôn là nút (khớp COT_THEO_CHE_DO). */
 function oTheoCheDo(r, i) {
   if (cheDo === 'tuyen') {
     // Đang làm → nút Nghỉ việc; còn lại → nút Vào làm (sổ tự chặn nếu người đó đang làm ở lượt khác)
-    var nut = r.tt === 'dang_lam' && r.ma_lam ? nutDong('nghi', i, 'Nghỉ việc', 'do') : nutDong('vao', i, 'Vào làm');
-    return '<td>' + thoat(r.nam_sinh) + '</td>' + oSdt(r) + '<td>' + thoat(r.cccd4) + '</td>' +
+    var nut = r.tt === 'dang_lam' && r.ma_lam ? nutDong('nghi', i, '🚪 Nghỉ việc', 'do') : nutDong('vao', i, '✅ Vào làm');
+    return '<td>' + nut + '</td>' +
+      '<td><span class="nhan-tt tt-' + thoat(r.tt) + '">' + thoat(r.tt_nhan) + '</span></td>' +
+      '<td>' + thoat(r.nam_sinh) + '</td>' + oSdt(r) + '<td>' + thoat(r.cccd4) + '</td>' +
       '<td>' + thoat(r.ten_cong_ty) + (r.ca ? ' · ' + thoat(r.ca) : '') + '</td>' +
       '<td>' + thoat(r.ngay_hen) + '</td>' +
-      '<td><span class="nhan-tt tt-' + thoat(r.tt) + '">' + thoat(r.tt_nhan) + '</span></td>' +
-      '<td>' + thoat(r.nguoi_tuyen) + '</td><td>' + nut + '</td>';
+      '<td>' + thoat(r.nguoi_tuyen) + '</td>';
   }
   var l = r.lam;
-  var ghi = thoat(l.ghi_chu || '') + (l.canh_bao ? '<span class="canh-bao">⚠️ Đã vào làm ở <b>' + thoat(l.canh_bao.ten_cong_ty) +
-    '</b> từ ' + ngayVN(l.canh_bao.ngay_vao_lam) + '</span>' : '');
+  // Cảnh báo "đã vào làm nơi khác" đứng NGAY DƯỚI nút chuyển nghỉ — lý do phải nằm cạnh nút, không trôi ra cột cuối.
+  var cb = l.canh_bao ? '<span class="canh-bao">⚠️ Đã vào làm ở <b>' + thoat(l.canh_bao.ten_cong_ty) +
+    '</b> từ ' + ngayVN(l.canh_bao.ngay_vao_lam) + '</span>' : '';
+  var ghi = thoat(l.ghi_chu || '');
   var dau = '<td>' + thoat(l.nam_sinh) + '</td>' + oSdt(l) + '<td>' + thoat(l.ten_cong_ty) + '</td><td>' + ngayVN(l.ngay_vao_lam) + '</td>';
   if (cheDo === 'dang_lam') {
-    return dau + '<td>' + thoat(l.so_ngay) + '</td><td style="white-space:normal">' + ghi + '</td><td>' +
-      (l.canh_bao ? nutDong('nghi_noi_khac', i, 'Chuyển sang Đã nghỉ', 'do') : nutDong('nghi', i, 'Nghỉ việc', 'do')) +
-      nutDong('sua', i, 'Sửa') + '</td>';
+    return '<td>' + (l.canh_bao ? nutDong('nghi_noi_khac', i, '🚪 Chuyển sang Đã nghỉ', 'do') : nutDong('nghi', i, '🚪 Nghỉ việc', 'do')) +
+      nutDong('sua', i, '✏️ Sửa') + cb + '</td>' + dau + '<td>' + thoat(l.so_ngay) + '</td><td style="white-space:normal">' + ghi + '</td>';
   }
-  return dau + '<td>' + ngayVN(l.ngay_nghi) + '</td><td style="white-space:normal">' + thoat(l.ly_do_nghi) + '</td>' +
-    '<td style="white-space:normal">' + ghi + '</td><td>' + nutDong('sua', i, 'Sửa') + '</td>';
+  return '<td>' + nutDong('sua', i, '✏️ Sửa') + '</td>' + dau + '<td>' + ngayVN(l.ngay_nghi) + '</td>' +
+    '<td style="white-space:normal">' + thoat(l.ly_do_nghi) + '</td><td style="white-space:normal">' + ghi + '</td>';
 }
 
 function ve() {
@@ -558,6 +571,7 @@ function ve() {
   while (tr.children.length > 1) tr.removeChild(tr.lastChild);          // giữ ô "chọn tất cả" cùng sự kiện của nó
   tr.insertAdjacentHTML('beforeend', '<th class="c1">Họ tên</th>' + cot.map(function (c) { return '<th>' + c + '</th>'; }).join(''));
   $('tong').innerHTML = duLieu ? dungTong(dangHien) : '—';
+  $('goi_y').innerHTML = GOI_Y[cheDo];
   if (!dangHien.length) {
     var trong = cheDo === 'tuyen'
       ? (duLieu && duLieu.ds && duLieu.ds.length ? 'Không ai khớp bộ lọc.' : 'Chưa có người nào bạn tuyển trong khoảng ngày này. Thử "30 ngày" hoặc "Tất cả".')
