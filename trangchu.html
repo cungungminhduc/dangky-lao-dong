@@ -17,6 +17,9 @@
 
   KHÔNG có hẹn giờ tự gọi máy chủ: trần 40 lượt/phút là trần chung cả hệ. Chỉ lấy lại khi mở / quay lại trang
   mà số đã quá 2 phút, hoặc khi bấm "Làm mới số".
+
+  3.39 (Dương 25/10/2026): ô chia HAI nhóm có tiêu đề + dòng hướng dẫn — "Không cần đăng nhập" (ở trên) / "Cần đăng nhập" — và
+  ghi chú "phải chờ" ở cả màn đăng nhập lẫn trang chủ, để ai mở lần đầu không cần người chỉ cũng biết cách dùng.
 -->
 <style>
   :root{
@@ -50,7 +53,11 @@
   .loi{margin:12px 16px 0;padding:10px 12px;border-radius:9px;background:var(--do-nhat);
     color:#8a1c13;font-size:13.5px}
   .mach{padding:4px 16px 18px;font-size:12.5px;color:var(--mo);line-height:1.55}
-  .ke{margin:18px 16px 4px;font-size:13px;color:var(--mo);font-weight:600}
+  /* 3.39: hai nhóm ô có tiêu đề + một dòng hướng dẫn, và ghi chú phải chờ — ai mở lần đầu cũng tự hiểu cách dùng */
+  .ke{margin:18px 16px 2px;font-size:14.5px;color:var(--chu);font-weight:700}
+  .ke-ghi{margin:0 16px 2px;font-size:12.5px;color:var(--mo);line-height:1.5}
+  .cho{margin:10px 14px 0;padding:10px 12px;border-radius:10px;background:#fff8e6;border:1px solid #f0dda0;
+    color:#6b4e00;font-size:13px;line-height:1.5}
 
   /* Ô việc: hai cột trên điện thoại, chữ to bấm bằng ngón cái */
   .luoi{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 14px 0}
@@ -77,6 +84,15 @@
     <b>TUYỂN DỤNG</b>
     <div class="phu">Một chỗ vào mọi việc — đăng nhập một lần</div>
   </div>
+  <div class="ke">🔓 Không cần đăng nhập — ai cũng dùng được</div>
+  <div class="ke-ghi">Đăng ký = ghi người <b>sẽ</b> đến nhà máy (chụp thẻ căn cước là tự điền). Quét thẻ đón = ở cổng nhà máy,
+    quét thẻ để đánh dấu người <b>đã</b> đến.</div>
+  <div class="luoi">
+    <a class="o-viec mo-cong" href="index.html"><b>Đăng ký lao động</b><span class="mt">Ghi người sẽ đến nhà máy</span></a>
+    <a class="o-viec mo-cong" href="doncong.html"><b>Quét thẻ đón</b><span class="mt">Đánh dấu người đã đến</span></a>
+  </div>
+  <div class="ke">🔐 Cần đăng nhập</div>
+  <div class="ke-ghi">Danh sách gọi · phân công đón · báo quân số · dữ liệu tuyển. Dùng số căn cước + mật khẩu được cấp.</div>
   <div class="o">
     <div class="nhan">Số căn cước của bạn (12 số)</div>
     <input id="dn_cccd" inputmode="numeric" maxlength="12" autocomplete="username" placeholder="Ví dụ 024303008090">
@@ -88,15 +104,8 @@
   </div>
   <div class="loi an" id="dn_loi"></div>
   <button type="button" class="nut" id="nut_dn">Đăng nhập</button>
-  <div class="ke">Không cần đăng nhập</div>
-  <div class="luoi">
-    <a class="o-viec mo-cong" href="index.html"><b>Đăng ký lao động</b><span class="mt">Ghi người sẽ đến nhà máy</span></a>
-    <a class="o-viec mo-cong" href="doncong.html"><b>Quét thẻ đón</b><span class="mt">Đánh dấu người đã đến</span></a>
-  </div>
-  <div class="mach">
-    Danh sách gọi, phân công, quân số và dữ liệu tuyển cần đăng nhập — dùng đúng số căn cước và mật khẩu
-    như các trang đó.
-  </div>
+  <div class="cho">⏳ Bấm Đăng nhập xong <b>chờ một chút</b> — lần đầu trong ngày máy chủ Google có khi mất 30–60 giây.
+    Nút còn ghi "Đang kiểm tra…" là máy đang làm, <b>đừng tải lại trang</b>.</div>
 </div>
 
 <!-- ===== TRANG CHỦ ===== -->
@@ -105,8 +114,11 @@
     <b>TUYỂN DỤNG</b>
     <div class="phu" id="chu_ai">—</div>
   </div>
+  <div class="cho">⏳ <b>Phải chờ một chút:</b> lần đầu mở trong ngày, máy chủ Google có khi mất 30–60 giây mới trả số.
+    Dưới ô còn ghi "đang lấy số mới…" là máy đang làm — <b>cứ chờ, đừng tải lại trang</b>. Bấm vào ô thì trang đó tự
+    tải, chờ vòng xoay chạy xong.</div>
   <div class="loi an" id="chu_loi"></div>
-  <div class="luoi" id="chu_o"></div>
+  <div id="chu_o"></div>
   <button type="button" class="nut phu" id="nut_lam_moi">Làm mới số</button>
   <button type="button" class="nut phu an" id="nut_cai">Thêm vào màn hình chính (mở nhanh, khỏi đăng nhập lại)</button>
   <button type="button" class="nut phu" id="nut_thoat">Đăng xuất</button>
@@ -190,8 +202,18 @@ var O_VIEC = [
   { ten: 'Phân công đón', mt: 'Ai phụ trách nhà máy nào', href: 'phancong.html', can: 'phan_cong', muc: 'phan_cong' },
   { ten: 'Báo quân số', mt: 'Số người đi làm từng công ty', href: 'quanso.html', can: 'dang_nhap', muc: 'quan_so' },
   { ten: 'Dữ liệu tuyển', mt: 'Người mình đã tuyển · đăng ký lại', href: 'dulieutuyen.html', can: 'du_lieu_tuyen', muc: '' },
-  { ten: 'Đăng ký lao động', mt: 'Không cần đăng nhập', href: 'index.html', can: '', muc: '' },
-  { ten: 'Quét thẻ đón', mt: 'Không cần đăng nhập', href: 'doncong.html', can: '', muc: '' }
+  { ten: 'Đăng ký lao động', mt: 'Ghi người sẽ đến nhà máy', href: 'index.html', can: '', muc: '' },
+  { ten: 'Quét thẻ đón', mt: 'Đánh dấu người đã đến', href: 'doncong.html', can: '', muc: '' }
+];
+// Tiêu đề + một dòng hướng dẫn cho hai nhóm ô (3.39) — người mới mở không cần ai chỉ cũng biết ô nào để làm gì.
+// Nhóm không cần đăng nhập ở TRÊN (Dương 25/10/2026).
+var NHOM_O = [
+  { can: false, ke: '🔓 Không cần đăng nhập — ai cũng dùng được',
+    ghi: 'Đăng ký = ghi người SẼ đến nhà máy (chụp thẻ căn cước là tự điền). Quét thẻ đón = ở cổng nhà máy, quét thẻ để '
+       + 'đánh dấu người ĐÃ đến.' },
+  { can: true, ke: '🔐 Cần đăng nhập',
+    ghi: 'Việc của người phụ trách. Bạn đã đăng nhập — bấm ô là vào thẳng, không phải gõ lại mật khẩu. '
+       + 'Ô nào không hiện là tài khoản chưa được cấp quyền đó.' }
 ];
 
 /** Ô nào hiện. `tk` null = chưa biết quyền (máy chủ chưa trả lời) → hiện hết, trang con tự kiểm quyền.
@@ -230,11 +252,15 @@ function veChu() {
   var xemDlt = v ? v.goi.xem_du_lieu_tuyen : undefined;
   $('chu_ai').textContent = tk ? (tk.ten_nguoi || '') + (tk.ten_chuc_vu ? ' · ' + tk.ten_chuc_vu : '')
                                : (dangLay ? 'Đang vào…' : '—');
-  $('chu_o').innerHTML = oDuocXem(tk, xemDlt).map(function (o) {
-    var tt = chuTrangThai(o, v);
-    return '<a class="o-viec' + (o.can ? '' : ' mo-cong') + '" href="' + o.href + '"><b>' + thoat(o.ten) + '</b>' +
-           '<span class="mt">' + thoat(o.mt) + '</span>' +
-           (tt && tt.t ? '<span class="tt' + (tt.k ? ' ' + tt.k : '') + '">' + thoat(tt.t) + '</span>' : '') + '</a>';
+  var ds = oDuocXem(tk, xemDlt);
+  $('chu_o').innerHTML = NHOM_O.map(function (n) {
+    return '<div class="ke">' + thoat(n.ke) + '</div><div class="ke-ghi">' + thoat(n.ghi) + '</div><div class="luoi">' +
+      ds.filter(function (o) { return !!o.can === n.can; }).map(function (o) {
+        var tt = chuTrangThai(o, v);
+        return '<a class="o-viec' + (o.can ? '' : ' mo-cong') + '" href="' + o.href + '"><b>' + thoat(o.ten) + '</b>' +
+               '<span class="mt">' + thoat(o.mt) + '</span>' +
+               (tt && tt.t ? '<span class="tt' + (tt.k ? ' ' + tt.k : '') + '">' + thoat(tt.t) + '</span>' : '') + '</a>';
+      }).join('') + '</div>';
   }).join('');
   if (loiGoi) { $('chu_loi').textContent = loiGoi + ' Các ô vẫn bấm được — trang nào mở ra sẽ tự lấy.'; $('chu_loi').classList.remove('an'); }
   else $('chu_loi').classList.add('an');
