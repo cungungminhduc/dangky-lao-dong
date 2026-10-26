@@ -91,7 +91,9 @@
   .the-nn.x{background:var(--do-nhat);color:#8a1c13}
   .d3{display:flex;gap:6px;margin-top:9px}
   .d3 button{flex:1;padding:9px 6px;border:1px solid #d9dde2;background:#fff;border-radius:9px;
-    font-size:13.5px;font-weight:600;color:#3c4753;cursor:pointer}
+    font-size:13.5px;font-weight:600;color:#3c4753;cursor:pointer;min-height:44px}
+  /* 3.40: nút ✏️ Sửa đứng cuối hàng, hẹp hơn hai nút trạng thái */
+  .d3 button.nut-sua{flex:0 0 auto;padding:9px 12px;color:#1d5fbf;border-color:#c9d8f2;background:#f5f8fe}
   .d3 button.chon-v{background:var(--xanh);border-color:var(--xanh);color:#fff}
   .d3 button.chon-x{background:var(--do);border-color:var(--do);color:#fff}
   .nghe{display:flex;gap:6px;margin-top:7px;padding-top:7px;border-top:1px dashed var(--vien)}
@@ -101,8 +103,9 @@
   .nghe .kq-c{background:#c97a12;border-color:#c97a12;color:#fff}
   .hang.bo{background:#fff5f5}
   .hang.se-don{background:#f2fbf5}
-  /* Đã đón (3.31) — xuống cuối, tối màu. Vẫn bấm được "Vào làm / Không"; chữ "đã đón" ở .d2 vẫn in. */
-  .hang.da-don{opacity:.55}
+  /* Đã đón (3.31) — xuống cuối, tối màu; chữ "đã đón" ở .d2 vẫn in. 3.40 (Dương 26/10): chỉ mờ PHẦN CHỮ — nút Gọi /
+     Vào làm / Không / ✏️ Sửa giữ sáng để người dùng biết vẫn bấm chọn bình thường. */
+  .hang.da-don .d1 b,.hang.da-don .the-ca,.hang.da-don .d2,.hang.da-don .the-nn{opacity:.55}
   /* CA LÀM VIỆC (3.21) — dải màu bên trái, KHÔNG tô cả nền.
      Tô cả nền thì đè lên ba màu trạng thái đã có (đã vào làm / không vào làm / sẽ đón)
      và hai tầng thông tin đánh nhau. Dải bên trái thì cộng thêm, không tranh chỗ.
@@ -179,6 +182,26 @@
   .lop .hop b{display:block;text-align:center;margin-bottom:10px}
   .lop .hop button{display:block;width:100%;padding:13px;margin-top:8px;border:1px solid var(--vien);
     background:#fff;border-radius:10px;font-size:15px;cursor:pointer}
+  /* 3.40: ô tự ghi của "Lý do khác" — chữ 16px để iPhone không tự phóng to */
+  .ly-khac{margin-top:10px;padding:10px;border:1px solid var(--vien);border-radius:10px;background:#f7f9fb}
+  .ly-khac label{display:block;font-size:14.5px;font-weight:600;margin-bottom:6px}
+  .ly-khac input{width:100%;padding:11px 12px;font-size:16px;border:1px solid #c9d0d8;border-radius:9px}
+  .ly-khac-loi{margin-top:6px;font-size:14px;color:#8a1c13}
+  .lop .hop .ly-luu{background:var(--xanh);border-color:var(--xanh);color:#fff;font-weight:700}
+  .lop .hop .ly-luu:disabled{background:#9bb8a6;border-color:#9bb8a6}
+  /* 3.40: hộp ✏️ Sửa phiếu — cuộn được khi bàn phím điện thoại bật lên */
+  .lop .hop-sua{max-height:92vh;overflow-y:auto}
+  .goi-y-sua{font-size:15px;color:#3c4753;margin-bottom:4px}
+  .nh-sua{display:block;font-size:14.5px;font-weight:700;margin-top:14px;margin-bottom:6px}
+  .ca-sua{display:flex;gap:8px}
+  .lop .hop .ca-sua button{flex:1;margin-top:0;font-weight:600}
+  .lop .hop .ca-sua button.dang{background:var(--chu);border-color:var(--chu);color:#fff}
+  .hop-sua input,.hop-sua select{width:100%;padding:11px 12px;font-size:16px;border:1px solid #c9d0d8;border-radius:9px;
+    background:#fff;min-height:46px}
+  .phu-sua{font-size:14px;color:var(--mo);margin-top:5px}
+  .hop-sua .cho{margin:14px 0 0}
+  .loi-sua{margin-top:10px;padding:10px 12px;border-radius:9px;background:var(--do-nhat);color:#8a1c13;font-size:14.5px}
+  .xong-sua{margin-top:6px;padding:12px;border-radius:9px;background:var(--xanh-nhat);color:#14532d;font-size:15px;line-height:1.55}
 </style>
 <!-- 3.32: mở trong Zalo thì nhắc mở bằng Chrome (thiếu tệp thì trang vẫn chạy như cũ) -->
 <script src="ngoai-zalo.js" defer></script>
@@ -354,6 +377,7 @@ function veManDangNhap(loi) {
 function vaoTrong(kq, ngay) {
   taiKhoan = { ten_nguoi: kq.ten_nguoi || '', cong_ty: kq.cong_ty || [] };
   napLyDo(kq.ly_do);
+  napCongTySua();                 // 3.40 — danh sách công ty + ca cho hộp ✏️ Sửa (có bản nhớ, không chặn màn)
   hien('man_ds');
   moNgay(ngay || ngayCong(1));    // mặc định NGÀY MAI — người đón cần gọi trước cho hôm sau
 }
@@ -907,20 +931,25 @@ function ganChonVung() {
  */
 var LY_DO = [
   ['truot_phong_van', 'Trượt phỏng vấn'],
-  ['khong_du_suc_khoe', 'Không đủ sức khoẻ'],
+  ['khong_dap_ung', 'Không đáp ứng công việc'],
   ['tu_bo_ve', 'Tự bỏ về'],
-  ['cong_ty_khong_nhan', 'Công ty không nhận'],
+  ['khong_co_ke_hoach', 'Công ty không có kế hoạch'],
   ['khac', 'Lý do khác']
 ];
 var TEN_LY_DO = {};
+/** Chữ của lý do thuộc bộ trước 3.40 — phiếu đã lưu vẫn mang các mã này (giống TEN_LY_DO_CU ở máy chủ). */
+var TEN_LY_DO_CU = { khong_du_suc_khoe: 'Không đủ sức khoẻ', cong_ty_khong_nhan: 'Công ty không nhận' };
 /**
  * Tên hiện ra của một lý do. Lý do CŨ đã bị xoá khỏi cấu hình thì vẫn còn nằm trong các
  * bản ghi đã lưu — không có tên nữa, nhưng đừng bày mã thô "tu_bo_ve" ra cho người đọc:
  * thay gạch dưới bằng khoảng trắng là đọc được ngay.
+ * 3.40: "Lý do khác" lưu dạng "khac: <chữ người đón gõ>".
  */
 function tenLyDo(ma) {
   if (!ma) return '';
-  return TEN_LY_DO[ma] || String(ma).replace(/_/g, ' ');
+  var khac = String(ma).match(/^khac\s*:\s*(.+)$/);
+  if (khac) return (TEN_LY_DO.khac || 'Lý do khác') + ': ' + khac[1];
+  return TEN_LY_DO[ma] || TEN_LY_DO_CU[ma] || String(ma).replace(/_/g, ' ');
 }
 function napLyDo(ds) {
   if (ds && ds.length) LY_DO = ds.map(function (c) { return [c.ma, c.ten]; });
@@ -1167,6 +1196,7 @@ function ve(kq) {
     g.ds.forEach(function (r) { if (r.da_don) daDon++; });
   });
   ngayHienThiHienTai = kq.ngay_hien_thi || '';
+  if (kq.goi_y_tuyen) goiYTuyen = kq.goi_y_tuyen;   // 3.40 — gợi ý ô "Người tuyển" ở hộp ✏️ Sửa
   // Đếm theo ca ngay trên đầu: người đón liếc một cái là biết hôm nay xe ngày mấy người,
   // xe đêm mấy người — trước đây phải tự đếm tay giữa danh sách sáu chục dòng.
   var caN = 0, caD = 0;
@@ -1254,17 +1284,19 @@ function veHang(r) {
       }).join('') + '</div>';
 
   // Chưa đón thì chưa nói chuyện vào làm được — không bày nút ra cho rối.
+  // 3.40: nút ✏️ Sửa (ca · người tuyển · công ty) đứng cuối hàng nút của MỌI thẻ.
+  var nutSua = '<button type="button" class="nut-sua" data-sua="' + thoat(r.ma_ld) + '">✏️ Sửa</button>';
   if (r.da_don) {
     h += '<div class="d3">' +
       '<button type="button" data-tt="da_vao_lam" data-ma="' + thoat(r.ma_ld) + '">Vào làm</button>' +
-      '<button type="button" data-tt="khong_vao_lam" data-ma="' + thoat(r.ma_ld) + '">Không</button></div>';
+      '<button type="button" data-tt="khong_vao_lam" data-ma="' + thoat(r.ma_ld) + '">Không</button>' + nutSua + '</div>';
   } else {
     // BẢN 3.20: đánh dấu đã đón ngay tại đây, khỏi phải mở trang khác quét thẻ.
     // Nơi đón mặc định là nơi họ đã đăng ký — ai đến nơi KHÁC thì đó đúng là ca cần
     // quét thẻ ở trang đón, nơi có đủ đường xử lý đón-lại.
     h += '<div class="d3">' +
       '<button type="button" class="' + (chonDon[r.ma_ld] ? 'chon-don' : '') +
-      '" data-don="' + thoat(r.ma_ld) + '">Đã đón</button></div>';
+      '" data-don="' + thoat(r.ma_ld) + '">Đã đón</button>' + nutSua + '</div>';
   }
   return h + '</div>';
 }
@@ -1301,6 +1333,9 @@ $('noi').addEventListener('click', function (e) {
     return;
   }
 
+  var nutSua = t.closest ? t.closest('button[data-sua]') : null;
+  if (nutSua) { moSua(nutSua.getAttribute('data-sua')); return; }
+
   var nutDon = t.closest ? t.closest('button[data-don]') : null;
   if (nutDon) {
     var maD = nutDon.getAttribute('data-don');
@@ -1329,7 +1364,7 @@ function veLai(ma) {
   var o = $('noi').querySelector('.hang[data-ma="' + ma + '"]');
   if (!o) return;
   var c = chonTT[ma];
-  var nut = o.querySelectorAll('.d3 button');
+  var nut = o.querySelectorAll('.d3 button[data-tt]');
   for (var i = 0; i < nut.length; i++) {
     var tt = nut[i].getAttribute('data-tt');
     nut[i].className = (c && c.tinh_trang === tt) ? (tt === 'da_vao_lam' ? 'chon-v' : 'chon-x') : '';
@@ -1374,17 +1409,158 @@ function demChon() {
 function hoiLyDo(xong) {
   var lop = document.createElement('div');
   lop.className = 'lop';
+  // 3.40: "Lý do khác" mở ô cho người đón tự ghi — gửi lên dạng "khac: <chữ>", máy chủ từ chối 'khac' trơn.
   lop.innerHTML = '<div class="hop"><b>Vì sao không vào làm?</b>' +
     LY_DO.map(function (c) { return '<button type="button" data-ly="' + thoat(c[0]) + '">' + thoat(c[1]) + '</button>'; }).join('') +
-    '<button type="button" data-ly="" style="margin-top:14px;color:var(--mo)">Bỏ qua</button></div>';
+    '<div class="ly-khac an"><label for="ly_khac">Ghi lý do:</label>' +
+      '<input type="text" id="ly_khac" maxlength="200" autocomplete="off">' +
+      '<div class="ly-khac-loi an">Ghi rõ lý do vào ô rồi bấm "Lưu lý do".</div>' +
+      '<button type="button" class="ly-luu" data-luu="1">💾 Lưu lý do</button></div>' +
+    '<button type="button" data-ly="" style="margin-top:14px;color:var(--mo)">Thôi, không chọn</button></div>';
+  var khoi = lop.querySelector('.ly-khac'), o = lop.querySelector('#ly_khac');
   lop.addEventListener('click', function (e) {
     if (e.target === lop) { document.body.removeChild(lop); xong(''); return; }
+    if (e.target.closest && e.target.closest('button[data-luu]')) {
+      var chu = o.value.replace(/\s+/g, ' ').trim();
+      if (!chu) { lop.querySelector('.ly-khac-loi').classList.remove('an'); o.focus(); return; }
+      document.body.removeChild(lop);
+      xong('khac: ' + chu);
+      return;
+    }
     var b = e.target.closest ? e.target.closest('button[data-ly]') : null;
     if (!b) return;
+    if (b.getAttribute('data-ly') === 'khac') { khoi.classList.remove('an'); o.focus(); return; }
     document.body.removeChild(lop);
     xong(b.getAttribute('data-ly'));
   });
   document.body.appendChild(lop);
+}
+
+// ============================================================
+// ✏️ SỬA PHIẾU (bản 3.40) — đổi ca / người tuyển / công ty ngay trên danh sách
+// ============================================================
+/*
+ * Dương báo 26/10/2026: đăng ký ca ngày, đã đón, sẽ đi ca đêm — không có chỗ đổi; ghi nhầm người tuyển / công ty thì
+ * không ai sửa được. Lưu là ghi NGAY, không chờ thanh GỬI: việc hiếm, mỗi lần cần máy chủ xác nhận (quyền, cùng mảng).
+ * Lưu xong tải lại danh sách để thấy đúng thứ máy chủ đã ghi — không tự đoán ca / công ty mới trên trang.
+ * Công ty + ca lấy từ danh_sach_cong_ty (bản nhớ dùng chung với trang đăng ký); thiếu thì vẫn sửa được ca, người tuyển.
+ */
+var dsCongTy = [], dsCa = [['ngay', 'Ca ngày'], ['dem', 'Ca đêm']], goiYTuyen = [];
+var BIEU_CA = { ngay: '☀️ ', dem: '🌙 ' };
+function napCongTySua() {
+  if (typeof napDsCongTy_ !== 'function') return;
+  napDsCongTy_(function (kq) {
+    dsCongTy = kq.danh_sach || [];
+    if (kq.danh_sach_ca && kq.danh_sach_ca.length) dsCa = kq.danh_sach_ca.map(function (c) { return [c.ma, c.ten]; });
+  }, function () {});
+}
+function maYC() { return 'ds-' + new Date().getTime().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
+function timHang(ma) {
+  for (var i = 0; i < dsNgay.length; i++) {
+    for (var j = 0; j < dsNgay[i].ds.length; j++) if (dsNgay[i].ds[j].ma_ld === ma) return { r: dsNgay[i].ds[j], g: dsNgay[i] };
+  }
+  return null;
+}
+
+function moSua(ma) {
+  var x = timHang(ma);
+  if (!x) return;
+  var r = x.r, g = x.g, laTV = g.loai === 'thời vụ', loaiMa = laTV ? 'thoi_vu' : 'chinh_thuc';
+  var cung = function (a, b) { return String(a || '').toLowerCase() === String(b || '').toLowerCase(); };
+  var ct = dsCongTy.filter(function (c) { return c.loai === loaiMa; });
+  if (!ct.some(function (c) { return cung(c.ma_ct, g.ma_ct); })) ct = [{ ma_ct: g.ma_ct, ten_cong_ty: g.ten_cong_ty }].concat(ct);
+  var lop = document.createElement('div');
+  lop.className = 'lop';
+  lop.innerHTML = '<div class="hop hop-sua"><b>✏️ Sửa phiếu — ' + thoat(r.ho_ten || '(chưa có tên)') + '</b>' +
+    '<div class="goi-y-sua">👉 Chọn lại chỗ bị sai rồi bấm "Lưu thay đổi".</div>' +
+    (laTV ? '<div class="nh-sua">Ca làm</div><div class="ca-sua">' + dsCa.map(function (c) {
+      var dang = c[0] === r.ca_lam;
+      return '<button type="button" data-ca="' + thoat(c[0]) + '" class="' + (dang ? 'dang' : '') + '" aria-pressed="' + dang + '">' +
+             (BIEU_CA[c[0]] || '') + thoat(c[1]) + '</button>';
+    }).join('') + '</div>' : '') +
+    '<label class="nh-sua" for="sua_nguoi">Người tuyển</label>' +
+    '<input id="sua_nguoi" list="sua_goi_y" maxlength="60" autocomplete="off" value="' + thoat(r.nguoi_dk || '') + '">' +
+    '<datalist id="sua_goi_y">' + goiYTuyen.map(function (t) { return '<option value="' + thoat(t) + '">'; }).join('') + '</datalist>' +
+    '<div class="phu-sua">Gõ đúng tên người đã tìm ra lao động này.</div>' +
+    '<label class="nh-sua" for="sua_ct">Công ty</label>' +
+    '<select id="sua_ct">' + ct.map(function (c) {
+      return '<option value="' + thoat(c.ma_ct) + '"' + (cung(c.ma_ct, g.ma_ct) ? ' selected' : '') + '>' + thoat(c.ten_cong_ty) + '</option>';
+    }).join('') + '</select>' +
+    (dsCongTy.length ? '<div class="phu-sua">Chỉ có công ty cùng mảng ' + thoat(g.loai) + '.</div>'
+                     : '<div class="phu-sua">Chưa tải được danh sách công ty — muốn đổi công ty thì bấm "Thôi", chờ vài giây rồi mở lại.</div>') +
+    '<div class="cho">Bấm Lưu có khi phải chờ vài giây tới 1 phút — đừng tải lại trang.</div>' +
+    '<div class="loi-sua an" id="sua_loi"></div>' +
+    '<button type="button" class="ly-luu" id="sua_luu">💾 Lưu thay đổi</button>' +
+    '<button type="button" id="sua_thoi">Thôi, không sửa</button></div>';
+  var hop = lop.querySelector('.hop'), chon = { ca: r.ca_lam || '' };
+  var dong = function () { if (lop.parentNode) document.body.removeChild(lop); };
+  lop.addEventListener('click', function (e) {
+    var t = e.target;
+    if (hop.dangLuu) return;                                  // đang chờ máy chủ: không đóng giữa chừng
+    if (t === lop || t.id === 'sua_thoi' || t.id === 'sua_dong') { dong(); return; }
+    var b = t.closest ? t.closest('button[data-ca]') : null;
+    if (b) {
+      chon.ca = b.getAttribute('data-ca');
+      var ds = hop.querySelectorAll('button[data-ca]');
+      for (var i = 0; i < ds.length; i++) {
+        var dang = ds[i] === b;
+        ds[i].className = dang ? 'dang' : '';
+        ds[i].setAttribute('aria-pressed', dang);
+      }
+      return;
+    }
+    if (t.id === 'sua_luu') luuSua(hop, r, g, laTV, chon, dong);
+  });
+  document.body.appendChild(lop);
+}
+
+function luuSua(hop, r, g, laTV, chon, dong) {
+  var loi = function (s) { var o = hop.querySelector('#sua_loi'); o.textContent = s; o.classList.remove('an'); };
+  var nguoi = hop.querySelector('#sua_nguoi').value.replace(/\s+/g, ' ').trim();
+  var maCt = hop.querySelector('#sua_ct').value;
+  if (!nguoi) { loi('Ô "Người tuyển" đang trống — gõ tên người đã tìm ra lao động này.'); return; }
+  var doi = (laTV && chon.ca !== (r.ca_lam || '')) || nguoi !== (r.nguoi_dk || '') ||
+            String(maCt).toLowerCase() !== String(g.ma_ct || '').toLowerCase();
+  if (!doi) { loi('Chưa đổi gì để lưu. Không cần sửa thì bấm "Thôi, không sửa".'); return; }
+  if (dangXemTruoc) { loi('Đang xác nhận đăng nhập với máy chủ — chờ vài giây rồi bấm Lưu lại.'); return; }
+  // Giữ mã khi bấm lại ĐÚNG nội dung cũ (mất phản hồi): máy chủ trả kết quả lần trước, không ghi hai lần.
+  var khoa = [laTV ? chon.ca : '', nguoi, maCt].join('|');
+  if (hop.khoaYC !== khoa) { hop.khoaYC = khoa; hop.maYC = maYC(); }
+  var nut = hop.querySelector('#sua_luu'), thoi = hop.querySelector('#sua_thoi');
+  hop.querySelector('#sua_loi').classList.add('an');
+  hop.dangLuu = true;
+  nut.disabled = thoi.disabled = true;
+  nut.textContent = 'Đang lưu… đừng tải lại trang';
+  goiAPI({ token: TOKEN_API, hanh_dong: 'ds_sua_phieu', ma_ld: r.ma_ld, ca_lam: laTV ? chon.ca : '',
+           nguoi_nhap: nguoi, ma_ct: maCt, ma_yeu_cau: hop.maYC })
+    .then(function (kq) {
+      if (!kq) return;
+      if (kq.ma === 'HET_PHIEN') { hop.dangLuu = false; dong(); return; }   // goiAPI đã đưa về màn đăng nhập
+      if (!kq.ok) { loi(kq.loi || 'Không lưu được — thử lại.'); return; }
+      var cau = kq.khong_doi ? ['Phiếu đã đúng như vậy rồi, không có gì đổi.'] : ['✓ Đã lưu.'];
+      if (kq.so_tin) cau.push('Đã báo nhóm Zalo của ' + kq.ten_cong_ty + '.');
+      if (kq.van_thay === false) {
+        cau.push('Người này đã sang "' + kq.ten_cong_ty + '" — bạn không phụ trách công ty đó nên họ rời khỏi danh sách của bạn.');
+      }
+      if (kq.canh_bao_ten) cau.push('⚠️ ' + kq.canh_bao_ten);
+      if (kq.canh_bao_so) cau.push('⚠️ ' + kq.canh_bao_so);
+      if (kq.kho_ok === false) cau.push('Trang Dữ liệu tuyển sẽ cập nhật sau khoảng 10 phút.');
+      hop.innerHTML = '<b>✏️ ' + thoat(r.ho_ten || '') + '</b><div class="xong-sua">' + cau.map(thoat).join('<br>') + '</div>' +
+                      '<button type="button" id="sua_dong">Đóng</button>';
+      if (kq.khong_doi) return;
+      // Gói trang chủ còn giữ số TRƯỚC lần sửa — bỏ trước, không thì moNgay vẽ lại số cũ.
+      if (typeof boMucGoi_ === 'function') boMucGoi_('danh_sach');
+      moNgay(ngayXem);
+    })
+    .catch(function () {
+      loi('Không nối được máy chủ — chưa chắc đã lưu. Kiểm tra mạng rồi bấm "Lưu thay đổi" lần nữa (bấm lại không bị ghi hai lần).');
+    })
+    .then(function () {
+      hop.dangLuu = false;
+      if (!hop.querySelector('#sua_luu')) return;            // đã thay bằng màn "Đã lưu"
+      nut.disabled = thoi.disabled = false;
+      nut.textContent = '💾 Lưu thay đổi';
+    });
 }
 
 // ---------- Vết gọi điện ----------
