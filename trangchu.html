@@ -23,7 +23,7 @@
 -->
 <style>
   :root{
-    --nen:#f4f6f8; --the:#ffffff; --vien:#e6e9ed; --chu:#1f2933; --mo:#7b8794;
+    --nen:#f4f6f8; --the:#ffffff; --vien:#e6e9ed; --chu:#1f2933; --mo:#5f6b76;
     --xanh:#1f9d55; --xanh-nhat:#f2f9f4; --do-nhat:#fdecea; --xam-nut:#eef1f4;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
@@ -34,12 +34,18 @@
 
   .dinh{text-align:center;padding:20px 16px 8px}
   .dinh b{font-size:17.5px}
-  .dinh .phu{font-size:13px;color:var(--mo);margin-top:3px}
+  .dinh .phu{font-size:15px;color:var(--mo);margin-top:3px}
+  /* 3.44 — chuẩn 12–14 tuổi / người già (cùng kiểu Đăng ký / Đón / Danh sách): dòng 👉, lỗi tại ô, hộp trong trang */
+  .goi-y{padding:4px 16px 0;font-size:15px;line-height:1.5;color:#3c4753}
 
   .nut{display:block;width:calc(100% - 28px);margin:14px;padding:15px;border:0;border-radius:12px;
     background:var(--xanh);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
-  .nut.phu{background:var(--xam-nut);color:#3c4753;padding:12px;font-size:15px;margin-top:10px}
+  .nut.phu{background:var(--xam-nut);color:#3c4753;min-height:48px;padding:12px;font-size:16px;margin-top:10px}
+  /* Đăng xuất: tách xa "Làm mới số", kiểu nút viền nhạt — chạm nhầm là phải gõ lại mật khẩu */
+  .nut.vien{background:#fff;border:1px solid #c9d0d8;color:#3c4753;font-weight:600;margin-top:28px}
   .nut:disabled{opacity:.55}
+  .nut-nho{display:block;margin:10px auto 0;min-height:44px;padding:8px 14px;border:0;background:none;font:inherit;
+    font-size:15px;color:var(--mo);text-decoration:underline;cursor:pointer}
 
   .o{padding:0 16px}
   .o input{width:100%;padding:13px 12px;font-size:16px;border:1px solid #d9dde2;
@@ -48,29 +54,42 @@
   .mk-o input{padding-right:70px}
   .mk-o input::-ms-reveal{display:none}
   .mk-hien{position:absolute;right:2px;top:6px;bottom:0;padding:0 14px;border:0;background:none;
-        font:inherit;font-size:14.5px;font-weight:600;color:#2d6cdf;cursor:pointer}
-  .nhan{font-size:13.5px;color:var(--mo);margin-top:14px}
+        font:inherit;font-size:15px;font-weight:600;color:#2d6cdf;cursor:pointer}
+  .nhan{font-size:15px;color:#3c4753;margin-top:14px}
   .loi{margin:12px 16px 0;padding:10px 12px;border-radius:9px;background:var(--do-nhat);
-    color:#8a1c13;font-size:13.5px}
-  .mach{padding:4px 16px 18px;font-size:12.5px;color:var(--mo);line-height:1.55}
+    color:#8a1c13;font-size:15px}
+  /* 3.44: lỗi gõ báo NGAY DƯỚI ô sai */
+  .loi-tai{color:#8a1c13;font-size:15px;line-height:1.45;padding:4px 2px 0}
+  .o input.sai,.mk-o.sai input{border-color:#c0392b;background:#fff5f4}
   /* 3.39: hai nhóm ô có tiêu đề + một dòng hướng dẫn, và ghi chú phải chờ — ai mở lần đầu cũng tự hiểu cách dùng */
-  .ke{margin:18px 16px 2px;font-size:14.5px;color:var(--chu);font-weight:700}
-  .ke-ghi{margin:0 16px 2px;font-size:12.5px;color:var(--mo);line-height:1.5}
+  .ke{margin:18px 16px 2px;font-size:16px;color:var(--chu);font-weight:700}
+  .ke-ghi{margin:0 16px 2px;font-size:15px;color:var(--mo);line-height:1.5}
   .cho{margin:10px 14px 0;padding:10px 12px;border-radius:10px;background:#fff8e6;border:1px solid #f0dda0;
-    color:#6b4e00;font-size:13px;line-height:1.5}
+    color:#6b4e00;font-size:15px;line-height:1.5}
 
-  /* Ô việc: hai cột trên điện thoại, chữ to bấm bằng ngón cái */
+  /* Ô việc: hai cột trên điện thoại, chữ to bấm bằng ngón cái. 3.44: biểu tượng to trên tên ô (Dương chốt 27/10) */
   .luoi{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:6px 14px 0}
   .o-viec{display:flex;flex-direction:column;min-height:112px;padding:13px 12px;border-radius:14px;
     background:var(--the);border:1px solid var(--vien);color:var(--chu);text-decoration:none}
-  .o-viec b{font-size:15.5px;line-height:1.3}
-  .o-viec .mt{font-size:12.5px;color:var(--mo);margin-top:3px;flex:1}
-  .o-viec .tt{font-size:12px;margin-top:8px;color:#1b7a43;font-weight:600}
+  .o-viec .bt{font-size:26px;line-height:1;margin-bottom:6px}
+  .o-viec b{font-size:16px;line-height:1.3}
+  .o-viec .mt{font-size:15px;color:var(--mo);margin-top:3px;flex:1;line-height:1.4}
+  .o-viec .tt{font-size:15px;margin-top:8px;color:#1b7a43;font-weight:600}
   .o-viec .tt.cu{color:var(--mo);font-weight:500}
   .o-viec .tt.xau{color:#8a1c13;font-weight:500}
   .o-viec.mo-cong{background:var(--xanh-nhat);border-color:#bfe0c9}
 
-  .do{margin:12px 14px 0;font-size:11.5px;color:var(--mo);text-align:center}
+  .do{margin:8px 14px 0;font-size:15px;color:var(--mo);text-align:center}
+
+  /* 3.44 — hộp hỏi lại TRONG TRANG (thay confirm). Không dùng inset — webview Zalo cũ có thể không hiểu. */
+  .lop{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;z-index:60}
+  .lop .hop{background:#fff;width:100%;max-width:560px;margin:0 auto;border-radius:16px 16px 0 0;padding:18px 16px 24px}
+  .lop .hop b{display:block;font-size:17px;margin-bottom:8px}
+  .hop-noi{font-size:15.5px;line-height:1.55;color:#3c4753;white-space:pre-line}
+  .lop .hop button{display:block;width:100%;min-height:48px;margin-top:10px;padding:12px;font:inherit;font-size:16px;
+        border-radius:10px;cursor:pointer}
+  .lop .hop .hop-dong{background:var(--xanh);border:0;color:#fff;font-weight:700}
+  .lop .hop .hop-thoi{background:#fff;border:1px solid #c9d0d8;color:var(--chu)}
 </style>
 <!-- 3.32: mở trong Zalo thì nhắc mở bằng Chrome (thiếu tệp thì trang vẫn chạy như cũ) -->
 <script src="ngoai-zalo.js" defer></script>
@@ -84,12 +103,13 @@
     <b>TUYỂN DỤNG</b>
     <div class="phu">Một chỗ vào mọi việc — đăng nhập một lần</div>
   </div>
+  <div class="goi-y">👉 Đăng ký hay quét thẻ thì chạm ô ngay dưới. Việc khác: gõ số căn cước + mật khẩu rồi bấm "Đăng nhập".</div>
   <div class="ke">🔓 Không cần đăng nhập — ai cũng dùng được</div>
-  <div class="ke-ghi">Đăng ký = ghi người <b>sẽ</b> đến nhà máy (chụp thẻ căn cước là tự điền). Quét thẻ đón = ở cổng nhà máy,
-    quét thẻ để đánh dấu người <b>đã</b> đến.</div>
+  <div class="ke-ghi">Đăng ký = ghi người <b>sẽ</b> đến nhà máy (chụp thẻ là tự điền). Quét thẻ đón = ở cổng nhà máy, đánh dấu
+    người <b>đã</b> đến.</div>
   <div class="luoi">
-    <a class="o-viec mo-cong" href="index.html"><b>Đăng ký lao động</b><span class="mt">Ghi người sẽ đến nhà máy</span></a>
-    <a class="o-viec mo-cong" href="doncong.html"><b>Quét thẻ đón</b><span class="mt">Đánh dấu người đã đến</span></a>
+    <a class="o-viec mo-cong" href="index.html"><span class="bt" aria-hidden="true">📝</span><b>Đăng ký lao động</b><span class="mt">Ghi người sẽ đến nhà máy</span></a>
+    <a class="o-viec mo-cong" href="doncong.html"><span class="bt" aria-hidden="true">📷</span><b>Quét thẻ đón</b><span class="mt">Đánh dấu người đã đến</span></a>
   </div>
   <div class="ke">🔐 Cần đăng nhập</div>
   <div class="ke-ghi">Danh sách gọi · phân công đón · báo quân số · dữ liệu tuyển. Dùng số căn cước + mật khẩu được cấp.</div>
@@ -97,15 +117,15 @@
     <div class="nhan">Số căn cước của bạn (12 số)</div>
     <input id="dn_cccd" inputmode="numeric" maxlength="12" autocomplete="username" placeholder="Ví dụ 024303008090">
     <div class="nhan">Mật khẩu</div>
-    <div class="mk-o">
+    <div class="mk-o" id="mk_o">
       <input id="dn_mk" type="password" autocomplete="current-password" placeholder="Mật khẩu được cấp">
       <button type="button" class="mk-hien" id="nut_hien_mk" aria-label="Hiện mật khẩu" aria-pressed="false">Hiện</button>
     </div>
   </div>
   <div class="loi an" id="dn_loi"></div>
   <button type="button" class="nut" id="nut_dn">Đăng nhập</button>
-  <div class="cho">⏳ Bấm Đăng nhập xong <b>chờ một chút</b> — lần đầu trong ngày máy chủ Google có khi mất 30–60 giây.
-    Nút còn ghi "Đang kiểm tra…" là máy đang làm, <b>đừng tải lại trang</b>.</div>
+  <!-- Báo TRƯỚC khi phải chờ (chuẩn 6) — màn này giữ luôn hiện -->
+  <div class="cho">⏳ Bấm Đăng nhập xong <b>chờ một chút</b> — lần đầu trong ngày có khi 30–60 giây. <b>Đừng tải lại trang.</b></div>
 </div>
 
 <!-- ===== TRANG CHỦ ===== -->
@@ -114,14 +134,17 @@
     <b>TUYỂN DỤNG</b>
     <div class="phu" id="chu_ai">—</div>
   </div>
-  <div class="cho">⏳ <b>Phải chờ một chút:</b> lần đầu mở trong ngày, máy chủ Google có khi mất 30–60 giây mới trả số.
-    Dưới ô còn ghi "đang lấy số mới…" là máy đang làm — <b>cứ chờ, đừng tải lại trang</b>. Bấm vào ô thì trang đó tự
-    tải, chờ vòng xoay chạy xong.</div>
+  <div class="goi-y">👉 Chạm một ô để làm việc đó.</div>
+  <!-- 3.44 (Dương chốt 27/10): CHỈ hiện trong lúc đang lấy số — số về rồi thì câu này chỉ đẩy các ô xuống -->
+  <div class="cho an" id="chu_cho">⏳ <b>Đang lấy số mới</b> — lần đầu trong ngày có khi 30–60 giây. <b>Cứ chờ, đừng tải lại
+    trang.</b></div>
   <div class="loi an" id="chu_loi"></div>
   <div id="chu_o"></div>
-  <button type="button" class="nut phu" id="nut_lam_moi">Làm mới số</button>
+  <button type="button" class="nut phu" id="nut_lam_moi">🔄 Làm mới số</button>
   <button type="button" class="nut phu an" id="nut_cai">Thêm vào màn hình chính (mở nhanh, khỏi đăng nhập lại)</button>
-  <button type="button" class="nut phu" id="nut_thoat">Đăng xuất</button>
+  <button type="button" class="nut vien" id="nut_thoat">Đăng xuất</button>
+  <!-- 3.44 (Dương chốt 27/10): dòng đo kỹ thuật ẩn sau nút ⓘ — anh vẫn bảo người dùng bấm ra rồi chụp khi báo chậm -->
+  <button type="button" class="nut-nho" id="nut_do" aria-expanded="false">ⓘ Thông tin kỹ thuật (khi báo chậm)</button>
   <div class="do an" id="thanh_do"></div>
 </div>
 
@@ -192,27 +215,70 @@ function hien(el) {
   $(el).classList.remove('an');
 }
 
+/**
+ * 3.44 — hộp hỏi lại TRONG TRANG (thay confirm: chữ nhỏ, có máy hiện "OK / Cancel" tiếng Anh). Cùng kiểu Đăng ký / Đón /
+ * Danh sách. o = { tieu, noi, dong: chữ nút đồng ý, thoi: chữ nút thôi }. Chạm ra ngoài = thôi. Trả Promise<true nếu đồng ý>.
+ */
+function hopHoi(o) {
+  return new Promise(function (xong) {
+    var lop = document.createElement('div');
+    lop.className = 'lop';
+    lop.innerHTML = '<div class="hop" role="dialog"><b>' + thoat(o.tieu) + '</b><div class="hop-noi">' + thoat(o.noi || '') + '</div>' +
+      '<button type="button" class="hop-dong">' + thoat(o.dong) + '</button>' +
+      (o.thoi ? '<button type="button" class="hop-thoi">' + thoat(o.thoi) + '</button>' : '') + '</div>';
+    lop.addEventListener('click', function (e) {
+      var dong = e.target.closest ? e.target.closest('.hop-dong') : null;
+      var thoi = e.target.closest ? e.target.closest('.hop-thoi') : null;
+      if (!dong && !thoi && e.target !== lop) return;
+      document.body.removeChild(lop);
+      xong(!!dong);
+    });
+    document.body.appendChild(lop);
+  });
+}
+/* 3.44: lỗi gõ báo NGAY DƯỚI ô sai, nói cách sửa (trước dồn chung một khung dưới cả hai ô). */
+function baoLoiO(id, cau) {
+  var h = $(id);
+  if (!h) return;
+  h.classList.add('sai');
+  var o = h.nextElementSibling;
+  if (!o || !o.classList.contains('loi-tai')) {
+    o = document.createElement('div');
+    o.className = 'loi-tai';
+    h.parentNode.insertBefore(o, h.nextSibling);
+  }
+  o.textContent = cau;
+}
+function xoaLoiO(id) {
+  var h = $(id);
+  if (!h) return;
+  h.classList.remove('sai');
+  var o = h.nextElementSibling;
+  if (o && o.classList.contains('loi-tai')) o.parentNode.removeChild(o);
+}
+
 // ============================================================
 // Ô VIỆC
 // ============================================================
 // `can`: '' = ai cũng vào được · 'phan_cong' = trưởng nhóm / quản trị · 'du_lieu_tuyen' = đã khai ten_tuyen.
-// `muc`: phần nào trong gói đầu thuộc ô này (để ghi "số lúc …").
+// `muc`: phần nào trong gói đầu thuộc ô này (để ghi "cập nhật lúc …"). `bt` (3.44, Dương chốt 27/10): biểu tượng to trên tên ô.
 var O_VIEC = [
-  { ten: 'Danh sách gọi', mt: 'Gọi lao động · báo vào làm · lấy dữ liệu', href: 'danhsach.html', can: 'dang_nhap', muc: 'danh_sach' },
-  { ten: 'Phân công đón', mt: 'Ai phụ trách nhà máy nào', href: 'phancong.html', can: 'phan_cong', muc: 'phan_cong' },
-  { ten: 'Báo quân số', mt: 'Số người đi làm từng công ty', href: 'quanso.html', can: 'dang_nhap', muc: 'quan_so' },
-  { ten: 'Dữ liệu tuyển', mt: 'Người mình đã tuyển · đăng ký lại', href: 'dulieutuyen.html', can: 'du_lieu_tuyen', muc: '' },
-  { ten: 'Đăng ký lao động', mt: 'Ghi người sẽ đến nhà máy', href: 'index.html', can: '', muc: '' },
-  { ten: 'Quét thẻ đón', mt: 'Đánh dấu người đã đến', href: 'doncong.html', can: '', muc: '' }
+  { bt: '📞', ten: 'Danh sách gọi', mt: 'Gọi lao động · báo vào làm · lấy dữ liệu', href: 'danhsach.html', can: 'dang_nhap', muc: 'danh_sach' },
+  { bt: '👥', ten: 'Phân công đón', mt: 'Ai phụ trách nhà máy nào', href: 'phancong.html', can: 'phan_cong', muc: 'phan_cong' },
+  { bt: '📊', ten: 'Báo quân số', mt: 'Số người đi làm từng công ty', href: 'quanso.html', can: 'dang_nhap', muc: 'quan_so' },
+  { bt: '📁', ten: 'Dữ liệu tuyển', mt: 'Người mình đã tuyển · đăng ký lại', href: 'dulieutuyen.html', can: 'du_lieu_tuyen', muc: '' },
+  { bt: '📝', ten: 'Đăng ký lao động', mt: 'Ghi người sẽ đến nhà máy', href: 'index.html', can: '', muc: '' },
+  { bt: '📷', ten: 'Quét thẻ đón', mt: 'Đánh dấu người đã đến', href: 'doncong.html', can: '', muc: '' }
 ];
 // Tiêu đề + một dòng hướng dẫn cho hai nhóm ô (3.39) — người mới mở không cần ai chỉ cũng biết ô nào để làm gì.
-// Nhóm không cần đăng nhập ở TRÊN (Dương 25/10/2026).
+// Nhóm không cần đăng nhập ở TRÊN (Dương 25/10/2026). `ghi` là HTML viết sẵn ở đây (không có dữ liệu người dùng) — 3.44: "sẽ" /
+// "đã" in đậm như màn đăng nhập (trước in HOA ở đây, in đậm ở kia).
 var NHOM_O = [
   { can: false, ke: '🔓 Không cần đăng nhập — ai cũng dùng được',
-    ghi: 'Đăng ký = ghi người SẼ đến nhà máy (chụp thẻ căn cước là tự điền). Quét thẻ đón = ở cổng nhà máy, quét thẻ để '
-       + 'đánh dấu người ĐÃ đến.' },
+    ghi: 'Đăng ký = ghi người <b>sẽ</b> đến nhà máy (chụp thẻ là tự điền). Quét thẻ đón = ở cổng nhà máy, đánh dấu '
+       + 'người <b>đã</b> đến.' },
   { can: true, ke: '🔐 Cần đăng nhập',
-    ghi: 'Việc của người phụ trách. Bạn đã đăng nhập — bấm ô là vào thẳng, không phải gõ lại mật khẩu. '
+    ghi: 'Việc của người phụ trách. Bạn đã đăng nhập — chạm ô là vào thẳng, không phải gõ lại mật khẩu. '
        + 'Ô nào không hiện là tài khoản chưa được cấp quyền đó.' }
 ];
 
@@ -234,13 +300,14 @@ var mayChuCu = false;    // máy chủ chưa có goi_dau → không tự lấy l
 
 /** Dòng trạng thái dưới một ô có số. */
 function chuTrangThai(o, v) {
-  if (!o.muc) return o.href === 'dulieutuyen.html' ? { t: 'Mở ra là tải', k: 'cu' } : null;
+  if (!o.muc) return o.href === 'dulieutuyen.html' ? { t: 'Mở ra mới tải số', k: 'cu' } : null;
   var p = layPhien();
   var m = v ? layMucGoi_(p, o.muc, o.muc === 'danh_sach' && v.goi.ngay ? v.goi.ngay.ngay_mai : '') : null;
   var r;
-  if (m) r = conTuoi_(m.luc) ? { t: 'Số lúc ' + gioLuc_(m.luc), k: '' } : { t: 'Số lúc ' + gioLuc_(m.luc) + ' (cũ)', k: 'cu' };
+  // 3.44: "Số lúc" → "Cập nhật lúc" (như trang Danh sách 3.43)
+  if (m) r = conTuoi_(m.luc) ? { t: 'Cập nhật lúc ' + gioLuc_(m.luc), k: '' } : { t: 'Cập nhật lúc ' + gioLuc_(m.luc) + ' (cũ)', k: 'cu' };
   else if (v && (o.muc in v.goi.muc)) r = { t: 'Chưa lấy được — mở trang sẽ tự lấy', k: 'xau' };
-  else r = { t: dangLay ? '' : 'Mở trang để lấy số', k: 'cu' };
+  else r = { t: dangLay ? '' : 'Chạm để xem số', k: 'cu' };
   if (dangLay) r = { t: (r.t ? r.t + ' · ' : '') + 'đang lấy số mới…', k: 'cu' };
   return r;
 }
@@ -254,16 +321,19 @@ function veChu() {
                                : (dangLay ? 'Đang vào…' : '—');
   var ds = oDuocXem(tk, xemDlt);
   $('chu_o').innerHTML = NHOM_O.map(function (n) {
-    return '<div class="ke">' + thoat(n.ke) + '</div><div class="ke-ghi">' + thoat(n.ghi) + '</div><div class="luoi">' +
+    return '<div class="ke">' + thoat(n.ke) + '</div><div class="ke-ghi">' + n.ghi + '</div><div class="luoi">' +
       ds.filter(function (o) { return !!o.can === n.can; }).map(function (o) {
         var tt = chuTrangThai(o, v);
-        return '<a class="o-viec' + (o.can ? '' : ' mo-cong') + '" href="' + o.href + '"><b>' + thoat(o.ten) + '</b>' +
+        return '<a class="o-viec' + (o.can ? '' : ' mo-cong') + '" href="' + o.href + '">' +
+               '<span class="bt" aria-hidden="true">' + o.bt + '</span><b>' + thoat(o.ten) + '</b>' +
                '<span class="mt">' + thoat(o.mt) + '</span>' +
                (tt && tt.t ? '<span class="tt' + (tt.k ? ' ' + tt.k : '') + '">' + thoat(tt.t) + '</span>' : '') + '</a>';
       }).join('') + '</div>';
   }).join('');
   if (loiGoi) { $('chu_loi').textContent = loiGoi + ' Các ô vẫn bấm được — trang nào mở ra sẽ tự lấy.'; $('chu_loi').classList.remove('an'); }
   else $('chu_loi').classList.add('an');
+  // 3.44: khung "đang lấy số — cứ chờ" chỉ hiện khi có lượt trên đường
+  if (dangLay) $('chu_cho').classList.remove('an'); else $('chu_cho').classList.add('an');
   $('nut_lam_moi').disabled = dangLay;
   hien('man_chu');
 }
@@ -274,8 +344,15 @@ function hienDo(msTrang, _do) {
   var cac = Object.keys(_do || {}).map(function (k) { return (ten[k] || k) + ' ' + _do[k] + 'ms'; });
   $('thanh_do').textContent = 'Trang chờ ' + (msTrang / 1000).toFixed(1).replace('.', ',') + ' giây' +
     (cac.length ? ' · máy chủ: ' + cac.join(' · ') : '');
-  $('thanh_do').classList.remove('an');
+  // 3.44: chỉ ghi số; hiện hay không do nút ⓘ (Dương chốt 27/10)
 }
+var xemDo = false;
+$('nut_do').addEventListener('click', function () {
+  xemDo = !xemDo;
+  if (!$('thanh_do').textContent) $('thanh_do').textContent = 'Chưa có số đo — bấm "Làm mới số" rồi xem lại.';
+  if (xemDo) $('thanh_do').classList.remove('an'); else $('thanh_do').classList.add('an');
+  $('nut_do').setAttribute('aria-expanded', xemDo);
+});
 
 /** MỘT lượt goi_dau. Đang có lượt trên đường thì thôi — bấm hay quay lại liên tục không nhân lượt. */
 function layGoiMoi() {
@@ -317,6 +394,7 @@ function veManDangNhap(loi) {
   $('dn_mk').value = '';
   hienMatKhau(false);   // máy hay dùng chung — quay lại màn đăng nhập thì ẩn mật khẩu
   $('thanh_do').classList.add('an');
+  xemDo = false;
   hien('man_dn');
 }
 function baoLoi(t) { $('dn_loi').textContent = t; $('dn_loi').classList.remove('an'); }
@@ -325,14 +403,25 @@ function baoLoi(t) { $('dn_loi').textContent = t; $('dn_loi').classList.remove('
 $('nut_dn').addEventListener('click', function () {
   var cccd = ($('dn_cccd').value || '').replace(/\D/g, '');
   var mk = $('dn_mk').value || '';
-  if (cccd.length !== 12) { baoLoi('Số căn cước phải đủ 12 chữ số.'); return; }
-  if (!mk) { baoLoi('Chưa nhập mật khẩu.'); return; }
+  // 3.44: soát HẾT một lượt, báo ngay dưới ô sai (trước dừng ở lỗi đầu, báo chung một khung)
+  xoaLoiO('dn_cccd'); xoaLoiO('mk_o'); $('dn_loi').classList.add('an');
+  var sai = false;
+  if (cccd.length !== 12) {
+    baoLoiO('dn_cccd', cccd.length ? 'Số căn cước đang có ' + cccd.length + ' số, cần đúng 12' : 'Chưa gõ số căn cước — 12 số trên thẻ');
+    sai = true;
+  }
+  if (!mk) { baoLoiO('mk_o', 'Chưa gõ mật khẩu'); sai = true; }
+  if (sai) return;
   var n = this; n.disabled = true; n.textContent = 'Đang kiểm tra…';
-  $('dn_loi').classList.add('an');
   var t0 = Date.now();
   goiAPI({ token: TOKEN_API, hanh_dong: 'dang_nhap', so_cccd: cccd, mat_khau: mk, goi: true, phien: '-' })
     .then(function (kq) {
-      if (!(kq && kq.ok)) { baoLoi((kq && kq.loi) || 'Không đăng nhập được.'); return; }
+      if (!(kq && kq.ok)) {
+        // Máy chủ cố ý không nói sai ô nào (chống dò mật khẩu) → câu đứng dưới ô mật khẩu, nói gõ lại cả hai.
+        if (kq && kq.ma === 'SAI_DANG_NHAP') baoLoiO('mk_o', 'Sai số căn cước hoặc mật khẩu — gõ lại cả hai cho chắc.');
+        else baoLoi((kq && kq.loi) || 'Không đăng nhập được.');
+        return;
+      }
       xoaHetBanNho_();             // máy dùng chung: không để sót số của tài khoản đăng nhập trước
       datPhien(kq.phien);
       tkTam = kq; loiGoi = '';
@@ -342,6 +431,9 @@ $('nut_dn').addEventListener('click', function () {
     .then(function () { n.disabled = false; n.textContent = 'Đăng nhập'; });
 });
 $('dn_mk').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('nut_dn').click(); });
+// Gõ lại ô nào thì câu đỏ của ô đó tắt
+$('dn_cccd').addEventListener('input', function () { xoaLoiO('dn_cccd'); });
+$('dn_mk').addEventListener('input', function () { xoaLoiO('mk_o'); });
 
 function hienMatKhau(bat) {
   $('dn_mk').type = bat ? 'text' : 'password';
@@ -353,10 +445,13 @@ function hienMatKhau(bat) {
 $('nut_hien_mk').addEventListener('click', function () { hienMatKhau($('dn_mk').type === 'password'); });
 
 $('nut_thoat').addEventListener('click', function () {
-  if (!confirm('Đăng xuất khỏi máy này? Số đã lưu trong máy cũng bị xoá.')) return;
-  xoaHetBanNho_();
-  datPhien('');
-  veManDangNhap('');
+  hopHoi({ tieu: 'Đăng xuất khỏi máy này?', noi: 'Số đã lưu trong máy cũng bị xoá. Lần sau phải gõ lại số căn cước + mật khẩu.',
+           dong: 'Đăng xuất', thoi: 'Thôi' }).then(function (ok) {
+    if (!ok) return;
+    xoaHetBanNho_();
+    datPhien('');
+    veManDangNhap('');
+  });
 });
 $('nut_lam_moi').addEventListener('click', function () { layGoiMoi(); });
 
