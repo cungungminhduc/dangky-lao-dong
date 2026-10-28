@@ -20,7 +20,8 @@ var HAN_TUOI_MS = 2 * 60 * 1000;   // Dương chốt 24/10/2026
 // ('tuyendung_chua_gui_v1') cố ý KHÔNG nằm đây: đăng nhập lại là gửi tiếp được (bản 3.32).
 var KHOA_NHO_PHAN_CONG = 'phancong_nho_v1';
 var KHOA_NHO_QUAN_SO = 'quanso_nho_v1';
-var KHOA_BAN_NHO = [KHOA_GOI, 'tuyendung_ds_v1', KHOA_NHO_PHAN_CONG, KHOA_NHO_QUAN_SO];
+var KHOA_NHO_BIEU_DO = 'bieudo_nho_v1';   // 3.47 — số 12 tháng của trang biểu đồ (không có dữ liệu cá nhân lao động)
+var KHOA_BAN_NHO = [KHOA_GOI, 'tuyendung_ds_v1', KHOA_NHO_PHAN_CONG, KHOA_NHO_QUAN_SO, KHOA_NHO_BIEU_DO];
 
 function docKhoa_(k) {
   try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; }

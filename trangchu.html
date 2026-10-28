@@ -267,6 +267,8 @@ var O_VIEC = [
   { bt: '👥', ten: 'Phân công đón', mt: 'Ai phụ trách nhà máy nào', href: 'phancong.html', can: 'phan_cong', muc: 'phan_cong' },
   { bt: '📊', ten: 'Báo quân số', mt: 'Số người đi làm từng công ty', href: 'quanso.html', can: 'dang_nhap', muc: 'quan_so' },
   { bt: '📁', ten: 'Dữ liệu tuyển', mt: 'Người mình đã tuyển · đăng ký lại', href: 'dulieutuyen.html', can: 'du_lieu_tuyen', muc: '' },
+  // 3.47: cùng luật ô Phân công — chỉ trưởng nhóm / quản trị
+  { bt: '📈', ten: 'Biểu đồ', mt: 'Biến động tuyển dụng · quân số · nhân viên', href: 'bieudo.html', can: 'phan_cong', muc: '' },
   { bt: '📝', ten: 'Đăng ký lao động', mt: 'Ghi người sẽ đến nhà máy', href: 'index.html', can: '', muc: '' },
   { bt: '📷', ten: 'Quét thẻ đón', mt: 'Đánh dấu người đã đến', href: 'doncong.html', can: '', muc: '' }
 ];
@@ -300,7 +302,7 @@ var mayChuCu = false;    // máy chủ chưa có goi_dau → không tự lấy l
 
 /** Dòng trạng thái dưới một ô có số. */
 function chuTrangThai(o, v) {
-  if (!o.muc) return o.href === 'dulieutuyen.html' ? { t: 'Mở ra mới tải số', k: 'cu' } : null;
+  if (!o.muc) return (o.href === 'dulieutuyen.html' || o.href === 'bieudo.html') ? { t: 'Mở ra mới tải số', k: 'cu' } : null;
   var p = layPhien();
   var m = v ? layMucGoi_(p, o.muc, o.muc === 'danh_sach' && v.goi.ngay ? v.goi.ngay.ngay_mai : '') : null;
   var r;

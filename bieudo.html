@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#1f9d55">
+<title>Biểu đồ tuyển dụng</title>
+<link rel="icon" href="icon-tc-192.png">
+<!--
+  TRANG BIỂU ĐỒ — bản 3.47. Đặc tả + bản nháp Dương đã duyệt: .scratch/bieu-do-3.47/ (DAC-TA.md, BAN-NHAP.html)
+
+  Cho trưởng nhóm / quản trị xem biến động: tuyển dụng (đăng ký → đón → vào làm), quân số, biến động quân số, đội ngũ,
+  từng nhân viên — theo ngày / tuần / tháng. MỘT cú `bd_lay` (chỉ đọc) lấy số 12 tháng; đổi lọc là trang tự gộp lại,
+  không gọi máy chủ. Máy chủ chỉ trả số đếm: không tên, CCCD, SĐT lao động.
+
+  Đăng nhập dùng chung vé với Trang chủ (khoá phien_ds_v3). Chưa có vé → mời về Trang chủ đăng nhập.
+  Số lần trước lưu trong máy (goi-dau.js, KHOA_NHO_BIEU_DO) → bày ngay, rồi lấy số mới; đăng xuất là xoá.
+  Không có hẹn giờ tự gọi máy chủ (trần 40 lượt/phút là trần chung cả hệ).
+-->
+<style>
+  :root{
+    --nen:#f4f6f8; --the:#ffffff; --vien:#e6e9ed; --chu:#1f2933; --mo:#5f6b76;
+    --xanh:#1f9d55; --do-nhat:#fdecea;
+    /* màu chuỗi số — bảng màu đã soát mù màu, cố định theo MỤC / theo ĐỘI, không theo thứ hạng */
+    --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s5:#e87ba4; --s6:#008300; --s7:#6250d6; --s8:#e34948;
+    --tang:#2a78d6; --giam:#e34948; --luoi:#e6e9ed; --truc:#c3c2b7;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--nen);color:var(--chu);
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .boc{max-width:640px;margin:0 auto;padding-bottom:30px}
+  .an{display:none !important}
+
+  .dinh{text-align:center;padding:18px 16px 4px}
+  .dinh b{font-size:18px}
+  .dinh .phu{font-size:15px;color:var(--mo);margin-top:2px}
+  .goi-y{padding:6px 16px 0;font-size:15px;line-height:1.5;color:#3c4753}
+  .cho{margin:10px 14px 0;padding:10px 12px;border-radius:10px;background:#fff8e6;border:1px solid #f0dda0;
+    color:#6b4e00;font-size:15px;line-height:1.5}
+  .loi{margin:12px 14px 0;padding:12px;border-radius:10px;background:var(--do-nhat);color:#8a1c13;font-size:15.5px;line-height:1.5}
+  .cap{margin:8px 14px 0;font-size:15px;color:var(--mo);display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .cap.cu{color:#8a4b00}
+  .nut-to{display:block;width:calc(100% - 28px);margin:14px;min-height:48px;padding:12px;border:0;border-radius:12px;
+    background:var(--xanh);color:#fff;font:inherit;font-size:16px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer}
+  .nut-to.phu{background:#eef1f4;color:#3c4753}
+
+  /* bộ lọc chung — MỘT hàng trên mọi biểu đồ */
+  .loc{margin:12px 14px 0;padding:12px;background:var(--the);border:1px solid var(--vien);border-radius:14px}
+  .nhan{font-size:15px;font-weight:700;margin:2px 0 6px}
+  .nhan + .hang{margin-bottom:10px}
+  .hang{display:flex;flex-wrap:wrap;gap:8px}
+  .chon{min-height:44px;padding:9px 14px;border-radius:22px;border:1px solid #c9d0d8;background:#fff;color:var(--chu);
+    font:inherit;font-size:15.5px;cursor:pointer}
+  .chon[aria-pressed="true"]{background:#1f2933;border-color:#1f2933;color:#fff;font-weight:700}
+  .chon[aria-pressed="true"]::before{content:"✓ "}
+  .chon:disabled{opacity:.45}
+  .hang.ba,.hang.bon{display:grid;grid-template-columns:1fr 1fr 1fr}
+  .hang.bon{grid-template-columns:1fr 1fr}
+  .hang.ba .chon,.hang.bon .chon{border-radius:10px;padding:8px 6px;line-height:1.25}
+  .chon small{display:block;font-size:15px;font-weight:400;opacity:.85}
+  .luoi-ct{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+  .luoi-ct .chon{border-radius:10px;text-align:left}
+
+  /* khối */
+  .khoi{margin:16px 14px 0;padding:14px 12px 12px;background:var(--the);border:1px solid var(--vien);border-radius:14px}
+  .khoi h2{margin:0;font-size:17px}
+  .khoi .ghi{font-size:15px;color:var(--mo);margin:2px 0 10px;line-height:1.45}
+  .muc{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+  .muc .chon{display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:10px;text-align:left;line-height:1.25}
+  .muc .chon[aria-pressed="true"]{background:#f1f4f7;border:2px solid #1f2933;color:var(--chu)}
+  .cham{width:12px;height:12px;border-radius:50%;flex:none}
+  .cham.vuong{border-radius:3px}
+  .cham.giua{display:inline-block}
+  .bd{width:100%;touch-action:manipulation}
+  .bd svg{display:block;width:100%;height:auto;overflow:visible}
+  .bd text{font:13px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;fill:var(--mo)}
+  .bd .nhan-cuoi{fill:#3c4753;font-weight:700}
+
+  /* ô chi tiết kỳ đang chọn */
+  .ct{margin-top:8px;padding:10px 12px;border-radius:10px;background:#f6f8fa;font-size:15.5px;line-height:1.55}
+  .ct b.ky{display:block;font-size:16px}
+  .ct .dong{display:flex;justify-content:space-between;gap:10px}
+  .ct .dong span:first-child{display:inline-flex;align-items:center;gap:7px}
+  .so{font-weight:700;font-variant-numeric:tabular-nums}
+  .phu{color:var(--mo);font-size:15px}
+  .canh{color:#8a4b00;font-size:15px}
+  .phai{text-align:right}
+  .buoc{display:flex;gap:8px;margin-top:8px}
+  .buoc button{flex:1;min-height:44px;border-radius:10px;border:1px solid #c9d0d8;background:#fff;font:inherit;font-size:15.5px;cursor:pointer}
+  .buoc button:disabled{opacity:.4}
+  .nut-bang{display:block;margin:8px auto 0;min-height:44px;padding:8px 14px;border:0;background:none;font:inherit;
+    font-size:15px;color:#2d6cdf;text-decoration:underline;cursor:pointer}
+  table.bang{width:100%;border-collapse:collapse;font-size:15px;margin-top:4px;font-variant-numeric:tabular-nums}
+  table.bang th,table.bang td{padding:7px 6px;border-bottom:1px solid var(--vien);text-align:right}
+  table.bang th:first-child,table.bang td:first-child{text-align:left}
+  table.bang th{font-weight:600;color:#3c4753}
+
+  /* đội · từng nhân viên */
+  .nv{border:1px solid var(--vien);border-radius:12px;padding:10px 12px;margin-top:8px}
+  .nv .ten{font-size:16.5px;font-weight:700}
+  .nv .ten span{font-weight:400;color:var(--mo);font-size:15px}
+  .nv .so3{font-size:15.5px;margin-top:2px}
+  .nv .ty{font-size:15px;color:var(--mo)}
+  .thanh{height:10px;border-radius:5px;background:#eef1f4;margin:7px 0 2px;overflow:hidden;display:flex;gap:2px}
+  .thanh i{display:block;height:100%}
+  .nv .xem{display:block;width:100%;margin-top:8px;min-height:44px;border-radius:10px;border:1px solid #c9d0d8;background:#fff;
+    font:inherit;font-size:15.5px;cursor:pointer}
+  .nv .bd-rieng{margin-top:8px}
+  .nv.khop{background:#fff8e6;border-color:#f0dda0}
+</style>
+<!-- mở trong Zalo thì nhắc mở bằng trình duyệt (thiếu tệp thì trang vẫn chạy như cũ) -->
+<script src="ngoai-zalo.js" defer></script>
+</head>
+<body>
+<div class="boc">
+  <div class="dinh"><b>📈 BIỂU ĐỒ</b><div class="phu" id="ai">Biến động tuyển dụng · quân số · nhân viên</div></div>
+
+  <!-- Chưa có vé đăng nhập -->
+  <div id="man_dn" class="an">
+    <div class="goi-y">👉 Trang này cần đăng nhập. Về Trang chủ, gõ số căn cước + mật khẩu, rồi chạm ô "📈 Biểu đồ".</div>
+    <div class="loi an" id="dn_loi"></div>
+    <a class="nut-to" href="trangchu.html">🏠 Về Trang chủ để đăng nhập</a>
+  </div>
+
+  <!-- Đăng nhập rồi nhưng không phải trưởng nhóm / quản trị -->
+  <div id="man_cam" class="an">
+    <div class="loi" id="cam_loi"></div>
+    <a class="nut-to phu" href="trangchu.html">🏠 Về Trang chủ</a>
+  </div>
+
+  <div id="man_chinh" class="an">
+    <div class="goi-y">👉 Chọn <b>Xem theo</b> và <b>Phạm vi</b>, rồi chạm mục muốn xem — biểu đồ hiện ngay dưới.
+      Chạm vào biểu đồ để đọc số của ngày / tuần / tháng đó.</div>
+    <div class="goi-y an" id="pham_quyen"></div>
+    <div class="cho an" id="cho">⏳ <b>Đang lấy số 12 tháng</b> — có khi 20–40 giây. <b>Cứ chờ, đừng tải lại trang.</b></div>
+    <div class="loi an" id="loi"></div>
+    <div class="cap an" id="cap"><span id="cap_chu"></span></div>
+    <button type="button" class="nut-to phu an" id="nut_lam_moi">🔄 Làm mới số</button>
+
+    <div id="noi_dung" class="an">
+    <div class="loc">
+      <div class="nhan">Xem theo</div>
+      <div class="hang ba" id="loc_che"></div>
+      <div class="nhan">Phạm vi</div>
+      <div class="hang bon" id="loc_pv"></div>
+      <div class="luoi-ct an" id="loc_ct"></div>
+    </div>
+
+    <div class="khoi">
+      <h2>👷 Tuyển dụng</h2>
+      <div class="ghi">Đếm theo <b>ngày hẹn</b> (ngày đi làm / ngày phỏng vấn). Mỗi lần đăng ký là một phiếu. Nét đứt ở cuối = kỳ đang
+        dở, số còn tăng. Chấm rỗng = kỳ kho mới có số một phần. Số lấy từ kho dữ liệu tuyển — chậm tối đa khoảng 10 phút.<span id="td_thieu"></span></div>
+      <div class="muc" id="muc_td"></div>
+      <div class="bd" id="bd_td"></div>
+      <div class="ct" id="ct_td"></div>
+      <div class="buoc"><button type="button" data-buoc="-1">◀ Kỳ trước</button><button type="button" data-buoc="1">Kỳ sau ▶</button></div>
+      <button type="button" class="nut-bang" data-bang="td">📋 Xem dạng bảng số</button>
+      <div class="an" id="bang_td"></div>
+    </div>
+
+    <div class="khoi">
+      <h2>📊 Quân số</h2>
+      <div class="ghi">Số người theo báo cáo quân số. Xem theo tuần / tháng là số của <b>ngày cuối kỳ</b>. Chấm rỗng = có công ty chưa
+        báo, đang dùng số gần nhất của họ.</div>
+      <div class="muc" id="muc_qs"></div>
+      <div class="bd" id="bd_qs"></div>
+      <div class="ct" id="ct_qs"></div>
+      <div class="buoc"><button type="button" data-buoc="-1">◀ Kỳ trước</button><button type="button" data-buoc="1">Kỳ sau ▶</button></div>
+      <button type="button" class="nut-bang" data-bang="qs">📋 Xem dạng bảng số</button>
+      <div class="an" id="bang_qs"></div>
+    </div>
+
+    <div class="khoi">
+      <h2>↕️ Biến động quân số</h2>
+      <div class="ghi">Cột <b>trên vạch 0 = tăng</b> người, cột <b>dưới vạch 0 = giảm</b> người, cộng dồn trong kỳ. Chạm mục để chỉ
+        tính khoản đó (vd chỉ "Nghỉ việc").</div>
+      <div class="muc" id="muc_bd"></div>
+      <div class="bd" id="bd_bd"></div>
+      <div class="ct" id="ct_bd"></div>
+      <div class="buoc"><button type="button" data-buoc="-1">◀ Kỳ trước</button><button type="button" data-buoc="1">Kỳ sau ▶</button></div>
+      <button type="button" class="nut-bang" data-bang="bd">📋 Xem dạng bảng số</button>
+      <div class="an" id="bang_bd"></div>
+    </div>
+
+    <div class="khoi" id="khoi_doi">
+      <h2>👥 Đội ngũ</h2>
+      <div class="ghi">Mỗi đội một đường — đội lấy theo cột <b>nhom</b> của người tuyển ở tab NGUOI_DON. Chạm một mục để so các đội
+        theo mục đó.</div>
+      <div class="muc" id="muc_doi"></div>
+      <div class="bd" id="bd_doi"></div>
+      <div class="ct" id="ct_doi"></div>
+      <div class="buoc"><button type="button" data-buoc="-1">◀ Kỳ trước</button><button type="button" data-buoc="1">Kỳ sau ▶</button></div>
+      <div id="doi_ds"></div>
+    </div>
+
+    <div class="khoi" id="khoi_nv">
+      <h2>🧑‍💼 Từng nhân viên</h2>
+      <div class="ghi" id="nv_ghi">—</div>
+      <div class="nhan">Đội</div>
+      <div class="hang bon" id="nv_doi" style="margin-bottom:10px"></div>
+      <div class="nhan">Xếp theo</div>
+      <div class="hang ba" id="nv_xep" style="margin-bottom:4px"></div>
+      <div id="nv_ds"></div>
+    </div>
+    </div>
+
+    <a class="nut-to phu" href="trangchu.html" style="margin-top:22px">🏠 Về Trang chủ</a>
+  </div>
+</div>
+
+<script src="cau-hinh.js"></script>
+<script src="goi-may-chu.js"></script>
+<script src="goi-dau.js"></script>
+<script>
+// ====== CẤU HÌNH: URL_API + TOKEN_API nằm ở tệp cau-hinh.js, dùng chung cho mọi trang ======
+if (typeof URL_API === 'undefined' || typeof TOKEN_API === 'undefined' || !URL_API) {
+  window.URL_API = window.URL_API || '';
+  window.TOKEN_API = window.TOKEN_API || '';
+  document.body.insertAdjacentHTML('afterbegin', '<div style="background:#b71c1c;color:#fff;padding:14px;' +
+    'font-weight:bold;text-align:center">Trang chưa nối được máy chủ: không đọc được tệp cau-hinh.js ' +
+    '(chưa tải lên, mạng chập, hoặc chưa điền URL_API).<br>Tải lại trang. Vẫn thấy dòng này thì báo quản trị.</div>');
+}
+// Thiếu goi-dau.js: trang vẫn chạy, chỉ không nhớ được số lần trước (mở ra là phải chờ).
+if (typeof luuBanNho_ !== 'function') {
+  window.KHOA_NHO_BIEU_DO = 'bieudo_nho_v1';
+  window.luuBanNho_ = function () {};
+  window.layBanNho_ = function () { return null; };
+  window.xoaBanNho_ = function () {};
+  window.xoaHetBanNho_ = function () {};
+  window.gioLuc_ = function (l) { var d = new Date(Number(l)); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); };
+}
+// ==========================================================================================
+
+var $ = function (id) { return document.getElementById(id); };
+function thoat(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
+var KHOA_PHIEN = 'phien_ds_v3';   // CHUNG vé với Trang chủ + các trang có đăng nhập
+function layPhien() { try { return localStorage.getItem(KHOA_PHIEN) || ''; } catch (e) { return ''; } }
+function datPhien(p) { try { p ? localStorage.setItem(KHOA_PHIEN, p) : localStorage.removeItem(KHOA_PHIEN); } catch (e) {} }
+function cauLoi(e) { return (e && e.message) || 'Không nối được máy chủ. Kiểm tra mạng rồi thử lại.'; }
+
+function hien(id) {
+  ['man_dn', 'man_cam', 'man_chinh'].forEach(function (i) { $(i).classList.add('an'); });
+  $(id).classList.remove('an');
+}
+
+/** Mọi lượt gọi tự kèm vé. Vé hết / bị thu hồi → xoá vé + MỌI số đã lưu trong máy, mời đăng nhập lại. */
+function goiAPI(body) {
+  var b = body || {};
+  if (!b.phien) b.phien = layPhien();
+  var goi = typeof goiMayChu_ === 'function' ? goiMayChu_(b)
+    : fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                       body: JSON.stringify(b) }).then(function (r) { return r.json(); });
+  return goi.then(function (kq) {
+    if (kq && kq.ma === 'HET_PHIEN') {
+      xoaHetBanNho_();
+      datPhien('');
+      $('dn_loi').textContent = 'Phiên đăng nhập đã hết. Về Trang chủ đăng nhập lại.';
+      $('dn_loi').classList.remove('an');
+      hien('man_dn');
+    }
+    return kq;
+  });
+}
+
+// ============================================================
+// SỐ — nhận từ máy chủ (cú bd_lay) → dạng gọn trang dùng để gộp
+// ============================================================
+var SO = null;               // { phieu, bao, qsLoi, tuKho, thieu, vai }
+var HOM_NAY = '';
+var CONG_TY = [], CT_THEO_MA = {};
+var NHAN_VIEN = [];          // [{ma (1..n), ten, doi: [..]}]
+var CHUA_DOI = 'Chưa xếp đội';
+
+/**
+ * Phiếu máy chủ: [ngày hẹn, chỉ số công ty, nhân viên (>0 thứ tự 1..n · <0 tên lệch · 0 trống), tình trạng, chỉ số lý do]
+ * → phiếu trang: [ngày, ma_ct, mã nhân viên (0 = chưa khớp), tình trạng, chữ lý do, tên gõ tay khi chưa khớp].
+ */
+function nhanSo(kq) {
+  var ct = kq.cong_ty || [], lech = kq.ten_lech || [], ly = kq.ly_do || [];
+  CONG_TY = ct.map(function (c) { return { ma_ct: c.ma_ct, ten: c.ten, mang: c.mang, ngoai: !!c.ngoai_nhom }; })
+              .sort(function (a, b) { return a.ten.localeCompare(b.ten, 'vi'); });
+  CT_THEO_MA = {};
+  CONG_TY.forEach(function (c) { CT_THEO_MA[c.ma_ct] = c; });
+  NHAN_VIEN = (kq.nhan_vien || []).map(function (n, i) {
+    return { ma: i + 1, ten: n.ten + (n.da_khoa ? ' (đã khoá tài khoản)' : ''), doi: n.doi || [] };
+  });
+  HOM_NAY = kq.hom_nay;
+  var qs = kq.quan_so || { ok: false, loi: 'Máy chủ không trả số quân số.' };
+  return {
+    phieu: (kq.phieu || []).map(function (p) {
+      var l = p[2] < 0 ? (lech[-p[2] - 1] || { ten: '?' }) : null;
+      var ten = l ? l.ten + (l.trung ? ' (tên này 2 tài khoản cùng khai)' : '') : (p[2] === 0 ? '(ô người tuyển để trống)' : '');
+      return [p[0], ct[p[1]].ma_ct, p[2] > 0 ? p[2] : 0, p[3], p[4] >= 0 ? ly[p[4]] : '', ten];
+    }),
+    bao: qs.ok ? qs.bao.map(function (b) { return [b[0], ct[b[1]].ma_ct, b[2], b[3], b[4], b[5], b[6], b[7], b[8] || {}]; }) : [],
+    qsLoi: qs.ok ? '' : (qs.loi || 'Không đọc được báo cáo quân số.'),
+    tuKho: kq.tu_ngay_kho || '', thieu: kq.thieu_ngay || 0, vai: kq.vai || {}
+  };
+}
+
+function dsDoi() {
+  var ra = [];
+  NHAN_VIEN.forEach(function (n) { (n.doi.length ? n.doi : [CHUA_DOI]).forEach(function (d) { if (ra.indexOf(d) < 0) ra.push(d); }); });
+  return ra.sort(function (a, b) { return a === CHUA_DOI ? 1 : (b === CHUA_DOI ? -1 : a.localeCompare(b, 'vi')); });
+}
+// Màu đội cố định theo tên đội xếp A→Z (không theo thứ hạng); "Chưa xếp đội" xám. Quá 8 đội thì lặp màu — chữ vẫn ghi tên.
+function mauDoi(d) { return d === CHUA_DOI ? '#8a94a0' : 'var(--s' + (dsDoi().indexOf(d) % 8 + 1) + ')'; }
+
+// ============================================================
+// TRẠNG THÁI + GỘP KỲ
+// ============================================================
+var mDoi = 'lam';            // mục đang so giữa các đội: dk | don | lam | ty
+var locDoiNV = '';           // khối Từng nhân viên chỉ hiện một đội ('' = mọi đội)
+var che = 'tuan';            // ngay | tuan | thang
+var pv = 'tat_ca';           // tat_ca | thoi_vu | chinh_thuc | <ma_ct>
+var moCT = false;
+var kyChon = -1;             // chỉ số kỳ đang chọn (chung cho mọi khối); -1 = kỳ đã hết gần nhất
+var xepNV = 'lam';
+var moNV = {};
+var moBang = {};
+
+var MUC_TD = [
+  { k: 'dk', ten: 'Đăng ký', mau: 'var(--s1)', bat: true },
+  { k: 'don', ten: 'Đã đón', mau: 'var(--s2)', bat: true },
+  { k: 'lam', ten: 'Vào làm', mau: 'var(--s3)', bat: true },
+  { k: 'khong', ten: 'Không vào làm', mau: 'var(--s4)', bat: false },
+  { k: 'huy', ten: 'Báo không đi', mau: 'var(--s5)', bat: false }
+];
+var MUC_QS = [
+  { k: 't', ten: 'Thực tế (đang đi làm)', mau: 'var(--s1)', bat: true },
+  { k: 'q', ten: 'Tổng quân số', mau: 'var(--s2)', bat: true },
+  { k: 'np', ten: 'Nghỉ phép (NP)', mau: 'var(--s3)', bat: false },
+  { k: 'kp', ten: 'Nghỉ không báo (KP)', mau: 'var(--s4)', bat: false },
+  { k: 'cv', ten: 'Chờ việc (CV)', mau: 'var(--s5)', bat: false }
+];
+var MUC_BD = [
+  { k: 'moi', ten: 'Mới vào làm', chieu: 1, bat: true }, { k: 'dll', ten: 'Đi làm lại', chieu: 1, bat: true },
+  { k: 'np', ten: 'Nghỉ phép', chieu: -1, bat: true }, { k: 'kp', ten: 'Nghỉ không báo', chieu: -1, bat: true },
+  { k: 'cv', ten: 'Chờ việc', chieu: -1, bat: true }, { k: 'nv', ten: 'Nghỉ việc', chieu: -1, bat: true },
+  { k: 'cg', ten: 'Chuyển công ty', chieu: -1, bat: true }, { k: 'nn', ten: 'Nghỉ ngang', chieu: -1, bat: true }
+];
+var MUC_DOI = [{ k: 'dk', ten: 'Đăng ký' }, { k: 'don', ten: 'Đã đón' }, { k: 'lam', ten: 'Vào làm' }, { k: 'ty', ten: 'Tỷ lệ vào làm %' }];
+
+var THU_DU = ['Chủ nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+function isoCong(iso, n) { var d = new Date(iso + 'T00:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+function thuCua(iso) { return new Date(iso + 'T00:00:00Z').getUTCDay(); }   // 0 = CN
+function dm(iso) { return iso.slice(8, 10) + '/' + iso.slice(5, 7); }
+function dmy(iso) { return dm(iso) + '/' + iso.slice(0, 4); }
+function dauTuan(iso) { var t = thuCua(iso); return isoCong(iso, t === 0 ? -6 : 1 - t); }
+
+/** Danh sách kỳ: {tu, den, nhan (trục), ten (đầy đủ), dang (kỳ chưa hết)} — cũ → mới. Tuần bắt đầu thứ Hai. */
+function dsKy() {
+  var ra = [], i;
+  if (che === 'ngay') {
+    for (i = 29; i >= 0; i--) {
+      var d = isoCong(HOM_NAY, -i);
+      ra.push({ tu: d, den: d, nhan: dm(d), ten: THU_DU[thuCua(d)] + ' ' + dm(d) + (i === 0 ? ' (hôm nay)' : ''), dang: i === 0 });
+    }
+  } else if (che === 'tuan') {
+    var dt = dauTuan(HOM_NAY);
+    for (i = 11; i >= 0; i--) {
+      var a = isoCong(dt, -7 * i), b = isoCong(a, 6);
+      ra.push({ tu: a, den: b, nhan: dm(a), ten: 'Tuần ' + dm(a) + ' – ' + dm(b) + (i === 0 ? ' (tuần này, chưa hết)' : ''), dang: i === 0 });
+    }
+  } else {
+    var y = Number(HOM_NAY.slice(0, 4)), m = Number(HOM_NAY.slice(5, 7));
+    for (i = 11; i >= 0; i--) {
+      var mm = m - i, yy = y;
+      while (mm < 1) { mm += 12; yy--; }
+      var tu = yy + '-' + (mm < 10 ? '0' : '') + mm + '-01';
+      var mSau = mm === 12 ? (yy + 1) + '-01-01' : yy + '-' + (mm + 1 < 10 ? '0' : '') + (mm + 1) + '-01';
+      ra.push({ tu: tu, den: isoCong(mSau, -1), nhan: 'T' + mm + '/' + String(yy).slice(2),
+                ten: 'Tháng ' + mm + '/' + yy + (i === 0 ? ' (tháng này, chưa hết)' : ''), dang: i === 0 });
+    }
+  }
+  return ra;
+}
+function tenKyTruoc() { return che === 'ngay' ? 'hôm trước' : (che === 'tuan' ? 'tuần trước' : 'tháng trước'); }
+function viTriKy(ky, iso) {
+  for (var i = 0; i < ky.length; i++) if (iso >= ky[i].tu && iso <= ky[i].den) return i;
+  return -1;
+}
+/** Kỳ kết thúc trước ngày kho có số đầu tiên → chưa có số (KHÔNG phải 0). Kho mới có từ bản 3.33 (16/10/2026). */
+function chuaCoKho(k) { return !!SO.tuKho && k.den < SO.tuKho; }
+/** Kỳ chứa ngày kho bắt đầu có số → chỉ có số một phần: vẽ chấm rỗng, kẻo trông như tuyển tụt hẳn rồi vọt lên. */
+function motPhanKho(k) { return !!SO.tuKho && k.tu < SO.tuKho && k.den >= SO.tuKho; }
+
+/*
+ * QUYỀN đã lọc ở máy chủ (Dương chốt 28/10): quản trị xem hết; trưởng nhóm xem mọi phiếu + quân số công ty nhóm mình, và phiếu
+ * của người trong đội mình ở công ty ngoài nhóm (cờ `ngoai` — chỉ phiếu, không quân số). Trang chỉ lọc theo phạm vi đang chọn.
+ */
+function timCT(ma) { return CT_THEO_MA[ma] || null; }
+function hopPV(c) {
+  if (pv === 'tat_ca') return true;
+  if (pv === 'thoi_vu' || pv === 'chinh_thuc') return c.mang === pv;
+  return c.ma_ct === pv;
+}
+function xemPhieu(p) { var c = timCT(p[1]); return !!c && hopPV(c); }
+/** Công ty cho quân số: chỉ công ty thuộc nhóm (không cờ ngoai). */
+function trongPV(maCT) { var c = timCT(maCT); return !!c && !c.ngoai && hopPV(c); }
+
+/** ① Tuyển dụng theo kỳ (nvMa: chỉ một nhân viên; undefined = mọi người). */
+function gopTD(ky, nvMa) {
+  var ra = ky.map(function (k) { return { dk: 0, don: 0, lam: 0, khong: 0, huy: 0, cho: 0, chua: 0, chuaCo: chuaCoKho(k) }; });
+  SO.phieu.forEach(function (p) {
+    if (nvMa !== undefined && p[2] !== nvMa) return;
+    if (!xemPhieu(p)) return;
+    var i = viTriKy(ky, p[0]);
+    if (i < 0) return;
+    var o = ra[i], tt = p[3];
+    o.dk++;
+    if (tt === 'don' || tt === 'lam' || tt === 'khong') o.don++;
+    if (tt === 'lam') o.lam++;
+    if (tt === 'khong') o.khong++;
+    if (tt === 'huy') o.huy++;
+    if (tt === 'cho') o.cho++;
+    if (tt === 'don') o.chua++;
+  });
+  return ra;
+}
+
+/** ② Quân số cuối kỳ. Mỗi đơn vị: báo cáo mới nhất ≤ cuối kỳ. Cả kỳ không báo → số cũ (cờ). Mọi đơn vị không báo → trống. */
+function gopQS(ky) {
+  var donVi = {};
+  SO.bao.forEach(function (b) {
+    if (!trongPV(b[1])) return;
+    var k = b[1] + '#' + b[2];
+    (donVi[k] = donVi[k] || []).push(b);
+  });
+  Object.keys(donVi).forEach(function (k) { donVi[k].sort(function (a, b) { return a[0] < b[0] ? -1 : (a[0] > b[0] ? 1 : 0); }); });
+  return ky.map(function (x) {
+    var cuoi = x.den < HOM_NAY ? x.den : HOM_NAY;
+    var tong = { t: 0, q: 0, np: 0, kp: 0, cv: 0 }, coMoi = 0, cu = [];
+    Object.keys(donVi).forEach(function (k) {
+      var ds = donVi[k], h = null;
+      for (var i = 0; i < ds.length; i++) if (ds[i][0] <= cuoi) h = ds[i];
+      if (!h) return;                                   // chưa từng báo tới lúc đó → không tính
+      if (h[0] < x.tu) {
+        var c = timCT(h[1]);
+        cu.push((c ? c.ten : h[1]) + (h[2] ? (h[2] === 'dem' ? ' ca đêm' : (h[2] === 'ngay' ? ' ca ngày' : ' ca ' + h[2])) : '') +
+                ' (số ' + dm(h[0]) + ')');
+      } else coMoi++;
+      tong.t += h[3]; tong.q += h[4]; tong.np += h[5]; tong.kp += h[6]; tong.cv += h[7];
+    });
+    if (!coMoi) return { trong: true, cu: cu };
+    return { so: tong, cu: cu };
+  });
+}
+
+/** ③ Biến động cộng dồn trong kỳ. */
+function gopBD(ky) {
+  var ra = ky.map(function () { var o = {}; MUC_BD.forEach(function (m) { o[m.k] = 0; }); o.co = 0; return o; });
+  SO.bao.forEach(function (b) {
+    if (!trongPV(b[1])) return;
+    var i = viTriKy(ky, b[0]);
+    if (i < 0) return;
+    ra[i].co++;
+    MUC_BD.forEach(function (m) { ra[i][m.k] += b[8][m.k] || 0; });
+  });
+  return ra;
+}
+
+/** ④ Đội theo kỳ. Người ở hai đội tính cho cả hai; phiếu chưa khớp tài khoản không thuộc đội nào. */
+function gopDoi(ky) {
+  var doiCua = {}, ra = {};
+  NHAN_VIEN.forEach(function (n) { doiCua[n.ma] = n.doi.length ? n.doi : [CHUA_DOI]; });
+  dsDoi().forEach(function (d) { ra[d] = ky.map(function (k) { return { dk: 0, don: 0, lam: 0, nguoi: {}, chuaCo: chuaCoKho(k) }; }); });
+  SO.phieu.forEach(function (p) {
+    if (!p[2] || !xemPhieu(p)) return;
+    var i = viTriKy(ky, p[0]);
+    if (i < 0) return;
+    doiCua[p[2]].forEach(function (d) {
+      var o = ra[d][i];
+      o.dk++;
+      if (p[3] === 'don' || p[3] === 'lam' || p[3] === 'khong') o.don++;
+      if (p[3] === 'lam') { o.lam++; o.nguoi[p[2]] = (o.nguoi[p[2]] || 0) + 1; }
+    });
+  });
+  return ra;
+}
+function soDoi(o) {
+  if (o.chuaCo) return null;
+  return mDoi === 'ty' ? (o.dk ? Math.round(o.lam * 100 / o.dk) : null) : o[mDoi];
+}
+
+// ============================================================
+// VẼ BIỂU ĐỒ (SVG tự vẽ — không thư viện ngoài)
+// ============================================================
+function trucDep(max) {
+  if (max <= 4) return 4;
+  var s = max / 4, mu = Math.pow(10, Math.floor(Math.log(s) / Math.LN10)), b = [1, 2, 2.5, 5, 10];
+  for (var i = 0; i < b.length; i++) if (b[i] * mu >= s) return Math.ceil(b[i] * mu) * 4;
+  return Math.ceil(max);
+}
+function nhanTruc(ky, w) {
+  var buoc = Math.max(1, Math.ceil(ky.length / Math.max(3, Math.floor(w / 58))));
+  return function (i) { return (ky.length - 1 - i) % buoc === 0; };
+}
+
+/**
+ * Đường lên xuống. ds = [{ten, mau, gt: [số|null], rong: [bool], ngat: [bool]}]; null = không vẽ điểm (chưa có số, KHÔNG phải 0).
+ * rong = chấm rỗng (số cũ / số một phần) · ngat = chấm đứng riêng, không nối nét (số một phần — nối thì trông như vọt lên).
+ */
+function veDuong(el, ky, ds, chon, khiChon, hau) {
+  hau = hau || '';
+  var W = Math.max(280, el.clientWidth || 320), H = 220, L = 38, R = 34, T = 12, B = 28;
+  var pw = W - L - R, ph = H - T - B, n = ky.length, buoc = n > 1 ? pw / (n - 1) : pw;
+  var max = 0, min = Infinity;
+  ds.forEach(function (s) { s.gt.forEach(function (v) { if (v == null) return; if (v > max) max = v; if (v < min) min = v; }); });
+  // Số lớn ít đổi (quân số ~ 600 ± 20): trục bắt đầu từ 0 thì đường nằm phẳng, sếp không thấy lên xuống → trục bắt đầu gần số nhỏ nhất
+  // (vạch dưới cùng ghi rõ số, không phải 0).
+  var lo = 0, top = trucDep(max);
+  if (min !== Infinity && max > 20 && min > max * .5) {
+    var buocT = trucDep(Math.max(4, max - min)) / 4;
+    lo = Math.floor(min / buocT) * buocT;
+    while (lo + buocT * 4 < max) { buocT = trucDep(buocT * 4 + 1) / 4; lo = Math.floor(min / buocT) * buocT; }
+    top = lo + buocT * 4;
+  }
+  var x = function (i) { return L + (n > 1 ? i * buoc : pw / 2); };
+  var y = function (v) { return T + ph - ((v - lo) / (top - lo)) * ph; };
+  var h = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Biểu đồ đường — số từng kỳ có ở ô chi tiết và bảng số">';
+  for (var g = 0; g <= 4; g++) {
+    var gv = lo + (top - lo) * g / 4, gy = y(gv);
+    h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy + '" y2="' + gy + '" stroke="' + (g ? 'var(--luoi)' : 'var(--truc)') + '" stroke-width="1"/>';
+    h += '<text x="' + (L - 6) + '" y="' + (gy + 4) + '" text-anchor="end">' + Math.round(gv) + hau + '</text>';
+  }
+  var hienNhan = nhanTruc(ky, pw);
+  ky.forEach(function (k, i) { if (hienNhan(i)) h += '<text x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle">' + thoat(k.nhan) + '</text>'; });
+  if (chon >= 0) h += '<line x1="' + x(chon) + '" x2="' + x(chon) + '" y1="' + T + '" y2="' + (T + ph) + '" stroke="#1f2933" stroke-width="1"/>';
+  var nhanCuoi = [];
+  ds.forEach(function (s) {
+    // kỳ cuối chưa hết → đoạn nối tới nó vẽ nét đứt (số còn tăng), không để trông như "tụt"
+    var dut = ky[n - 1].dang && n > 1, het = dut ? n - 1 : n;
+    var duong = '', dangVe = false;
+    s.gt.slice(0, het).forEach(function (v, i) {
+      if (v == null || (s.ngat && s.ngat[i])) { dangVe = false; return; }
+      duong += (dangVe ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1);
+      dangVe = true;
+    });
+    h += '<path d="' + duong + '" fill="none" stroke="' + s.mau + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>';
+    if (dut && s.gt[n - 2] != null && s.gt[n - 1] != null && !(s.ngat && (s.ngat[n - 2] || s.ngat[n - 1]))) {
+      h += '<path d="M' + x(n - 2) + ' ' + y(s.gt[n - 2]) + 'L' + x(n - 1) + ' ' + y(s.gt[n - 1]) + '" fill="none" stroke="' + s.mau +
+           '" stroke-width="2" stroke-dasharray="3 4" stroke-linecap="round"/>';
+    }
+    s.gt.forEach(function (v, i) {
+      if (v == null) return;
+      var trai = (i === 0 || s.gt[i - 1] == null) && (i === n - 1 || s.gt[i + 1] == null);   // điểm lẻ: không có đường nối, phải chấm
+      if (n > 14 && i !== chon && !(s.rong && s.rong[i]) && !trai) return;   // dày quá thì chỉ chấm điểm đang chọn + điểm số cũ
+      var r = i === chon ? 5 : 4, rong = s.rong && s.rong[i];
+      h += '<circle cx="' + x(i) + '" cy="' + y(v) + '" r="' + r + '" fill="' + (rong ? '#fff' : s.mau) + '" stroke="' + (rong ? s.mau : '#fff') + '" stroke-width="2"/>';
+    });
+    for (var j = s.gt.length - 1; j >= 0; j--) if (s.gt[j] != null) { nhanCuoi.push({ y: y(s.gt[j]), v: s.gt[j], x: x(j) }); break; }
+  });
+  // nhãn số ở cuối mỗi đường (chọn lọc — không ghi số trên mọi điểm), tách nhau tối thiểu 15px
+  nhanCuoi.sort(function (a, b) { return a.y - b.y; });
+  for (var q = 1; q < nhanCuoi.length; q++) if (nhanCuoi[q].y - nhanCuoi[q - 1].y < 15) nhanCuoi[q].y = nhanCuoi[q - 1].y + 15;
+  // đẩy xuống quá vạch đáy thì dồn ngược lên (khỏi đè chữ ngày ở trục dưới)
+  if (nhanCuoi.length && nhanCuoi[nhanCuoi.length - 1].y > T + ph) {
+    nhanCuoi[nhanCuoi.length - 1].y = T + ph;
+    for (q = nhanCuoi.length - 2; q >= 0; q--) if (nhanCuoi[q + 1].y - nhanCuoi[q].y < 15) nhanCuoi[q].y = nhanCuoi[q + 1].y - 15;
+  }
+  nhanCuoi.forEach(function (o) { h += '<text class="nhan-cuoi" x="' + (o.x + 7) + '" y="' + (o.y + 4) + '">' + o.v + hau + '</text>'; });
+  h += '<rect x="' + (L - buoc / 2) + '" y="0" width="' + (pw + buoc) + '" height="' + H + '" fill="transparent" data-cham="1"/>';
+  h += '</svg>';
+  el.innerHTML = h;
+  el.querySelector('[data-cham]').addEventListener('click', function (e) {
+    var r = el.querySelector('svg').getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width;
+    khiChon(Math.max(0, Math.min(n - 1, Math.round((px - L) / (n > 1 ? buoc : 1)))));
+  });
+}
+
+/** Cột lên (tăng) / xuống (giảm) quanh vạch 0. */
+function veCot(el, ky, tang, giam, chon, khiChon) {
+  var W = Math.max(280, el.clientWidth || 320), H = 230, L = 38, R = 8, T = 18, B = 30;
+  var pw = W - L - R, ph = H - T - B, n = ky.length, o = pw / n;
+  var max = 0;
+  tang.forEach(function (v) { if (v > max) max = v; });
+  giam.forEach(function (v) { if (v > max) max = v; });
+  var top = trucDep(max), y0 = T + ph / 2, ty = (ph / 2) / top;
+  var rong = Math.max(4, Math.min(22, o * .62));
+  var h = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Biểu đồ cột tăng giảm — số từng kỳ có ở ô chi tiết và bảng số">';
+  [-top, -top / 2, top / 2, top].forEach(function (gv) {
+    var gy = y0 - gv * ty;
+    h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy + '" y2="' + gy + '" stroke="var(--luoi)"/>';
+    h += '<text x="' + (L - 6) + '" y="' + (gy + 4) + '" text-anchor="end">' + (gv > 0 ? '+' : '−') + Math.round(Math.abs(gv)) + '</text>';
+  });
+  h += '<text x="' + (L - 6) + '" y="' + (y0 + 4) + '" text-anchor="end">0</text>';
+  var hienNhan = nhanTruc(ky, pw);
+  ky.forEach(function (k, i) {
+    var cx = L + o * i + o / 2;
+    if (i === chon) h += '<rect x="' + (L + o * i) + '" y="' + T + '" width="' + o + '" height="' + ph + '" fill="#eef1f4"/>';
+    var a = tang[i] * ty, b = giam[i] * ty, r = Math.min(4, rong / 2);
+    if (a > 0) h += '<path d="M' + (cx - rong / 2) + ' ' + (y0 - 1) + 'V' + (y0 - a + r) + 'q0 -' + r + ' ' + r + ' -' + r + 'H' + (cx + rong / 2 - r) + 'q' + r + ' 0 ' + r + ' ' + r + 'V' + (y0 - 1) + 'Z" fill="var(--tang)"/>';
+    if (b > 0) h += '<path d="M' + (cx - rong / 2) + ' ' + (y0 + 1) + 'V' + (y0 + b - r) + 'q0 ' + r + ' ' + r + ' ' + r + 'H' + (cx + rong / 2 - r) + 'q' + r + ' 0 ' + r + ' -' + r + 'V' + (y0 + 1) + 'Z" fill="var(--giam)"/>';
+    if (i === chon) {
+      h += '<text class="nhan-cuoi" x="' + cx + '" y="' + (y0 - a - 5) + '" text-anchor="middle">+' + tang[i] + '</text>';
+      h += '<text class="nhan-cuoi" x="' + cx + '" y="' + (y0 + b + 15) + '" text-anchor="middle">−' + giam[i] + '</text>';
+    }
+    if (hienNhan(i)) h += '<text x="' + cx + '" y="' + (H - 8) + '" text-anchor="middle">' + thoat(k.nhan) + '</text>';
+  });
+  h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y0 + '" y2="' + y0 + '" stroke="#1f2933"/>';
+  h += '<rect x="' + L + '" y="0" width="' + pw + '" height="' + H + '" fill="transparent" data-cham="1"/></svg>';
+  el.innerHTML = h;
+  el.querySelector('[data-cham]').addEventListener('click', function (e) {
+    var r = el.querySelector('svg').getBoundingClientRect(), px = (e.clientX - r.left) * W / r.width;
+    khiChon(Math.max(0, Math.min(n - 1, Math.floor((px - L) / o))));
+  });
+}
+
+// ============================================================
+// GIAO DIỆN
+// ============================================================
+function nut(chu, bat, data) {
+  return '<button type="button" class="chon" aria-pressed="' + (bat ? 'true' : 'false') + '" ' + data + '>' + chu + '</button>';
+}
+function nutMuc(m, data) {
+  return '<button type="button" class="chon" aria-pressed="' + (m.bat ? 'true' : 'false') + '" ' + data + '>' +
+    (m.mau ? '<span class="cham" style="background:' + m.mau + '"></span>' :
+             '<span class="cham vuong" style="background:var(--' + (m.chieu > 0 ? 'tang' : 'giam') + ')"></span>') +
+    thoat(m.ten) + (m.chieu ? (m.chieu > 0 ? ' ▲' : ' ▼') : '') + '</button>';
+}
+var dangDo = false;   // kỳ đang chọn chưa hết
+function chenhLech(a, b, donVi) {
+  if (b == null || a == null) return '';
+  if (dangDo) return 'kỳ chưa hết — chưa so với ' + tenKyTruoc();
+  var d = a - b;
+  if (!d) return 'bằng ' + tenKyTruoc();
+  return (d > 0 ? '▲ tăng ' : '▼ giảm ') + Math.abs(d) + (donVi || '') + ' so với ' + tenKyTruoc();
+}
+function pt(a, b) { return b ? Math.round(a * 100 / b) + '%' : '—'; }
+function cauChuaCoKho() {
+  return '<div class="canh">Kho dữ liệu tuyển mới có số từ ' + dmy(SO.tuKho) + ' — kỳ này chưa có số (không phải 0 người).</div>';
+}
+function cauMotPhanKho(k) {
+  return motPhanKho(k)
+    ? '<div class="canh">○ Kho dữ liệu tuyển mới có số từ ' + dmy(SO.tuKho) + ' — kỳ này chỉ tính từ ngày đó, số thấp hơn thực tế.</div>' : '';
+}
+
+function veLoc() {
+  $('loc_che').innerHTML = [['ngay', 'Ngày<small>30 ngày</small>'], ['tuan', 'Tuần<small>12 tuần</small>'], ['thang', 'Tháng<small>12 tháng</small>']].map(function (x) {
+    return nut(x[1], che === x[0], 'data-che="' + x[0] + '"');
+  }).join('');
+  var laCT = pv !== 'tat_ca' && pv !== 'thoi_vu' && pv !== 'chinh_thuc', c0 = timCT(pv);
+  $('loc_pv').innerHTML = nut('Tất cả', pv === 'tat_ca', 'data-pv="tat_ca"') + nut('Thời vụ', pv === 'thoi_vu', 'data-pv="thoi_vu"') +
+    nut('Chính thức', pv === 'chinh_thuc', 'data-pv="chinh_thuc"') +
+    nut(laCT && c0 ? '🏭 ' + thoat(c0.ten) : '🏭 Một công ty…', laCT, 'data-pv="mo_ct"');
+  $('loc_ct').innerHTML = CONG_TY.length ? CONG_TY.map(function (c) {
+    return nut(thoat(c.ten) + '<small>' + (c.mang === 'chinh_thuc' ? 'chính thức' : 'thời vụ') +
+               (c.ngoai ? ' · ngoài nhóm, chỉ người đội mình' : '') + '</small>',
+               pv === c.ma_ct, 'data-pv="' + thoat(c.ma_ct) + '"');
+  }).join('') : '<div class="phu">Chưa có công ty nào có số.</div>';
+  $('loc_ct').classList.toggle('an', !moCT);
+}
+
+function veTatCa() {
+  if (!SO) return;
+  if (pv !== 'tat_ca' && pv !== 'thoi_vu' && pv !== 'chinh_thuc' && !timCT(pv)) pv = 'tat_ca';   // công ty không còn trong số mới
+  veLoc();
+  var ky = dsKy(), n = ky.length;
+  // Mặc định chọn kỳ ĐÃ HẾT gần nhất: kỳ đang dở (hôm nay / tuần này) so với kỳ trước thì trông như tụt số.
+  var chon = kyChon < 0 || kyChon >= n ? n - 2 : kyChon;
+  dangDo = !!ky[chon].dang;
+  var khiChon = function (i) { kyChon = i; veTatCa(); };
+  document.querySelectorAll('[data-buoc="-1"]').forEach(function (b) { b.disabled = chon <= 0; });
+  document.querySelectorAll('[data-buoc="1"]').forEach(function (b) { b.disabled = chon >= n - 1; });
+  $('td_thieu').innerHTML = SO.thieu ? ' <b class="canh">' + SO.thieu + ' phiếu không đọc được ngày hẹn nên chưa tính</b> (ô ngày đi làm / ' +
+    'ngày phỏng vấn trống hoặc gõ sai trong kho).' : '';
+
+  // ① Tuyển dụng
+  var td = gopTD(ky);
+  $('muc_td').innerHTML = MUC_TD.map(function (m, i) { return nutMuc(m, 'data-td="' + i + '"'); }).join('');
+  var rongKho = ky.map(motPhanKho);
+  var dsTD = MUC_TD.filter(function (m) { return m.bat; }).map(function (m) {
+    return { ten: m.ten, mau: m.mau, gt: td.map(function (o) { return o.chuaCo ? null : o[m.k]; }), rong: rongKho, ngat: rongKho };
+  });
+  veDuong($('bd_td'), ky, dsTD, chon, khiChon);
+  var o = td[chon], t = chon > 0 && !td[chon - 1].chuaCo ? td[chon - 1] : null;
+  $('ct_td').innerHTML = '<b class="ky">' + thoat(ky[chon].ten) + '</b>' + (o.chuaCo ? cauChuaCoKho()
+    : MUC_TD.filter(function (m) { return m.bat; }).map(function (m) {
+        return '<div class="dong"><span><span class="cham" style="background:' + m.mau + '"></span>' + m.ten + '</span><span class="so">' + o[m.k] + '</span></div>' +
+               (t ? '<div class="phu phai">' + chenhLech(o[m.k], t[m.k]) + '</div>' : '');
+      }).join('') + '<div class="phu">Tỷ lệ vào làm / đăng ký: <b>' + pt(o.lam, o.dk) + '</b> · đón được / đăng ký: <b>' + pt(o.don, o.dk) + '</b></div>' +
+      (o.cho ? '<div class="canh">⏳ Còn ' + o.cho + ' người chưa tới ngày hẹn — tỷ lệ kỳ này sẽ còn đổi.</div>' : '') +
+      (o.chua ? '<div class="canh">ℹ️ ' + o.chua + ' người đã đón nhưng chưa ai báo vào làm / không vào làm.</div>' : '') +
+      cauMotPhanKho(ky[chon]));
+  if (moBang.td) $('bang_td').innerHTML = bangSo(ky, MUC_TD.filter(function (m) { return m.bat; }), function (i, m) { return td[i].chuaCo ? '—' : td[i][m.k]; });
+
+  // ② Quân số
+  var qs = gopQS(ky);
+  $('muc_qs').innerHTML = MUC_QS.map(function (m, i) { return nutMuc(m, 'data-qs="' + i + '"'); }).join('');
+  var dsQS = MUC_QS.filter(function (m) { return m.bat; }).map(function (m) {
+    return { ten: m.ten, mau: m.mau, gt: qs.map(function (x) { return x.trong ? null : x.so[m.k]; }),
+             rong: qs.map(function (x) { return !x.trong && x.cu.length > 0; }) };
+  });
+  veDuong($('bd_qs'), ky, dsQS, chon, khiChon);
+  var a = qs[chon], b = chon > 0 ? qs[chon - 1] : null;
+  var ctLoc = timCT(pv), ngoaiNhom = !!ctLoc && ctLoc.ngoai;
+  var cauRieng = SO.qsLoi ? '<div class="canh">⚠️ ' + thoat(SO.qsLoi) + ' Khối Tuyển dụng, Đội ngũ, Nhân viên vẫn đúng.</div>'
+    : (ngoaiNhom ? '<div class="canh">' + thoat(ctLoc.ten) + ' không thuộc nhóm của bạn — ở đây chỉ xem được phiếu của người trong đội ' +
+                   'mình (khối Tuyển dụng, Đội ngũ, Nhân viên), không xem quân số công ty này.</div>' : '');
+  $('ct_qs').innerHTML = '<b class="ky">' + thoat(ky[chon].ten) + '</b>' + (cauRieng ? cauRieng : a.trong
+    ? '<div class="canh">Chưa báo quân số kỳ này — bỏ trống điểm (không phải 0 người).' +
+      (a.cu.length ? ' Số gần nhất: ' + thoat(a.cu.join(' · ')) + '.' : '') + '</div>'
+    : MUC_QS.filter(function (m) { return m.bat; }).map(function (m) {
+        return '<div class="dong"><span><span class="cham" style="background:' + m.mau + '"></span>' + m.ten + '</span><span class="so">' + a.so[m.k] + '</span></div>' +
+               (b && !b.trong ? '<div class="phu phai">' + chenhLech(a.so[m.k], b.so[m.k]) + '</div>' : '');
+      }).join('') + (a.cu.length ? '<div class="canh">○ ' + a.cu.length + ' đơn vị chưa báo trong kỳ, đang dùng số gần nhất: ' + thoat(a.cu.join(' · ')) + '</div>' : ''));
+  if (moBang.qs) $('bang_qs').innerHTML = bangSo(ky, MUC_QS.filter(function (m) { return m.bat; }), function (i, m) { return qs[i].trong ? '—' : qs[i].so[m.k] + (qs[i].cu.length ? '○' : ''); });
+
+  // ③ Biến động
+  var bd = gopBD(ky);
+  $('muc_bd').innerHTML = MUC_BD.map(function (m, i) { return nutMuc(m, 'data-bd="' + i + '"'); }).join('');
+  var tang = bd.map(function (x) { var s = 0; MUC_BD.forEach(function (m) { if (m.bat && m.chieu > 0) s += x[m.k]; }); return s; });
+  var giam = bd.map(function (x) { var s = 0; MUC_BD.forEach(function (m) { if (m.bat && m.chieu < 0) s += x[m.k]; }); return s; });
+  veCot($('bd_bd'), ky, tang, giam, chon, khiChon);
+  var c = bd[chon], chenh = tang[chon] - giam[chon];
+  $('ct_bd').innerHTML = '<b class="ky">' + thoat(ky[chon].ten) + '</b>' + (cauRieng ? cauRieng : !c.co
+    ? '<div class="canh">Chưa có báo cáo quân số nào trong kỳ này.</div>'
+    : '<div class="dong"><span><span class="cham vuong" style="background:var(--tang)"></span><b>Tăng</b></span><span class="so">+' + tang[chon] + '</span></div>' +
+      MUC_BD.filter(function (m) { return m.bat && m.chieu > 0; }).map(function (m) { return '<div class="dong phu"><span>· ' + m.ten + '</span><span class="so">' + c[m.k] + '</span></div>'; }).join('') +
+      '<div class="dong"><span><span class="cham vuong" style="background:var(--giam)"></span><b>Giảm</b></span><span class="so">−' + giam[chon] + '</span></div>' +
+      MUC_BD.filter(function (m) { return m.bat && m.chieu < 0; }).map(function (m) { return '<div class="dong phu"><span>· ' + m.ten + '</span><span class="so">' + c[m.k] + '</span></div>'; }).join('') +
+      '<div style="margin-top:4px"><b>' + (chenh > 0 ? '▲ Quân số tăng ' + chenh + ' người' : (chenh < 0 ? '▼ Quân số giảm ' + (-chenh) + ' người' : 'Quân số không đổi')) + '</b> trong kỳ này (tính các mục đang chọn).</div>');
+  if (moBang.bd) $('bang_bd').innerHTML = bangSo(ky, [{ ten: 'Tăng' }, { ten: 'Giảm' }], function (i, m) { return m.ten === 'Tăng' ? '+' + tang[i] : '−' + giam[i]; });
+
+  // ④ Đội ngũ · ⑤ Từng nhân viên
+  veDoi(ky, chon);
+  veNV(ky, chon);
+}
+
+function veDoi(ky, chon) {
+  var g = gopDoi(ky), doi = dsDoi().filter(function (d) { return g[d].some(function (o) { return o.dk; }); });
+  $('muc_doi').innerHTML = MUC_DOI.map(function (m) { return nut(m.ten, mDoi === m.k, 'data-mdoi="' + m.k + '"'); }).join('');
+  if (!doi.length) {
+    $('bd_doi').innerHTML = '';
+    $('ct_doi').innerHTML = '<div class="canh">Chưa có phiếu nào của người tuyển đã khớp tài khoản trong 12 tháng — chưa chia được đội. ' +
+      'Đội lấy theo cột nhom, người tuyển lấy theo cột ten_tuyen ở tab NGUOI_DON.</div>';
+    $('doi_ds').innerHTML = '';
+    return;
+  }
+  var rongKho = ky.map(motPhanKho);
+  veDuong($('bd_doi'), ky, doi.map(function (d) {
+    return { ten: d, mau: mauDoi(d), gt: g[d].map(soDoi), rong: rongKho, ngat: rongKho };
+  }), chon, function (i) { kyChon = i; veTatCa(); }, mDoi === 'ty' ? '%' : '');
+  var tenM = MUC_DOI.filter(function (m) { return m.k === mDoi; })[0].ten.replace(' %', '');
+  var hai = NHAN_VIEN.filter(function (n) { return n.doi.length > 1; }).map(function (n) { return n.ten; });
+  if (g[doi[0]][chon].chuaCo) {
+    $('ct_doi').innerHTML = '<b class="ky">' + thoat(ky[chon].ten) + '</b>' + cauChuaCoKho();
+    $('doi_ds').innerHTML = '';
+    return;
+  }
+  $('ct_doi').innerHTML = '<b class="ky">' + thoat(ky[chon].ten) + ' — ' + thoat(tenM) + '</b>' + doi.map(function (d) {
+    var v = soDoi(g[d][chon]), t = chon > 0 ? soDoi(g[d][chon - 1]) : null;
+    return '<div class="dong"><span><span class="cham" style="background:' + mauDoi(d) + '"></span>' + thoat(d) + '</span><span class="so">' +
+      (v == null ? '—' : v + (mDoi === 'ty' ? '%' : '')) + '</span></div>' +
+      (t != null && v != null ? '<div class="phu phai">' + chenhLech(v, t, mDoi === 'ty' ? ' điểm %' : '') + '</div>' : '');
+  }).join('') + (hai.length ? '<div class="phu">' + thoat(hai.join(', ')) + ' ở 2 đội trở lên — số của người đó tính ở mỗi đội.</div>' : '') +
+    cauMotPhanKho(ky[chon]);
+  // thẻ từng đội cho kỳ đang chọn
+  var tenNV = {};
+  NHAN_VIEN.forEach(function (n) { tenNV[n.ma] = n.ten; });
+  $('doi_ds').innerHTML = doi.map(function (d) {
+    var o = g[d][chon], dau = Object.keys(o.nguoi).sort(function (a, b) { return o.nguoi[b] - o.nguoi[a]; })[0];
+    var soNguoi = NHAN_VIEN.filter(function (n) { return (n.doi.length ? n.doi : [CHUA_DOI]).indexOf(d) >= 0; }).length;
+    return '<div class="nv"><div class="ten"><span class="cham giua" style="background:' + mauDoi(d) + '"></span> ' + thoat(d) +
+      ' <span>· ' + soNguoi + ' người</span></div>' +
+      '<div class="so3">Đăng ký <b>' + o.dk + '</b> · Đã đón <b>' + o.don + '</b> · Vào làm <b>' + o.lam + '</b></div>' +
+      '<div class="ty">Tỷ lệ vào làm: <b>' + pt(o.lam, o.dk) + '</b>' + (dau ? ' · nhiều nhất: ' + thoat(tenNV[dau]) + ' (' + o.nguoi[dau] + ' vào làm)' : '') + '</div>' +
+      '<button type="button" class="xem" data-xemdoi="' + thoat(d) + '">🧑‍💼 Xem từng người của ' + thoat(d) + '</button></div>';
+  }).join('');
+}
+
+function bangSo(ky, cot, gt) {
+  var h = '<table class="bang"><tr><th>Kỳ</th>' + cot.map(function (m) { return '<th>' + thoat(m.ten.replace(/ \(.*\)/, '')) + '</th>'; }).join('') + '</tr>';
+  for (var i = ky.length - 1; i >= 0; i--) {
+    h += '<tr><td>' + thoat(ky[i].nhan) + '</td>' + cot.map(function (m) { return '<td>' + gt(i, m) + '</td>'; }).join('') + '</tr>';
+  }
+  return h + '</table>';
+}
+
+function veNV(ky, chon) {
+  var k = ky[chon];
+  $('nv_ghi').innerHTML = 'Số của <b>' + thoat(k.ten) + '</b> (đổi kỳ bằng cách chạm biểu đồ hoặc nút ◀ ▶ ở trên). Chỉ tính người tuyển ' +
+    '— không tính người đón.';
+  $('nv_xep').innerHTML = nut('Vào làm', xepNV === 'lam', 'data-xep="lam"') + nut('Đăng ký', xepNV === 'dk', 'data-xep="dk"') +
+    nut('Tỷ lệ', xepNV === 'ty', 'data-xep="ty"');
+  var dsD = dsDoi();
+  if (locDoiNV && dsD.indexOf(locDoiNV) < 0) locDoiNV = '';
+  $('nv_doi').innerHTML = nut('Mọi đội', !locDoiNV, 'data-locdoi=""') + dsD.map(function (d) {
+    return nut(thoat(d), locDoiNV === d, 'data-locdoi="' + thoat(d) + '"');
+  }).join('');
+  if (chuaCoKho(k)) { $('nv_ds').innerHTML = '<div class="ct">' + cauChuaCoKho() + '</div>'; return; }
+  var theo = {};
+  NHAN_VIEN.forEach(function (n) {
+    if (locDoiNV && (n.doi.length ? n.doi : [CHUA_DOI]).indexOf(locDoiNV) < 0) return;
+    theo[n.ma] = { ma: n.ma, ten: n.ten, doi: n.doi.length ? n.doi.join(' · ') : CHUA_DOI, dk: 0, don: 0, lam: 0, ly: {} };
+  });
+  var lech = {};
+  SO.phieu.forEach(function (p) {
+    if (!xemPhieu(p) || p[0] < k.tu || p[0] > k.den) return;
+    if (!p[2]) { lech[p[5]] = (lech[p[5]] || 0) + 1; return; }
+    var o = theo[p[2]];
+    if (!o) return;   // khác đội đang lọc
+    o.dk++;
+    if (p[3] === 'don' || p[3] === 'lam' || p[3] === 'khong') o.don++;
+    if (p[3] === 'lam') o.lam++;
+    if (p[4]) o.ly[p[4]] = (o.ly[p[4]] || 0) + 1;
+  });
+  var ds = Object.keys(theo).map(function (m) { return theo[m]; }).filter(function (o) { return o.dk; });
+  ds.sort(function (a, b) {
+    var va = xepNV === 'ty' ? (a.dk ? a.lam / a.dk : 0) : a[xepNV], vb = xepNV === 'ty' ? (b.dk ? b.lam / b.dk : 0) : b[xepNV];
+    return vb - va || b.dk - a.dk;
+  });
+  var maxDk = 1;
+  ds.forEach(function (o) { if (o.dk > maxDk) maxDk = o.dk; });
+  var h = ds.map(function (o, i) {
+    var lyNhat = Object.keys(o.ly).sort(function (a, b) { return o.ly[b] - o.ly[a]; })[0];
+    return '<div class="nv"><div class="ten">' + (i + 1) + '. ' + thoat(o.ten) + ' <span>· ' + thoat(o.doi) + '</span></div>' +
+      '<div class="so3">Đăng ký <b>' + o.dk + '</b> · Đã đón <b>' + o.don + '</b> · Vào làm <b>' + o.lam + '</b></div>' +
+      '<div class="thanh" aria-hidden="true" style="width:' + Math.max(8, o.dk * 100 / maxDk) + '%">' +
+        '<i style="flex:' + o.lam + ';background:var(--s3)"></i><i style="flex:' + (o.don - o.lam) + ';background:var(--s2)"></i>' +
+        '<i style="flex:' + (o.dk - o.don) + ';background:var(--s1);opacity:.45"></i></div>' +
+      '<div class="ty">Tỷ lệ vào làm: <b>' + pt(o.lam, o.dk) + '</b>' + (lyNhat ? ' · rớt nhiều nhất: ' + thoat(lyNhat) + ' (' + o.ly[lyNhat] + ')' : '') + '</div>' +
+      '<button type="button" class="xem" data-nv="' + o.ma + '">' + (moNV[o.ma] ? '▲ Ẩn biểu đồ của ' : '📈 Xem biểu đồ của ') + thoat(o.ten) + '</button>' +
+      (moNV[o.ma] ? '<div class="bd bd-rieng" id="bd_nv_' + o.ma + '"></div>' : '') + '</div>';
+  }).join('');
+  if (!ds.length) h = '<div class="ct">Kỳ này chưa có phiếu nào trong phạm vi đang chọn.</div>';
+  var tenLech = Object.keys(lech);
+  if (tenLech.length && !locDoiNV) {
+    var tong = 0;
+    tenLech.forEach(function (t) { tong += lech[t]; });
+    h += '<div class="nv khop"><div class="ten">⚠️ Chưa khớp tài khoản — ' + tong + ' phiếu</div>' +
+      '<div class="so3">Tên gõ tay: ' + tenLech.map(function (t) { return '"' + thoat(t) + '" (' + lech[t] + ')'; }).join(' · ') + '</div>' +
+      '<div class="ty">Các phiếu này chưa tính cho ai. Thêm tên vào cột <b>ten_tuyen</b> của đúng người ở tab NGUOI_DON (mỗi tên chỉ ' +
+      'một người khai) là lần sau tự tính đúng.</div></div>';
+  }
+  h += '<div class="phu" style="margin-top:8px"><span class="cham giua" style="background:var(--s3)"></span> vào làm · ' +
+    '<span class="cham giua" style="background:var(--s2)"></span> đón mà chưa vào làm · ' +
+    '<span class="cham giua" style="background:var(--s1);opacity:.45"></span> chưa đón / huỷ</div>';
+  $('nv_ds').innerHTML = h;
+  ds.forEach(function (o) {
+    if (!moNV[o.ma]) return;
+    var td = gopTD(ky, o.ma);
+    veDuong($('bd_nv_' + o.ma), ky, MUC_TD.slice(0, 3).map(function (m) {
+      return { ten: m.ten, mau: m.mau, gt: td.map(function (x) { return x.chuaCo ? null : x[m.k]; }), rong: ky.map(motPhanKho), ngat: ky.map(motPhanKho) };
+    }), chon, function (i) { kyChon = i; veTatCa(); });
+  });
+}
+
+// ============================================================
+// LẤY SỐ
+// ============================================================
+var dangLay = false;
+var lucSo = 0;               // mốc của số đang bày
+
+/** Bày số (của máy chủ hoặc bản nhớ). `luc` = mốc lấy số; `cu` = số trong máy, đang chờ số mới. */
+function apSo(kq, luc, cu) {
+  SO = nhanSo(kq);
+  lucSo = luc;
+  $('ai').textContent = (kq.ai ? kq.ai + ' · ' : '') + (SO.vai.quan_tri ? 'Quản trị' : 'Trưởng nhóm');
+  var nhom = SO.vai.nhom || [];
+  $('pham_quyen').innerHTML = !SO.vai.quan_tri ? '🔐 Bạn là trưởng nhóm' + (nhom.length ? ' <b>' + thoat(nhom.join(', ')) + '</b>' : '') +
+    ': thấy mọi phiếu + quân số ở công ty thuộc nhóm, và phiếu của người trong đội mình ở công ty khác.' : '';
+  $('pham_quyen').classList.toggle('an', !!SO.vai.quan_tri);
+  $('cap_chu').textContent = cu ? 'Số lúc ' + gioLuc_(luc) + ' (cũ) — đang lấy số mới…' : 'Cập nhật lúc ' + gioLuc_(luc);
+  $('cap').classList.toggle('cu', !!cu);
+  $('cap').classList.remove('an');
+  $('noi_dung').classList.remove('an');
+  hien('man_chinh');
+  veTatCa();
+}
+
+function laySo() {
+  if (dangLay) return;
+  var p = layPhien();
+  if (!p) { hien('man_dn'); return; }
+  dangLay = true;
+  $('loi').classList.add('an');
+  $('nut_lam_moi').disabled = true;
+  $('cho').classList.toggle('an', !!SO);            // đã có số (bản nhớ) thì chỉ ghi "đang lấy số mới" ở dòng cập nhật
+  if (SO) $('cap_chu').textContent = 'Đang lấy số mới…';
+  hien('man_chinh');
+  goiAPI({ token: TOKEN_API, hanh_dong: 'bd_lay' }).then(function (kq) {
+    if (!kq || kq.ma === 'HET_PHIEN' || layPhien() !== p) return;   // đăng xuất / đổi tài khoản giữa chừng → bỏ
+    if (kq.ok) { luuBanNho_(KHOA_NHO_BIEU_DO, p, 'bd', kq); apSo(kq, Date.now(), false); return; }
+    if (kq.ma === 'KHONG_QUYEN') {
+      xoaBanNho_(KHOA_NHO_BIEU_DO);
+      $('cam_loi').textContent = kq.loi;
+      hien('man_cam');
+      return;
+    }
+    baoLoi(kq.ma === 'SAI_HANH_DONG'
+      ? 'Máy chủ chưa cập nhật bản 3.47 nên chưa có biểu đồ — báo quản trị tải Code.gs mới lên Apps Script.'
+      : (kq.loi || 'Máy chủ chưa trả lời được.'));
+  }, function (e) { baoLoi(cauLoi(e)); }).then(function () {
+    dangLay = false;
+    $('cho').classList.add('an');
+    $('nut_lam_moi').disabled = false;
+    $('nut_lam_moi').classList.remove('an');
+  });
+}
+
+function baoLoi(cau) {
+  $('loi').innerHTML = '⚠️ ' + thoat(cau) + (SO ? '<br>Đang bày số lúc ' + gioLuc_(lucSo) + ' — chưa phải số mới nhất.' : '') +
+    '<br>👉 Bấm "🔄 Làm mới số" để thử lại.';
+  $('loi').classList.remove('an');
+  if (SO) { $('cap_chu').textContent = 'Số lúc ' + gioLuc_(lucSo) + ' (cũ) — chưa lấy được số mới'; $('cap').classList.add('cu'); }
+}
+
+// ============================================================
+// SỰ KIỆN
+// ============================================================
+document.addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('button') : null;
+  if (!b) return;
+  var d = b.dataset || {};
+  if (b.id === 'nut_lam_moi') { laySo(); return; }
+  if (d.che) { che = d.che; kyChon = -1; }
+  else if (d.pv === 'mo_ct') { moCT = !moCT; }
+  else if (d.pv) { pv = d.pv; moCT = false; }
+  else if (d.td) { MUC_TD[d.td].bat = !MUC_TD[d.td].bat; }
+  else if (d.qs) { MUC_QS[d.qs].bat = !MUC_QS[d.qs].bat; }
+  else if (d.bd) { MUC_BD[d.bd].bat = !MUC_BD[d.bd].bat; }
+  else if (d.buoc) { var n = dsKy().length, c = kyChon < 0 ? n - 2 : kyChon; kyChon = Math.max(0, Math.min(n - 1, c + Number(d.buoc))); }
+  else if (d.bang) {
+    moBang[d.bang] = !moBang[d.bang];
+    $('bang_' + d.bang).classList.toggle('an', !moBang[d.bang]);
+    b.textContent = moBang[d.bang] ? '▲ Ẩn bảng số' : '📋 Xem dạng bảng số';
+  }
+  else if (d.xep) { xepNV = d.xep; }
+  else if (d.mdoi) { mDoi = d.mdoi; }
+  else if (d.locdoi !== undefined) { locDoiNV = d.locdoi; }
+  else if (d.xemdoi) { locDoiNV = d.xemdoi; veTatCa(); $('khoi_nv').scrollIntoView({ block: 'start' }); return; }
+  else if (d.nv) { moNV[d.nv] = !moNV[d.nv]; }
+  else return;
+  veTatCa();
+});
+
+var henVe = null;
+window.addEventListener('resize', function () { clearTimeout(henVe); henVe = setTimeout(veTatCa, 150); });
+
+function khoiDong() {
+  var p = layPhien();
+  if (!p) { hien('man_dn'); return; }
+  var nho = layBanNho_(KHOA_NHO_BIEU_DO, p, 'bd');
+  if (nho) apSo(nho.kq, nho.luc, true);
+  laySo();
+}
+// Chạy SAU khi cả khối mã đã khai xong biến (bài học 3.32: gọi giữa khối thì biến khai phía dưới chưa có giá trị).
+Promise.resolve().then(khoiDong);
+</script>
+</body>
+</html>
