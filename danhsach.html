@@ -191,6 +191,26 @@
   .nhac-x{margin:10px 14px 0;padding:10px 12px 10px 30px;border-radius:9px;background:var(--vang-nhat);
     font-size:15px;color:#6b5a1e;line-height:1.5}
   .nhac-x li{margin:2px 0}
+  /* 3.48 — chọn thông tin theo hạng mục, ngay trên bảng của từng nhà máy */
+  .chon-x{margin-top:10px;border:1px solid var(--vien);border-radius:10px;background:#fff}
+  .chon-x summary{min-height:48px;padding:12px;font-size:15px;font-weight:700;color:#1d5fb8;cursor:pointer;
+    list-style:none;line-height:1.4}
+  .chon-x summary::-webkit-details-marker{display:none}
+  .chon-x summary .so-x{font-weight:400;color:var(--mo)}
+  .chon-x[open] summary{border-bottom:1px solid var(--vien)}
+  .nhom-x{padding:10px 12px 4px}
+  .nhom-dau{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:15px}
+  .nhom-dau button{min-height:44px;padding:8px 12px;border:1px solid var(--vien);border-radius:9px;
+    background:#fff;font-size:15px;color:#1d5fb8;cursor:pointer}
+  .o-x{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .o-x label{display:flex;align-items:center;gap:8px;min-height:44px;padding:6px 12px;border:1px solid var(--vien);
+    border-radius:22px;font-size:15px;cursor:pointer;background:#fff}
+  .o-x label.co{background:#e7f1ff;border-color:#8bb6ec}
+  .o-x input{width:20px;height:20px;margin:0}
+  .ve-md{display:block;width:calc(100% - 24px);margin:8px 12px 12px;min-height:44px;border:1px solid var(--vien);
+    border-radius:9px;background:var(--xam-nut);font-size:15px;color:#3c4753;cursor:pointer}
+  .doi-x button:disabled{background:#b8c2cc;cursor:not-allowed}
+  .trong-x{padding:14px;font-size:15px;color:var(--mo);white-space:normal}
 
   /* Không dùng thuộc tính inset — webview trong Zalo có thể còn cũ (như gui-anh.css) */
   .lop{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;z-index:60}
@@ -311,7 +331,7 @@
     <b>LẤY DỮ LIỆU CHO NHÀ MÁY</b>
     <div class="phu" id="x_tom">—</div>
   </div>
-  <div class="goi-y">👉 Bấm "Sao chép bảng Excel" rồi dán vào Excel / Zalo gửi nhà máy.</div>
+  <div class="goi-y">👉 Chọn thông tin nhà máy cần, bấm "Sao chép bảng Excel" rồi dán vào Excel / Zalo gửi nhà máy.</div>
   <div class="nhac-x"><ul style="margin:0;padding:0">
     <li>Chỉ có người đã bấm <b>"Vào làm"</b> trong <b>hôm nay</b>.</li>
     <li>Bảng có <b>số căn cước đầy đủ và số điện thoại</b> — chỉ gửi đúng người cần.</li>
@@ -887,27 +907,22 @@ function veXuat(kq) {
     return;
   }
 
-  var h = '';
+  // Máy chủ 3.48 trả đủ thông tin theo hạng mục → tự chọn cột. Máy chủ cũ → bảng theo bộ cột chung như trước.
+  var coChon = !!(kq.truong && kq.truong.length);
+  var h = coChon ? '' : '<div class="nhac-x" style="padding-left:12px">⚠️ Máy chủ chưa cập nhật bản 3.48 nên chưa chọn được '
+    + 'thông tin — bảng dưới theo bộ cột chung.</div>';
   kq.nhom.forEach(function (g, i) {
-    var bang = '<table id="x_bang_' + i + '"><thead><tr>'
-      + g.cot.map(function (c, ci) {
-          return '<th data-c="' + ci + '" title="Bấm để chọn cả cột">' + thoat(c) + '</th>';
-        }).join('')
-      + '</tr></thead><tbody>'
-      + g.hang.map(function (r, ri) {
-          return '<tr>' + r.map(function (v, ci) {
-            return '<td data-r="' + ri + '" data-c="' + ci + '">' + thoat(v) + '</td>';
-          }).join('') + '</tr>';
-        }).join('')
-      + '</tbody></table>';
+    if (coChon) { g._chon = docChon(g.ma_ct, kq); apDungChon(g, kq); }
     h += '<div class="khoi-x" data-i="' + i + '">'
       +   '<div class="ten">' + thoat(g.ten_cong_ty) + '</div>'
       +   '<div class="dem">' + g.so + ' người đã vào làm hôm nay</div>'
+      +   (coChon ? veKhungChon(g, i, kq) : '')
       +   '<div class="doi-x">'
-      +     '<button type="button" data-ten="Sao chép bảng Excel" data-i="' + i + '" data-loai="bang">Sao chép bảng Excel</button>'
+      +     '<button type="button" data-ten="Sao chép bảng Excel" data-i="' + i + '" data-loai="bang"'
+      +       (g.cot.length ? '' : ' disabled') + '>Sao chép bảng Excel</button>'
       +   '</div>'
       +   '<div class="mach-x">Bấm <b>tiêu đề cột</b> để chọn cả cột · <b>kéo</b> qua các ô để chọn một vùng, rồi bấm Sao chép (hoặc Ctrl+C).</div>'
-      +   '<div class="cuon-x">' + bang + '</div>'
+      +   '<div class="cuon-x" id="x_cuon_' + i + '">' + bangXuat(g, i) + '</div>'
       + '</div>';
   });
   $('x_noi').innerHTML = h;
@@ -916,6 +931,7 @@ function veXuat(kq) {
     b.addEventListener('click', function () {
       var i = Number(b.getAttribute('data-i'));
       var g = kq.nhom[i];
+      if (!g.cot.length) return;
       // Chỉ còn bản BẢNG EXCEL — chép dữ liệu, không kèm dòng tiêu đề (biểu mẫu nhà máy đã có sẵn).
       // Bản TIN NHẮN Zalo đã bỏ (3.29): bảng báo quân số lo phần báo cáo; danh sách này chỉ để
       // phụ trách lấy Excel gửi nhà máy.
@@ -923,7 +939,126 @@ function veXuat(kq) {
     });
   });
 
+  if (coChon) {
+    Array.prototype.forEach.call($('x_noi').querySelectorAll('.khoi-x'), function (khoi) {
+      var i = Number(khoi.getAttribute('data-i'));
+      var g = kq.nhom[i];
+      khoi.addEventListener('change', function (e) {
+        if (e.target.getAttribute('data-k')) doiChon(i, kq);
+      });
+      Array.prototype.forEach.call(khoi.querySelectorAll('.ca-nhom'), function (b) {
+        b.addEventListener('click', function () {
+          var o = khoi.querySelectorAll('.nhom-x')[Number(b.getAttribute('data-n'))].querySelectorAll('input');
+          var du = Array.prototype.every.call(o, function (x) { return x.checked; });
+          Array.prototype.forEach.call(o, function (x) { x.checked = !du; });
+          doiChon(i, kq);
+        });
+      });
+      khoi.querySelector('.ve-md').addEventListener('click', function () {
+        try { localStorage.removeItem('xuat_truong_' + g.ma_ct); } catch (e) {}
+        var md = docChon(g.ma_ct, kq);
+        Array.prototype.forEach.call(khoi.querySelectorAll('input[data-k]'), function (x) {
+          x.checked = md.indexOf(x.getAttribute('data-k')) >= 0;
+        });
+        doiChon(i, kq, true);
+      });
+    });
+  }
+
   ganChonVung();
+}
+
+/**
+ * 3.48 — CHỌN THÔNG TIN THEO HẠNG MỤC. Lựa chọn nhớ RIÊNG từng nhà máy, trên máy đang dùng
+ * (localStorage `xuat_truong_<ma_ct>`, chỉ là danh sách khoá cột — không có dữ liệu người).
+ * Thứ tự cột luôn theo `kq.truong` (thứ tự hạng mục của máy chủ), không theo thứ tự bấm.
+ */
+function docChon(ma, kq) {
+  var biet = kq.truong.map(function (t) { return t.khoa; });
+  var nho = null;
+  try { nho = JSON.parse(localStorage.getItem('xuat_truong_' + ma) || 'null'); } catch (e) { nho = null; }
+  var ds = Array.isArray(nho) ? nho.filter(function (k) { return biet.indexOf(k) >= 0; }) : [];
+  // Nhớ mà rỗng do người dùng bỏ hết thì vẫn tôn trọng; còn không đọc được / toàn khoá lạ → mặc định
+  if (!Array.isArray(nho) || (nho.length && !ds.length)) ds = kq.mac_dinh || [];
+  return biet.filter(function (k) { return ds.indexOf(k) >= 0; });
+}
+
+function luuChon(ma, ds) {
+  try { localStorage.setItem('xuat_truong_' + ma, JSON.stringify(ds)); } catch (e) {}
+}
+
+/** Dựng cột / hàng đang xem từ hàng đủ thông tin (`du`) — các hàm chép và chọn vùng dùng lại nguyên như cũ. */
+function apDungChon(g, kq) {
+  var so = [];
+  kq.truong.forEach(function (t, ci) { if (g._chon.indexOf(t.khoa) >= 0) so.push(ci); });
+  g.cot = so.map(function (ci) { return kq.truong[ci].nhan; });
+  g.hang = g.du.map(function (r) { return so.map(function (ci) { return r[ci]; }); });
+}
+
+function veKhungChon(g, i, kq) {
+  var coNho = false;
+  try { coNho = localStorage.getItem('xuat_truong_' + g.ma_ct) != null; } catch (e) {}
+  var nhom = [];
+  kq.truong.forEach(function (t) {
+    if (!nhom.length || nhom[nhom.length - 1].ten !== t.hang_muc) nhom.push({ ten: t.hang_muc, ds: [] });
+    nhom[nhom.length - 1].ds.push(t);
+  });
+  return '<details class="chon-x"' + (coNho ? '' : ' open') + '>'
+    + '<summary>✏️ Chọn thông tin cần lấy <span class="so-x">· đang lấy ' + g._chon.length + ' thông tin</span></summary>'
+    + nhom.map(function (n, ni) {
+        var du = n.ds.every(function (t) { return g._chon.indexOf(t.khoa) >= 0; });
+        return '<div class="nhom-x"><div class="nhom-dau"><b>' + thoat(n.ten) + '</b>'
+          + '<button type="button" class="ca-nhom" data-n="' + ni + '">' + (du ? 'Bỏ cả nhóm' : 'Chọn cả nhóm') + '</button></div>'
+          + '<div class="o-x">' + n.ds.map(function (t) {
+              var co = g._chon.indexOf(t.khoa) >= 0;
+              return '<label' + (co ? ' class="co"' : '') + '><input type="checkbox" data-k="' + t.khoa + '"'
+                + (co ? ' checked' : '') + '> ' + thoat(t.nhan) + '</label>';
+            }).join('') + '</div></div>';
+      }).join('')
+    + '<button type="button" class="ve-md">↺ Về mặc định</button>'
+    + '</details>';
+}
+
+function bangXuat(g, i) {
+  if (!g.cot.length) return '<div class="trong-x">👉 Tích ít nhất một thông tin ở trên.</div>';
+  return '<table id="x_bang_' + i + '"><thead><tr>'
+    + g.cot.map(function (c, ci) {
+        return '<th data-c="' + ci + '" title="Bấm để chọn cả cột">' + thoat(c) + '</th>';
+      }).join('')
+    + '</tr></thead><tbody>'
+    + g.hang.map(function (r, ri) {
+        return '<tr>' + r.map(function (v, ci) {
+          return '<td data-r="' + ri + '" data-c="' + ci + '">' + thoat(v) + '</td>';
+        }).join('') + '</tr>';
+      }).join('')
+    + '</tbody></table>';
+}
+
+/**
+ * Một ô tích vừa đổi → đọc lại các ô của nhà máy i, lưu, vẽ lại bảng của RIÊNG nhà máy đó.
+ * Không gọi máy chủ. Không gắn lại sự kiện chọn vùng (đã gắn một lần trên #x_noi).
+ * `macDinh` = vừa bấm "Về mặc định" → không lưu, để lần sau vẫn theo ô xuat_cot.
+ */
+function doiChon(i, kq, macDinh) {
+  var g = kq.nhom[i];
+  var khoi = $('x_noi').querySelector('.khoi-x[data-i="' + i + '"]');
+  var co = [];
+  Array.prototype.forEach.call(khoi.querySelectorAll('input[data-k]'), function (x) {
+    if (x.checked) co.push(x.getAttribute('data-k'));
+    x.parentNode.className = x.checked ? 'co' : '';
+  });
+  g._chon = kq.truong.map(function (t) { return t.khoa; }).filter(function (k) { return co.indexOf(k) >= 0; });
+  if (!macDinh) luuChon(g.ma_ct, g._chon);
+  apDungChon(g, kq);
+  boChon();
+  $('x_cuon_' + i).innerHTML = bangXuat(g, i);
+  khoi.querySelector('.doi-x button').disabled = !g.cot.length;
+  khoi.querySelector('.so-x').textContent = '· đang lấy ' + g._chon.length + ' thông tin';
+  Array.prototype.forEach.call(khoi.querySelectorAll('.nhom-x'), function (n, ni) {
+    var o = n.querySelectorAll('input');
+    var du = Array.prototype.every.call(o, function (x) { return x.checked; });
+    n.querySelector('.ca-nhom').textContent = du ? 'Bỏ cả nhóm' : 'Chọn cả nhóm';
+  });
 }
 
 /** Gắn các sự kiện chọn vùng cho mọi bảng trong màn. */

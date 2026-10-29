@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Hồ sơ scan căn cước</title>
+<!--
+  TRANG HỒ SƠ SCAN — bản 3.49. Đặc tả: .scratch/ho-so-scan/DAC-TA.md (mục 3, 3b, 12)
+
+  Máy scan gửi PDF (2 trang A5, trang 1 mặt trước) vào một thư mục trên máy quản lý. Bấm "Đọc bản scan mới" → trang đọc mã
+  QR NGAY TRÊN MÁY (pdf.js + ZXing-WASM, cùng bản trang đăng ký), gửi SỐ CCCD lên máy chủ (hs_tra) để biết họ tên, nhà máy,
+  ngày Đang làm → ghi <Nhà máy>\<yyyy-mm-dd>\<Họ và tên> - <4 số cuối>.pdf vào thư mục hồ sơ → RỒI MỚI chuyển bản gốc vào
+  _da-xep\. Không khớp → bản chép vào _Chưa xếp\<hôm nay>\, lần bấm sau thử lại. Bản scan không rời máy.
+
+  Cần Chrome / Edge trên MÁY TÍNH (File System Access). Bộ tách QR tachQR CHÉP NGUYÊN VĂN từ index.html
+  (kiem/hososcan-trang.test.mjs so từng chữ). Trang chỉ cất vé đăng nhập (localStorage) + thư mục đã chọn (IndexedDB).
+-->
+<style>
+  :root{
+    --nen:#f4f6f8; --the:#ffffff; --vien:#e1e5ea; --chu:#1f2933; --mo:#5f6b76;
+    --xanh:#1f9d55; --xanh-nhat:#e7f7ee; --do-nhat:#fdecea; --vang-nhat:#fff8e6; --vang-vien:#f0dda0;
+    --xam-nut:#eef1f4; --lam:#1d5fbf; --lam-nhat:#eef4fd;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:var(--nen);color:var(--chu);
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif}
+  .boc{max-width:640px;margin:0 auto;padding-bottom:60px}
+  .an{display:none !important}
+  button,input{font-family:inherit}
+  .dinh{padding:14px 16px 4px}
+  .dinh b{font-size:19px}
+  .dinh .phu{font-size:15px;color:var(--mo)}
+  .goi-y{margin:10px 14px 0;font-size:16px;font-weight:600;line-height:1.5}
+  .ve-chu{display:inline-flex;align-items:center;gap:7px;min-height:44px;margin:12px 0 0 14px;padding:8px 16px 8px 12px;
+    border:1px solid #c9d8f2;border-radius:22px;background:var(--lam-nhat);color:var(--lam);font-size:15px;font-weight:700;text-decoration:none}
+  .ke{margin:20px 16px 0;font-size:16px;font-weight:700}
+  .ke-ghi{margin:2px 16px 0;font-size:15px;color:var(--mo);line-height:1.5}
+  .khoi{margin:10px 14px 0;padding:14px;background:var(--the);border:1px solid var(--vien);border-radius:12px}
+  .nut{display:block;width:100%;min-height:48px;padding:13px;border:0;border-radius:12px;background:var(--xanh);color:#fff;
+    font-size:17px;font-weight:700;cursor:pointer}
+  .nut:disabled{background:#b8c2cc;cursor:not-allowed}
+  .nut-nho{min-height:44px;padding:9px 14px;border:1px solid #c9d8f2;border-radius:10px;background:var(--lam-nhat);color:var(--lam);
+    font-size:15px;font-weight:700;cursor:pointer;flex:none}
+  .cho{margin-top:10px;font-size:15px;color:var(--mo);line-height:1.5}
+  .tien-do{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--vang-nhat);border:1px solid var(--vang-vien);
+    font-size:15px;color:#6b4e00;white-space:pre-line}
+  .loi{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--do-nhat);color:#8a1c13;font-size:15px;white-space:pre-line}
+  .tom{margin-top:12px;font-size:16px;font-weight:700}
+  .kq{display:flex;gap:10px;padding:10px 0;border-top:1px solid #eef1f4;font-size:15px;line-height:1.5}
+  .kq:first-child{border-top:0}
+  .kq .bt{flex:none;font-size:18px}
+  .kq .noi{flex:1;min-width:0;word-break:break-word}
+  .kq .phu{color:var(--mo)}
+  .kq .viec{color:#6b4e00}
+  .tm{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #eef1f4}
+  .tm:first-of-type{border-top:0}
+  .tm .noi{flex:1;min-width:0;font-size:15px;line-height:1.45}
+  .tm .ten{font-weight:700;word-break:break-all}
+  .tm .chua{color:#8a1c13;font-weight:600}
+  .huong-dan{margin:8px 0 0;padding-left:20px;font-size:15px;color:var(--mo);line-height:1.55}
+  .o{display:block;margin-top:12px;font-size:15px;color:var(--mo)}
+  .o input{display:block;width:100%;margin-top:6px;padding:12px;font-size:16px;border:1px solid #cfd5dc;border-radius:10px}
+  .mk{position:relative}
+  .mk input{padding-right:76px}
+  .mk button{position:absolute;right:4px;top:10px;min-height:44px;padding:0 12px;border:0;background:none;font-size:15px;
+    font-weight:700;color:var(--lam);cursor:pointer}
+  .khong-ho-tro{margin:30px 16px;padding:18px;border-radius:12px;background:var(--vang-nhat);border:1px solid var(--vang-vien);
+    font-size:16px;line-height:1.6}
+</style>
+<script src="ngoai-zalo.js" defer></script>
+</head>
+<body>
+<div class="boc">
+
+<!-- TRÌNH DUYỆT KHÔNG GHI ĐƯỢC THƯ MỤC -->
+<div id="man_khong" class="an">
+  <div class="dinh"><b>🗂️ Hồ sơ scan căn cước</b></div>
+  <div class="khong-ho-tro">Trình duyệt này không ghi được vào thư mục trên máy.<br>
+    👉 Mở trang này bằng <b>Chrome</b> hoặc <b>Edge</b> trên <b>máy tính</b> (máy có thư mục máy scan gửi về).
+    Điện thoại và trình duyệt trong Zalo không dùng được trang này.</div>
+  <a class="ve-chu" href="trangchu.html"><span aria-hidden="true">←</span>Về Trang chủ</a>
+</div>
+
+<!-- ĐĂNG NHẬP -->
+<div id="man_dn" class="an">
+  <div class="dinh"><b>🗂️ Hồ sơ scan căn cước</b><div class="phu">Đăng nhập chung với Trang chủ</div></div>
+  <div class="goi-y">👉 Gõ số căn cước và mật khẩu rồi bấm "Đăng nhập".</div>
+  <div class="khoi">
+    <label class="o">Số căn cước của bạn (12 số)<input id="dn_cccd" inputmode="numeric" autocomplete="username"></label>
+    <label class="o">Mật khẩu
+      <span class="mk"><input id="dn_mk" type="password" autocomplete="current-password">
+      <button type="button" id="nut_hien_mk" aria-pressed="false">Hiện</button></span></label>
+    <div id="dn_loi" class="loi an"></div>
+    <button type="button" class="nut" id="nut_dn" style="margin-top:14px">Đăng nhập</button>
+    <div class="cho">Máy chủ Google có khi mất 30–60 giây — cứ chờ, đừng tải lại trang.</div>
+  </div>
+</div>
+
+<!-- TRANG CHÍNH -->
+<div id="man_chinh" class="an">
+  <a class="ve-chu" href="trangchu.html"><span aria-hidden="true">←</span>Về Trang chủ</a>
+  <div class="dinh"><b>🗂️ Hồ sơ scan căn cước</b><div class="phu" id="ai">—</div></div>
+  <div class="goi-y" id="goi_y">👉 Scan xong thì bấm "Đọc bản scan mới". Máy tự đọc thẻ, đặt tên và xếp vào thư mục hồ sơ.</div>
+
+  <div class="ke">📥 Đọc bản scan</div>
+  <div class="khoi">
+    <button type="button" class="nut" id="nut_doc">📥 Đọc bản scan mới</button>
+    <div class="cho" id="doc_ghi">Đọc mọi bản PDF mới trong thư mục máy scan và hộp thư máy scan — mỗi bản khoảng 1–5 giây; lấy
+      thư mỗi lượt 5 bản, có khi 10–30 giây. Lần đầu mở trang phải tải bộ đọc mã QR (vài giây). Bản gốc trong thư mục được chuyển
+      vào thư mục con <b>_da-xep</b>, thư không bị xoá.</div>
+    <div class="tien-do an" id="tien_do"></div>
+    <div class="loi an" id="doc_loi"></div>
+    <div id="ket_qua" class="an"><div class="tom" id="tom"></div><div id="ds_kq"></div></div>
+  </div>
+
+  <div class="ke">⚙️ Cài đặt trên máy này (làm một lần)</div>
+  <div class="ke-ghi">Máy này nhớ hai thư mục. Đổi máy tính thì chọn lại.</div>
+  <div class="khoi">
+    <div class="tm">
+      <div class="noi">Thư mục <b>lưu hồ sơ</b> (đã đặt tên, xếp theo nhà máy) — <b>bắt buộc</b><br><span id="tm_hoso" class="chua">Chưa chọn</span></div>
+      <button type="button" class="nut-nho" id="chon_hoso">📁 Chọn</button>
+    </div>
+    <div class="tm">
+      <div class="noi">Thư mục <b>máy scan gửi về</b> — chỉ khi máy scan lưu thẳng vào máy này<br><span id="tm_scan" class="chua">Chưa chọn</span></div>
+      <button type="button" class="nut-nho" id="chon_scan">📁 Chọn</button>
+    </div>
+    <div class="tm">
+      <div class="noi">📧 <b>Hộp thư máy scan</b> — khi máy scan gửi qua email<br><span id="hop_thu" class="chua">Đang kiểm tra…</span></div>
+    </div>
+    <ol class="huong-dan">
+      <li>Bấm <b>📁 Chọn</b> → hộp chọn thư mục của Windows hiện ra.</li>
+      <li>Dán đường dẫn thư mục vào <b>ô địa chỉ trên cùng</b> của hộp đó → Enter → bấm <b>Chọn thư mục</b>.</li>
+      <li>Chrome hỏi quyền → bấm <b>Cho phép</b> (hoặc <b>Lưu thay đổi</b>).</li>
+    </ol>
+    <div class="loi an" id="tm_loi"></div>
+  </div>
+</div>
+
+</div>
+
+<script src="cau-hinh.js"></script>
+<script src="goi-may-chu.js"></script>
+<script>
+if (typeof URL_API === 'undefined' || typeof TOKEN_API === 'undefined' || !URL_API) {
+  window.URL_API = window.URL_API || ''; window.TOKEN_API = window.TOKEN_API || '';
+  document.body.insertAdjacentHTML('afterbegin', '<div style="background:#b71c1c;color:#fff;padding:14px;font-weight:bold;text-align:center">' +
+    'Trang chưa nối được máy chủ: không đọc được tệp cau-hinh.js. Tải lại trang. Vẫn thấy dòng này thì báo quản trị.</div>');
+}
+
+var $ = function (id) { return document.getElementById(id); };
+var KHOA_PHIEN = 'phien_ds_v3';     // CHUNG với Trang chủ / danh sách / dữ liệu tuyển
+function layPhien() { try { return localStorage.getItem(KHOA_PHIEN) || ''; } catch (e) { return ''; } }
+function datPhien(p) { try { p ? localStorage.setItem(KHOA_PHIEN, p) : localStorage.removeItem(KHOA_PHIEN); } catch (e) {} }
+function thoat(s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function cauLoi(e) { return (e && e.message) || 'Không nối được máy chủ.'; }
+function hien(id) {
+  ['man_khong', 'man_dn', 'man_chinh'].forEach(function (i) { $(i).classList.add('an'); });
+  $(id).classList.remove('an');
+}
+
+/** Mọi lượt gọi tự kèm vé; vé hết → về màn đăng nhập. */
+function goiAPI(body) {
+  var b = body || {};
+  if (!b.phien) b.phien = layPhien();
+  var goi = typeof goiMayChu_ === 'function' ? goiMayChu_(b)
+    : fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(b) })
+        .then(function (r) { return r.json(); });
+  return goi.then(function (kq) {
+    if (kq && kq.ma === 'HET_PHIEN') { datPhien(''); veManDangNhap('Phiên đăng nhập đã hết. Xin đăng nhập lại.'); }
+    return kq;
+  });
+}
+
+// ============================================================
+// ĐĂNG NHẬP
+// ============================================================
+function veManDangNhap(loi) {
+  $('dn_loi').textContent = loi || '';
+  $('dn_loi').classList.toggle('an', !loi);
+  $('dn_mk').value = '';
+  hien('man_dn');
+}
+$('nut_dn').addEventListener('click', function () {
+  var cccd = ($('dn_cccd').value || '').replace(/\D/g, ''), mk = $('dn_mk').value || '';
+  if (cccd.length !== 12) { veManDangNhap('Số căn cước phải đủ 12 chữ số (đang có ' + cccd.length + ').'); return; }
+  if (!mk) { veManDangNhap('Chưa nhập mật khẩu.'); return; }
+  var n = this; n.disabled = true; n.textContent = 'Đang kiểm tra…';
+  goiAPI({ token: TOKEN_API, hanh_dong: 'dang_nhap', so_cccd: cccd, mat_khau: mk, phien: '-' })
+    .then(function (kq) {
+      if (kq && kq.ok) { datPhien(kq.phien); moChinh(kq.ten_nguoi); return; }
+      veManDangNhap((kq && kq.loi) || 'Không đăng nhập được.');
+    }, function (e) { veManDangNhap(cauLoi(e) + ' Kiểm tra mạng rồi thử lại.'); })
+    .then(function () { n.disabled = false; n.textContent = 'Đăng nhập'; });
+});
+$('dn_mk').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('nut_dn').click(); });
+$('nut_hien_mk').addEventListener('click', function () {
+  var bat = $('dn_mk').type === 'password';
+  $('dn_mk').type = bat ? 'text' : 'password';
+  this.textContent = bat ? 'Ẩn' : 'Hiện';
+  this.setAttribute('aria-pressed', bat);
+});
+
+function moChinh(ten) {
+  $('ai').textContent = ten ? 'Đăng nhập: ' + ten : 'Đang kiểm tra đăng nhập…';
+  hien('man_chinh');
+  veCaiDat();
+  taiTaiKhoan();
+}
+
+// Hộp thư máy scan (3.49): máy chủ nói tài khoản này nhận scan ở email nào, hệ đã nối Trợ lý Gmail chưa.
+var MAIL = { email: '', co: false, biet: false };
+function mailSan() { return !!(MAIL.email && MAIL.co); }
+function taiTaiKhoan() {
+  goiAPI({ token: TOKEN_API, hanh_dong: 'cong_ty_cua_toi' }).then(function (kq) {
+    if (kq && kq.ok) {
+      $('ai').textContent = 'Đăng nhập: ' + (kq.ten_nguoi || '');
+      MAIL = { email: kq.email_nhan_scan || '', co: !!kq.co_hop_thu_scan, biet: true };
+    } else if (kq && kq.ma !== 'HET_PHIEN') $('ai').textContent = (kq && kq.loi) || '';
+    veCaiDat();
+  }, function (e) { $('ai').textContent = cauLoi(e) + ' (vẫn đọc thư mục được khi có mạng)'; veCaiDat(); });
+}
+
+// ============================================================
+// THƯ MỤC — nhớ trong IndexedDB của trình duyệt trên máy này (không lên Sheet)
+// ============================================================
+var TM = { scan: null, hoso: null };
+
+function idb_() {
+  return new Promise(function (ok, hong) {
+    var r = indexedDB.open('hososcan', 1);
+    r.onupgradeneeded = function () { r.result.createObjectStore('tm'); };
+    r.onsuccess = function () { ok(r.result); };
+    r.onerror = function () { hong(r.error); };
+  });
+}
+async function idbLay_(k) {
+  try {
+    var db = await idb_();
+    return await new Promise(function (ok) {
+      var q = db.transaction('tm').objectStore('tm').get(k);
+      q.onsuccess = function () { ok(q.result || null); };
+      q.onerror = function () { ok(null); };
+    });
+  } catch (e) { return null; }
+}
+async function idbDat_(k, v) {
+  var db = await idb_();
+  await new Promise(function (ok, hong) {
+    var tx = db.transaction('tm', 'readwrite');
+    tx.objectStore('tm').put(v, k);
+    tx.oncomplete = ok;
+    tx.onerror = function () { hong(tx.error); };
+  });
+}
+
+/** Xin quyền xem + sửa thư mục. Chrome hỏi lại mỗi lần mở trình duyệt — phải gọi trong lúc bấm nút. */
+async function coQuyen_(th) {
+  if ((await th.queryPermission({ mode: 'readwrite' })) === 'granted') return true;
+  return (await th.requestPermission({ mode: 'readwrite' })) === 'granted';
+}
+
+function veCaiDat() {
+  [['scan', 'tm_scan'], ['hoso', 'tm_hoso']].forEach(function (c) {
+    var th = TM[c[0]];
+    $(c[1]).textContent = th ? '✓ ' + th.name : 'Chưa chọn';
+    $(c[1]).className = th ? 'ten' : 'chua';
+  });
+  // Thư mục máy scan không bắt buộc khi đã lấy được qua hộp thư — đừng tô đỏ như lỗi.
+  if (!TM.scan && mailSan()) { $('tm_scan').textContent = 'Chưa chọn — không cần nếu máy scan gửi qua email'; $('tm_scan').className = ''; }
+  var ht = $('hop_thu');
+  if (!MAIL.biet) { ht.textContent = 'Đang kiểm tra…'; ht.className = 'chua'; }
+  else if (mailSan()) { ht.textContent = '✓ Lấy bản scan máy scan đã gửi tới ' + MAIL.email; ht.className = 'ten'; }
+  else if (!MAIL.email) { ht.textContent = 'Tài khoản chưa khai email nhận scan — nhờ quản trị điền cột email_nhan_scan (tab NGUOI_DON).'; ht.className = 'chua'; }
+  else { ht.textContent = 'Hệ chưa nối hộp thư máy scan — nhờ quản trị điền ô url_tro_ly_gmail + ma_tro_ly_gmail (tab CAUHINH).'; ht.className = 'chua'; }
+  // Cần thư mục hồ sơ + ít nhất một nguồn: thư mục máy scan hoặc hộp thư.
+  var du = TM.hoso && (TM.scan || mailSan());
+  $('nut_doc').disabled = !du;
+  $('goi_y').textContent = du
+    ? '👉 Scan xong thì bấm "Đọc bản scan mới". Máy tự đọc thẻ, đặt tên và xếp vào thư mục hồ sơ.'
+    : (TM.hoso ? '👉 Chọn "Thư mục máy scan gửi về" ở phần "Cài đặt" bên dưới (hoặc nhờ quản trị nối hộp thư máy scan).'
+               : '👉 Lần đầu trên máy này: chọn "Thư mục lưu hồ sơ" ở phần "Cài đặt" bên dưới, rồi bấm "Đọc bản scan mới".');
+}
+
+async function chonThuMuc(loai) {
+  $('tm_loi').classList.add('an');
+  try {
+    var th = await window.showDirectoryPicker({ id: 'hososcan-' + loai, mode: 'readwrite' });
+    if (!(await coQuyen_(th))) throw new Error('Chưa được cho phép sửa thư mục này — bấm Chọn lại rồi bấm "Cho phép".');
+    TM[loai] = th;
+    await idbDat_(loai, th);
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;         // bấm Huỷ trong hộp chọn
+    $('tm_loi').textContent = (e && e.name === 'SecurityError' || /system|hệ thống/i.test(e && e.message))
+      ? 'Chrome không cho dùng thư mục này (thư mục của hệ thống). Chọn thư mục khác, ví dụ D:\\Scan — và đổi nơi lưu trên máy scan cho khớp.'
+      : cauLoi(e);
+    $('tm_loi').classList.remove('an');
+  }
+  veCaiDat();
+}
+$('chon_scan').addEventListener('click', function () { chonThuMuc('scan'); });
+$('chon_hoso').addEventListener('click', function () { chonThuMuc('hoso'); });
+
+// ============================================================
+// BỘ ĐỌC MÃ QR TRÊN PDF — pdf.js vẽ trang 1 ở ĐÚNG độ nét gốc của ảnh scan, ZXing-WASM đọc (vé 01, mục 12 đặc tả)
+// ============================================================
+var QR_NGUON = 'https://unpkg.com/';
+var PDFJS_BAN = '3.11.174';
+var ZX_BAN = '3.1.3';
+var ZX_TUY = { tryHarder: true, tryRotate: true, tryInvert: true, tryDownscale: true, formats: ['QRCode'], maxNumberOfSymbols: 1 };
+var thuVienCho = null;
+
+function napTep_(src) {
+  return new Promise(function (ok, hong) {
+    var s = document.createElement('script');
+    s.src = src; s.onload = ok;
+    s.onerror = function () { hong(new Error('Không tải được bộ đọc mã QR — kiểm tra mạng rồi bấm lại.')); };
+    document.head.appendChild(s);
+  });
+}
+/** Nạp một lần; hỏng thì lần bấm sau nạp lại. */
+function napThuVien_() {
+  if (!thuVienCho) {
+    thuVienCho = Promise.all([
+      napTep_(QR_NGUON + 'pdfjs-dist@' + PDFJS_BAN + '/build/pdf.min.js'),
+      napTep_(QR_NGUON + 'zxing-wasm@' + ZX_BAN + '/dist/iife/reader/index.js')
+    ]).then(function () {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = QR_NGUON + 'pdfjs-dist@' + PDFJS_BAN + '/build/pdf.worker.min.js';
+      return ZXingWASM.prepareZXingModule({
+        overrides: { locateFile: function (t, p) { return /\.wasm$/.test(t) ? QR_NGUON + 'zxing-wasm@' + ZX_BAN + '/dist/reader/' + t : p + t; } },
+        fireImmediately: true
+      });
+    });
+    thuVienCho.catch(function () { thuVienCho = null; });
+  }
+  return thuVienCho;
+}
+
+async function zxDoc_(anh) {
+  try { var r = await ZXingWASM.readBarcodes(anh, ZX_TUY); return r && r[0] && r[0].isValid ? r[0].text : ''; }
+  catch (e) { return ''; }
+}
+
+/** Tỉ lệ vẽ = cỡ ảnh scan trong PDF ÷ cỡ trang. Vẽ nhỏ hơn gốc là làm nhòe lại mã (đo ở vé 01). */
+async function tiLeGoc_(tr) {
+  var vp = tr.getViewport({ scale: 1 }), lon = 0;
+  try {
+    var ops = await tr.getOperatorList();
+    for (var i = 0; i < ops.fnArray.length; i++) {
+      if (ops.fnArray[i] !== pdfjsLib.OPS.paintImageXObject && ops.fnArray[i] !== pdfjsLib.OPS.paintJpegXObject) continue;
+      var o = await new Promise(function (ok) { tr.objs.get(ops.argsArray[i][0], ok); });
+      if (o) lon = Math.max(lon, o.width || 0, o.height || 0);
+    }
+  } catch (e) {}
+  var s = lon ? lon / Math.max(vp.width, vp.height) : 4;
+  return Math.min(6, Math.max(2, s));
+}
+
+/** Đọc cả trang; không ra thì dò lưới ô chồng nhau (bản 200 dpi cần cách này). */
+async function docQRTrang_(tr, s) {
+  var vp = tr.getViewport({ scale: s });
+  var cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+  var ctx = cv.getContext('2d', { willReadFrequently: true });
+  try {
+    await tr.render({ canvasContext: ctx, viewport: vp }).promise;
+    var t = await zxDoc_(ctx.getImageData(0, 0, cv.width, cv.height));
+    if (t) return t;
+    var LUOI = [[3, 2], [5, 3]];     // [chia bề ngang thành mấy ô, bước = ô ÷ mấy]
+    for (var l = 0; l < LUOI.length; l++) {
+      var o = Math.round(cv.width / LUOI[l][0]), buoc = Math.max(1, Math.round(o / LUOI[l][1]));
+      for (var y = 0; y < cv.height; y += buoc) {
+        for (var x = 0; x < cv.width; x += buoc) {
+          var xx = Math.max(0, Math.min(x, cv.width - o)), yy = Math.max(0, Math.min(y, cv.height - o));
+          t = await zxDoc_(ctx.getImageData(xx, yy, Math.min(o, cv.width), Math.min(o, cv.height)));
+          if (t) return t;
+        }
+      }
+    }
+    return '';
+  } finally { cv.width = 0; cv.height = 0; }
+}
+
+async function docQR(file) {
+  var pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+  try {
+    var tr = await pdf.getPage(1);
+    var goc = await tiLeGoc_(tr);
+    var cac = goc < 4 ? [goc, 6] : [goc];
+    for (var i = 0; i < cac.length; i++) {
+      var t = await docQRTrang_(tr, cac[i]);
+      if (t) return t;
+    }
+    return '';
+  } finally { pdf.destroy(); }
+}
+
+// ---------- Tách chuỗi QR trên thẻ căn cước ----------
+// 7 trường ngăn bằng |: sốCCCD | sốCMND9 | họ tên | ddMMyyyy sinh | giới tính | nơi thường trú | ddMMyyyy cấp
+// Lấy ĐỦ cả 7 trường; số CMND cũ và ngày cấp không hiện trên biểu mẫu nhưng vẫn lưu vào Sheet.
+function tachQR(chuoi) {
+  var s = String(chuoi == null ? '' : chuoi).trim();
+  var p = s.split('|');
+
+  // KHÔNG tin tuyệt đối rằng ô đầu tiên là số căn cước.
+  // Thẻ đời mới (từ 01/7/2024) hoặc máy đọc chèn thêm tiền tố sẽ làm lệch cả 7 ô.
+  // Cách chắc: tìm ô nào ĐÚNG 12 chữ số rồi coi ô đó là mốc, cắt bỏ phần thừa phía trước.
+  for (var i = 0; i < p.length && i < 4; i++) {
+    if (/^\s*\d{12}\s*$/.test(p[i])) { if (i > 0) p = p.slice(i); break; }
+  }
+
+  var ngay = function (s2) {
+    var d = String(s2 || '').replace(/\D/g, '');
+    return d.length === 8 ? d.substring(0, 2) + '/' + d.substring(2, 4) + '/' + d.substring(4) : '';
+  };
+
+  var cccd = String(p[0] || '').replace(/\D/g, '');
+  // Vẫn không ra 12 số → vớt vát: nhặt cụm 12 chữ số bất kỳ trong cả chuỗi.
+  // Thà lấy được mỗi số căn cước còn hơn bắt cộng tác viên gõ lại từ đầu.
+  if (cccd.length !== 12) {
+    var v = s.match(/(?:^|\D)(\d{12})(?:\D|$)/);
+    if (v) return { so_cccd: v[1], cmnd_cu: '', ho_ten: '', ngay_sinh: '',
+                    gioi_tinh: '', noi_thuong_tru: '', ngay_cap: '' };
+  }
+
+  var g = String(p[4] || '').trim();
+  return {
+    so_cccd: cccd,
+    cmnd_cu: String(p[1] || '').replace(/\D/g, ''),
+    ho_ten: String(p[2] || '').replace(/\s+/g, ' ').trim(),
+    ngay_sinh: ngay(p[3]),
+    gioi_tinh: /^n[ữu]/i.test(g) ? 'Nữ' : (/^nam/i.test(g) ? 'Nam' : ''),
+    noi_thuong_tru: String(p[5] || '').replace(/\s+/g, ' ').trim(),
+    ngay_cap: ngay(p[6])
+  };
+}
+
+// ============================================================
+// XẾP TỆP — hàm không đụng giao diện, nhận thư mục qua tham số (kiem/hososcan-trang.test.mjs chạy trên thư mục giả)
+// ============================================================
+
+/** So họ tên trên thẻ với trong hệ: bỏ dấu, không phân biệt hoa thường. */
+function boDau_(s) {
+  return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D')
+    .toLowerCase().replace(/\s+/g, ' ').trim();
+}
+/** Tên thư mục / tệp hợp lệ trên Windows: bỏ \ / : * ? " < > |, không kết thúc bằng dấu chấm / cách. */
+function tenSach_(s) {
+  return String(s || '').replace(/[\\/:*?"<>|]/g, '-').replace(/\s+/g, ' ').replace(/[. ]+$/, '').trim() || 'Không rõ';
+}
+function tenHoSo_(hoTen, so) { return tenSach_(hoTen) + ' - ' + String(so).slice(-4) + '.pdf'; }
+
+/** Tên chưa có trong thư mục: "a.pdf" → "a (2).pdf" → … Không bao giờ ghi đè. */
+async function tenChuaCo_(th, ten) {
+  var m = /^(.*?)(\.[^.]*)?$/.exec(ten), dau = m[1], duoi = m[2] || '';
+  for (var i = 1; ; i++) {
+    var thu = i === 1 ? ten : dau + ' (' + i + ')' + duoi;
+    try { await th.getFileHandle(thu); } catch (e) { if (e && e.name === 'NotFoundError') return thu; throw e; }
+  }
+}
+async function ghiTep_(th, ten, blob) {
+  var w = await (await th.getFileHandle(ten, { create: true })).createWritable();
+  await w.write(blob);
+  await w.close();
+  return ten;
+}
+/** Chuyển = chép sang chỗ mới XONG rồi mới xoá bản cũ. */
+async function chuyenVao_(thGoc, ten, thDich) {
+  var file = await (await thGoc.getFileHandle(ten)).getFile();
+  var ten2 = await ghiTep_(thDich, await tenChuaCo_(thDich, ten), file);
+  await thGoc.removeEntry(ten);
+  return ten2;
+}
+/** Đi xuống các thư mục con; `tao` = tạo nếu chưa có, không thì thiếu → null. */
+async function thuMucCon_(th, duong, tao) {
+  for (var i = 0; i < duong.length; i++) {
+    try { th = await th.getDirectoryHandle(duong[i], { create: !!tao }); }
+    catch (e) { if (!tao && e && e.name === 'NotFoundError') return null; throw e; }
+  }
+  return th;
+}
+
+/** Việc của một lần bấm: PDF ở NGAY thư mục scan (cũ trước) + PDF trong _Chưa xếp\<ngày>\ của thư mục hồ sơ. */
+async function gomViec_(thScan, thHoSo) {
+  var moi = [], cho = [];
+  if (thScan) for await (var h of thScan.values()) {
+    if (h.kind === 'file' && /\.pdf$/i.test(h.name)) moi.push({ nguon: 'moi', ten: h.name, th: thScan, file: await h.getFile() });
+  }
+  moi.sort(function (a, b) { return a.file.lastModified - b.file.lastModified; });
+  var thCho = await thuMucCon_(thHoSo, ['_Chưa xếp'], false);
+  if (thCho) {
+    for await (var d of thCho.values()) {
+      if (d.kind !== 'directory') continue;
+      for await (var t of d.values()) {
+        if (t.kind === 'file' && /\.pdf$/i.test(t.name)) cho.push({ nguon: 'cho', ten: t.name, th: d, file: await t.getFile() });
+      }
+    }
+  }
+  return moi.concat(cho);
+}
+
+/**
+ * Một lần bấm: đọc số → đối chiếu (mỗi lượt ≤ 50 số) → ghi hồ sơ → RỒI MỚI chuyển bản gốc vào _da-xep.
+ * Máy chủ hỏng → ném lỗi trước khi đụng tệp nào. Bản trong _Chưa xếp đã đổi tên thành 12 số → xếp theo số trong tên.
+ */
+async function xuLyLuot_(viec, docQR, traSo, thScan, thHoSo, homNay, baoBuoc) {
+  for (var i = 0; i < viec.length; i++) {
+    var v = viec[i];
+    if (baoBuoc) baoBuoc(i + 1, viec.length, v.ten);
+    var tenSo = v.nguon === 'cho' ? /^(\d{12})\.pdf$/i.exec(v.ten) : null;
+    if (tenSo) { v.so = tenSo[1]; v.the = null; continue; }
+    var qr = '';
+    try { qr = await docQR(v.file); } catch (e) { qr = ''; }
+    v.the = qr ? tachQR(qr) : null;
+    v.so = v.the && v.the.so_cccd && v.the.so_cccd.length === 12 ? v.the.so_cccd : '';
+    v.loiQR = qr && !v.so ? 'so_sai' : '';
+  }
+
+  var canTra = viec.filter(function (x) { return x.so; });
+  for (var j = 0; j < canTra.length; j += 50) {
+    var phan = canTra.slice(j, j + 50);
+    var kq = await traSo(phan.map(function (x) { return x.so; }));
+    if (!kq || kq.length !== phan.length) throw new Error('Máy chủ trả thiếu kết quả — bấm lại "Đọc bản scan mới".');
+    phan.forEach(function (x, k) { x.tra = kq[k]; });
+  }
+
+  // nguon: 'moi' = thư mục máy scan (xong thì chuyển gốc vào _da-xep) · 'cho' = _Chưa xếp (xếp được thì rời đi) ·
+  // 'mail' = hộp thư máy scan (thư không đụng tới; `da_ghi` báo nơi gọi đánh dấu "đã lấy" trên hộp thư)
+  var ra = [];
+  for (var n = 0; n < viec.length; n++) {
+    var x = viec[n], r = { ten_goc: x.ten, nguon: x.nguon, so4: x.so ? x.so.slice(-4) : '', id: x.id || '' };
+    if (x.tra && x.tra.ok) {
+      var noi = tenSach_(x.tra.ten_cong_ty);
+      var th = await thuMucCon_(thHoSo, [noi, x.tra.ngay_dang_lam], true);
+      r.ok = true;
+      r.ten_tep = await ghiTep_(th, await tenChuaCo_(th, tenHoSo_(x.tra.ho_ten, x.so)), x.file);
+      r.noi = noi + ' / ' + x.tra.ngay_dang_lam;
+      r.tu_phieu = !!x.tra.tu_phieu;
+      r.ten_lech = x.the && x.the.ho_ten && boDau_(x.the.ho_ten) !== boDau_(x.tra.ho_ten) ? x.the.ho_ten : '';
+      if (x.nguon === 'moi') await chuyenVao_(thScan, x.ten, await thuMucCon_(thScan, ['_da-xep'], true));
+      else if (x.nguon === 'cho') await x.th.removeEntry(x.ten);
+      r.da_ghi = true;
+    } else {
+      r.ok = false;
+      r.ly_do = x.tra ? x.tra.ly_do : (x.loiQR || 'khong_doc_duoc');
+      if (x.nguon !== 'cho') {
+        var thCho = await thuMucCon_(thHoSo, ['_Chưa xếp', homNay], true);
+        await ghiTep_(thCho, await tenChuaCo_(thCho, x.ten), x.file);
+        if (x.nguon === 'moi') await chuyenVao_(thScan, x.ten, await thuMucCon_(thScan, ['_da-xep'], true));
+        r.da_ghi = true;
+      }
+    }
+    ra.push(r);
+  }
+  return ra;
+}
+
+// ============================================================
+// NÚT "ĐỌC BẢN SCAN MỚI"
+// ============================================================
+var LY_DO_CHU = {
+  khong_doc_duoc: ['Không đọc được mã QR (thẻ đời cũ hoặc bản scan nhòe).',
+                   'Mở thư mục _Chưa xếp, đổi tên tệp thành đúng 12 số căn cước, rồi bấm lại "Đọc bản scan mới".'],
+  so_sai: ['Mã QR không có số căn cước 12 số.', 'Mở thư mục _Chưa xếp, đổi tên tệp thành đúng 12 số căn cước, rồi bấm lại "Đọc bản scan mới".'],
+  khong_co: ['Số căn cước này chưa có trong hệ.', 'Đăng ký hoặc nhập bù người này, báo Vào làm, rồi bấm lại "Đọc bản scan mới".'],
+  chua_dang_lam: ['Người này chưa ở trạng thái Đang làm.', 'Nhắc người đón bấm "Vào làm", rồi bấm lại "Đọc bản scan mới".'],
+  ngoai_pham_vi: ['Người này làm ở nhà máy bạn không phụ trách.', 'Chuyển bản scan cho quản lý nhà máy đó.'],
+  nhieu_noi: ['Sổ lao động ghi người này đang làm 2 nơi cùng ngày.', 'Sửa ở trang Dữ liệu tuyển, rồi bấm lại "Đọc bản scan mới".']
+};
+
+function homNay_() {
+  var d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+async function traSoMayChu_(ds) {
+  var kq = await goiAPI({ token: TOKEN_API, hanh_dong: 'hs_tra', ds: ds });
+  if (!kq || !kq.ok) throw new Error((kq && kq.loi) || 'Máy chủ không trả lời.');
+  return kq.ket_qua;
+}
+
+function veKetQua(ds) {
+  var luu = ds.filter(function (r) { return r.ok; }).length, chua = ds.length - luu;
+  $('tom').textContent = [luu ? '✅ Đã lưu ' + luu : '', chua ? '⚠️ Chưa xếp ' + chua : ''].filter(Boolean).join(' · ');
+  $('ds_kq').innerHTML = ds.map(function (r) {
+    var cu = r.nguon === 'cho' ? ' <span class="phu">(bản chờ từ trước)</span>' : '';
+    if (r.ok) {
+      return '<div class="kq"><span class="bt">✅</span><div class="noi"><b>' + thoat(r.ten_tep) + '</b>' + cu +
+        '<br><span class="phu">→ ' + thoat(r.noi) + ' · bản gốc: ' + thoat(r.ten_goc) +
+          (r.nguon === 'mail' ? ' (từ hộp thư)' : '') + '</span>' +
+        (r.tu_phieu ? '<br><span class="phu">Ngày lấy theo phiếu đã báo vào làm (sổ lao động chưa ghi người này).</span>' : '') +
+        (r.ten_lech ? '<br><span class="viec">⚠️ Tên trên thẻ là "' + thoat(r.ten_lech) +
+          '", khác tên trong hệ — kiểm lại họ tên trong Sheet.</span>' : '') + '</div></div>';
+    }
+    var c = LY_DO_CHU[r.ly_do] || ['Chưa xếp được (' + r.ly_do + ').', 'Bấm lại "Đọc bản scan mới", vẫn vậy thì báo quản trị.'];
+    return '<div class="kq"><span class="bt">⚠️</span><div class="noi"><b>' + thoat(r.ten_goc) + '</b>' +
+      (r.so4 ? ' <span class="phu">(căn cước ***' + thoat(r.so4) + ')</span>' : '') + cu +
+      '<br>' + thoat(c[0]) + '<br><span class="viec">👉 ' + thoat(c[1]) + '</span></div></div>';
+  }).join('');
+  $('ket_qua').classList.remove('an');
+}
+
+/** Một tệp hộp thư máy chủ đưa xuống ({ id, ten_tep, pdf_base64 }) → việc cho xuLyLuot_. */
+function tepTuBase64_(t) {
+  var s = atob(t.pdf_base64 || ''), b = new Uint8Array(s.length);
+  for (var i = 0; i < s.length; i++) b[i] = s.charCodeAt(i);
+  var ten = t.ten_tep || ('scan-' + String(t.id).replace(/[^\w-]/g, '') + '.pdf');
+  return { nguon: 'mail', ten: ten, id: String(t.id), file: new File([b], ten, { type: 'application/pdf' }) };
+}
+
+/**
+ * Hộp thư: lấy từng lượt (≤ 5 tệp) → xử lý → đánh dấu "đã lấy" các tệp ĐÃ GHI → lượt kế, tới khi hết (tối đa 20 lượt).
+ * Hộp thư cứ đưa lại bản đã xử lý (đánh dấu hỏng) → dừng, nói thẳng, không lưu lặp vô tận.
+ */
+async function vongHopThu_(layLuot, xuLy, danhDau, nhan) {
+  var daThay = {};
+  for (var luot = 0; luot < 20; luot++) {
+    var kq = await layLuot();
+    var moi = (kq.tep || []).filter(function (t) { return !daThay[t.id]; });
+    if (!moi.length) {
+      if ((kq.tep || []).length) throw new Error('Hộp thư cứ đưa lại bản vừa lưu — chưa đánh dấu được "đã lấy". Báo quản trị kiểm Trợ lý Gmail.');
+      return;
+    }
+    moi.forEach(function (t) { daThay[t.id] = true; });
+    var ds = await xuLy(moi);
+    nhan(ds);
+    var ids = ds.filter(function (r) { return r.da_ghi; }).map(function (r) { return r.id; });
+    if (ids.length) await danhDau(ids);
+    if (!kq.con) return;
+  }
+}
+
+$('nut_doc').addEventListener('click', async function () {
+  var nut = this;
+  $('doc_loi').classList.add('an');
+  $('ket_qua').classList.add('an');
+  if (!TM.hoso || !(TM.scan || mailSan())) { veCaiDat(); return; }
+  nut.disabled = true; nut.textContent = 'Đang đọc…';
+  var td = $('tien_do'), tatCa = [];
+  td.classList.remove('an');
+  var traSo = function (so) {
+    td.textContent = 'Đang đối chiếu với hệ (máy chủ Google, có khi 30–60 giây)…';
+    return traSoMayChu_(so);
+  };
+  var baoBuoc = function (i, n, ten) { td.textContent = 'Đang đọc thẻ ' + i + '/' + n + ': ' + ten + '…'; };
+  try {
+    if (!(await coQuyen_(TM.hoso)) || (TM.scan && !(await coQuyen_(TM.scan)))) {
+      throw new Error('Chưa được cho phép dùng thư mục. Bấm lại "Đọc bản scan mới" rồi bấm "Cho phép" khi Chrome hỏi.');
+    }
+    // 1. Thư mục máy scan (nếu có) + bản chờ trong _Chưa xếp
+    td.textContent = TM.scan ? 'Đang tìm bản scan mới trong "' + TM.scan.name + '"…' : 'Đang xem thư mục _Chưa xếp…';
+    var viec = await gomViec_(TM.scan, TM.hoso);
+    if (viec.length || mailSan()) { td.textContent = 'Đang tải bộ đọc mã QR…'; await napThuVien_(); }
+    if (viec.length) tatCa = tatCa.concat(await xuLyLuot_(viec, docQR, traSo, TM.scan, TM.hoso, homNay_(), baoBuoc));
+    // 2. Hộp thư máy scan
+    if (mailSan()) {
+      td.textContent = 'Đang lấy thư từ hộp thư máy scan (' + MAIL.email + ') — mỗi lượt 5 bản, có khi 10–30 giây…';
+      await vongHopThu_(async function () {
+        var kq = await goiAPI({ token: TOKEN_API, hanh_dong: 'hs_ds' });
+        if (!kq || !kq.ok) throw new Error((kq && kq.loi) || 'Hộp thư máy scan không trả lời.');
+        return kq;
+      }, function (tep) {
+        return xuLyLuot_(tep.map(tepTuBase64_), docQR, traSo, TM.scan, TM.hoso, homNay_(), baoBuoc);
+      }, async function (ids) {
+        td.textContent = 'Đang đánh dấu ' + ids.length + ' thư đã lấy…';
+        var kq = await goiAPI({ token: TOKEN_API, hanh_dong: 'hs_xong', ids: ids });
+        if (!kq || !kq.ok) {
+          throw new Error('Đã lưu ' + ids.length + ' bản từ hộp thư nhưng chưa đánh dấu được "đã lấy" (' + ((kq && kq.loi) || 'không rõ') +
+            '). Lần bấm sau các bản đó có thể được lưu lặp (tên thêm " (2)") — xoá bản lặp.');
+        }
+        td.textContent = 'Đang lấy thư tiếp…';
+      }, function (ds) { tatCa = tatCa.concat(ds); });
+    }
+    if (!tatCa.length) {
+      $('tom').textContent = 'Không có bản scan mới.';
+      var noi = [];
+      if (TM.scan) noi.push('lưu vào thư mục "' + thoat(TM.scan.name) + '"');
+      if (mailSan()) noi.push('gửi tới email ' + thoat(MAIL.email));
+      $('ds_kq').innerHTML = '<div class="cho">👉 Vừa scan mà không thấy? Kiểm tra máy scan đã ' + noi.join(' hoặc ') + ' chưa.</div>';
+      $('ket_qua').classList.remove('an');
+    } else veKetQua(tatCa);
+  } catch (e) {
+    if (tatCa.length) veKetQua(tatCa);
+    $('doc_loi').textContent = cauLoi(e) + '\nBản nào chưa lưu xong thì vẫn nằm nguyên chỗ cũ — bấm "Đọc bản scan mới" để thử lại.';
+    $('doc_loi').classList.remove('an');
+  } finally {
+    td.classList.add('an');
+    nut.disabled = false; nut.textContent = '📥 Đọc bản scan mới';
+    veCaiDat();
+  }
+});
+
+// ============================================================
+// KHỞI ĐỘNG
+// ============================================================
+async function khoiDong() {
+  if (typeof window.showDirectoryPicker !== 'function' || typeof indexedDB === 'undefined') { hien('man_khong'); return; }
+  TM.scan = await idbLay_('scan');
+  TM.hoso = await idbLay_('hoso');
+  if (!layPhien()) { veManDangNhap(''); return; }
+  moChinh('');
+}
+Promise.resolve().then(khoiDong);
+</script>
+</body>
+</html>
