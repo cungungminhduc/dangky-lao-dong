@@ -392,8 +392,8 @@ var CAP_DUOI = { nam: 'quy', quy: 'thang', thang: 'tuan' };
 // SỐ — nhận từ máy chủ (cú bd_lay)
 // ============================================================
 var SO_GOC = null;
-var CONG_TY = [], CT_MA = {}, NHAN_VIEN = [], NV_MA = {}, PHIEU = [], DON_VI = {}, CHI_TIEU = [];
-var TU = '', BAT_DAU = '', QS_LOI = '', CT_LOI = '', CT_HONG = 0, THIEU_NGAY = 0;
+var CONG_TY = [], CT_MA = {}, NHAN_VIEN = [], NV_MA = {}, PHIEU = [], DON_VI = {}, CHI_TIEU = [], LUOT = [];
+var TU = '', BAT_DAU = '', QS_LOI = '', CT_LOI = '', CT_HONG = 0, THIEU_NGAY = 0, BAT_DAU_SO = '', LUOT_LOI = '';
 var VAI = { quan_tri: false, nhom: [] };
 var CHUA_DOI = 'Chưa xếp đội', CHUA_KV = 'Chưa ghi khu vực';
 
@@ -423,6 +423,11 @@ function nhanSo(kq) {
     var ten = l ? l.ten + (l.trung ? ' (tên này 2 tài khoản cùng khai)' : '') : (p[2] === 0 ? '(ô người tuyển để trống)' : '');
     return [p[0], ct[p[1]].ma_ct, p[2] > 0 ? p[2] : 0, p[3], p[4] >= 0 ? ly[p[4]] : '', ten];
   }).sort(function (a, b) { return a[0] < b[0] ? -1 : (a[0] > b[0] ? 1 : 0); });
+  // 3.50 — lượt làm từ sổ: [ngày vào, chỉ số công ty, nhân viên, 1 = người mới · 2 = tuyển lại] → [ngày, ma_ct, mã NV, loại].
+  LUOT = (kq.luot || []).map(function (p) { return [p[0], ct[p[1]].ma_ct, p[2] > 0 ? p[2] : 0, p[3]]; })
+    .sort(function (a, b) { return a[0] < b[0] ? -1 : (a[0] > b[0] ? 1 : 0); });
+  BAT_DAU_SO = kq.tu_ngay_so ? lon(kq.tu_ngay_so, TU) : HOM_NAY;   // sổ chưa có lượt nào → mọi kỳ cũ "chưa có số"
+  LUOT_LOI = kq.luot ? (kq.luot_loi || '') : 'Máy chủ chưa cập nhật bản 3.50 — chưa đếm được người mới / tuyển lại.';
   var qs = kq.quan_so || { ok: false, loi: 'Máy chủ không trả số quân số.' };
   DON_VI = {};
   if (qs.ok) qs.bao.forEach(function (b) { var r = [b[0], ct[b[1]].ma_ct, b[2], b[3], b[4], b[5], b[6], b[7], b[8] || {}]; (DON_VI[r[1] + '#' + r[2]] = DON_VI[r[1] + '#' + r[2]] || []).push(r); });
@@ -455,7 +460,7 @@ function motPhanTN(d) {
 // ============================================================
 var HANG = [
   { k: 'td', bt: '📥', ten: 'Tuyển dụng', hoi: 'Đưa được bao nhiêu người vào làm? Rớt ở khâu nào?',
-    so: ['lam', 'dk', 'don', 'ty_den', 'ty_dau', 'huy', 'khong'], macDinh: ['lam', 'ty_den', 'ty_dau'],
+    so: ['lam', 'moi_tuyen', 'tuyen_lai', 'dk', 'don', 'ty_den', 'ty_dau', 'huy', 'khong'], macDinh: ['lam', 'ty_den', 'ty_dau'],
     goc: [{ k: 'pheu', ten: 'Phễu tuyển dụng', mo: 'tỷ lệ đến · đậu · ra người qua các kỳ — khâu nào đang xấu đi' },
           { k: 'ly_do', ten: 'Lý do không vào làm', mo: 'mỗi lý do một đường qua các kỳ' }] },
   { k: 'qs', bt: '👷', ten: 'Quân số', hoi: 'Lực lượng đang làm tăng hay giảm? Vì sao?',
@@ -472,6 +477,8 @@ var KET_HOP = [
 ];
 var CHI_SO = {
   lam:    { ten: 'Vào làm', dv: 'người', ct: 'vao_lam', mo: 'người đi làm thật (theo ngày hẹn)' },
+  moi_tuyen: { ten: 'Người mới', dv: 'người', mo: 'lần đầu vào làm — mỗi người chỉ tính một lần (sổ lao động)' },
+  tuyen_lai: { ten: 'Tuyển lại', dv: 'người', mo: 'người từng đi làm, nay vào làm lại (sổ lao động)' },
   dk:     { ten: 'Đăng ký', dv: 'phiếu', mo: 'phiếu có ngày hẹn trong kỳ' },
   don:    { ten: 'Đã đến', dv: 'người', mo: 'có mặt ngày hẹn (đã đón)' },
   ty_den: { ten: 'Tỷ lệ đến', ty: true, mo: 'đã đến ÷ phiếu đã tới ngày hẹn' },
@@ -488,6 +495,7 @@ var CHI_SO = {
   ty_bu:  { ten: 'Tỷ lệ bù', ty: true, mo: 'vào làm ÷ nghỉ việc' }
 };
 function hangCua(cs) { for (var i = 0; i < HANG.length; i++) if (HANG[i].so.indexOf(cs) >= 0) return HANG[i].k; return ''; }
+var TU_SO = { moi_tuyen: true, tuyen_lai: true };   // chỉ số đếm từ sổ lao động (3.50), không phải từ phiếu
 var MAU = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#6250d6'];   // bảng 6 màu đã soát mù màu
 var TOI_DA = 6;
 /** Khoá có dùng quân số (máy chủ báo hỏng quân số → thẻ ghi lỗi thay biểu đồ). */
@@ -645,6 +653,11 @@ function tinhTD(tu, den, loc) {
     if (t === 'khong') { o.khong++; var l = p[4] || 'Chưa ghi lý do'; o.ly[l] = (o.ly[l] || 0) + 1; }
     if (t === 'huy') o.huy++;
   }
+  o.moi_tuyen = 0; o.tuyen_lai = 0;
+  for (var j = tim(LUOT, isoCong(tu, -1), function (p) { return p[0]; }) + 1; j < LUOT.length && LUOT[j][0] <= den; j++) {
+    if (!loc.fp(LUOT[j])) continue;
+    if (LUOT[j][3] === 1) o.moi_tuyen++; else o.tuyen_lai++;
+  }
   o.toi = o.dk - o.cho;
   o.ty_den = o.toi ? o.don / o.toi : null;
   o.ty_dau = (o.lam + o.khong) ? o.lam / (o.lam + o.khong) : null;
@@ -687,6 +700,7 @@ function giaTri(cs, tu, den, loc) {
     if (!q.cuoi) return null;
     return { qs_t: q.cuoi.t, qs_moi: q.moi, qs_nv: q.nv, qs_ty_nghi: q.ty_nghi, qs_kp: q.kp }[cs];
   }
+  if (TU_SO[cs] && (LUOT_LOI || den < BAT_DAU_SO)) return null;   // kỳ hết trước khi có sổ: chưa có số, không phải 0
   if (den < BAT_DAU) return null;
   var o = tinhTD(tu, den, loc);
   return o[cs] === undefined ? null : o[cs];
@@ -793,6 +807,9 @@ function moTaThe(key, T, duong, pv) {
   if (canQS(key) && QS_LOI) {
     return { key: key, tieuDe: t[0] === 'so' ? CHI_SO[k].ten : (k === 'vao_ra' ? 'Vào / ra từng kỳ' : 'Tuyển có bù kịp nghỉ việc?'), loi: QS_LOI, so: '—', nhan: '', xu: '', them: '', ds: [], cs: 'qs_t' };
   }
+  if (t[0] === 'so' && TU_SO[k] && LUOT_LOI) {
+    return { key: key, tieuDe: CHI_SO[k].ten, loi: LUOT_LOI, so: '—', nhan: '', xu: '', them: '', ds: [], cs: k };
+  }
   if (t[0] === 'so') {
     var m = CHI_SO[k];
     cs = k; tieuDe = m.ten;
@@ -820,6 +837,7 @@ function moTaThe(key, T, duong, pv) {
       xs.sort(function (a, b) { return (b.x.chenh - a.x.chenh) * (m.nguoc ? -1 : 1); });
       if (xs.length >= 2) them += '<br>Tốt nhất: <b>' + thoat(xs[0].ten) + '</b> (' + chuChenh(xs[0].x) + ') · Kém nhất: <b>' + thoat(xs[xs.length - 1].ten) + '</b> (' + chuChenh(xs[xs.length - 1].x) + ')';
     }
+    if (TU_SO[k] && KD[0].tu < BAT_DAU_SO) them += '<br><span class="mo">Đếm từ sổ lao động — có số từ ' + dmy(BAT_DAU_SO) + '.</span>';
     if (xu) tom = '<b>' + m.ten + '</b>: ' + chuXu(xu, k).replace(/<span class="mo">.*<\/span>/, '');
   } else if (k === 'pheu') {
     tieuDe = 'Phễu tuyển dụng — tỷ lệ qua các kỳ'; cs = 'ty_den';

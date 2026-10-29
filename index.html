@@ -1792,6 +1792,12 @@ function veTinhTrang(kq) {
              thoat(kq.ten_cong_ty || '?') + '</b>' +
              (kq.ngay_di_lam ? ', đi làm ' + thoat(kq.ngay_di_lam) : '') +
              '</p><p>Phiếu cũ đã được ghi đè, không tạo phiếu mới.</p>'; }
+  else if (kq.ok && kq.ma === 'TRUNG' && kq.tu_so) { loai = 'canh'; dau = '!'; tieu = 'Chưa đăng ký được';
+      // 3.50: sổ lao động chặn (đang làm / vừa nghỉ việc) — máy chủ đã viết sẵn lý do + người cần báo
+      mo = kq.ho_ten; ma = '';
+      them = '<p>' + thoat(kq.loi) + '</p>';
+      goiY = kq.tu_so === 'dang_lam_o_day' ? '👉 Người này đang làm ở đây rồi, không cần đăng ký. Gõ nhầm số căn cước thì bấm "Quay lại sửa phiếu".'
+           : '👉 Liên hệ ' + thoat(kq.nguoi_nhap_cu) + ' trước. Gõ nhầm số căn cước thì bấm "Quay lại sửa phiếu".'; }
   else if (kq.ok && kq.ma === 'TRUNG')       { loai = 'canh'; dau = '!'; tieu = 'Trùng — chưa đăng ký được';
       // 3.41: nói ai đang giữ + việc tiếp theo; bỏ mã phiếu của người khác (vô nghĩa với người đang đăng ký)
       mo = kq.ho_ten; ma = '';
