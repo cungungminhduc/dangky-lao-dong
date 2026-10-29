@@ -502,13 +502,14 @@ async function gomViec_(thScan, thHoSo) {
 
 /**
  * Một lần bấm: đọc số → đối chiếu (mỗi lượt ≤ 50 số) → ghi hồ sơ → RỒI MỚI chuyển bản gốc vào _da-xep.
- * Máy chủ hỏng → ném lỗi trước khi đụng tệp nào. Bản trong _Chưa xếp đã đổi tên thành 12 số → xếp theo số trong tên.
+ * Máy chủ hỏng → ném lỗi trước khi đụng tệp nào. Bản trong _Chưa xếp đã đổi tên thành số căn cước (12 số, mở đầu 0) → xếp theo số trong tên.
  */
 async function xuLyLuot_(viec, docQR, traSo, thScan, thHoSo, homNay, baoBuoc) {
   for (var i = 0; i < viec.length; i++) {
     var v = viec[i];
     if (baoBuoc) baoBuoc(i + 1, viec.length, v.ten);
-    var tenSo = v.nguon === 'cho' ? /^(\d{12})\.pdf$/i.exec(v.ten) : null;
+    // Số căn cước luôn mở đầu bằng 0 (mã tỉnh 001–096); máy scan đặt tên theo giờ 202610270625 cũng 12 số → không phải số thẻ
+    var tenSo = v.nguon === 'cho' ? /^(0\d{11})\.pdf$/i.exec(v.ten) : null;
     if (tenSo) { v.so = tenSo[1]; v.the = null; continue; }
     var qr = '';
     try { qr = await docQR(v.file); } catch (e) { qr = ''; }
@@ -560,7 +561,7 @@ async function xuLyLuot_(viec, docQR, traSo, thScan, thHoSo, homNay, baoBuoc) {
 // NÚT "ĐỌC BẢN SCAN MỚI"
 // ============================================================
 var LY_DO_CHU = {
-  khong_doc_duoc: ['Không đọc được mã QR (thẻ đời cũ hoặc bản scan nhòe).',
+  khong_doc_duoc: ['Không đọc được mã QR (thẻ đời cũ, hoặc bản scan nhòe — máy scan cần để 400 dpi).',
                    'Mở thư mục _Chưa xếp, đổi tên tệp thành đúng 12 số căn cước, rồi bấm lại "Đọc bản scan mới".'],
   so_sai: ['Mã QR không có số căn cước 12 số.', 'Mở thư mục _Chưa xếp, đổi tên tệp thành đúng 12 số căn cước, rồi bấm lại "Đọc bản scan mới".'],
   khong_co: ['Số căn cước này chưa có trong hệ.', 'Đăng ký hoặc nhập bù người này, báo Vào làm, rồi bấm lại "Đọc bản scan mới".'],
