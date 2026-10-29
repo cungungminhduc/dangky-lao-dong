@@ -108,7 +108,8 @@
     <button type="button" class="nut" id="nut_doc">📥 Đọc bản scan mới</button>
     <div class="cho" id="doc_ghi">Đọc mọi bản PDF mới trong thư mục máy scan và hộp thư máy scan — mỗi bản khoảng 1–5 giây; lấy
       thư mỗi lượt 5 bản, có khi 10–30 giây. Lần đầu mở trang phải tải bộ đọc mã QR (vài giây). Bản gốc trong thư mục được chuyển
-      vào thư mục con <b>_da-xep</b>, thư không bị xoá.</div>
+      vào thư mục con <b>_da-xep</b>, thư không bị xoá.<br>🖨️ Bản lưu là <b>1 tờ A4</b>: mặt trước ở trên, mặt sau ở dưới, đúng cỡ
+      thật. Khi in chọn <b>"Kích thước thực tế"</b> (Actual size).</div>
     <div class="tien-do an" id="tien_do"></div>
     <div class="loi an" id="doc_loi"></div>
     <div id="ket_qua" class="an"><div class="tom" id="tom"></div><div id="ds_kq"></div></div>
@@ -310,6 +311,7 @@ var QR_NGUON = 'https://unpkg.com/';
 var PDFJS_BAN = '3.11.174';
 var ZX_BAN = '3.1.3';
 var ZX_TUY = { tryHarder: true, tryRotate: true, tryInvert: true, tryDownscale: true, formats: ['QRCode'], maxNumberOfSymbols: 1 };
+var PDFLIB_BAN = '1.17.1';           // ghép 2 trang A5 thành 1 tờ A4
 var thuVienCho = null;
 
 function napTep_(src) {
@@ -325,7 +327,8 @@ function napThuVien_() {
   if (!thuVienCho) {
     thuVienCho = Promise.all([
       napTep_(QR_NGUON + 'pdfjs-dist@' + PDFJS_BAN + '/build/pdf.min.js'),
-      napTep_(QR_NGUON + 'zxing-wasm@' + ZX_BAN + '/dist/iife/reader/index.js')
+      napTep_(QR_NGUON + 'zxing-wasm@' + ZX_BAN + '/dist/iife/reader/index.js'),
+      napTep_(QR_NGUON + 'pdf-lib@' + PDFLIB_BAN + '/dist/pdf-lib.min.js')
     ]).then(function () {
       pdfjsLib.GlobalWorkerOptions.workerSrc = QR_NGUON + 'pdfjs-dist@' + PDFJS_BAN + '/build/pdf.worker.min.js';
       return ZXingWASM.prepareZXingModule({
@@ -364,7 +367,8 @@ async function docQRTrang_(tr, s) {
   var cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
   var ctx = cv.getContext('2d', { willReadFrequently: true });
   try {
-    await tr.render({ canvasContext: ctx, viewport: vp }).promise;
+    // intent 'print': vẽ không chờ khung hình — tab bị che / người dùng sang tab khác thì việc đọc vẫn chạy (đo 29/10)
+    await tr.render({ canvasContext: ctx, viewport: vp, intent: 'print' }).promise;
     var t = await zxDoc_(ctx.getImageData(0, 0, cv.width, cv.height));
     if (t) return t;
     var LUOI = [[3, 2], [5, 3]];     // [chia bề ngang thành mấy ô, bước = ô ÷ mấy]
@@ -394,6 +398,100 @@ async function docQR(file) {
     }
     return '';
   } finally { pdf.destroy(); }
+}
+
+// ============================================================
+// DẢI CHỮ MẶT SAU (MRZ) — khi mã QR nhòe (bản 200 dpi). Tesseract.js đọc trang 2, CHẠY TRÊN MÁY; chỉ tải khi cần.
+// Thẻ chip: IDVNM + 9 số cuối + số kiểm | 12 số | << | số kiểm 12 số / ngày sinh… / HỌ<<TÊN (đo thật: DAC-TA mục 12)
+// ============================================================
+var TESS_BAN = '5.1.1';
+var boDocChuCho = null;
+
+function napBoDocChu_() {
+  if (!boDocChuCho) {
+    boDocChuCho = napTep_('https://cdn.jsdelivr.net/npm/tesseract.js@' + TESS_BAN + '/dist/tesseract.min.js').then(function () {
+      return Tesseract.createWorker('eng');
+    }).then(function (w) {
+      return w.setParameters({ tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789<', tessedit_pageseg_mode: '6' })
+        .then(function () { return w; });
+    });
+    boDocChuCho.catch(function () { boDocChuCho = null; });
+  }
+  return boDocChuCho;
+}
+
+/** Đọc dải chữ trang 2. PDF không vẽ được / không có trang 2 → null; bộ đọc chữ không tải được → ném lỗi (nơi gọi báo riêng). */
+async function docMRZ(file) {
+  var w = await napBoDocChu_();
+  var pdf;
+  try { pdf = await pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise; } catch (e) { return null; }
+  try {
+    if (pdf.numPages < 2) return null;
+    var tr = await pdf.getPage(2);
+    var vp = tr.getViewport({ scale: await tiLeGoc_(tr) });
+    var cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+    try {
+      await tr.render({ canvasContext: cv.getContext('2d'), viewport: vp, intent: 'print' }).promise;
+      return tachMRZ_((await w.recognize(cv)).data.text);
+    } finally { cv.width = 0; cv.height = 0; }
+  } finally { pdf.destroy(); }
+}
+
+/** Số kiểm ICAO: trọng số 7-3-1, '<' = 0, chữ A–Z = 10–35. */
+function soKiem_(s) {
+  var t = 0;
+  for (var i = 0; i < s.length; i++) {
+    var c = s.charAt(i);
+    t += (c === '<' ? 0 : /\d/.test(c) ? +c : c.charCodeAt(0) - 55) * [7, 3, 1][i % 3];
+  }
+  return String(t % 10);
+}
+/** Ô chỉ có số mà bộ đọc chữ nhầm thành chữ giống hình: O Q D → 0, I L → 1, Z → 2, S → 5, G → 6, B → 8. */
+function soHoa_(s) {
+  return s.replace(/[OQD]/g, '0').replace(/[IL]/g, '1').replace(/Z/g, '2').replace(/S/g, '5').replace(/G/g, '6').replace(/B/g, '8');
+}
+/**
+ * Chữ bộ đọc trả → { so_cccd } hoặc null. KHÔNG lấy họ tên: dòng tên không có số kiểm, dấu đệm "<" hay bị đọc thành L/S/K
+ * (thử bản scan thật 29/10 ra tên lẫn rác) → so tên chỉ gây báo lệch sai.
+ * CHỈ nhận khi đủ: số kiểm 9 số ✓ + số kiểm 12 số ✓ + 9 số = đuôi 12 số + mở đầu 0. Thiếu một là null — không đoán.
+ */
+function tachMRZ_(chu) {
+  var dong = String(chu || '').toUpperCase().split('\n').map(function (d) { return d.replace(/[^A-Z0-9<]/g, ''); });
+  for (var i = 0; i < dong.length; i++) {
+    var k = dong[i].search(/[I1L]DVNM/);
+    if (k < 0) continue;
+    var l1 = dong[i].slice(k + 5);
+    var so9 = soHoa_(l1.slice(0, 9)), kiem9 = soHoa_(l1.charAt(9)), so12 = soHoa_(l1.slice(10, 22));
+    var kiem12 = soHoa_(l1.slice(22).replace(/^[<K]+/, '').charAt(0));     // "<<" hay bị đọc thành "KK"
+    if (!/^0\d{11}$/.test(so12) || so9 !== so12.slice(3) || soKiem_(so9) !== kiem9 || soKiem_(so12) !== kiem12) continue;
+    return { so_cccd: so12 };
+  }
+  return null;
+}
+
+// ============================================================
+// GHÉP A4 — 2 trang A5 ngang (mặt trước, mặt sau) xếp chồng = vừa 1 tờ A4 dọc, đúng cỡ thật để in như bản photo
+// ============================================================
+/** pdf-lib nhúng NGUYÊN trang gốc (không chụp lại ảnh) → không nhòe, tệp nặng như cũ. Không ghép được → { loi }. */
+async function ghepA4_(PL, bytes) {
+  var goc = await PL.PDFDocument.load(bytes);
+  var trang = goc.getPages();
+  if (!trang.length || trang.length > 2) return { loi: 'tệp có ' + trang.length + ' trang' };
+  var moi = await PL.PDFDocument.create();
+  var W = PL.PageSizes.A4[0], H = PL.PageSizes.A4[1], nua = H / 2;
+  var to = moi.addPage(PL.PageSizes.A4);
+  (await moi.embedPages(trang)).forEach(function (e, i) {
+    // Máy scan lưu trang DỌC kèm lệnh "xoay 90°" để hiện NGANG (đo bản Ricoh thật) → đặt theo cỡ khi hiện
+    var xoay = ((trang[i].getRotation().angle % 360) + 360) % 360;
+    var nam = xoay === 90 || xoay === 270;
+    var rong = nam ? e.height : e.width, cao = nam ? e.width : e.height;
+    var s = Math.min(1, W / rong, nua / cao);                 // không phóng to: giữ cỡ thật
+    var X = (W - rong * s) / 2, Y = (i === 0 ? nua : 0) + (nua - cao * s) / 2;
+    // lệnh xoay của PDF xoay XUÔI kim đồng hồ; drawPage xoay NGƯỢC quanh (x, y) → xoay -góc rồi bù chỗ đặt
+    var bu = { 0: [0, 0], 90: [0, e.width * s], 180: [e.width * s, e.height * s], 270: [e.height * s, 0] }[xoay];
+    to.drawPage(e, { x: X + bu[0], y: Y + bu[1], width: e.width * s, height: e.height * s, rotate: PL.degrees(-xoay) });
+  });
+  return { pdf: await moi.save() };
 }
 
 // ---------- Tách chuỗi QR trên thẻ căn cước ----------
@@ -503,8 +601,9 @@ async function gomViec_(thScan, thHoSo) {
 /**
  * Một lần bấm: đọc số → đối chiếu (mỗi lượt ≤ 50 số) → ghi hồ sơ → RỒI MỚI chuyển bản gốc vào _da-xep.
  * Máy chủ hỏng → ném lỗi trước khi đụng tệp nào. Bản trong _Chưa xếp đã đổi tên thành số căn cước (12 số, mở đầu 0) → xếp theo số trong tên.
+ * cu = { qr: đọc mã QR trang 1, mrz: đọc dải chữ mặt sau (chỉ khi QR hỏng), a4: ghép tờ A4 cho bản lưu hồ sơ }.
  */
-async function xuLyLuot_(viec, docQR, traSo, thScan, thHoSo, homNay, baoBuoc) {
+async function xuLyLuot_(viec, cu, traSo, thScan, thHoSo, homNay, baoBuoc) {
   for (var i = 0; i < viec.length; i++) {
     var v = viec[i];
     if (baoBuoc) baoBuoc(i + 1, viec.length, v.ten);
@@ -512,10 +611,15 @@ async function xuLyLuot_(viec, docQR, traSo, thScan, thHoSo, homNay, baoBuoc) {
     var tenSo = v.nguon === 'cho' ? /^(0\d{11})\.pdf$/i.exec(v.ten) : null;
     if (tenSo) { v.so = tenSo[1]; v.the = null; continue; }
     var qr = '';
-    try { qr = await docQR(v.file); } catch (e) { qr = ''; }
+    try { qr = await cu.qr(v.file); } catch (e) { qr = ''; }
     v.the = qr ? tachQR(qr) : null;
     v.so = v.the && v.the.so_cccd && v.the.so_cccd.length === 12 ? v.the.so_cccd : '';
     v.loiQR = qr && !v.so ? 'so_sai' : '';
+    if (!v.so && cu.mrz) {
+      var m = null;
+      try { m = await cu.mrz(v.file); } catch (e) { v.loiQR = 'loi_bo_doc_chu'; }
+      if (m) { v.the = m; v.so = m.so_cccd; v.tu_mrz = true; v.loiQR = ''; }
+    }
   }
 
   var canTra = viec.filter(function (x) { return x.so; });
@@ -534,10 +638,16 @@ async function xuLyLuot_(viec, docQR, traSo, thScan, thHoSo, homNay, baoBuoc) {
     if (x.tra && x.tra.ok) {
       var noi = tenSach_(x.tra.ten_cong_ty);
       var th = await thuMucCon_(thHoSo, [noi, x.tra.ngay_dang_lam], true);
+      // bản lưu hồ sơ = tờ A4 để in; _Chưa xếp và _da-xep vẫn giữ bản gốc 2 trang
+      var a4 = null;
+      if (cu.a4) { try { a4 = await cu.a4(x.file); } catch (e) { a4 = { loi: 'không mở được tệp PDF' }; } }
       r.ok = true;
-      r.ten_tep = await ghiTep_(th, await tenChuaCo_(th, tenHoSo_(x.tra.ho_ten, x.so)), x.file);
+      r.ten_tep = await ghiTep_(th, await tenChuaCo_(th, tenHoSo_(x.tra.ho_ten, x.so)),
+        a4 && a4.pdf ? new Blob([a4.pdf], { type: 'application/pdf' }) : x.file);
+      r.khong_a4 = a4 && !a4.pdf ? a4.loi : '';
       r.noi = noi + ' / ' + x.tra.ngay_dang_lam;
       r.tu_phieu = !!x.tra.tu_phieu;
+      r.tu_mrz = !!x.tu_mrz;
       r.ten_lech = x.the && x.the.ho_ten && boDau_(x.the.ho_ten) !== boDau_(x.tra.ho_ten) ? x.the.ho_ten : '';
       if (x.nguon === 'moi') await chuyenVao_(thScan, x.ten, await thuMucCon_(thScan, ['_da-xep'], true));
       else if (x.nguon === 'cho') await x.th.removeEntry(x.ten);
@@ -561,8 +671,10 @@ async function xuLyLuot_(viec, docQR, traSo, thScan, thHoSo, homNay, baoBuoc) {
 // NÚT "ĐỌC BẢN SCAN MỚI"
 // ============================================================
 var LY_DO_CHU = {
-  khong_doc_duoc: ['Không đọc được mã QR (thẻ đời cũ, hoặc bản scan nhòe — máy scan cần để 400 dpi).',
+  khong_doc_duoc: ['Không đọc được mã QR lẫn dải chữ mặt sau (thẻ đời cũ, hoặc bản scan nhòe — máy scan cần để 400 dpi).',
                    'Mở thư mục _Chưa xếp, đổi tên tệp thành đúng 12 số căn cước, rồi bấm lại "Đọc bản scan mới".'],
+  loi_bo_doc_chu: ['Mã QR nhòe, và bộ đọc dải chữ mặt sau chưa tải được (mạng yếu?).',
+                   'Bấm lại "Đọc bản scan mới". Vẫn vậy thì mở thư mục _Chưa xếp, đổi tên tệp thành đúng 12 số căn cước.'],
   so_sai: ['Mã QR không có số căn cước 12 số.', 'Mở thư mục _Chưa xếp, đổi tên tệp thành đúng 12 số căn cước, rồi bấm lại "Đọc bản scan mới".'],
   khong_co: ['Số căn cước này chưa có trong hệ.', 'Đăng ký hoặc nhập bù người này, báo Vào làm, rồi bấm lại "Đọc bản scan mới".'],
   chua_dang_lam: ['Người này chưa ở trạng thái Đang làm.', 'Nhắc người đón bấm "Vào làm", rồi bấm lại "Đọc bản scan mới".'],
@@ -591,6 +703,8 @@ function veKetQua(ds) {
         '<br><span class="phu">→ ' + thoat(r.noi) + ' · bản gốc: ' + thoat(r.ten_goc) +
           (r.nguon === 'mail' ? ' (từ hộp thư)' : '') + '</span>' +
         (r.tu_phieu ? '<br><span class="phu">Ngày lấy theo phiếu đã báo vào làm (sổ lao động chưa ghi người này).</span>' : '') +
+        (r.tu_mrz ? '<br><span class="phu">Mã QR nhòe — số đọc từ dải chữ mặt sau (đã khớp số kiểm tra). Máy scan nên để 400 dpi.</span>' : '') +
+        (r.khong_a4 ? '<br><span class="phu">Lưu nguyên bản scan, chưa ghép tờ A4 (' + thoat(r.khong_a4) + ').</span>' : '') +
         (r.ten_lech ? '<br><span class="viec">⚠️ Tên trên thẻ là "' + thoat(r.ten_lech) +
           '", khác tên trong hệ — kiểm lại họ tên trong Sheet.</span>' : '') + '</div></div>';
     }
@@ -645,6 +759,15 @@ $('nut_doc').addEventListener('click', async function () {
     return traSoMayChu_(so);
   };
   var baoBuoc = function (i, n, ten) { td.textContent = 'Đang đọc thẻ ' + i + '/' + n + ': ' + ten + '…'; };
+  var cu = {
+    qr: docQR,
+    mrz: function (f) {
+      td.textContent = 'Mã QR của "' + f.name + '" nhòe — đang đọc dải chữ mặt sau' +
+        (boDocChuCho ? '' : ' (lần đầu tải bộ đọc chữ ~8 MB, có khi 10–30 giây)') + '…';
+      return docMRZ(f);
+    },
+    a4: async function (f) { return ghepA4_(PDFLib, new Uint8Array(await f.arrayBuffer())); }
+  };
   try {
     if (!(await coQuyen_(TM.hoso)) || (TM.scan && !(await coQuyen_(TM.scan)))) {
       throw new Error('Chưa được cho phép dùng thư mục. Bấm lại "Đọc bản scan mới" rồi bấm "Cho phép" khi Chrome hỏi.');
@@ -653,7 +776,7 @@ $('nut_doc').addEventListener('click', async function () {
     td.textContent = TM.scan ? 'Đang tìm bản scan mới trong "' + TM.scan.name + '"…' : 'Đang xem thư mục _Chưa xếp…';
     var viec = await gomViec_(TM.scan, TM.hoso);
     if (viec.length || mailSan()) { td.textContent = 'Đang tải bộ đọc mã QR…'; await napThuVien_(); }
-    if (viec.length) tatCa = tatCa.concat(await xuLyLuot_(viec, docQR, traSo, TM.scan, TM.hoso, homNay_(), baoBuoc));
+    if (viec.length) tatCa = tatCa.concat(await xuLyLuot_(viec, cu, traSo, TM.scan, TM.hoso, homNay_(), baoBuoc));
     // 2. Hộp thư máy scan
     if (mailSan()) {
       td.textContent = 'Đang lấy thư từ hộp thư máy scan (' + MAIL.email + ') — mỗi lượt 5 bản, có khi 10–30 giây…';
@@ -662,7 +785,7 @@ $('nut_doc').addEventListener('click', async function () {
         if (!kq || !kq.ok) throw new Error((kq && kq.loi) || 'Hộp thư máy scan không trả lời.');
         return kq;
       }, function (tep) {
-        return xuLyLuot_(tep.map(tepTuBase64_), docQR, traSo, TM.scan, TM.hoso, homNay_(), baoBuoc);
+        return xuLyLuot_(tep.map(tepTuBase64_), cu, traSo, TM.scan, TM.hoso, homNay_(), baoBuoc);
       }, async function (ids) {
         td.textContent = 'Đang đánh dấu ' + ids.length + ' thư đã lấy…';
         var kq = await goiAPI({ token: TOKEN_API, hanh_dong: 'hs_xong', ids: ids });
