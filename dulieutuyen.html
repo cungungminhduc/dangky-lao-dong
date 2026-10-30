@@ -142,6 +142,8 @@
   .the-nut{display:flex;gap:8px;margin-top:6px}
   .the-nut .nut-dong{flex:1;min-height:48px;margin:0}
   .the .canh-bao{max-width:none}
+  /* 3.51 — nhãn quân số (nghỉ phép từ…, chờ quản lý xác nhận nghỉ, chưa tính quân số) ngay dưới nút của người đó */
+  .nhan-qs{display:block;margin-top:4px;font-size:15px;color:#163f7a;white-space:normal}
   @media (max-width:699px){ .khung-bang{display:none} }
   @media (min-width:700px){ .ds-the,.chon-tat{display:none} }
 
@@ -706,16 +708,42 @@ function nutViec(r, i) {
     return r.tt === 'dang_lam' && r.ma_lam ? nutDong('nghi', i, '🚪 Báo nghỉ việc', 'do') : nutDong('vao', i, '✅ Báo đã đi làm');
   }
   if (cheDo === 'dang_lam') {
+    // 3.51: đã đề xuất nghỉ (chờ quản lý chốt) → nút rút đề xuất thay cho nút báo nghỉ
+    if (r.lam.de_xuat === 'nghi') return nutDong('rut', i, '↩ Rút đề xuất nghỉ') + nutDong('sua', i, '✏️ Sửa');
     return (r.lam.canh_bao ? nutDong('nghi_noi_khac', i, '🚪 Chuyển sang Đã nghỉ', 'do') : nutDong('nghi', i, '🚪 Báo nghỉ việc', 'do')) +
       nutDong('sua', i, '✏️ Sửa');
   }
   return nutDong('sua', i, '✏️ Sửa');
 }
+/** 3.51 — nhãn quân số cạnh "Đang làm" (đặc tả 6g). '' = không nói gì (đơn vị chưa nạp danh sách, đi làm bình thường). */
+var TT_QS = { np: 'nghỉ phép', kp: 'nghỉ không báo', cv: 'chờ việc' };
+function nhanQS(l) {
+  if (!l || l.trang_thai !== 'dang_lam') return '';
+  if (l.de_xuat === 'nghi') return '⏳ chờ quản lý xác nhận nghỉ';
+  var s = l.qs_cho ? 'đang chuyển ca — chờ ca kia nhận' : TT_QS[l.qs] ? TT_QS[l.qs] + (l.qs_tu ? ' từ ' + ngayNgan(l.qs_tu) : '')
+        : l.chua_tinh ? 'chưa tính quân số' : '';
+  var t = l.de_xuat === 'bo' ? 'quản lý chưa xác nhận nghỉ' + (l.de_xuat_luc ? ' (đề xuất ' + ngayNgan(l.de_xuat_luc) + ')' : '') : '';
+  return [s, t].filter(function (x) { return x; }).join(' · ');
+}
 // Cảnh báo "đã vào làm nơi khác" đứng NGAY DƯỚI nút chuyển nghỉ — lý do phải nằm cạnh nút, không trôi ra cột cuối.
 function canhBaoCua(r) {
-  var l = r.lam;
-  return l && l.canh_bao ? '<span class="canh-bao">⚠️ Đã vào làm ở <b>' + thoat(l.canh_bao.ten_cong_ty) +
-    '</b> từ ' + ngayVN(l.canh_bao.ngay_vao_lam) + '</span>' : '';
+  var l = r.lam, qs = nhanQS(l);
+  return (l && l.canh_bao ? '<span class="canh-bao">⚠️ Đã vào làm ở <b>' + thoat(l.canh_bao.ten_cong_ty) +
+    '</b> từ ' + ngayVN(l.canh_bao.ngay_vao_lam) + '</span>' : '') + (qs ? '<span class="nhan-qs">· ' + thoat(qs) + '</span>' : '');
+}
+/** 3.51: rút đề xuất nghỉ (bấm nhầm, người vẫn làm) — ghi ngay sau khi hỏi lại, như Mở lại / Huỷ lượt. */
+function rutDeXuat(r) {
+  hopHoi({ tieu: 'Rút đề xuất nghỉ của ' + r.ho_ten + '?', noi: 'Người này vẫn được tính đi làm như cũ. Ghi ngay, không chờ gửi.',
+           dong: 'Rút đề xuất', thoi: 'Thôi' })
+    .then(function (ok) {
+      if (!ok) return;
+      goiAPI({ token: TOKEN_API, hanh_dong: 'dlt_sua_lam', ma_lam: r.lam.ma_lam, rut_de_xuat: true }, 'Đang rút đề xuất…')
+        .then(function (kq) {
+          if (!kq || kq.ma === 'HET_PHIEN') return;
+          if (!kq.ok) { hopHoi({ tieu: 'Chưa rút được', noi: kq.loi || 'Máy chủ từ chối.', dong: 'Đã hiểu' }); return; }
+          taiDanhSach();
+        }, function (e) { hopHoi({ tieu: 'Không nối được máy chủ', noi: cauLoi(e) + ' Bấm lại — rút hai lần cũng không sao.', dong: 'Đã hiểu' }); });
+    });
 }
 function dongChoCua(r) { var v = viecCua(r); return v ? '<div class="cho-gui">✏️ Chờ gửi: ' + thoat(moTaViec(v)) + '</div>' : ''; }
 
@@ -998,15 +1026,22 @@ function moLam(viec, r, goiY) {
   $('lam_tieu').textContent = TEN_VIEC[viec] + ' — ' + r.ho_ten;
   $('lam_phu').textContent = (r.nam_sinh ? 'Sinh ' + r.nam_sinh : '') + (l ? (r.nam_sinh ? ' · ' : '') + 'vào ' + ngayVN(l.ngay_vao_lam) + ' ở ' + l.ten_cong_ty : '') +
     (goiY ? '\nĐã vào làm ở ' + goiY.ten_cong_ty + ' từ ' + ngayVN(goiY.ngay) + '. Kiểm lại ngày nghỉ rồi bấm Xong.' : '');
-  $('lam_goi_y').textContent = GOI_Y_VIEC[viec];
+  // 3.51 (G5): lượt do quân số quyết — báo nghỉ thành ĐỀ XUẤT; sửa chỉ ngày vào làm + ghi chú (đổi công ty / huỷ / mở lại qua quản lý)
+  var qs = l ? l.quan_so : '';
+  $('lam_goi_y').textContent = qs === 'dang' && viec === 'nghi'
+    ? '👉 Người này đang được tính trong quân số — gửi đi sẽ thành ĐỀ XUẤT nghỉ, quản lý ở công ty xác nhận mới tính. ' + GOI_Y_VIEC.nghi.slice(3)
+    : qs && viec === 'sua' ? '👉 Lượt do báo cáo quân số quyết: chỉ sửa được ngày vào làm và ghi chú. ' +
+      (qs === 'dang' ? 'Người này nghỉ thì bấm "Báo nghỉ việc".' : 'Ngày nghỉ sai thì báo quản lý đính chính báo cáo quân số.')
+    : GOI_Y_VIEC[viec];
   $('lam_cho').textContent = dangCho && !cu ? 'Đang chờ: ' + moTaViec(dangCho) + ' — bấm "✓ Xong" sẽ thay bằng việc này.' : '';
   $('lam_cho').classList.toggle('an', !(dangCho && !cu));
-  $('lam_khoi_ct').classList.toggle('an', viec === 'nghi');
+  $('lam_khoi_ct').classList.toggle('an', viec === 'nghi' || (viec === 'sua' && !!qs));
   $('lam_khoi_vao').classList.toggle('an', viec === 'nghi');
-  $('lam_khoi_nghi').classList.toggle('an', viec === 'vao' || (viec === 'sua' && !laNghi));
+  $('lam_khoi_nghi').classList.toggle('an', viec === 'vao' || (viec === 'sua' && (!laNghi || !!qs)));
   $('lam_khoi_ghi').classList.toggle('an', viec !== 'sua');
   $('lam_khoi_them').classList.toggle('an', viec !== 'sua');
-  $('lam_mo_lai').classList.toggle('an', !laNghi);
+  $('lam_mo_lai').classList.toggle('an', !laNghi || !!qs);
+  $('lam_huy').classList.toggle('an', !!qs);
   $('lam_bo').classList.toggle('an', !dangCho);
   ['lam_loi_ct', 'lam_loi_vao', 'lam_loi_nghi'].forEach(function (id) { $(id).classList.add('an'); });
   veLuoiCT('lam');
@@ -1116,6 +1151,7 @@ function bamViec(e) {
   var b = e.target.closest ? e.target.closest('button[data-viec]') : null; if (!b) return;
   var viec = b.getAttribute('data-viec');
   var r = dangHien[+b.getAttribute('data-i')]; if (!r) return;
+  if (viec === 'rut') { rutDeXuat(r); return; }
   if (viec === 'nghi_noi_khac') {
     var cb = r.lam.canh_bao;
     moLam('nghi', r, { ngay: cb.ngay_vao_lam, ten_cong_ty: cb.ten_cong_ty, ly_do: 'Sang làm ở ' + cb.ten_cong_ty });

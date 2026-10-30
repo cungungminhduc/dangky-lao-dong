@@ -128,6 +128,13 @@
   .canhbao.vang{background:var(--canh-nen);color:#6b4e00;border:1px solid #f0dda0}
   .canhbao.xanh{background:var(--tot-nen);color:#0a5c2f;border:1px solid #b6e2c8}
   .canhbao button{min-height:44px;font-size:15px !important}
+  /* 3.51 — câu hỏi Giữ chỗ / Đã thôi cho từng nơi cũ: hai nút ngay dưới tên nơi đó */
+  .noi-cu{margin-top:10px;padding-top:8px;border-top:1px dashed #f0dda0}
+  .noi-cu-nut{display:flex;gap:8px;margin-top:6px}
+  .noi-cu-nut button{flex:1;border:1px solid #e0c98a;background:#fff;border-radius:9px;font-family:inherit;font-weight:600;color:#3c3000;cursor:pointer}
+  .noi-cu-nut button.dang{background:#b7791f;border-color:#b7791f;color:#fff}
+  .noi-cu .nhe{font-size:13.5px;margin-top:4px}
+  #hoi_noi_cu.sai{border-color:var(--loi)}
 
   /* 3.41 — hộp hỏi lại trong trang (thay alert / confirm của trình duyệt) */
   .lop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;z-index:60}
@@ -246,6 +253,8 @@
     <div class="hang" id="hang_cccd"><span>Số căn cước</span><input id="so_cccd" inputmode="numeric" maxlength="14" placeholder="12 số trên thẻ" autocomplete="off"></div>
     <div class="hang" id="hang_sdt"><span>Số điện thoại</span><input id="sdt" inputmode="numeric" placeholder="Ví dụ 0912345678" autocomplete="off"></div>
   </div>
+  <!-- 3.51: người này đang làm ở nơi khác (chính bạn tuyển) → hỏi từng nơi giữ chỗ hay đã thôi, trả lời đủ mới gửi -->
+  <div class="canhbao" id="hoi_noi_cu"></div>
   <div class="nhom-phu">Không bắt buộc</div>
   <div class="khoi">
     <div class="hang"><span>Giới tính</span>
@@ -727,11 +736,13 @@ var phieuVuaGui = null;   // 3.41 — phiếu vừa gửi, để màn kết qu�
 function traTinhTrang(cccd) {
   phieuSua = null;
   $('nut_sua').classList.add('an');
+  noiCu = []; traLoiNoiCu = {}; veNoiCu();
   goiAPI({ token: TOKEN_API, hanh_dong: 'kiem_tra', so_cccd: cccd, ma_ct: maCT,
            nguoi_nhap: ($('nguoi_nhap').value || '').trim() })
     .then(function (kq) {
       if (!kq.ok) return;
       if (kq.ma === 'TRUNG') { veTinhTrang(kq); return; }
+      noiCu = kq.noi_cu || []; veNoiCu();          // máy chủ cũ không trả noi_cu → không hỏi, như trước
       var tin = '';
 
       // BẢN 3.21 — chính người đăng ký gốc đang thao tác, phiếu cũ còn trong hạn giữ chỗ.
@@ -780,6 +791,35 @@ function traTinhTrang(cccd) {
     })
     .catch(function () {});
 }
+
+/**
+ * 3.51 — NƠI CŨ: người này đang làm ở nơi khác mà bạn đăng ký được (chính bạn tuyển, hoặc nơi đó không ghi người tuyển).
+ * Hỏi từng nơi: vẫn giữ chỗ (đi thử việc, đang nghỉ phép bên đó) hay đã thôi. Trả lời đủ mới gửi. "Đã thôi": nơi đang báo
+ * quân số theo người thì thành ĐỀ XUẤT nghỉ (quản lý nơi đó chốt); nơi khác thì ghi nghỉ luôn từ hôm nay.
+ */
+var noiCu = [], traLoiNoiCu = {};
+function veNoiCu() {
+  var o = $('hoi_noi_cu');
+  xoaLoiO('hoi_noi_cu');
+  if (!noiCu.length) { o.className = 'canhbao'; o.innerHTML = ''; return; }
+  o.innerHTML = '<b>Người này đang làm ở ' + (noiCu.length > 1 ? noiCu.length + ' nơi khác' : 'nơi khác') + '.</b> 👉 Chọn cho từng nơi rồi mới gửi:' +
+    noiCu.map(function (n) {
+      var tl = traLoiNoiCu[n.ma_lam];
+      return '<div class="noi-cu"><div><b>' + thoat(n.ten_cong_ty) + '</b> — vào làm ' + thoat(n.tu) + '</div><div class="noi-cu-nut">' +
+        '<button type="button" data-noi-cu="' + thoat(n.ma_lam) + '" data-tl="giu"' + (tl === 'giu' ? ' class="dang"' : '') + '>Vẫn giữ chỗ</button>' +
+        '<button type="button" data-noi-cu="' + thoat(n.ma_lam) + '" data-tl="thoi"' + (tl === 'thoi' ? ' class="dang"' : '') + '>Đã thôi ở đây</button></div>' +
+        (tl === 'thoi' ? '<div class="nhe">Gửi xong: ' + (n.tinh ? 'nơi này nhận ĐỀ XUẤT nghỉ — quản lý ở đó chốt mới tính.' : 'ghi nghỉ ở nơi này từ hôm nay.') + '</div>'
+         : tl === 'giu' ? '<div class="nhe">Nơi này vẫn giữ người (đi thử việc, đang nghỉ phép bên đó…).</div>' : '') + '</div>';
+    }).join('');
+  o.className = 'canhbao hien vang';
+}
+$('hoi_noi_cu').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-noi-cu]');
+  if (!b) return;
+  traLoiNoiCu[b.getAttribute('data-noi-cu')] = b.getAttribute('data-tl');
+  veNoiCu();
+});
+function chuaTraLoiNoiCu() { return noiCu.some(function (n) { return !traLoiNoiCu[n.ma_lam]; }); }
 
 // ---------- Nút máy ảnh: lấy từ ảnh thẻ (ảnh KHÔNG rời khỏi máy) ----------
 // Đã BỎ hẳn đường quét trực tiếp bằng camera: thực tế dùng cho thấy không hiệu quả,
@@ -1560,8 +1600,9 @@ $('form').addEventListener('submit', function (ev) {
   };
   v.cach = ngayCachHomNay(v.ngay);
   // 3.41: soát HẾT một lượt, báo ngay dưới từng ô sai, cuộn tới ô sai đầu tiên.
-  ['hang_nguoi_nhap', 'hang_ct', 'hang_ngay', 'hang_ca', 'hang_ho_ten', 'hang_cccd', 'hang_sdt'].forEach(xoaLoiO);
+  ['hang_nguoi_nhap', 'hang_ct', 'hang_ngay', 'hang_ca', 'hang_ho_ten', 'hang_cccd', 'hang_sdt', 'hoi_noi_cu'].forEach(xoaLoiO);
   var loi = soatPhieu(v);
+  if (chuaTraLoiNoiCu()) loi.push(['hoi_noi_cu', 'Người này đang làm ở nơi khác — chọn "Vẫn giữ chỗ" hoặc "Đã thôi ở đây" cho từng nơi.']);
   loi.forEach(function (x) { baoLoiO(x[0], x[1]); });
   var o = $('loi_form');
   o.textContent = loi.length ? 'Còn ' + loi.length + ' chỗ cần sửa — xem chữ đỏ ngay dưới từng ô ở trên.' : '';
@@ -1604,6 +1645,7 @@ function guiPhieu(v) {
     ngay_cap: ngayCap, cmnd_cu: cmndCu,
     nguon_nhap: nguonNhap, qr_tho: qrTho
   };
+  if (noiCu.length) d.noi_cu = traLoiNoiCu;   // 3.51: {mã lượt nơi cũ: 'giu' | 'thoi'}
   try { localStorage.setItem('nguoi_nhap', v.nn); } catch (e) {}
 
   guiDangKy(d, v.ten, nut);
@@ -1819,6 +1861,11 @@ function veTinhTrang(kq) {
     them += '<p>' + thoat(kq.ten_cong_ty) + '</p>';
   }
   if (kq.canh_bao_cheo) them += '<p style="color:var(--canh)">(!) ' + thoat(kq.canh_bao_cheo) + '</p>';
+  // 3.51: nơi cũ — giữ chỗ / đã thôi đã ghi thế nào
+  if (loai === 'tot') (kq.noi_cu || []).forEach(function (n) {
+    them += '<p class="tom">' + thoat(n.ten_cong_ty) + ': ' + (n.ket === 'de_xuat' ? 'đã gửi đề xuất nghỉ — chờ quản lý nơi đó xác nhận'
+      : n.ket === 'nghi' ? 'đã ghi nghỉ từ hôm nay' : 'vẫn giữ chỗ') + '</p>';
+  });
 
   // Khối gửi ảnh thẻ (bản 3.23): chỉ khi phiếu VỪA được nhận, có mã, và máy chủ báo đã bật.
   var coAnh = loai === 'tot' && !!ma && dsCT.some(function (c) { return c.ma_ct === maCT && c.co_anh === true; });

@@ -647,6 +647,7 @@ async function xuLyLuot_(viec, cu, traSo, thScan, thHoSo, homNay, baoBuoc) {
       r.khong_a4 = a4 && !a4.pdf ? a4.loi : '';
       r.noi = noi + ' / ' + x.tra.ngay_dang_lam;
       r.tu_phieu = !!x.tra.tu_phieu;
+      r.thieu_ngay_so = !!x.tra.thieu_ngay_so;      // 3.51: sổ có người mà thiếu ngày vào làm
       r.tu_mrz = !!x.tu_mrz;
       r.ten_lech = x.the && x.the.ho_ten && boDau_(x.the.ho_ten) !== boDau_(x.tra.ho_ten) ? x.the.ho_ten : '';
       if (x.nguon === 'moi') await chuyenVao_(thScan, x.ten, await thuMucCon_(thScan, ['_da-xep'], true));
@@ -679,7 +680,10 @@ var LY_DO_CHU = {
   khong_co: ['Số căn cước này chưa có trong hệ.', 'Đăng ký hoặc nhập bù người này, báo Vào làm, rồi bấm lại "Đọc bản scan mới".'],
   chua_dang_lam: ['Người này chưa ở trạng thái Đang làm.', 'Nhắc người đón bấm "Vào làm", rồi bấm lại "Đọc bản scan mới".'],
   ngoai_pham_vi: ['Người này làm ở nhà máy bạn không phụ trách.', 'Chuyển bản scan cho quản lý nhà máy đó.'],
-  nhieu_noi: ['Sổ lao động ghi người này đang làm 2 nơi cùng ngày.', 'Sửa ở trang Dữ liệu tuyển, rồi bấm lại "Đọc bản scan mới".']
+  nhieu_noi: ['Sổ lao động ghi người này đang làm 2 nơi cùng ngày.', 'Sửa ở trang Dữ liệu tuyển, rồi bấm lại "Đọc bản scan mới".'],
+  // 3.51 — người nạp từ danh sách cũ, sổ chưa có ngày vào làm, cũng không có phiếu báo vào làm
+  thieu_ngay_vao: ['Sổ lao động chưa ghi ngày vào làm của người này (nạp từ danh sách cũ).',
+                   'Ở trang Dữ liệu tuyển bấm ✏️ Sửa, điền ngày vào làm, rồi bấm lại "Đọc bản scan mới".']
 };
 
 function homNay_() {
@@ -702,7 +706,8 @@ function veKetQua(ds) {
       return '<div class="kq"><span class="bt">✅</span><div class="noi"><b>' + thoat(r.ten_tep) + '</b>' + cu +
         '<br><span class="phu">→ ' + thoat(r.noi) + ' · bản gốc: ' + thoat(r.ten_goc) +
           (r.nguon === 'mail' ? ' (từ hộp thư)' : '') + '</span>' +
-        (r.tu_phieu ? '<br><span class="phu">Ngày lấy theo phiếu đã báo vào làm (sổ lao động chưa ghi người này).</span>' : '') +
+        (r.tu_phieu ? '<br><span class="phu">Ngày lấy theo phiếu đã báo vào làm (sổ lao động chưa ghi ' +
+          (r.thieu_ngay_so ? 'ngày vào làm của' : '') + ' người này).</span>' : '') +
         (r.tu_mrz ? '<br><span class="phu">Mã QR nhòe — số đọc từ dải chữ mặt sau (đã khớp số kiểm tra). Máy scan nên để 400 dpi.</span>' : '') +
         (r.khong_a4 ? '<br><span class="phu">Lưu nguyên bản scan, chưa ghép tờ A4 (' + thoat(r.khong_a4) + ').</span>' : '') +
         (r.ten_lech ? '<br><span class="viec">⚠️ Tên trên thẻ là "' + thoat(r.ten_lech) +
