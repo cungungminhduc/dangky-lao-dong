@@ -26,6 +26,9 @@
     — KHÔNG tên, SĐT, căn cước (Dương chốt 27/10). Mở lại / Huỷ lượt vẫn ghi ngay sau khi hỏi lại.
   - Màn hẹp (< 700px) hiện THẺ từng người thay bảng; màn rộng giữ bảng.
   - Ngày bằng lưới nút + "📅 Ngày khác…"; công ty bằng lưới nút có ô tìm; hỏi lại / báo bằng hộp trong trang (0 alert / confirm).
+
+  GIỮ CHỖ / ĐÃ THÔI Ở ĐĂNG KÝ LẠI — bản 3.53. Đặc tả: .scratch/giu-cho-dk-lai-3.52/DAC-TA.md
+  Người đang làm nơi khác: hộp kết quả hỏi từng nơi như trang đăng ký (3.51), chọn đủ mới đăng ký được. Máy chủ cũ không trả noi_cu → không hỏi.
 -->
 <style>
   :root{
@@ -199,6 +202,14 @@
   .kq-dong .ly{display:block;font-size:15px;color:#3c4753;white-space:pre-line}
   .kq-dong label{display:flex;gap:8px;align-items:center;min-height:44px;font-size:15px;color:#6b4e00;margin-top:4px}
   .kq-dong label input{width:22px;height:22px}
+  /* 3.53 — câu hỏi Giữ chỗ / Đã thôi cho từng nơi cũ: hai nút ngay dưới tên nơi đó, như trang đăng ký */
+  .hoi-noi-cu{margin-top:6px;padding:0 10px 10px;border-radius:10px;background:var(--vang-nhat);border:1px solid var(--vang-vien);color:#6b4e00}
+  .noi-cu{padding-top:8px}
+  .noi-cu + .noi-cu{margin-top:8px;border-top:1px dashed #e0c98a}
+  .noi-cu-nut{display:flex;gap:8px;margin-top:6px}
+  .noi-cu-nut button{flex:1;min-height:44px;border:1px solid #e0c98a;background:#fff;border-radius:9px;font-family:inherit;font-size:15px;font-weight:600;color:#3c3000;cursor:pointer}
+  .noi-cu-nut button.dang{background:#b7791f;border-color:#b7791f;color:#fff}
+  .noi-cu .nhe{margin-top:4px;font-size:15px}
   .hai{display:flex;gap:8px;margin-top:14px}
   .hai button{flex:1;min-height:48px;padding:12px;border:0;border-radius:11px;font-size:16px;font-weight:700;cursor:pointer;background:var(--xanh);color:#fff}
   .hai button.thoi-nut{background:var(--xam-nut);color:#3c4753;flex:0 0 32%}
@@ -265,6 +276,7 @@
     <div class="ten-trang"><b>Dữ liệu tuyển</b><div class="phu" id="ds_ai">—</div></div>
   </div>
   <a class="nut-nhap-bu" href="nhapbu.html">➕ Nhập bù: người đã đi làm, chưa đăng ký</a>
+  <a class="nut-nhap-bu" href="giotien.html">💰 Giờ & tiền tuyển dụng (kế toán tính)</a>
   <div id="ds_nhac" class="nhac an"></div>
 
   <div class="che-do" id="che_do">
@@ -365,6 +377,7 @@
     </div>
     <div id="hop_loi" class="loi an" style="margin:10px 0 0"></div>
     <div id="hop_kq" class="an" style="margin-top:10px"></div>
+    <div class="goi-y-hop an" id="hop_goi_y_nc"></div>
     <div class="tien an" id="hop_tien"></div>
     <div class="hai">
       <button type="button" class="thoi-nut" id="hop_dong">Đóng</button>
@@ -1366,15 +1379,14 @@ function veBuoc() {
   $('hop_form').classList.toggle('an', hop.pha === 'xong');
   $('hop_kq').classList.toggle('an', !hop.kq || hop.pha === 'form');
   $('hop_tien').classList.add('an');
+  $('hop_goi_y_nc').classList.add('an');
   veForm();
   $('hop_dong').textContent = hop.loat || hop.i + 1 >= hop.buoc.length ? 'Đóng' : 'Bỏ qua người này';
   var nut = $('hop_chinh');
   if (!hop.pha || hop.pha === 'form') { hop.pha = 'form'; nut.textContent = 'Xem ai đăng ký được'; }
   else if (hop.pha === 'kiem') {
-    var n = soSeGhi();
-    nut.textContent = n ? ('Đăng ký ' + n + ' người') : 'Không ai đăng ký được';
-    nut.disabled = !n;
     veKq();
+    capNhatNutKiem();
     return;
   } else {
     nut.textContent = hop.i + 1 < hop.buoc.length ? 'Sang người tiếp →' : 'Xong';
@@ -1382,10 +1394,54 @@ function veBuoc() {
   }
   nut.disabled = false;
 }
-function soSeGhi() {
-  return (hop.kq || []).filter(function (x) { return x.kq === 'duoc' || (x.kq === 'can_xac_nhan' && hop.xacNhan[x.ma]); }).length;
+function seDangKy(x) { return x.kq === 'duoc' || (x.kq === 'can_xac_nhan' && hop.xacNhan[x.ma]); }
+function soSeGhi() { return (hop.kq || []).filter(seDangKy).length; }
+/** 3.53 — số người sẽ đăng ký còn nơi cũ chưa chọn Vẫn giữ chỗ / Đã thôi. */
+function soChuaChonNoiCu() {
+  return (hop.kq || []).filter(function (x) {
+    var tl = hop.traLoiNC[x.ma] || {};
+    return seDangKy(x) && (x.noi_cu || []).some(function (n) { return !tl[n.ma_lam]; });
+  }).length;
 }
-var BIEU = { duoc: '✅', can_xac_nhan: '⚠️', bi_chan: '⛔', loi: '❌', da_dang_ky: '✅' };
+/** Nút chính ở bước xem kết quả. 3.53: khoá tới khi chọn đủ nơi cũ, dòng 👉 ngay trên nút nói còn thiếu mấy người. */
+function capNhatNutKiem() {
+  var n = soSeGhi(), thieu = soChuaChonNoiCu(), nut = $('hop_chinh');
+  nut.textContent = n ? ('Đăng ký ' + n + ' người') : 'Không ai đăng ký được';
+  nut.disabled = !n || thieu > 0 || !!hop.dangGui;
+  $('hop_goi_y_nc').textContent = thieu ? '👉 Còn ' + thieu + ' người chưa chọn Vẫn giữ chỗ / Đã thôi.' : '';
+  $('hop_goi_y_nc').classList.toggle('an', !thieu);
+}
+/**
+ * 3.53 — NƠI CŨ, như trang đăng ký (3.51): người sẽ đăng ký mà đang làm ở nơi khác → hỏi từng nơi vẫn giữ chỗ (đi thử việc, đang nghỉ
+ * phép bên đó) hay đã thôi. "Đã thôi": nơi đang báo quân số theo người thì thành ĐỀ XUẤT nghỉ (quản lý nơi đó chốt), nơi khác ghi nghỉ luôn.
+ */
+function veHoiNoiCu(x) {
+  if (hop.pha !== 'kiem' || !seDangKy(x) || !(x.noi_cu || []).length) return '';
+  var tl = hop.traLoiNC[x.ma] || {};
+  return '<div class="hoi-noi-cu">' + x.noi_cu.map(function (n) {
+    var c = tl[n.ma_lam];
+    var nut = function (ma, chu) {
+      return '<button type="button" data-nc-nguoi="' + thoat(x.ma) + '" data-nc="' + thoat(n.ma_lam) + '" data-tl="' + ma + '"' +
+        (c === ma ? ' class="dang" aria-pressed="true"' : ' aria-pressed="false"') + '>' + chu + '</button>';
+    };
+    return '<div class="noi-cu"><div>Đang làm ở <b>' + thoat(n.ten_cong_ty) + '</b>, vào làm ' + thoat(n.tu) + '</div>' +
+      '<div class="noi-cu-nut">' + nut('giu', 'Vẫn giữ chỗ') + nut('thoi', 'Đã thôi ở đây') + '</div>' +
+      (c === 'thoi' ? '<div class="nhe">Gửi xong: ' + (n.tinh ? 'nơi này nhận ĐỀ XUẤT nghỉ — quản lý ở đó chốt mới tính.' : 'ghi nghỉ ở nơi này từ hôm nay.') + '</div>'
+       : c === 'giu' ? '<div class="nhe">Nơi này vẫn giữ người (đi thử việc, đang nghỉ phép bên đó…).</div>' : '') + '</div>';
+  }).join('') + '</div>';
+}
+/** Sau khi đăng ký: từng nơi cũ đã ghi thế nào. Máy chủ giữ phiếu dù sổ hỏng (NHATKY) — chọn "Đã thôi" mà không có dòng đã ghi thì nói thẳng. */
+function veKetNoiCu(x) {
+  if (x.kq !== 'da_dang_ky') return '';
+  var ds = x.noi_cu || [], tl = hop.traLoiNC[x.ma] || {};
+  var chon = Object.keys(tl).filter(function (m) { return tl[m] === 'thoi'; }).length;
+  var daGhi = ds.filter(function (n) { return n.ket !== 'giu'; }).length;
+  return ds.map(function (n) {
+    return '<span class="ly">' + thoat(n.ten_cong_ty) + ': ' + (n.ket === 'de_xuat' ? 'đã gửi đề xuất nghỉ — chờ quản lý nơi đó xác nhận'
+      : n.ket === 'nghi' ? 'đã ghi nghỉ từ hôm nay' : 'vẫn giữ chỗ') + '</span>';
+  }).join('') + (chon > daGhi ? '<span class="canh-bao">⚠️ Chưa ghi được "Đã thôi" vào sổ — phiếu vẫn đăng ký. Vào "Đang làm", bấm 🚪 Báo nghỉ việc cho nơi cũ.</span>' : '');
+}
+var BIEU ={ duoc: '✅', can_xac_nhan: '⚠️', bi_chan: '⛔', loi: '❌', da_dang_ky: '✅' };
 var CHU = { duoc: 'Đăng ký được', can_xac_nhan: 'Cần xác nhận', bi_chan: 'Không đăng ký được', loi: 'Không làm được', da_dang_ky: 'Đã đăng ký' };
 function veKq() {
   var tenTheoMa = {};
@@ -1395,16 +1451,21 @@ function veKq() {
       ? '<label><input type="checkbox" data-xn="' + thoat(x.ma) + '"' + (hop.xacNhan[x.ma] ? ' checked' : '') + '> Vẫn đăng ký (sẽ ghi là trùng)</label>' : '';
     return '<div class="kq-dong"><span class="bieu">' + (BIEU[x.kq] || '•') + '</span><div class="noi"><b>' +
       thoat(x.ho_ten || tenTheoMa[x.ma] || '') + '</b> — ' + (CHU[x.kq] || x.kq) +
-      (x.loi ? '<span class="ly">' + thoat(x.loi) + '</span>' : '') + tick + '</div></div>';
+      (x.loi ? '<span class="ly">' + thoat(x.loi) + '</span>' : '') + tick + veHoiNoiCu(x) + veKetNoiCu(x) + '</div></div>';
   }).join('');
   $('hop_kq').classList.remove('an');
 }
 $('hop_kq').addEventListener('change', function (e) {
   var m = e.target.getAttribute('data-xn'); if (!m) return;
   if (e.target.checked) hop.xacNhan[m] = true; else delete hop.xacNhan[m];
-  var n = soSeGhi();
-  $('hop_chinh').textContent = n ? ('Đăng ký ' + n + ' người') : 'Không ai đăng ký được';
-  $('hop_chinh').disabled = !n;
+  veKq(); capNhatNutKiem();
+});
+$('hop_kq').addEventListener('click', function (e) {
+  var b = e.target.closest ? e.target.closest('button[data-nc]') : null;
+  if (!b || !hop || hop.pha !== 'kiem' || hop.dangGui) return;
+  var m = b.getAttribute('data-nc-nguoi');
+  (hop.traLoiNC[m] = hop.traLoiNC[m] || {})[b.getAttribute('data-nc')] = b.getAttribute('data-tl');
+  veKq(); capNhatNutKiem();
 });
 function loiHop(t) { $('hop_loi').textContent = t; $('hop_loi').classList.remove('an'); }
 
@@ -1450,6 +1511,7 @@ function khoaNut(co, chu) {
 function kiemLuat(ts) {
   var goi = cat(nguoiBuoc()), kq = [], i = 0;
   hop.xacNhan = {};
+  hop.traLoiNC = {};
   function tiep() {
     if (!hop) return;
     if (i >= goi.length) { khoaNut(false); hop.kq = kq; hop.pha = 'kiem'; veBuoc(); return; }
@@ -1467,8 +1529,11 @@ function kiemLuat(ts) {
 
 /** Đăng ký — cú GHI. Mỗi gói một mã yêu cầu, GIỮ mã đó khi bấm lại sau lỗi mạng để máy chủ không ghi hai lần. */
 function dangKyLai(ts) {
-  var seGhi = hop.kq.filter(function (x) { return x.kq === 'duoc' || (x.kq === 'can_xac_nhan' && hop.xacNhan[x.ma]); })
-    .map(function (x) { return { ma: x.ma, xac_nhan: x.kq === 'can_xac_nhan' }; });
+  var seGhi = hop.kq.filter(seDangKy).map(function (x) {
+    var m = { ma: x.ma, xac_nhan: x.kq === 'can_xac_nhan' };
+    if ((x.noi_cu || []).length) m.noi_cu = hop.traLoiNC[x.ma];   // 3.53: {mã lượt nơi cũ: 'giu' | 'thoi'}
+    return m;
+  });
   var goi = cat(seGhi), ketQua = {}, i = 0;
   hop.goiYC = hop.goiYC || {};
   function tiep() {
