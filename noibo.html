@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<title>Công–lương nội bộ</title>
+<!--
+  TRANG NỘI BỘ CÔNG–LƯƠNG — kế toán tải file lương từng công ty × tháng (vé 02–04).
+  Đọc Excel NGAY TRÊN MÁY (thư viện xlsx), soát bằng doc-file-luong.js, chỉ gửi số đã đọc lên máy chủ.
+  BẢO MẬT: đăng nhập CCCD + mật khẩu; mọi quyền kiểm lại ở máy chủ. Đăng xuất xoá hết dữ liệu đang hiện.
+  1.1.1 (Dương chốt 31/10): nằm CHUNG kho GitHub với hệ tuyển dụng, vào qua ô Kế toán ở Trang chủ; máy chủ, Sheet, tài khoản vẫn riêng.
+  Tệp cấu hình tên cau-hinh-luong.js — đừng đổi lại cau-hinh.js, tải lên là đè tệp hệ tuyển dụng.
+-->
+<style>
+  :root { --nen:#f1f4f8; --the:#fff; --chu:#1a202c; --mo:#4a5568; --vien:#cbd5e0; --chinh:#1d4ed8; --xanh:#15803d;
+          --do:#b91c1c; --vang:#fef3c7; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Roboto, Arial, sans-serif; background: var(--nen); color: var(--chu); font-size: 16px;
+         line-height: 1.45; padding: 0 16px 60px; }
+  .khung { max-width: 980px; margin: 0 auto; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 14px 0; flex-wrap: wrap; }
+  header h1 { font-size: 1.15rem; }
+  .ai { font-size: .9rem; color: var(--mo); }
+  .the { background: var(--the); border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,.07); padding: 18px 16px; margin-bottom: 14px; }
+  .chi { background: #eff6ff; border-left: 4px solid var(--chinh); padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; }
+  label { display: block; font-weight: 600; margin: 12px 0 6px; }
+  input[type=text], input[type=password], input[type=search] { width: 100%; min-height: 48px; padding: 10px 12px; font-size: 1rem;
+         border: 1.5px solid var(--vien); border-radius: 8px; }
+  input.sai { border-color: var(--do); }
+  .loi-o { color: var(--do); font-size: .9rem; margin-top: 4px; }
+  button, .nut { min-height: 48px; padding: 10px 16px; font-size: 1rem; font-weight: 600; border-radius: 8px; cursor: pointer;
+         border: 1.5px solid var(--chinh); background: #fff; color: var(--chinh); display: inline-flex; align-items: center;
+         justify-content: center; gap: 6px; }
+  button.chinh, .nut.chinh { background: var(--chinh); color: #fff; }
+  a.nut { text-decoration: none; }
+  button:disabled { opacity: .55; cursor: wait; }
+  .rong { width: 100%; }
+  .an { display: none !important; }
+  .bao { padding: 10px 12px; border-radius: 8px; margin: 10px 0; }
+  .bao.do { background: #fef2f2; border: 1px solid #fecaca; color: var(--do); }
+  .bao.xanh { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--xanh); }
+  .bao.cho { background: var(--vang); border: 1px solid #fde68a; }
+  .dai-do { background: var(--do); color: #fff; padding: 10px 12px; border-radius: 8px; margin: 10px 0; }
+  /* lưới: mỗi công ty một thẻ, các tháng xếp thành ô (điện thoại: xếp dọc) */
+  .ct h2 { font-size: 1.05rem; margin-bottom: 2px; }
+  .ct .phu { color: var(--mo); font-size: .88rem; margin-bottom: 10px; }
+  .cac-ky { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+  .ky { border: 1.5px solid var(--vien); border-radius: 10px; padding: 12px; }
+  .ky h3 { font-size: 1rem; margin-bottom: 6px; }
+  .ky ul { list-style: none; margin-bottom: 10px; font-size: .93rem; }
+  .ky li { padding: 3px 0; }
+  .ky .chua { color: var(--mo); }
+  .ky .roi { color: var(--xanh); }
+  .ky .moi { color: #92400e; font-weight: 600; }
+  /* xem trước */
+  .loi-ds li { margin: 6px 0 6px 18px; }
+  .loi-ds .sua { color: var(--mo); }
+  .tom { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin: 10px 0; }
+  .tom div { background: #f8fafc; border-radius: 8px; padding: 10px; }
+  .tom b { display: block; font-size: 1.15rem; }
+  .ds-nguoi { list-style: none; max-height: 340px; overflow-y: auto; border: 1px solid var(--vien); border-radius: 8px; }
+  .ds-nguoi li button { width: 100%; border: 0; border-bottom: 1px solid #edf2f7; border-radius: 0; justify-content: space-between;
+         color: var(--chu); font-weight: 400; text-align: left; }
+  .ds-nguoi li button.chon { background: #eff6ff; font-weight: 600; }
+  .thanh-duoi { position: sticky; bottom: 0; background: var(--nen); padding: 10px 0; display: flex; gap: 10px; flex-wrap: wrap; }
+  .thanh-duoi button { flex: 1 1 200px; }
+  /* phiếu (ve-phieu.js) */
+  .phieu { border: 1px solid var(--vien); border-radius: 8px; padding: 12px; margin-top: 12px; }
+  .ph-dv { font-weight: 700; font-size: .9rem; }
+  .ph-tieude { text-align: center; font-weight: 700; margin: 8px 0; }
+  .ph-phu { color: var(--mo); font-size: .88rem; }
+  table.bang { width: 100%; border-collapse: collapse; font-size: .88rem; margin-top: 8px; }
+  .bang th, .bang td { border: 1px solid #94a3b8; padding: 5px 6px; vertical-align: top; }
+  .bang td:first-child { text-align: center; width: 34px; }
+  .bang td.so { text-align: right; white-space: nowrap; }
+  .bang tr.muc td { background: #e6efe6; font-weight: 700; }
+  .bang tr.tong td { background: #fef08a; font-weight: 700; }
+  .cong { margin-top: 12px; }
+  .cong ul { list-style: none; margin: 6px 0 10px; }
+  .cong-tong li { display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding: 4px 0; }
+  .ngay-lam li { display: flex; gap: 10px; padding: 5px 0; border-bottom: 1px solid #edf2f7; font-size: .93rem; }
+  .ngay-lam .ngay { min-width: 72px; color: var(--mo); }
+  @media (max-width: 600px) { .ky { padding: 10px; } }
+  /* 1.1 — menu việc + giờ & giá tuyển dụng */
+  .menu-viec { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .menu-viec button { flex: 1 1 180px; }
+  .menu-viec button.dang { background: var(--chinh); color: #fff; }
+  .dong-gia { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid #edf2f7; }
+  .dong-gia .ten { flex: 1 1 160px; font-weight: 600; }
+  .dong-gia .gia { min-width: 110px; text-align: right; font-weight: 700; }
+  .dong-gia .phu { flex-basis: 100%; color: var(--mo); font-size: .88rem; }
+  .dong-gia input { width: 140px; min-height: 48px; padding: 8px 10px; font-size: 1rem; border: 1.5px solid var(--vien); border-radius: 8px; }
+  .dong-gia input.sai { border-color: var(--do); }
+  .dong-gia .loi-o { flex-basis: 100%; }
+  .dong-gia.nt { background: #fffbeb; border-radius: 8px; padding: 10px; }
+  .nhom-nut { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .nhom-nut > * { flex: 1 1 200px; }
+  input[type=month] { min-height: 48px; padding: 8px 10px; font-size: 1rem; border: 1.5px solid var(--vien); border-radius: 8px; width: 100%; }
+  .bang-nm { width: 100%; border-collapse: collapse; font-size: .93rem; margin-top: 8px; }
+  .bang-nm th, .bang-nm td { border-bottom: 1px solid #e2e8f0; padding: 6px 4px; text-align: right; }
+  .bang-nm th:first-child, .bang-nm td:first-child { text-align: left; }
+  .cuon-ngang { overflow-x: auto; }
+  .lop-phu { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
+  .hop-hoi { background: #fff; border-radius: 12px; padding: 18px 16px; max-width: 460px; width: 100%; }
+  .hop-hoi p { margin-bottom: 10px; }
+</style>
+</head>
+<body>
+<div class="khung">
+  <header>
+    <h1>📒 Công–lương nội bộ</h1>
+    <a class="nut" href="trangchu.html">🏠 Về Trang chủ</a>
+    <div id="thanhTK" class="an"><span class="ai" id="ai"></span> <button id="nutThoat">🚪 Đăng xuất</button></div>
+  </header>
+  <div id="daiCauHinh" class="dai-do an">Trang chưa nối máy chủ — người quản trị điền URL_API và TOKEN_API trong tệp cau-hinh-luong.js.</div>
+
+  <!-- ĐĂNG NHẬP -->
+  <section id="mDangNhap" class="the an">
+    <div class="chi">👉 Đăng nhập bằng số CCCD và mật khẩu <b>công–lương</b> người quản trị cấp — không phải mật khẩu Trang chủ.</div>
+    <label for="dnCccd">Số căn cước (CCCD)</label>
+    <input id="dnCccd" type="text" inputmode="numeric" autocomplete="username" maxlength="14" placeholder="Ví dụ 024303008090">
+    <div class="loi-o an" id="loiCccd"></div>
+    <label for="dnMk">Mật khẩu</label>
+    <input id="dnMk" type="password" autocomplete="current-password">
+    <div class="loi-o an" id="loiMk"></div>
+    <div id="dnBao" class="bao do an"></div>
+    <button id="nutDN" class="chinh rong" style="margin-top:16px">Đăng nhập</button>
+  </section>
+
+  <!-- MENU VIỆC (kế toán, quản trị) -->
+  <nav id="menuViec" class="menu-viec an">
+    <button data-viec="luong">📄 Lương công nhân</button>
+    <button data-viec="gio">⏱ Giờ tuyển dụng</button>
+    <button data-viec="gia">💲 Bảng giá tuyển dụng</button>
+  </nav>
+
+  <!-- BẢNG GIÁ TUYỂN DỤNG -->
+  <section id="mGia" class="an">
+    <div class="the">
+      <h2 style="font-size:1.1rem">💲 Bảng giá tuyển dụng (đồng / giờ)</h2>
+      <div class="chi" style="margin-top:10px">👉 Sửa một giá: bấm <b>✏️ Sửa</b> ngay cạnh giá đó. Đổi nhiều giá một lúc: <b>📂 Tải file giá</b>.
+        Tên nhà máy phải ghi <b>đúng như cột "Tên nhà máy làm việc"</b> trong file giờ.</div>
+      <div id="giaBao"></div>
+      <div id="giaDs"></div>
+      <div id="giaThem" class="an" style="margin-top:10px">
+        <label for="themMa">Tên nhà máy (như trong file giờ)</label>
+        <input id="themMa" type="text" placeholder="Ví dụ VHSX">
+        <div class="loi-o an" id="loiThemMa"></div>
+        <label for="themGia">Đơn giá (đồng / giờ)</label>
+        <input id="themGia" type="text" inputmode="numeric" placeholder="Ví dụ 2500">
+        <div class="loi-o an" id="loiThemGia"></div>
+        <div class="nhom-nut"><button id="nutThemLuu" class="chinh">💾 Lưu giá này</button><button id="nutThemHuy">Huỷ</button></div>
+      </div>
+      <div class="nhom-nut">
+        <button id="nutThemMo">➕ Thêm nhà máy</button>
+        <label class="nut" for="chonFileGia">📂 Tải file giá</label>
+        <button id="nutMauGia">⬇ Tải file mẫu</button>
+      </div>
+      <input id="chonFileGia" type="file" accept=".xlsx,.xls" class="an">
+      <div id="giaFile"></div>
+    </div>
+  </section>
+
+  <!-- GIỜ TUYỂN DỤNG -->
+  <section id="mGio" class="an">
+    <div class="the">
+      <h2 style="font-size:1.1rem">⏱ Giờ tuyển dụng theo tháng</h2>
+      <div class="chi" style="margin-top:10px">👉 Chọn tháng, rồi bấm <b>📂 Chọn file giờ</b> (file có trang <b>2.CGT…</b>, đủ cả Quảng Ninh và Bắc Giang).
+        Máy đọc ngay tại đây, tính tiền theo bảng giá, cho xem lại rồi mới lưu.</div>
+      <label for="gioThang">Tháng của file</label>
+      <input id="gioThang" type="month">
+      <label class="nut chinh" for="chonFileGio" style="width:100%;margin-top:12px">📂 Chọn file giờ</label>
+      <input id="chonFileGio" type="file" accept=".xlsx,.xls" class="an">
+      <div id="gioBao"></div>
+      <div id="gioXem" class="an"></div>
+      <div class="thanh-duoi"><button id="nutLuuGio" class="chinh an">💾 Lưu tháng này</button></div>
+    </div>
+    <div class="the">
+      <h2 style="font-size:1.05rem">Các tháng đã lưu</h2>
+      <div id="gioCacThang" style="margin-top:8px"></div>
+    </div>
+  </section>
+
+  <!-- LƯỚI CÔNG TY × THÁNG -->
+  <section id="mLuoi" class="an">
+    <div class="chi">👉 Tìm công ty, chọn đúng tháng, bấm <b>⬆ Tải file lương</b> ngay trong ô tháng đó.</div>
+    <div id="luoiBao"></div>
+    <input id="timCT" type="search" placeholder="🔍 Gõ tên hoặc mã công ty để tìm" style="margin-bottom:12px">
+    <div id="luoi"></div>
+    <button id="nutLamMoi">🔄 Làm mới</button>
+  </section>
+
+  <!-- TẢI FILE + XEM TRƯỚC -->
+  <section id="mTai" class="an">
+    <div class="the">
+      <h2 id="taiTieuDe" style="font-size:1.1rem"></h2>
+      <div class="chi" style="margin-top:10px">👉 Chọn file Excel lương của công ty này (có trang <b>1.Chấm công</b> và <b>2.Bảng lương</b>).
+        Máy đọc file ngay tại đây, kiểm từng ô rồi mới cho lưu.</div>
+      <label class="nut chinh" for="chonFile" style="width:100%">📂 Chọn file Excel</label>
+      <input id="chonFile" type="file" accept=".xlsx,.xls" class="an">
+      <div id="taiBao"></div>
+      <div id="xemTruoc" class="an">
+        <div class="tom" id="tom"></div>
+        <label for="timNguoi">Xem phiếu từng người (bấm tên)</label>
+        <input id="timNguoi" type="search" placeholder="Gõ tên để tìm">
+        <ul class="ds-nguoi" id="dsNguoi" style="margin-top:8px"></ul>
+        <div id="phieuXem"></div>
+      </div>
+    </div>
+    <div class="thanh-duoi">
+      <button id="nutQuayLai">↩ Quay lại danh sách</button>
+      <button id="nutLuu" class="chinh an">💾 Lưu bản nháp</button>
+    </div>
+    <p class="ai">Lưu bản nháp chưa cho công nhân xem. Nút công bố có ở bản sau.</p>
+  </section>
+</div>
+
+<script src="cau-hinh-luong.js"></script>
+<script src="doc-file-luong.js"></script>
+<script src="doc-file-gio.js"></script>
+<script src="ve-phieu.js"></script>
+<script>
+var $ = function (id) { return document.getElementById(id); };
+var e = VePhieu.e, tien = VePhieu.tien;
+var KHOA_PHIEN = 'cl_phien', KHOA_TK = 'cl_tk';
+var trangThai = { phien: '', tk: null, luoi: null, dangTai: null, kqDoc: null };
+
+function nho(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (x) {} }
+function doc(k) { try { return localStorage.getItem(k); } catch (x) { return null; } }
+function hien(id) {
+  ['mDangNhap', 'mLuoi', 'mTai', 'mGio', 'mGia'].forEach(function (m) { $(m).classList.toggle('an', m !== id); });
+  var viec = { mLuoi: 'luong', mTai: 'luong', mGio: 'gio', mGia: 'gia' }[id];
+  $('menuViec').classList.toggle('an', !viec || !trangThai.tk || trangThai.tk.vai_tro === 'quan_ly');
+  [].forEach.call(document.querySelectorAll('#menuViec button'), function (b) { b.classList.toggle('dang', b.getAttribute('data-viec') === viec); });
+  window.scrollTo(0, 0);
+}
+function bao(id, loai, html) { $(id).innerHTML = html ? '<div class="bao ' + loai + '">' + html + '</div>' : ''; }
+function thangNam(ky) { return ky.substring(5) + '/' + ky.substring(0, 4); }
+
+/** Gọi máy chủ — có hết giờ, phân biệt mất mạng / máy chủ lỗi. Không tự thử lại việc GHI. */
+function goi(goiTin, hanGiay) {
+  var dk = typeof AbortController === 'function' ? new AbortController() : null;
+  var hen = setTimeout(function () { if (dk) dk.abort(); }, (hanGiay || 30) * 1000);
+  goiTin.token = TOKEN_API;
+  return fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(goiTin),
+                          signal: dk ? dk.signal : undefined })
+    .then(function (r) { return r.text(); })
+    .then(function (t) {
+      clearTimeout(hen);
+      try { return JSON.parse(t); }
+      catch (x) { return { ok: false, ma: 'TAM', loi: 'Máy chủ Google đang bận hoặc trục trặc — thử lại sau ít giây.' }; }
+    }, function (err) {
+      clearTimeout(hen);
+      return { ok: false, ma: 'TAM', loi: err && err.name === 'AbortError'
+        ? 'Chờ máy chủ quá lâu — kiểm mạng rồi thử lại.' : 'Mất mạng hoặc không tới được máy chủ — kiểm mạng rồi thử lại.' };
+    })
+    .then(function (kq) {
+      if (kq && kq.ma === 'HET_PHIEN') { dangXuat(); bao('dnBao', 'do', e(kq.loi)); $('dnBao').classList.remove('an'); }
+      return kq;
+    });
+}
+
+// ---------------- ĐĂNG NHẬP ----------------
+function loiO(idLoi, idO, cau) { $(idLoi).textContent = cau; $(idLoi).classList.remove('an'); $(idO).classList.add('sai'); }
+function xoaLoiO(idLoi, idO) { $(idLoi).classList.add('an'); $(idO).classList.remove('sai'); }
+function dangNhap() {
+  var cccd = ($('dnCccd').value || '').replace(/\D/g, ''), mk = $('dnMk').value || '', sai = false;
+  xoaLoiO('loiCccd', 'dnCccd'); xoaLoiO('loiMk', 'dnMk'); $('dnBao').classList.add('an');
+  if (!cccd) { loiO('loiCccd', 'dnCccd', 'Chưa gõ số căn cước — 12 số trên thẻ.'); sai = true; }
+  else if (cccd.length !== 12) { loiO('loiCccd', 'dnCccd', 'Số căn cước đang có ' + cccd.length + ' số, cần đúng 12.'); sai = true; }
+  if (!mk) { loiO('loiMk', 'dnMk', 'Chưa gõ mật khẩu.'); sai = true; }
+  if (sai) return;
+  var nut = $('nutDN'); nut.disabled = true; nut.textContent = '⏳ Đang đăng nhập…';
+  goi({ hanh_dong: 'dang_nhap', so_cccd: cccd, mat_khau: mk }).then(function (kq) {
+    nut.disabled = false; nut.textContent = 'Đăng nhập';
+    if (!kq.ok) { $('dnBao').textContent = kq.loi; $('dnBao').classList.remove('an'); return; }
+    trangThai.phien = kq.phien;
+    trangThai.tk = { ho_ten: kq.ho_ten, ten_vai_tro: kq.ten_vai_tro, vai_tro: kq.vai_tro };
+    nho(KHOA_PHIEN, kq.phien); nho(KHOA_TK, JSON.stringify(trangThai.tk));
+    $('dnMk').value = '';
+    vaoViec();
+  });
+}
+function dangXuat() {
+  trangThai = { phien: '', tk: null, luoi: null, dangTai: null, kqDoc: null };
+  gio = { tom: null, kq: null, tenFile: '' }; gia = { lay: null, file: null };
+  nho(KHOA_PHIEN, null); nho(KHOA_TK, null);
+  $('luoi').innerHTML = ''; $('dsNguoi').innerHTML = ''; $('phieuXem').innerHTML = ''; $('tom').innerHTML = '';
+  ['gioXem', 'gioBao', 'gioCacThang', 'giaDs', 'giaBao', 'giaFile'].forEach(function (id) { $(id).innerHTML = ''; });
+  $('nutLuuGio').classList.add('an');
+  $('thanhTK').classList.add('an');
+  hien('mDangNhap');
+}
+function vaoViec() {
+  $('ai').textContent = trangThai.tk.ho_ten + ' · ' + trangThai.tk.ten_vai_tro;
+  $('thanhTK').classList.remove('an');
+  if (trangThai.tk.vai_tro === 'quan_ly') {
+    hien('mLuoi'); $('luoi').innerHTML = '';
+    bao('luoiBao', 'cho', 'Tài khoản Quản lý dùng mục Thắc mắc — mục này có ở bản sau.');
+    return;
+  }
+  taiLuoi();
+}
+
+// ---------------- LƯỚI ----------------
+function taiLuoi() {
+  hien('mLuoi');
+  bao('luoiBao', 'cho', '⏳ Đang lấy danh sách công ty…');
+  goi({ hanh_dong: 'kt_luoi', phien: trangThai.phien }).then(function (kq) {
+    if (!kq.ok) { bao('luoiBao', 'do', e(kq.loi) + ' <button onclick="taiLuoi()">Thử lại</button>'); return; }
+    trangThai.luoi = kq;
+    var canh = kq.ma_khong_co && kq.ma_khong_co.length
+      ? 'Tài khoản có khai công ty ' + e(kq.ma_khong_co.join(', ')) + ' nhưng tab CONG_TY chưa có — báo người quản trị thêm vào.' : '';
+    bao('luoiBao', canh ? 'cho' : '', canh);
+    if (!kq.cong_ty.length) { $('luoi').innerHTML = '<div class="bao cho">Tài khoản chưa được giao công ty nào — báo người quản trị.</div>'; return; }
+    $('luoi').innerHTML = kq.cong_ty.map(function (c, i) {
+      return '<div class="the ct" data-tim="' + e(DocFileLuong.chuanTenTra(c.ten + ' ' + c.ma_ct)) + '"><h2>' + e(c.ten) + '</h2><div class="phu">Mã ' + e(c.ma_ct) + (c.dia_ban ? ' · ' + e(c.dia_ban) : '') + '</div>' +
+        '<div class="cac-ky">' + c.ky.map(function (k, j) { return oKy(k, i, j); }).join('') + '</div></div>';
+    }).join('') + '<div id="khongCT" class="bao cho an">Không có công ty nào khớp.</div>';
+    locCT();
+  });
+}
+function locCT() {
+  var q = DocFileLuong.chuanTenTra($('timCT').value).replace(/ /g, ''), con = 0;   // "jin bang" vẫn ra JINBANG
+  [].forEach.call(document.querySelectorAll('#luoi .ct'), function (d) {
+    var thay = !q || d.getAttribute('data-tim').replace(/ /g, '').indexOf(q) >= 0;
+    d.classList.toggle('an', !thay); if (thay) con++;
+  });
+  if ($('khongCT')) $('khongCT').classList.toggle('an', con > 0);
+}
+function oKy(k, i, j) {
+  var file = k.co_file
+    ? '<li class="roi">📄 Đã tải ' + e(k.nhap_luc) + ' · ' + e(k.nhap_boi) + '<br>' + k.so_nguoi + ' người · ' + tien(k.tong_thuc_linh) + ' đ</li>'
+    : '<li class="chua">📄 Chưa có file</li>';
+  var cong = k.cb_cong_luc ? '<li class="roi">🗓 Bảng công: đã công bố ' + e(k.cb_cong_luc) + '</li>' : '<li class="chua">🗓 Bảng công: chưa công bố</li>';
+  var luong = k.cb_luong_luc ? '<li class="roi">💵 Phiếu lương: đã công bố ' + e(k.cb_luong_luc) + '</li>' : '<li class="chua">💵 Phiếu lương: chưa công bố</li>';
+  var moi = k.co_ban_moi ? '<li class="moi">⚠ Có bản mới chưa công bố</li>' : '';
+  return '<div class="ky"><h3>Tháng ' + thangNam(k.ky) + '</h3><ul>' + file + cong + luong + moi + '</ul>' +
+    '<button class="chinh rong" onclick="moTai(' + i + ',' + j + ')">⬆ ' + (k.co_file ? 'Tải lại file lương' : 'Tải file lương') + '</button></div>';
+}
+
+// ---------------- TẢI FILE ----------------
+function moTai(i, j) {
+  var c = trangThai.luoi.cong_ty[i], k = c.ky[j];
+  trangThai.dangTai = { ma_ct: c.ma_ct, ten: c.ten, ky: k.ky, phien_ban_ky: k.phien_ban || 0 };
+  trangThai.kqDoc = null;
+  $('taiTieuDe').textContent = '⬆ ' + c.ten + ' — Tháng ' + thangNam(k.ky);
+  $('chonFile').value = ''; $('taiBao').innerHTML = ''; $('xemTruoc').classList.add('an'); $('nutLuu').classList.add('an');
+  $('phieuXem').innerHTML = '';
+  if (k.co_file) bao('taiBao', 'cho', 'Tháng này đã có file tải lúc ' + e(k.nhap_luc) + '. Lưu file mới sẽ <b>thay</b> bản nháp đó.');
+  hien('mTai');
+}
+
+/** Một trang tính → mảng 2 chiều, hàng 0 = dòng 1, cột 0 = cột A (bù chỗ trống nếu vùng dữ liệu không bắt đầu ở A1). */
+function bangTuTrang(ws) {
+  if (!ws || !ws['!ref']) return [];
+  var r = XLSX.utils.decode_range(ws['!ref']);
+  var a = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true, defval: null, blankrows: true });
+  var ra = [];
+  for (var i = 0; i < r.s.r; i++) ra.push([]);
+  a.forEach(function (h) { var dem = []; for (var j = 0; j < r.s.c; j++) dem.push(null); ra.push(dem.concat(h)); });
+  return ra;
+}
+
+/** Workbook (đã đọc bằng thư viện) → soát → hiện xem trước. Tách riêng để thử được không cần chọn file thật. */
+function docWorkbook(wb, tenFile) {
+  var cacTrang = {};
+  wb.SheetNames.forEach(function (t) { cacTrang[t] = bangTuTrang(wb.Sheets[t]); });
+  var kq = DocFileLuong.docFile(cacTrang, { ma_ct: trangThai.dangTai.ma_ct, ky: trangThai.dangTai.ky });
+  kq.ten_file = tenFile;
+  trangThai.kqDoc = kq;
+  if (!kq.ok) {
+    bao('taiBao', 'do', '<b>Chưa lưu được — file còn ' + kq.loi.length + ' lỗi.</b> Sửa trong Excel, lưu lại, rồi bấm 📂 Chọn file lần nữa.' +
+      '<ul class="loi-ds">' + kq.loi.slice(0, 30).map(function (l) {
+        return '<li>' + (l.trang ? 'Trang <b>' + e(l.trang) + '</b>' : '') + (l.o ? ', ô <b>' + e(l.o) + '</b>' : '') + ': ' + e(l.loi) +
+               (l.cach_sua ? ' <span class="sua">→ ' + e(l.cach_sua) + '</span>' : '') + '</li>';
+      }).join('') + (kq.loi.length > 30 ? '<li>… và ' + (kq.loi.length - 30) + ' lỗi nữa</li>' : '') + '</ul>');
+    $('xemTruoc').classList.add('an'); $('nutLuu').classList.add('an');
+    return;
+  }
+  var canh = kq.canh_bao.map(function (c) { return '<li>' + e(c.loi) + '</li>'; }).join('');
+  bao('taiBao', 'xanh', '✅ File đọc được, không có lỗi. Kiểm lại tổng bên dưới với ô <b>Tổng cộng</b> trong Excel rồi bấm 💾 Lưu bản nháp.' +
+      (canh ? '<ul class="loi-ds" style="color:#92400e">' + canh + '</ul>' : ''));
+  $('tom').innerHTML = '<div>Số người<b>' + kq.tong.so_nguoi + '</b></div><div>Tổng thực lĩnh<b>' + tien(kq.tong.tong_thuc_linh) + ' đ</b></div>' +
+    '<div>Kỳ trong file<b>' + thangNam(kq.thong_tin.ky) + '</b></div><div>File<b style="font-size:.9rem;word-break:break-all">' + e(tenFile) + '</b></div>';
+  veDanhSach('');
+  $('xemTruoc').classList.remove('an'); $('nutLuu').classList.remove('an');
+}
+function veDanhSach(loc) {
+  var q = DocFileLuong.chuanTenTra(loc || '');
+  $('dsNguoi').innerHTML = trangThai.kqDoc.nguoi.map(function (n, i) {
+    if (q && n.ten_tra.join(' ').indexOf(q) < 0) return '';
+    return '<li><button onclick="xemNguoi(' + i + ', this)"><span>' + e(n.ten_hien) + ' <span class="ai">· ***' + e(n.cccd_tra.slice(-4)) +
+           '</span></span><b>' + tien(n.luong.thuc_linh) + ' đ</b></button></li>';
+  }).join('') || '<li class="bao">Không có tên nào khớp.</li>';
+}
+function xemNguoi(i, nut) {
+  [].forEach.call(document.querySelectorAll('.ds-nguoi button'), function (b) { b.classList.toggle('chon', b === nut); });
+  var n = trangThai.kqDoc.nguoi[i];
+  $('phieuXem').innerHTML = '<div class="ai" style="margin-top:12px">Công nhân sẽ thấy đúng như sau:</div>' +
+    VePhieu.phieuLuong(n, { cong_ty: trangThai.dangTai.ten, ky: trangThai.dangTai.ky }) + VePhieu.bangCong(n);
+  $('phieuXem').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+function chonFile(f) {
+  if (!f) return;
+  if (typeof XLSX === 'undefined') {
+    bao('taiBao', 'do', 'Không tải được bộ đọc Excel — kiểm mạng rồi tải lại trang (F5).'); return;
+  }
+  $('xemTruoc').classList.add('an'); $('nutLuu').classList.add('an');
+  bao('taiBao', 'cho', '⏳ Đang đọc file ' + e(f.name) + '… (vài giây)');
+  var r = new FileReader();
+  r.onload = function () {
+    try { docWorkbook(XLSX.read(new Uint8Array(r.result), { type: 'array' }), f.name); }
+    catch (x) { bao('taiBao', 'do', 'Không mở được file này như file Excel (' + e(String(x).substring(0, 120)) + '). Chọn đúng file .xlsx.'); }
+  };
+  r.onerror = function () { bao('taiBao', 'do', 'Máy không đọc được file — thử chọn lại.'); };
+  r.readAsArrayBuffer(f);
+}
+function luuNhap() {
+  var kq = trangThai.kqDoc, dt = trangThai.dangTai;
+  if (!kq || !kq.ok) return;
+  var nut = $('nutLuu'); nut.disabled = true; nut.textContent = '⏳ Đang lưu… (5–20 giây)';
+  bao('taiBao', 'cho', '⏳ Đang gửi ' + kq.tong.so_nguoi + ' người lên máy chủ. Đừng đóng trang.');
+  goi({ hanh_dong: 'kt_luu_nhap', phien: trangThai.phien, ma_ct: dt.ma_ct, ky: dt.ky, phien_ban_ky: dt.phien_ban_ky,
+        ten_file: kq.ten_file, nguoi: kq.nguoi }, 120).then(function (r) {
+    nut.disabled = false; nut.textContent = '💾 Lưu bản nháp';
+    if (!r.ok) {
+      bao('taiBao', 'do', '<b>Chưa lưu.</b> ' + e(r.loi) + (r.ma === 'DA_DOI' ? ' <button onclick="taiLuoi()">🔄 Tải lại</button>' : ''));
+      return;
+    }
+    bao('luoiBao', 'xanh', '✅ Đã lưu bản nháp ' + e(dt.ten) + ' tháng ' + thangNam(dt.ky) + ' lúc ' + e(r.nhap_luc) + ': ' + r.so_nguoi +
+        ' người, ' + tien(r.tong_thuc_linh) + ' đ. Công nhân CHƯA xem được cho tới khi công bố.');
+    var giu = $('luoiBao').innerHTML;
+    taiLuoiGiuBao(giu);
+  });
+}
+function taiLuoiGiuBao(html) {
+  taiLuoi();
+  var cho = setInterval(function () { if (trangThai.luoi && $('luoiBao').textContent.indexOf('Đang lấy') < 0) { $('luoiBao').innerHTML = html; clearInterval(cho); } }, 200);
+  setTimeout(function () { clearInterval(cho); }, 30000);
+}
+
+// ---------------- HỘP HỎI TRONG TRANG (không dùng confirm của trình duyệt) ----------------
+function hoi(html, chuCo, chuKhong, khiCo, khiKhong) {
+  var lop = document.createElement('div');
+  lop.className = 'lop-phu';
+  lop.innerHTML = '<div class="hop-hoi" role="dialog">' + html + '<div class="nhom-nut"><button class="chinh" data-tl="co">' + e(chuCo) +
+                  '</button><button data-tl="khong">' + e(chuKhong) + '</button></div></div>';
+  lop.addEventListener('click', function (ev) {
+    var b = ev.target.closest('button[data-tl]');
+    if (!b) return;
+    document.body.removeChild(lop);
+    if (b.getAttribute('data-tl') === 'co') khiCo(); else if (khiKhong) khiKhong();
+  });
+  document.body.appendChild(lop);
+}
+function soDong(v) { return String(v == null ? '' : v).replace(/[^\d]/g, ''); }
+function docExcel(f, khiXong, idBao) {
+  if (!f) return;
+  if (typeof XLSX === 'undefined') { bao(idBao, 'do', 'Không tải được bộ đọc Excel — kiểm mạng rồi tải lại trang (F5).'); return; }
+  bao(idBao, 'cho', '⏳ Đang đọc file ' + e(f.name) + '… (vài giây)');
+  var r = new FileReader();
+  r.onload = function () {
+    var wb;
+    try { wb = XLSX.read(new Uint8Array(r.result), { type: 'array' }); }
+    catch (x) { bao(idBao, 'do', 'Không mở được file này như file Excel (' + e(String(x).substring(0, 120)) + '). Chọn đúng file .xlsx.'); return; }
+    var cacTrang = {};
+    wb.SheetNames.forEach(function (t) { cacTrang[t] = bangTuTrang(wb.Sheets[t]); });
+    khiXong(cacTrang, f.name);
+  };
+  r.onerror = function () { bao(idBao, 'do', 'Máy không đọc được file — thử chọn lại.'); };
+  r.readAsArrayBuffer(f);
+}
+function dsLoi(loi) {
+  return '<ul class="loi-ds">' + loi.slice(0, 30).map(function (l) {
+    return '<li>' + (l.trang ? 'Trang <b>' + e(l.trang) + '</b>' : '') + (l.o ? ', ô <b>' + e(l.o) + '</b>' : '') + (l.trang || l.o ? ': ' : '') +
+      e(l.loi) + (l.cach_sua ? ' <span class="sua">→ ' + e(l.cach_sua) + '</span>' : '') + '</li>';
+  }).join('') + (loi.length > 30 ? '<li>… và ' + (loi.length - 30) + ' lỗi nữa</li>' : '') + '</ul>';
+}
+
+// ---------------- BẢNG GIÁ TUYỂN DỤNG ----------------
+var gia = { lay: null, file: null };
+function moGia() {
+  hien('mGia');
+  $('giaFile').innerHTML = ''; $('giaThem').classList.add('an');
+  bao('giaBao', 'cho', '⏳ Đang lấy bảng giá…');
+  goi({ hanh_dong: 'kt_gia_lay', phien: trangThai.phien }).then(function (kq) {
+    if (!kq.ok) { bao('giaBao', 'do', e(kq.loi) + ' <button onclick="moGia()">Thử lại</button>'); return; }
+    bao('giaBao', '', '');
+    veGia(kq);
+  });
+}
+function veGia(kq) {
+  gia.lay = kq;
+  var nt = kq.ds.filter(function (x) { return x.ma === DocFileGio.MA_NGOAI_TINH; })[0];
+  var con = kq.ds.filter(function (x) { return x.ma !== DocFileGio.MA_NGOAI_TINH; })
+    .sort(function (a, b) { return a.ten.localeCompare(b.ten, 'vi'); });
+  var dong = function (x, laNT) {
+    return '<div class="dong-gia' + (laNT ? ' nt' : '') + '" data-ma="' + e(x ? x.ma : DocFileGio.MA_NGOAI_TINH) + '">' +
+      '<span class="ten">' + (laNT ? '🚌 Ngoại tỉnh (giá chung)' : '🏭 ' + e(x.ten)) + '</span>' +
+      '<span class="gia">' + (x ? tien(x.don_gia) + ' đ' : '<span class="ai">Chưa có giá</span>') + '</span>' +
+      '<button data-sua="' + e(x ? x.ten : 'Ngoại tỉnh') + '">✏️ ' + (x ? 'Sửa' : 'Đặt giá') + '</button>' +
+      (x && x.sua_luc ? '<span class="phu">Sửa lúc ' + e(x.sua_luc) + ' · ' + e(x.sua_boi) + '</span>' : '') + '</div>';
+  };
+  $('giaDs').innerHTML = dong(nt, true) + (con.length ? con.map(function (x) { return dong(x, false); }).join('')
+    : '<div class="bao cho">Chưa có giá nhà máy nào — bấm ➕ Thêm nhà máy hoặc 📂 Tải file giá.</div>');
+}
+$('giaDs').addEventListener('click', function (ev) {
+  var b = ev.target.closest('button[data-sua]');
+  if (!b) return;
+  var hang = b.closest('.dong-gia'), ten = b.getAttribute('data-sua');
+  var cu = (gia.lay.ds.filter(function (x) { return x.ma === hang.getAttribute('data-ma'); })[0] || {}).don_gia || '';
+  hang.innerHTML = '<span class="ten">' + e(ten) + '</span><input type="text" inputmode="numeric" value="' + e(cu) + '" aria-label="Đơn giá mới">' +
+    '<button class="chinh" data-luu="1">💾 Lưu</button><button data-huy="1">Huỷ</button><div class="loi-o an"></div>';
+  var o = hang.querySelector('input'); o.focus(); o.select();
+  hang.querySelector('[data-huy]').onclick = function () { veGia(gia.lay); };
+  hang.querySelector('[data-luu]').onclick = function () {
+    var g = Number(soDong(o.value)), loi = hang.querySelector('.loi-o');
+    if (!(g > 0)) { loi.textContent = 'Gõ đơn giá là số lớn hơn 0, ví dụ 2500.'; loi.classList.remove('an'); o.classList.add('sai'); return; }
+    luuGia([{ ma: ten, don_gia: g }], this);
+  };
+});
+function luuGia(ds, nut) {
+  var chu = nut.textContent; nut.disabled = true; nut.textContent = '⏳ Đang lưu…';
+  goi({ hanh_dong: 'kt_gia_luu', phien: trangThai.phien, phien_ban: gia.lay.phien_ban, ds: ds }).then(function (kq) {
+    nut.disabled = false; nut.textContent = chu;
+    if (!kq.ok) { bao('giaBao', 'do', '<b>Chưa lưu.</b> ' + e(kq.loi) + (kq.ma === 'DA_DOI' ? ' <button onclick="moGia()">🔄 Tải lại</button>' : '')); return; }
+    $('giaFile').innerHTML = ''; $('giaThem').classList.add('an'); gia.file = null;
+    bao('giaBao', 'xanh', kq.so_doi ? '✅ Đã lưu ' + kq.so_doi + ' giá. Tháng giờ đã lưu trước đây KHÔNG tự đổi — muốn áp giá mới thì tải lại file giờ tháng đó.'
+                                    : 'Không có giá nào khác giá đang dùng — không đổi gì.');
+    veGia(kq);
+  });
+}
+$('nutThemMo').addEventListener('click', function () { $('giaThem').classList.remove('an'); $('themMa').value = ''; $('themGia').value = ''; $('themMa').focus(); });
+$('nutThemHuy').addEventListener('click', function () { $('giaThem').classList.add('an'); });
+$('nutThemLuu').addEventListener('click', function () {
+  var ma = $('themMa').value.trim(), g = Number(soDong($('themGia').value)), sai = false;
+  xoaLoiO('loiThemMa', 'themMa'); xoaLoiO('loiThemGia', 'themGia');
+  if (!ma) { loiO('loiThemMa', 'themMa', 'Gõ tên nhà máy đúng như trong file giờ.'); sai = true; }
+  if (!(g > 0)) { loiO('loiThemGia', 'themGia', 'Gõ đơn giá là số lớn hơn 0, ví dụ 2500.'); sai = true; }
+  if (!sai) luuGia([{ ma: ma, don_gia: g }], this);
+});
+$('chonFileGia').addEventListener('change', function () {
+  var f = this.files[0]; this.value = '';
+  docExcel(f, function (cacTrang) {
+    var kq = DocFileGio.docBangGia(cacTrang);
+    if (!kq.ok) { bao('giaFile', 'do', '<b>Chưa lưu được — file giá còn ' + kq.loi.length + ' lỗi.</b> Sửa trong Excel rồi chọn lại.' + dsLoi(kq.loi)); return; }
+    var cu = {};
+    gia.lay.ds.forEach(function (x) { cu[x.ma] = x.don_gia; });
+    var moi = kq.gia.filter(function (x) { return !(x.ma in cu); }), doi = kq.gia.filter(function (x) { return x.ma in cu && cu[x.ma] !== x.don_gia; });
+    gia.file = doi.concat(moi);
+    if (!gia.file.length) { bao('giaFile', 'xanh', 'File có ' + kq.gia.length + ' giá, đều giống giá đang dùng — không cần lưu.'); return; }
+    $('giaFile').innerHTML = '<div class="bao cho"><b>Xem lại trước khi lưu</b> (' + kq.gia.length + ' giá trong file; nhà máy không có trong file giữ giá cũ):' +
+      '<ul class="loi-ds">' + doi.map(function (x) { return '<li>' + e(x.ten) + ': ' + tien(cu[x.ma]) + ' → <b>' + tien(x.don_gia) + ' đ</b></li>'; }).join('') +
+      moi.map(function (x) { return '<li>' + e(x.ten) + ': <b>mới ' + tien(x.don_gia) + ' đ</b></li>'; }).join('') + '</ul>' +
+      '<button class="chinh rong" id="nutLuuFileGia">💾 Lưu ' + gia.file.length + ' giá</button></div>';
+    $('nutLuuFileGia').onclick = function () { luuGia(gia.file.map(function (x) { return { ma: x.ten, don_gia: x.don_gia }; }), this); };
+  }, 'giaFile');
+});
+$('nutMauGia').addEventListener('click', function () {
+  if (typeof XLSX === 'undefined') { bao('giaBao', 'do', 'Không tải được bộ đọc Excel — kiểm mạng rồi tải lại trang (F5).'); return; }
+  var dong = [['Tên nhà máy (như cột U file giờ)', 'Đơn giá (đồng/giờ)']];
+  var ds = (gia.lay && gia.lay.ds) || [];
+  if (!ds.some(function (x) { return x.ma === DocFileGio.MA_NGOAI_TINH; })) dong.push(['Ngoại tỉnh', null]);
+  ds.forEach(function (x) { dong.push([x.ten, x.don_gia]); });
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(dong), 'Bảng giá');
+  XLSX.writeFile(wb, 'bang-gia-tuyen-dung.xlsx');
+});
+
+// ---------------- GIỜ TUYỂN DỤNG ----------------
+var gio = { tom: null, kq: null, tenFile: '' };
+function thangTruoc() {
+  var d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - 1);
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
+}
+function moGio() {
+  hien('mGio');
+  if (!$('gioThang').value) $('gioThang').value = thangTruoc();
+  $('gioXem').classList.add('an'); $('nutLuuGio').classList.add('an');
+  bao('gioBao', '', '');
+  $('gioCacThang').innerHTML = '<div class="bao cho">⏳ Đang lấy các tháng đã lưu…</div>';
+  goi({ hanh_dong: 'kt_gio_tom', phien: trangThai.phien }).then(function (kq) {
+    if (!kq.ok) { $('gioCacThang').innerHTML = '<div class="bao do">' + e(kq.loi) + ' <button onclick="moGio()">Thử lại</button></div>'; return; }
+    gio.tom = kq;
+    $('gioCacThang').innerHTML = kq.thang.length ? kq.thang.map(function (t) {
+      return '<div class="dong-gia"><span class="ten">Tháng ' + thangNam(t.thang) + '</span><span class="gia">' + tien(t.tong_tien) + ' đ</span>' +
+        '<span class="phu">' + t.so_tinh + '/' + t.so_dong + ' người được tính · ' + tien(t.tong_gio) + ' giờ · lưu ' + e(t.luu_luc) + ' · ' + e(t.luu_boi) +
+        (t.ten_file ? ' · ' + e(t.ten_file) : '') + '</span></div>';
+    }).join('') : '<div class="ai">Chưa có tháng nào.</div>';
+  });
+}
+function lanTruoc(thang) { return gio.tom && gio.tom.thang.filter(function (t) { return t.thang === thang; })[0]; }
+$('chonFileGio').addEventListener('change', function () {
+  var f = this.files[0]; this.value = '';
+  var thang = $('gioThang').value;
+  if (!thang) { bao('gioBao', 'do', 'Chọn tháng trước, rồi mới chọn file.'); return; }
+  if (!gio.tom) { bao('gioBao', 'do', 'Chưa lấy được bảng giá — bấm ⏱ Giờ tuyển dụng ở trên để tải lại.'); return; }
+  $('gioXem').classList.add('an'); $('nutLuuGio').classList.add('an');
+  docExcel(f, function (cacTrang, tenFile) {
+    var kq = DocFileGio.docFile(cacTrang, { thang: thang, gia: gio.tom.gia });
+    gio.kq = kq; gio.tenFile = tenFile; gio.thang = thang;
+    if (!kq.ok) {
+      bao('gioBao', 'do', '<b>Chưa lưu được — file còn ' + kq.loi.length + ' lỗi.</b> Sửa trong Excel, lưu lại, rồi bấm 📂 Chọn file giờ lần nữa.' + dsLoi(kq.loi));
+      return;
+    }
+    var t = kq.tong, truoc = lanTruoc(thang), nmTruoc = {};
+    (truoc ? truoc.nha_may : []).forEach(function (n) { nmTruoc[DocFileGio.chuanMa(n.ma)] = n; });
+    var thieuNM = Object.keys(nmTruoc).filter(function (k) { return !kq.nha_may.some(function (n) { return DocFileGio.chuanMa(n.ma) === k; }); });
+    bao('gioBao', 'xanh', '✅ File đọc được (' + kq.trang.map(e).join(' · ') + '). Kiểm lại số bên dưới rồi bấm 💾 Lưu tháng này.' +
+      (truoc ? '<br>Tháng ' + thangNam(thang) + ' đã có file lưu lúc ' + e(truoc.luu_luc) + ' — lưu file này sẽ <b>thay</b> file đó.' : ''));
+    var thieuCC = kq.dong.filter(function (d) { return d.tinh_trang === 'thieu_cccd'; });
+    $('gioXem').innerHTML =
+      '<div class="tom"><div>Được tính<b>' + t.so_tinh + ' người</b></div><div>Tổng giờ<b>' + tien(t.tong_gio) + '</b></div>' +
+      '<div>Tổng tiền<b>' + tien(t.tong_tien) + ' đ</b></div><div>Không đạt<b>' + t.so_khong_dat + '</b></div><div>Thiếu CCCD<b>' + t.so_thieu_cccd + '</b></div></div>' +
+      (thieuNM.length ? '<div class="bao do">⚠ Lần lưu trước có nhà máy mà file này KHÔNG có: <b>' + e(thieuNM.map(function (k) { return nmTruoc[k].ma; }).join(', ')) +
+        '</b>. Có chắc đã chọn đúng file đủ cả hai vùng?</div>' : '') +
+      '<div class="cuon-ngang"><table class="bang-nm"><thead><tr><th>Nhà máy</th><th>Tính / dòng</th><th>Giờ</th><th>Tiền</th>' +
+      (truoc ? '<th>Lần trước</th>' : '') + '</tr></thead><tbody>' + kq.nha_may.map(function (n) {
+        var c = nmTruoc[DocFileGio.chuanMa(n.ma)];
+        return '<tr><td>' + e(n.ma) + '</td><td>' + n.so_tinh + ' / ' + n.so_dong + '</td><td>' + tien(n.gio) + '</td><td>' + tien(n.tien) + '</td>' +
+          (truoc ? '<td>' + (c ? tien(c.tien) : '<i>mới</i>') + '</td>' : '') + '</tr>';
+      }).join('') + '</tbody></table></div>' +
+      (thieuCC.length ? '<div class="bao cho" style="margin-top:12px"><b>' + thieuCC.length + ' người thiếu số CCCD — không tính, cần báo lại:</b><ul class="loi-ds">' +
+        thieuCC.slice(0, 50).map(function (d) { return '<li>' + e(d.ho_ten) + ' · ' + e(d.ma_tinh_luong) + ' · người tuyển ' + e(d.nguoi_tuyen) +
+          ' <span class="sua">(trang ' + e(d.trang) + ', dòng ' + d.dong + ')</span></li>'; }).join('') +
+        (thieuCC.length > 50 ? '<li>… và ' + (thieuCC.length - 50) + ' người nữa</li>' : '') + '</ul></div>' : '');
+    $('gioXem').classList.remove('an');
+    $('nutLuuGio').textContent = '💾 Lưu tháng ' + thangNam(thang);
+    $('nutLuuGio').classList.remove('an');
+  }, 'gioBao');
+});
+function luuGio(dongY) {
+  var kq = gio.kq, truoc = lanTruoc(gio.thang), nut = $('nutLuuGio');
+  if (!kq || !kq.ok) return;
+  nut.disabled = true; nut.textContent = '⏳ Đang lưu… (10–30 giây)';
+  bao('gioBao', 'cho', '⏳ Đang gửi ' + kq.dong.length + ' dòng lên máy chủ. Đừng đóng trang.');
+  goi({ hanh_dong: 'kt_gio_luu', phien: trangThai.phien, thang: gio.thang, gia_phien_ban: gio.tom.gia_phien_ban,
+        phien_ban_thang: truoc ? truoc.phien_ban : 0, ten_file: gio.tenFile, dong: kq.dong, dong_y_thieu_nha_may: dongY === true }, 180)
+    .then(function (r) {
+      nut.disabled = false; nut.textContent = '💾 Lưu tháng ' + thangNam(gio.thang);
+      if (r.ma === 'THIEU_NHA_MAY') {
+        hoi('<p><b>File này thiếu ' + r.thieu.length + ' nhà máy so với lần lưu trước:</b></p><p>' + e(r.thieu.join(', ')) +
+            '</p><p>Lưu thì các nhà máy đó <b>không còn số</b> tháng ' + thangNam(gio.thang) + '.</p>',
+            'Vẫn lưu', 'Không, chọn lại file', function () { luuGio(true); },
+            function () { bao('gioBao', 'cho', 'Chưa lưu gì. Bấm 📂 Chọn file giờ để chọn file đủ cả hai vùng.'); });
+        bao('gioBao', 'cho', 'Chưa lưu — đang chờ anh/chị trả lời.');
+        return;
+      }
+      if (!r.ok) {
+        bao('gioBao', 'do', '<b>Chưa lưu.</b> ' + e(r.loi) + (r.ma === 'DA_DOI' || r.ma === 'DA_DOI_GIA' ? ' <button onclick="moGio()">🔄 Tải lại</button>' : ''));
+        return;
+      }
+      var thang = gio.thang;
+      moGio();
+      bao('gioBao', 'xanh', '✅ Đã lưu tháng ' + thangNam(thang) + ' lúc ' + e(r.luu_luc) + ': ' + r.so_tinh + '/' + r.so_dong + ' người được tính, ' +
+          tien(r.tong_tien) + ' đ. Người tuyển xem được ngay ở trang Dữ liệu tuyển.' +
+          (r.don_thang && r.don_thang.length ? ' (Đã dọn tháng cũ: ' + e(r.don_thang.map(thangNam).join(', ')) + ')' : ''));
+    });
+}
+$('nutLuuGio').addEventListener('click', luuGio);
+
+// ---------------- GẮN NÚT ----------------
+$('menuViec').addEventListener('click', function (ev) {
+  var b = ev.target.closest('button[data-viec]');
+  if (!b) return;
+  var v = b.getAttribute('data-viec');
+  if (v === 'gio') moGio(); else if (v === 'gia') moGia(); else taiLuoi();
+});
+$('nutDN').addEventListener('click', dangNhap);
+$('dnMk').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') dangNhap(); });
+$('dnCccd').addEventListener('input', function () { xoaLoiO('loiCccd', 'dnCccd'); });
+$('dnMk').addEventListener('input', function () { xoaLoiO('loiMk', 'dnMk'); });
+$('nutThoat').addEventListener('click', dangXuat);
+$('nutLamMoi').addEventListener('click', taiLuoi);
+$('timCT').addEventListener('input', locCT);
+$('nutQuayLai').addEventListener('click', taiLuoi);
+$('chonFile').addEventListener('change', function () { chonFile(this.files[0]); });
+$('timNguoi').addEventListener('input', function () { veDanhSach(this.value); });
+$('nutLuu').addEventListener('click', luuNhap);
+
+(function batDau() {
+  if (!URL_API || !TOKEN_API) { $('daiCauHinh').classList.remove('an'); }
+  trangThai.phien = doc(KHOA_PHIEN) || '';
+  try { trangThai.tk = JSON.parse(doc(KHOA_TK) || 'null'); } catch (x) { trangThai.tk = null; }
+  if (trangThai.phien && trangThai.tk) vaoViec(); else hien('mDangNhap');
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</body>
+</html>

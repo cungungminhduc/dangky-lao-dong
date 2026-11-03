@@ -126,6 +126,12 @@
   <button type="button" class="nut" id="nut_dn">Đăng nhập</button>
   <!-- Báo TRƯỚC khi phải chờ (chuẩn 6) — màn này giữ luôn hiện -->
   <div class="cho">⏳ Bấm Đăng nhập xong <b>chờ một chút</b> — lần đầu trong ngày có khi 30–60 giây. <b>Đừng tải lại trang.</b></div>
+  <!-- Cổng kế toán (Dương chốt 31/10/2026): hệ công–lương riêng, trang chung kho. Kế toán không có tài khoản tuyển dụng nên ô nằm ở màn đầu -->
+  <div class="ke">📒 Kế toán</div>
+  <div class="ke-ghi">Chỉ dành cho kế toán: tải bảng giá, file giờ. Đăng nhập riêng bằng tài khoản công–lương, không dùng mật khẩu ở trên.</div>
+  <div class="luoi">
+    <a class="o-viec" href="noibo.html"><span class="bt" aria-hidden="true">📒</span><b>Kế toán – công lương</b><span class="mt">Bảng giá · file giờ tuyển dụng</span></a>
+  </div>
 </div>
 
 <!-- ===== TRANG CHỦ ===== -->
@@ -260,7 +266,7 @@ function xoaLoiO(id) {
 // ============================================================
 // Ô VIỆC
 // ============================================================
-// `can`: '' = ai cũng vào được · 'phan_cong' = trưởng nhóm / quản trị · 'du_lieu_tuyen' = đã khai ten_tuyen.
+// `can`: '' = ai cũng vào được · 'phan_cong' = trưởng nhóm / quản trị · 'du_lieu_tuyen' = đã khai ten_tuyen · 'quan_tri' = chỉ quản trị.
 // `muc`: phần nào trong gói đầu thuộc ô này (để ghi "cập nhật lúc …"). `bt` (3.44, Dương chốt 27/10): biểu tượng to trên tên ô.
 var O_VIEC = [
   { bt: '📞', ten: 'Danh sách gọi', mt: 'Gọi lao động · báo vào làm · lấy dữ liệu', href: 'danhsach.html', can: 'dang_nhap', muc: 'danh_sach' },
@@ -271,6 +277,8 @@ var O_VIEC = [
   { bt: '📈', ten: 'Biểu đồ', mt: 'Biến động tuyển dụng · quân số · nhân viên', href: 'bieudo.html', can: 'phan_cong', muc: '' },
   // 3.49: mọi tài khoản đã đăng nhập; trang tự báo nếu mở trên điện thoại (chỉ chạy Chrome / Edge máy tính)
   { bt: '🗂️', ten: 'Hồ sơ scan', mt: 'Bản scan căn cước tự đặt tên, xếp thư mục (máy tính)', href: 'hososcan.html', can: 'dang_nhap', muc: '' },
+  // Hệ công–lương riêng, tài khoản riêng (Dương chốt 31/10): quản trị đã đăng nhập thì không còn thấy màn đầu nên cần ô ở đây
+  { bt: '📒', ten: 'Kế toán – công lương', mt: 'Bảng giá · file giờ — đăng nhập riêng', href: 'noibo.html', can: 'quan_tri', muc: '' },
   { bt: '📝', ten: 'Đăng ký lao động', mt: 'Ghi người sẽ đến nhà máy', href: 'index.html', can: '', muc: '' },
   { bt: '📷', ten: 'Quét thẻ đón', mt: 'Đánh dấu người đã đến', href: 'doncong.html', can: '', muc: '' }
 ];
@@ -290,6 +298,7 @@ var NHOM_O = [
  *  `xemDlt` undefined = máy chủ cũ không nói → hiện, trang dữ liệu tuyển tự từ chối nếu chưa được duyệt. */
 function oDuocXem(tk, xemDlt) {
   return O_VIEC.filter(function (o) {
+    if (o.can === 'quan_tri') return !!(tk && tk.la_quan_tri);   // chưa rõ quyền thì chưa hiện — ô này không phải việc của đa số
     if (!o.can || !tk) return true;
     if (o.can === 'phan_cong') return !!tk.phan_cong_duoc;
     if (o.can === 'du_lieu_tuyen') return xemDlt !== false;
