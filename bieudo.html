@@ -8,13 +8,14 @@
 <title>Biểu đồ tuyển dụng</title>
 <link rel="icon" href="icon-tc-192.png">
 <!--
-  TRANG BIỂU ĐỒ — bản 3.47 (làm lại lần 2, khổ MÁY TÍNH). Đặc tả + bản nháp Dương duyệt: .scratch/bieu-do-3.47/
-  (DAC-TA.md mục 14–15, BAN-NHAP-4.html).
+  TRANG BIỂU ĐỒ — bản 3.54.1, báo cáo đội ngũ ĐỢT 2 (khổ MÁY TÍNH). Đặc tả + bản nháp Dương duyệt: .scratch/bao-cao-doi-ngu/
+  (DAC-TA.md, BAN-NHAP.html). Bố cục 3.47 trước đó: .scratch/bieu-do-3.47/.
 
-  Cột trái (thu gọn từng phần): ① xem gì — cây hạng mục → số liệu → góc nhìn → kết hợp · ② thời gian — CÂY năm → quý → tháng → tuần
-  (chọn một mục = biểu đồ chia theo cấp nhỏ hơn; thêm một mục cùng cấp = khoảng) + 2 ô ngày + so cùng kỳ năm trước · ③ xem ai — nhiều mục.
-  Bên phải: BIỂU ĐỒ CHÍNH đứng yên; dưới cuộn: tóm lại · lưới thẻ cùng cỡ (thẻ mới vào cuối) · đối chiếu cả khoảng (dạng bản nháp 3).
-  Mọi biểu đồ: thời gian nằm ngang, số lượng dựng đứng; ≥ 4 kỳ đường, ≤ 3 kỳ cột. Mọi bảng có "⛶ Xem to".
+  Cột trái (thu gọn từng phần): ① thời gian — CÂY năm → quý → tháng → tuần + 2 ô ngày + so cùng kỳ năm trước · ② ở đâu — mảng,
+  khu vực → nhà máy (lọc phiếu) · ③ so theo ai — Nhân viên / Đội / Nhà máy = hàng của bảng (nhân viên gom theo đội, có ô tìm, xếp).
+  Bên phải: vùng CỐ ĐỊNH ≤ 40% màn (tiêu đề một dòng · dải chỉ tiêu · biểu đồ + chip số liệu; từ 7 đối tượng là lưới biểu đồ nhỏ) ·
+  phần dưới cuộn riêng: tóm lại · 📋 Bảng so sánh (xếp hai chiều, Cộng đếm người không trùng, soát số) hoặc 🔻 Phân tích (phễu, đánh
+  giá, lý do, bù nghỉ, bảng chéo có "⛶ Xem to"). Bấm tên nhân viên = hồ sơ (◀ ▶ theo thứ tự bảng); bấm đội / nhà máy = đi sâu.
   🎯 Chỉ tiêu kế hoạch (chỉ quản trị): lớp phủ riêng, lưu = cú `bd_ct_luu` (ghi tab CHI_TIEU, chống gửi trùng).
 
   MỘT cú `bd_lay` (chỉ đọc) lấy số từ 01/01 hai năm trước; đổi lựa chọn là trang tự tính, không gọi máy chủ. Máy chủ chỉ trả số đếm:
@@ -58,7 +59,7 @@
     .chinh{display:flex;flex-direction:column;min-height:0}
     .cuon{flex:1;overflow:auto;min-height:0;padding-right:4px}
   }
-  @media (max-width:1000px){ .khung{grid-template-columns:1fr} }
+  @media (max-width:1000px){ .khung{grid-template-columns:minmax(0,1fr)} }   /* minmax(0,…): bảng rộng vuốt ngang trong khung, không nới cả trang */
 
   /* ===== CỘT TRÁI ===== */
   .nut-lai{width:100%;min-height:44px;margin-bottom:8px;border-radius:10px;border:1px solid #c9d0d8;background:#fff;font:inherit;font-size:15.5px;cursor:pointer}
@@ -76,23 +77,9 @@
   .hang{display:flex;flex-wrap:wrap;gap:6px}
   .luoi3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
   .luoi2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-  .nhom{border:1px solid var(--vien);border-radius:12px;margin-top:8px}
-  .nhom.bat{border-color:#9fbde6}
-  .dong-nhom{display:flex;align-items:stretch}
-  .dong-nhom .goc{flex:1;display:flex;gap:10px;align-items:center;min-height:48px;padding:6px 10px;border:0;background:none;font:inherit;font-size:16px;text-align:left;cursor:pointer}
-  .nhom.bat .dong-nhom{background:#eef4fd;border-radius:11px 11px 0 0}
-  .nut-mo{min-width:48px;border:0;border-left:1px solid var(--vien);background:none;font:inherit;font-size:16px;color:var(--mo);cursor:pointer}
   .o-tich{flex:none;width:22px;height:22px;border-radius:6px;border:2px solid #7d8895;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:#fff;background:#fff}
   [aria-pressed="true"] > .o-tich{background:#1f2933;border-color:#1f2933}
   [aria-pressed="true"] > .o-tich::after{content:"✓"}
-  .la-ds{padding:4px 10px 8px 42px}
-  .la{display:flex;gap:10px;align-items:center;width:100%;min-height:44px;padding:4px 2px;border:0;background:none;font:inherit;font-size:15.5px;text-align:left;cursor:pointer}
-  .la:disabled{opacity:.45;cursor:default}
-  .la .o-tich{width:20px;height:20px}
-  .la .phu-la{color:var(--mo);font-size:15px}
-  .tieu-la{font-size:15px;color:var(--mo);margin:6px 0 0}
-  .hai-nut{display:flex;gap:6px;margin:4px 0}
-  .hai-nut .chon{flex:1;font-size:15px;padding:6px 8px}
   .o-ngay-nhap{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .o-ngay-nhap label{font-size:15px;color:#3c4753}
   .o-ngay-nhap input{width:100%;min-height:44px;padding:6px 8px;font:inherit;font-size:16px;border:1px solid #c9d0d8;border-radius:10px;margin-top:2px}
@@ -111,23 +98,12 @@
   .ghi-ky .nhac{color:#1c4f8f;font-size:15px}
   .chip{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:6px 12px;border-radius:22px;border:1px solid #c9d0d8;background:#fff;font:inherit;font-size:15.5px;cursor:pointer}
   .chip[aria-pressed="true"]{border:2px solid #1f2933;background:#f1f4f7;font-weight:700}
-  .cham{display:inline-block;width:12px;height:12px;border-radius:50%;flex:none;background:#c9d0d8}
-  .loi-chon{margin-top:8px;padding:8px 10px;border-radius:10px;background:#fdecea;color:#8a1c13;font-size:15px}
 
   /* ===== CỘT PHẢI ===== */
-  .tieu-xem{background:var(--the);border:1px solid var(--vien);border-radius:14px;padding:8px 14px;font-size:15.5px;line-height:1.5}
-  .tieu-xem b{font-size:16.5px}
   .the{background:var(--the);border:1px solid var(--vien);border-radius:14px;padding:10px 14px;position:relative;min-width:0}
   .the h3{margin:0;font-size:16.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .the-chinh{margin-top:8px;border:2px solid #1f2933}
-  .the-chinh h3{font-size:18px}
   .dau-the{display:flex;align-items:center;gap:8px}
   .dau-the .nut-lon{margin-left:auto;flex:none;min-height:44px;padding:4px 10px;border-radius:10px;border:1px solid #c9d0d8;background:#fff;font:inherit;font-size:15px;cursor:pointer}
-  .so-the{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:2px}
-  .so-the b{font-size:26px;line-height:1.15;font-variant-numeric:tabular-nums}
-  .so-the span{font-size:15px;color:var(--mo)}
-  .xu-the{font-size:15px;line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-  .the-chinh .xu-the{-webkit-line-clamp:4}
   .loi-the{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--do-nhat);color:#8a1c13;font-size:15.5px}
   .chu-thich{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:15px;color:#3c4753;margin:4px 0 0}
   .chu-thich span{display:inline-flex;align-items:center;gap:6px}
@@ -139,32 +115,7 @@
   .goi-y-bd{position:absolute;pointer-events:none;background:#1f2933;color:#fff;border-radius:10px;padding:8px 10px;font-size:15px;line-height:1.45;min-width:170px;
     box-shadow:0 4px 14px rgba(0,0,0,.2);z-index:5}
   .goi-y-bd i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
-  .tom-lai{background:#fffdf3;border:1px solid #f0dda0;border-radius:14px;padding:10px 16px;margin-top:10px}
-  .tom-lai h2{margin:0 0 2px;font-size:17px}
-  .tom-lai ul{margin:0;padding-left:22px;font-size:15.5px;line-height:1.6}
-  /* lưới thẻ: CÙNG CỠ; thẻ mới thêm vào CUỐI nên thẻ cũ không nhảy chỗ */
-  .luoi-the{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:330px;gap:10px;margin-top:10px}
-  @media (max-width:1180px){ .luoi-the{grid-template-columns:1fr} }
-  .luoi-the .the{display:flex;flex-direction:column;cursor:pointer;overflow:hidden}
-  .luoi-the .the.dang-lon{outline:3px solid var(--sang);outline-offset:-1px}
-  .luoi-the .the .bd{margin-top:auto}
-  .luoi-the .the.rong{grid-column:1/-1;cursor:default}
-  .the-bang{overflow:auto;margin-top:6px}
-  .tieu-muc{margin:18px 0 0;font-size:17px}
-  .ghi-muc{font-size:15px;color:var(--mo);margin:2px 0 0}
-  .luoi-khoang{display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:10px;margin-top:8px}
-  .luoi-khoang .the.rong{grid-column:1/-1}
   .the .phu{font-size:15px;color:var(--mo);margin:2px 0 6px;line-height:1.45}
-  .thanh .dong{display:grid;grid-template-columns:minmax(120px,190px) 1fr 96px;gap:10px;align-items:center;margin-top:6px;font-size:15.5px}
-  .thanh .ray{position:relative;height:16px;background:#eef1f4;border-radius:8px}
-  .thanh .ray i{position:absolute;left:0;top:0;bottom:0;border-radius:8px}
-  .thanh .ray b{position:absolute;top:-4px;bottom:-4px;width:2px;background:#1f2933}
-  .thanh .so-p{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
-  .thanh small{font-size:15px;font-weight:400}
-  .pheu{display:grid;gap:10px}
-  .pheu .buoc{display:grid;grid-template-columns:150px 1fr;gap:10px;align-items:center;font-size:15.5px}
-  .pheu .buoc .khoi{height:30px;border-radius:6px;background:#2a78d6;color:#fff;display:flex;align-items:center;padding:0 10px;font-weight:700;white-space:nowrap;min-width:64px}
-  .pheu .roi{grid-column:2;font-size:15px;color:var(--duoi);margin-top:-6px}
   table.ss{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
   table.ss th,table.ss td{padding:7px 8px;border-bottom:1px solid var(--vien);text-align:right;vertical-align:middle}
   table.ss th:first-child,table.ss td:first-child{text-align:left}
@@ -173,9 +124,128 @@
   table.ss .nho{display:block;font-size:15px;font-weight:400}
   table.mt td.o-mt{text-align:center;min-width:64px}
   table.mt td.o-mt.dam{color:#fff;font-weight:700}
-  .chua-hd{color:#8a4b00}
   .chu-y-the{margin-top:8px;padding:8px 12px;border-radius:10px;background:#f6f8fa;font-size:15.5px;line-height:1.5}
   .trong{padding:30px;text-align:center;color:var(--mo);font-size:16px;background:var(--the);border:1px dashed #c9d0d8;border-radius:14px;margin-top:8px}
+
+  /* ===== ĐỢT 2 — cột trái: ② Ở đâu · ③ So theo ai ===== */
+  .o-tim{width:100%;min-height:44px;padding:8px 10px;margin-top:8px;font:inherit;font-size:16px;border:1px solid #c9d0d8;border-radius:10px}
+  .tich{flex:none;width:22px;height:22px;border-radius:6px;border:2px solid #7d8895;display:inline-flex;align-items:center;justify-content:center;font-size:14px;line-height:1;color:#fff;background:#fff}
+  [aria-pressed="true"] > .tich{background:#1f2933;border-color:#1f2933}
+  [aria-pressed="true"] > .tich::after{content:"✓"}
+  [aria-pressed="mixed"] > .tich{border-color:#1f2933;color:#1f2933}
+  [aria-pressed="mixed"] > .tich::after{content:"–";font-weight:700}
+  .dong-chon{display:flex;gap:8px;align-items:center;width:100%;min-height:44px;padding:4px 2px;border:0;background:none;color:var(--chu);font:inherit;font-size:15.5px;text-align:left;cursor:pointer}
+  .dong-chon .so{margin-left:auto;color:var(--mo);font-size:15px;white-space:nowrap}
+  .dong-chon.nhom-dau{font-weight:700;background:#f1f4f7;border-radius:8px;padding:4px 6px}
+  .nhom-hang{display:flex;gap:4px;margin-top:6px}
+  .nhom-hang .dong-chon{flex:1;min-width:0}
+  .nut-mo{flex:none;width:44px;min-height:44px;border:0;background:#f1f4f7;border-radius:8px;font:inherit;color:var(--mo);cursor:pointer}
+  .con{padding-left:14px}
+  .da-chon{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:8px;font-size:15px;font-weight:700}
+  .loc-doi{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;padding:4px 8px;border-radius:10px;background:#eef4fd;font-size:15.5px}
+  .loc-doi .nut-phu{margin-left:auto}
+  .nut-phu{flex:none;min-height:44px;padding:4px 10px;border-radius:10px;border:1px solid #c9d0d8;background:#fff;color:var(--chu);font:inherit;font-size:15px;cursor:pointer}
+
+  /* ===== ĐỢT 2 — vùng cố định (tối đa 40% màn): tiêu đề một dòng · chỉ tiêu · biểu đồ + chip ===== */
+  .tieu{position:relative;display:flex;align-items:center;gap:8px;background:var(--the);border:1px solid var(--vien);border-radius:12px;padding:0 10px;min-height:44px;font-size:15.5px}
+  .tieu .chu{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .pop{position:absolute;top:100%;left:0;right:0;z-index:20;max-height:220px;overflow:auto;margin-top:4px;padding:10px 12px;background:#fff;border:1px solid #c9d0d8;border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,.15);font-size:15px}
+  .dai-ct{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:10px;align-items:center;margin-top:5px;background:#eef8f2;border:1px solid #cfe9d9;border-radius:12px;padding:3px 10px;font-size:15px;line-height:1.35}
+  .dai-ct.cham{background:#fff4ec;border-color:#f3d7c2}
+  .dai-ct b{font-size:16px}
+  .ray{height:12px;background:#dfe5ea;border-radius:6px;position:relative;overflow:hidden}
+  .ray i{position:absolute;left:0;top:0;bottom:0;background:var(--xanh);border-radius:6px}
+  .dai-ct.cham .ray i{background:#e06c2e}
+  .ray s{position:absolute;top:0;bottom:0;width:2px;background:#1f2933}
+  .the-bd{position:relative;margin-top:5px;background:var(--the);border:2px solid #1f2933;border-radius:12px;padding:3px 10px 4px}
+  .the-bd.ho-bd{border:1px solid var(--vien);margin-top:4px}
+  .dau-bd{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-height:44px}
+  .nhom-cs{display:flex;gap:4px;flex:none}
+  .nhom-cs .chon{padding:6px 8px;font-size:15px}
+  .ds-chip{flex:1 1 300px;min-width:0;display:flex;flex-wrap:wrap;gap:4px}
+  .chip-cs{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:4px 9px;border-radius:22px;border:1px solid #c9d0d8;background:#fff;color:var(--chu);font:inherit;font-size:15px;cursor:pointer;white-space:nowrap}
+  .chip-cs[aria-pressed="true"]{border:2px solid #1f2933;background:#f1f4f7;font-weight:700;padding:3px 8px}
+  .chip-cs:disabled{opacity:.4;cursor:default}
+  .chip-cs i{width:12px;height:12px;border-radius:50%;background:#dfe5ea;flex:none}
+  .ghi-bd{font-size:15px;color:#6b4e00;line-height:1.4;margin:2px 0}
+  .luoi-nho{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;overflow:auto;padding:2px}
+  .o-nho{border:1px solid var(--vien);border-radius:10px;padding:3px 6px 2px;background:#fff;color:var(--chu);font:inherit;cursor:pointer;text-align:left;min-width:0}
+  .o-nho:hover{border-color:#1f2933}
+  .o-nho .ten{display:flex;gap:6px;font-size:15px;line-height:1.3}
+  .o-nho .ten span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+  /* ===== ĐỢT 2 — phần dưới: tóm lại · 📋 bảng so sánh · 🔻 phân tích ===== */
+  .cuon{margin-top:6px;background:var(--the);border:1px solid var(--vien);border-radius:12px}
+  .tom-lai{margin:8px 10px 0;padding:6px 12px 8px;border-radius:12px;background:#fffdf3;border:1px solid #f0dda0}
+  .dau-tom{display:flex;align-items:center;gap:8px;min-height:30px}
+  .dau-tom b{font-size:16.5px;flex:1}
+  .tom-lai ul{margin:0;padding-left:20px;font-size:15.5px;line-height:1.55}
+  .tab-duoi{display:flex;gap:6px;padding:8px 10px 6px;align-items:center;flex-wrap:wrap}
+  .tab-duoi button{flex:none;min-height:44px;padding:6px 14px;border-radius:10px;border:1px solid #c9d0d8;background:#fff;color:var(--chu);font:inherit;font-size:15.5px;cursor:pointer}
+  .tab-duoi button[aria-pressed="true"]{background:#1f2933;border-color:#1f2933;color:#fff;font-weight:700}
+  .tab-duoi .goi-y{padding:0 4px}
+  .thanh-bang{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:0 12px 6px}
+  .khung-bang{overflow-x:auto}
+  table.bang-ss{border-collapse:separate;border-spacing:0;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+  .bang-ss th,.bang-ss td{padding:4px 7px;border-bottom:1px solid var(--vien);text-align:right;white-space:nowrap;background:#fff}
+  .bang-ss thead th{position:sticky;top:0;z-index:3;background:#f6f8fa;padding:0}
+  .bang-ss thead th button{display:block;width:100%;min-height:50px;padding:2px 6px;border:0;background:none;font:inherit;font-weight:600;color:#3c4753;text-align:right;line-height:1.2;white-space:normal;min-width:62px;cursor:pointer}
+  .bang-ss thead th.dang button{background:#e4edf9;color:#163f7a;font-weight:700}
+  .bang-ss thead th.c-ky{padding:0 6px;font-weight:600;color:#3c4753}
+  .bang-ss .c-ten{position:sticky;left:0;z-index:2;text-align:left;min-width:210px;max-width:230px}
+  .bang-ss thead th.c-ten{z-index:4}
+  .bang-ss thead th.c-ten button{text-align:left}
+  .bang-ss tfoot td{position:sticky;bottom:0;z-index:3;background:#f1f4f7;font-weight:700;border-top:2px solid #c9d0d8}
+  .bang-ss tfoot td.c-ten{z-index:4}
+  .bang-ss tbody tr.chon-dong td{background:#eef4fd}
+  .bang-ss tbody tr.rong td{color:#8a94a0}
+  .bang-ss td.c-dang{background:#f5f9ff;font-weight:700}
+  .o-ten{display:flex;align-items:center;gap:2px}
+  .nut-tich{flex:none;width:40px;min-height:44px;display:flex;align-items:center;justify-content:center;border:0;background:none;cursor:pointer;padding:0}
+  .nut-ten{flex:1;min-width:0;min-height:44px;border:0;background:none;font:inherit;text-align:left;cursor:pointer;padding:2px;line-height:1.25}
+  .nut-ten b{display:block;font-weight:600;color:#1d5fbf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:165px}
+  .nut-ten span{display:block;font-size:15px;color:var(--mo);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:165px}
+  .canh{color:#8a4b00 !important}
+  .ghi-cong{padding:6px 12px;font-size:15px;color:var(--mo)}
+  .soat{margin:6px 12px 12px;padding:8px 12px;border-radius:10px;background:#fffdf3;border:1px solid #f0dda0;font-size:15px;line-height:1.5}
+  .soat ul{margin:2px 0 0;padding-left:20px}
+  .dau-pt{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:0 10px 8px;font-size:15.5px}
+  .nut-pt{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+  .luoi-pt{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(440px,100%),1fr));gap:10px;padding:0 10px 12px}
+  .luoi-pt .the.rong{grid-column:1/-1}
+  .the-pt{border:1px solid var(--vien);border-radius:12px;padding:10px 12px;min-width:0;overflow-x:auto}
+  .the-pt.rong-het{grid-column:1/-1}
+  .the-pt h4{margin:0;font-size:16.5px}
+  .the-pt .phu{font-size:15px;color:var(--mo);margin:2px 0 6px;line-height:1.4}
+  .the-pt .buoc{display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:center;font-size:15px;margin-top:6px}
+  .the-pt .khoi{min-height:30px;border-radius:6px;background:#1d5fbf;color:#fff;display:flex;align-items:center;padding:2px 8px;font-weight:700;white-space:nowrap;min-width:92px}
+  .the-pt .roi{grid-column:2;font-size:15px;color:var(--duoi);line-height:1.35}
+  .dong-tt{display:grid;grid-template-columns:150px 1fr 70px;gap:8px;align-items:center;font-size:15px;margin-top:4px}
+  .dong-tt.dai{grid-template-columns:130px 1fr 96px}
+  .dong-tt .ray{height:16px;border-radius:8px;overflow:visible}
+  .dong-tt .ray s{top:-2px;bottom:-2px}
+  table.gon{border-collapse:collapse;width:100%;font-size:15px;font-variant-numeric:tabular-nums}
+  table.gon th,table.gon td{padding:5px 6px;border-bottom:1px solid var(--vien);text-align:right;white-space:normal}
+  table.gon th:first-child,table.gon td:first-child{text-align:left}
+  table.gon thead th{font-weight:600;color:#3c4753;background:#f6f8fa}
+  table.gon td.o-dg{white-space:nowrap}
+  table.gon th.dang{background:#e4edf9}
+  .nut-cot{min-height:44px;border:0;background:none;font:inherit;cursor:pointer;padding:2px;text-align:right}
+  .nut-cot.ten-pt{text-align:left;color:#1d5fbf;font-weight:600}
+
+  /* ===== ĐỢT 2 — hồ sơ nhân viên (khung bên phải) ===== */
+  .nen-ho{position:fixed;top:0;right:0;bottom:0;left:0;background:rgba(0,0,0,.35);z-index:40}
+  .ho-so{position:fixed;top:0;right:0;bottom:0;width:min(840px,100%);z-index:41;background:#fff;overflow:auto;padding:0 18px 20px;box-shadow:-6px 0 24px rgba(0,0,0,.2)}
+  .dau-ho{position:sticky;top:0;z-index:2;background:#fff;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 0;border-bottom:2px solid var(--vien)}
+  .dau-ho .ten{flex:1;min-width:200px}
+  .dau-ho b{font-size:19px}
+  .nut-ho{min-height:44px;padding:6px 12px;border-radius:10px;border:1px solid #c9d0d8;background:#fff;color:var(--chu);font:inherit;font-size:15px;cursor:pointer}
+  .nut-ho.dam{background:#1f2933;border-color:#1f2933;color:#fff;font-weight:700}
+  .nut-ho:disabled{opacity:.4;cursor:default}
+  .o-so{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin-top:10px}
+  .o-so div{background:#f6f8fa;border-radius:10px;padding:8px 10px;font-size:15px;line-height:1.3}
+  .o-so b{display:block;font-size:24px}
+  .ho-so h4{margin:14px 0 4px;font-size:16.5px}
 
   /* ===== LỚP PHỦ: xem bảng to · chỉ tiêu kế hoạch ===== */
   .lop-to{position:fixed;top:0;right:0;bottom:0;left:0;background:#fff;z-index:50;overflow:auto;padding:0 28px 40px}
@@ -246,26 +316,23 @@
     <div class="ben">
       <button type="button" class="nut-ct an" id="nut_ct">🎯 Chỉ tiêu kế hoạch</button>
       <button type="button" class="nut-lai" id="nut_lai">↺ Chọn lại từ đầu</button>
-      <div class="phan"><button type="button" class="dau-phan" data-phan="xem"><span><b>① Xem gì?</b><span class="tom" id="tom_xem"></span></span><span class="mui-mo" id="mui_xem"></span></button>
-        <div class="than-phan" id="than_xem"></div></div>
-      <div class="phan"><button type="button" class="dau-phan" data-phan="tg"><span><b>② Thời gian</b><span class="tom" id="tom_tg"></span></span><span class="mui-mo" id="mui_tg"></span></button>
+      <div class="phan"><button type="button" class="dau-phan" data-phan="tg"><span><b>① Thời gian</b><span class="tom" id="tom_tg"></span></span><span class="mui-mo" id="mui_tg"></span></button>
         <div class="than-phan" id="than_tg"></div></div>
-      <div class="phan"><button type="button" class="dau-phan" data-phan="ai"><span><b>③ Xem ai?</b><span class="tom" id="tom_ai"></span></span><span class="mui-mo" id="mui_ai"></span></button>
+      <div class="phan"><button type="button" class="dau-phan" data-phan="o"><span><b>② Ở đâu</b><span class="tom" id="tom_o"></span></span><span class="mui-mo" id="mui_o"></span></button>
+        <div class="than-phan" id="than_o"></div></div>
+      <div class="phan"><button type="button" class="dau-phan" data-phan="ai"><span><b>③ So theo ai</b><span class="tom" id="tom_ai"></span></span><span class="mui-mo" id="mui_ai"></span></button>
         <div class="than-phan" id="than_ai"></div></div>
     </div>
     <div class="chinh">
-      <div class="co-dinh">
-        <div class="tieu-xem" id="tieu_xem"></div>
-        <div id="khoi_chinh"></div>
-      </div>
-      <div class="cuon" id="cuon">
-        <div class="tom-lai" id="tom_lai"><h2>👉 Tóm lại</h2><ul id="tom_lai_ds"></ul></div>
-        <div class="luoi-the" id="luoi_the"></div>
-        <div id="khoang"></div>
-      </div>
+      <div class="co-dinh" id="co_dinh"></div>
+      <div class="cuon" id="cuon"></div>
     </div>
   </div>
 </div>
+
+<!-- Hồ sơ một nhân viên: khung bên phải, ◀ ▶ theo thứ tự bảng đang xếp; Esc / ✕ / bấm nền tối để đóng -->
+<div class="nen-ho an" id="nen_ho" data-x="hs_dong"></div>
+<div class="ho-so an" id="ho_so" role="dialog" aria-modal="true" aria-label="Chi tiết nhân viên"></div>
 
 <div class="lop-to an" id="lop_to" role="dialog" aria-modal="true"></div>
 
@@ -394,7 +461,8 @@ var CAP_DUOI = { nam: 'quy', quy: 'thang', thang: 'tuan' };
 // ============================================================
 var SO_GOC = null;
 var CONG_TY = [], CT_MA = {}, NHAN_VIEN = [], NV_MA = {}, PHIEU = [], DON_VI = {}, CHI_TIEU = [], LUOT = [];
-var TU = '', BAT_DAU = '', QS_LOI = '', CT_LOI = '', CT_HONG = 0, THIEU_NGAY = 0, BAT_DAU_SO = '', LUOT_LOI = '';
+var TU = '', BAT_DAU = '', QS_LOI = '', CT_LOI = '', CT_HONG = 0, THIEU_NGAY = 0, BAT_DAU_SO = '', LUOT_LOI = '', TU_KHO = '', PHIEU_LA = 0;
+var NGAY_HO = 45;   // phiếu cách khúc chính hơn ngần này ngày = ngày lạ (thường gõ nhầm năm), không kéo mốc có số
 var VAI = { quan_tri: false, nhom: [] };
 var CHUA_DOI = 'Chưa xếp đội', CHUA_KV = 'Chưa ghi khu vực';
 
@@ -425,6 +493,14 @@ function nhanSo(kq) {
     var ten = l ? l.ten + (l.trung ? ' (tên này 2 tài khoản cùng khai)' : '') : (p[2] === 0 ? '(ô người tuyển để trống)' : '');
     return [p[0], ct[p[1]].ma_ct, p[2] > 0 ? p[2] : 0, p[3], p[4] >= 0 ? ly[p[4]] : '', ten, p[5] > 0 ? p[5] : -(i + 1)];
   }).sort(function (a, b) { return a[0] < b[0] ? -1 : (a[0] > b[0] ? 1 : 0); });
+  // Mốc có số (đợt 2): phiếu gõ nhầm năm, nằm cách khúc chính hơn NGAY_HO ngày, không được kéo mốc về đầu năm (bày 0 cả chục tháng → "tăng 100%" giả).
+  TU_KHO = tuKho;
+  for (var j = 0, truoc = BAT_DAU; j < PHIEU.length && PHIEU[j][0] <= HOM_NAY; j++) {
+    if (PHIEU[j][0] < truoc) continue;
+    if (soNgay(truoc, PHIEU[j][0]) - 1 > NGAY_HO) BAT_DAU = PHIEU[j][0];
+    truoc = PHIEU[j][0];
+  }
+  PHIEU_LA = PHIEU.filter(function (p) { return p[0] < BAT_DAU; }).length;
   // 3.50 — lượt làm từ sổ: [ngày vào, chỉ số công ty, nhân viên, 1 = người mới · 2 = tuyển lại] → [ngày, ma_ct, mã NV, loại].
   LUOT = (kq.luot || []).map(function (p) { return [p[0], ct[p[1]].ma_ct, p[2] > 0 ? p[2] : 0, p[3]]; })
     .sort(function (a, b) { return a[0] < b[0] ? -1 : (a[0] > b[0] ? 1 : 0); });
@@ -458,25 +534,8 @@ function motPhanTN(d) {
 }
 
 // ============================================================
-// CÂY HẠNG MỤC
+// SỐ LIỆU — chip trên biểu đồ + cột của bảng (đợt 2: bỏ lưới thẻ, mọi số liệu nằm ở chip + bảng)
 // ============================================================
-var HANG = [
-  { k: 'td', bt: '📥', ten: 'Tuyển dụng', hoi: 'Đưa được bao nhiêu người vào làm? Rớt ở khâu nào?',
-    so: ['lam', 'moi_tuyen', 'tuyen_lai', 'dk', 'luot', 'don', 'ty_den', 'ty_dau', 'huy', 'khong'], macDinh: ['lam', 'ty_den', 'ty_dau'],
-    goc: [{ k: 'pheu', ten: 'Phễu tuyển dụng', mo: 'tỷ lệ đến · đậu · ra người qua các kỳ — khâu nào đang xấu đi' },
-          { k: 'ly_do', ten: 'Lý do không vào làm', mo: 'mỗi lý do một đường qua các kỳ' }] },
-  { k: 'qs', bt: '👷', ten: 'Quân số', hoi: 'Lực lượng đang làm tăng hay giảm? Vì sao?',
-    so: ['qs_t', 'qs_moi', 'qs_nv', 'qs_cg', 'qs_ty_nghi', 'qs_kp'], macDinh: ['qs_t', 'qs_nv'],
-    goc: [{ k: 'vao_ra', ten: 'Vào / ra từng kỳ', mo: 'mới vào trên vạch 0, tự nghỉ + cắt giảm dưới vạch 0' }] },
-  { k: 'ns', bt: '🏆', ten: 'Năng suất', hoi: 'Ai, đội nào làm ra kết quả? Ai cần kèm?',
-    so: ['lam_ng'], macDinh: ['lam_ng'], goc: [{ k: 'xep_hang', ten: 'Xếp hạng nhân viên', mo: 'mỗi người kèm đường nhỏ: đang lên hay xuống' }] }
-];
-var KET_HOP = [
-  { k: 'bu_nghi', ten: 'Tuyển có bù kịp nghỉ việc?', mo: 'tỷ lệ bù từng nhà máy qua các kỳ, vạch 100%', can: ['td', 'qs'] },
-  { k: 'doi_nm', ten: 'Đội × Nhà máy', mo: 'bảng cả khoảng — đội nào tuyển cho nhà máy nào', can: ['td'] },
-  { k: 'nm_ly', ten: 'Nhà máy × Lý do rớt', mo: 'bảng cả khoảng — nhà máy nào rớt vì đâu', can: ['td'] },
-  { k: 'nv_nm', ten: 'Nhân viên × Nhà máy', mo: 'bảng cả khoảng — ai mạnh ở nhà máy nào', can: ['ns'] }
-];
 var CHI_SO = {
   lam:    { ten: 'Vào làm', dv: 'người', nguoi: true, ct: 'vao_lam', mo: 'người đi làm thật (theo ngày hẹn)' },
   moi_tuyen: { ten: 'Người mới', dv: 'người', mo: 'lần đầu vào làm — mỗi người chỉ tính một lần (sổ lao động)' },
@@ -485,63 +544,84 @@ var CHI_SO = {
   luot:   { ten: 'Lượt đăng ký', dv: 'lượt', mo: 'số phiếu trong kỳ, để thấy công sức đăng ký lại' },
   don:    { ten: 'Đã đến', dv: 'người', nguoi: true, mo: 'người có mặt ít nhất một lần (đã đón)' },
   ty_den: { ten: 'Tỷ lệ đến', ty: true, mo: 'người đã đến ÷ người đã tới ngày hẹn' },
-  ty_dau: { ten: 'Tỷ lệ đậu', ty: true, mo: 'người vào làm ÷ (vào làm + không vào làm)' },
-  ty_ra:  { ten: 'Tỷ lệ ra người', ty: true, mo: 'người vào làm ÷ người đã tới ngày hẹn' },
+  ty_dau: { ten: 'Tỷ lệ đậu', ty: true, mo: 'người vào làm ÷ (vào làm + không vào làm); nhân viên, đội không tính người rớt vì "Công ty không có kế hoạch"' },
+  ty_ra:  { ten: 'Ra người', ty: true, mo: 'người vào làm ÷ người đã tới ngày hẹn' },
   huy:    { ten: 'Báo không đi', dv: 'người', nguoi: true, nguoc: true, mo: 'người báo huỷ và không có kết quả nào tốt hơn trong kỳ' },
   khong:  { ten: 'Không vào làm', dv: 'người', nguoi: true, nguoc: true, mo: 'người đến rồi mà trượt / bỏ về, chưa vào làm lần nào trong kỳ' },
-  qs_t:   { ten: 'Đang đi làm', dv: 'người', ton: true, ct: 'quan_so', mo: 'quân số ngày cuối kỳ' },
-  qs_moi: { ten: 'Mới vào (báo cáo quân số)', dv: 'người', mo: 'theo báo cáo quân số' },
+  qs_t:   { ten: 'Đang làm', dv: 'người', ton: true, ct: 'quan_so', mo: 'quân số ngày cuối kỳ (báo cáo quân số)' },
+  qs_moi: { ten: 'Mới vào', dv: 'người', mo: 'mới vào theo báo cáo quân số' },
   qs_nv:  { ten: 'Tự nghỉ', dv: 'người', nguoc: true, mo: 'nghỉ việc + nghỉ ngang, theo báo cáo quân số' },
   qs_cg:  { ten: 'Cắt giảm', dv: 'người', nguoc: true, mo: 'nhà máy cắt giảm, theo báo cáo quân số' },
   qs_ty_nghi: { ten: 'Tỷ lệ tự nghỉ', ty: true, nguoc: true, mo: 'tự nghỉ ÷ quân số đầu kỳ' },
   qs_kp:  { ten: 'Nghỉ không phép', dv: 'lượt', nguoc: true, mo: 'lượt mới — thường báo trước người sắp nghỉ' },
-  lam_ng: { ten: 'Vào làm / người tuyển', dv: 'người', tb: true, mo: 'vào làm ÷ số nhân viên, tính cả người chưa có phiếu' },
-  ty_bu:  { ten: 'Tỷ lệ bù', ty: true, mo: 'vào làm ÷ (tự nghỉ + cắt giảm)' }
+  vao_ra: { ten: 'Vào / ra', mo: 'mới vào trên vạch 0, tự nghỉ + cắt giảm dưới vạch 0' },
+  lam_ng: { ten: 'Vào làm / người', dv: 'người', tb: true, mo: 'vào làm ÷ số nhân viên, tính cả người chưa có phiếu' }
 };
-function hangCua(cs) { for (var i = 0; i < HANG.length; i++) if (HANG[i].so.indexOf(cs) >= 0) return HANG[i].k; return ''; }
+var QS_CS = ['qs_t', 'qs_moi', 'qs_nv', 'qs_cg', 'qs_kp', 'qs_ty_nghi', 'vao_ra'];
+var NHOM_CS = { td: ['dk', 'don', 'lam', 'moi_tuyen', 'huy', 'khong', 'ty_den', 'ty_dau', 'ty_ra'], qs: QS_CS };
+function hangCua(cs) { return QS_CS.indexOf(cs) >= 0 ? 'qs' : 'td'; }
+/** Loại chip: số người vẽ chung một trục · tỷ lệ vẽ chung với nhau · Đang làm (cả nghìn người) và Vào / ra đứng riêng. Không vẽ hai trục. */
+function kieuCS(cs) { return cs === 'vao_ra' ? 'vao_ra' : (cs === 'qs_t' ? 'ton' : (CHI_SO[cs].ty ? 'ty' : 'nguoi')); }
 var TU_SO = { moi_tuyen: true, tuyen_lai: true };   // chỉ số đếm từ sổ lao động (3.50), không phải từ phiếu
 var MAU = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#6250d6'];   // bảng 6 màu đã soát mù màu
-var TOI_DA = 6;
-/** Khoá có dùng quân số (máy chủ báo hỏng quân số → thẻ ghi lỗi thay biểu đồ). */
-function canQS(key) { var t = key.split(':'); return (t[0] === 'so' && hangCua(t[1]) === 'qs') || key === 'goc:vao_ra' || key === 'kh:bu_nghi'; }
+var TOI_DA = 6, TOI_DA_CS = 4;   // một biểu đồ tối đa 6 đường; tối đa 4 số liệu cùng lúc
+var MAU_CS = { dk: 0, don: 1, lam: 2, moi_tuyen: 3, huy: 4, khong: 5, ty_den: 0, ty_dau: 1, ty_ra: 2, qs_t: 0, qs_moi: 2, qs_nv: 1, qs_cg: 4, qs_kp: 5, qs_ty_nghi: 4 };
+/** Màu đi theo số liệu, cố định; hai số liệu đang bật trùng màu thì số sau lấy màu còn trống. */
+function mauCS(ds) {
+  var dung = {}, ra = {};
+  ds.forEach(function (k) {
+    var i = MAU_CS[k] || 0;
+    if (dung[i]) for (var j = 0; j < MAU.length; j++) if (!dung[j]) { i = j; break; }
+    dung[i] = true; ra[k] = MAU[i];
+  });
+  return ra;
+}
+var COT_CHUNG = [['dk', 'Đăng ký<br>(người)'], ['luot', 'Lượt'], ['don', 'Đã đến'], ['lam', 'Vào làm'], ['ty_den', 'Tỷ lệ đến'], ['ty_dau', 'Tỷ lệ đậu'], ['ty_ra', 'Ra người'],
+                 ['huy', 'Báo không đi'], ['khong', 'Không vào làm'], ['moi_tuyen', 'Người mới'], ['ct', 'Chỉ tiêu'], ['dat', 'Đạt']];
+var COT_NM = [['qs_t', 'Đang làm'], ['thieu', 'Còn thiếu'], ['qs_moi', 'Mới vào<br>(quân số)'], ['qs_nv', 'Tự nghỉ'], ['qs_cg', 'Cắt giảm'], ['qs_ty_nghi', 'Tỷ lệ tự nghỉ'], ['qs_kp', 'Nghỉ không phép']];
+var COT_DOI = [['so_nguoi', 'Số người'], ['lam_ng', 'Vào làm / người']];
+var TEN_THEO = { nv: 'nhân viên', doi: 'đội', nm: 'nhà máy' }, TEN_THEO_HOA = { nv: 'Nhân viên', doi: 'Đội', nm: 'Nhà máy' };
 
 // ============================================================
 // TRẠNG THÁI
 // ============================================================
-var S = null;
+var S = null, R = null, DS = [], BD_MO = null;   // R = số của màn đang xem · DS = hàng bảng theo thứ tự đang xếp · BD_MO = biểu đồ chính vừa vẽ
 /**
- * Mặc định: Năm nay theo tháng. Kho mới có số chưa tới 3 tháng (vừa triển khai) → Tháng này theo tuần, kẻo cả năm
- * toàn "chưa có số".
+ * Mặc định (Dương chốt 02–03/11): tháng này theo tuần, bảng nhân viên xếp theo vào làm. Ngày 1–3 mở tháng trước (tháng mới gần như chưa có số).
+ * Trưởng nhóm lọc sẵn đội mình.
  */
 function macDinh() {
-  var nam = HOM_NAY.slice(0, 4), it = BAT_DAU > isoCong(dauThang(Number(nam), Number(HOM_NAY.slice(5, 7))), -62);
+  var thang = HOM_NAY.slice(0, 7) + '-01';
+  if (Number(HOM_NAY.slice(8, 10)) <= 3) thang = kyCua('thang', isoCong(thang, -1)).tu;
+  var doi = laTN() && (VAI.nhom || []).length ? VAI.nhom[0] : '';
   S = {
-    moPhan: { xem: true, tg: true, ai: false },
-    hang: { td: true, qs: false, ns: false }, moHang: { td: true, qs: true, ns: true },
-    bat: {}, thuTu: [], chinh: 'so:lam',
-    tg: it ? { cap: 'thang', a: HOM_NAY.slice(0, 7) + '-01', b: HOM_NAY.slice(0, 7) + '-01', tu: '', den: '' } : { cap: 'nam', a: nam + '-01-01', b: nam + '-01-01', tu: '', den: '' },
-    moCay: {}, namTruoc: false,
-    loai: 'cong_ty', chon: [], mauDT: {}, cach: 'tung', loi: ''
+    moPhan: { tg: true, o: true, ai: true },
+    tg: { cap: 'thang', a: thang, b: thang, tu: '', den: '' }, moCay: {}, namTruoc: false,
+    mang: '', nm: {}, timNM: '', moKV: {},
+    theo: 'nv', chon: {}, tim: '', xepNV: 'az', coPhieu: false, moDoi: {}, doiLoc: doi, lui: [],
+    csDs: ['dk', 'don', 'lam'], nhomCS: 'td', gon: false, xemTen: false,
+    xep: { k: 'lam', d: -1 }, chiChon: false, duoi: 'bang', tomMo: false, ho: null
   };
-  S.moCay[nam] = true;
-  S.moCay[nam + '-Q' + Math.ceil(Number(HOM_NAY.slice(5, 7)) / 3)] = true;
-  ['so:lam', 'so:ty_den', 'so:ty_dau', 'goc:pheu'].forEach(batKhoa);
+  S.moCay[thang.slice(0, 4)] = true;
+  S.moCay[thang.slice(0, 4) + '-Q' + Math.ceil(Number(thang.slice(5, 7)) / 3)] = true;
+  if (doi) S.moDoi[doi] = true;
 }
-function batKhoa(k) { if (!S.bat[k]) { S.bat[k] = true; S.thuTu.push(k); } }
-function tatKhoa(k) { delete S.bat[k]; S.thuTu = S.thuTu.filter(function (x) { return x !== k; }); }
-/** Quân số báo theo nhà máy: Cá nhân không có; Đội cũng không, vì đội của người tuyển khác đội phụ trách nhà máy (3.54). */
-function khongQS() { return S.loai === 'ca_nhan' || S.loai === 'doi'; }
-function duocSo(c) { return !(khongQS() && hangCua(c) === 'qs') && !(S.loai === 'ca_nhan' && c === 'lam_ng'); }
-function duocKhoa(k) {
-  var t = k.split(':');
-  if (t[0] === 'so') return S.hang[hangCua(t[1])] && duocSo(t[1]);
-  if (t[0] === 'goc') { var h = HANG.filter(function (g) { return g.goc.some(function (x) { return x.k === t[1]; }); })[0]; return S.hang[h.k] && !(t[1] === 'vao_ra' && khongQS()); }
-  var kh = KET_HOP.filter(function (x) { return x.k === t[1]; })[0];
-  return kh.can.every(function (h) { return S.hang[h]; }) && !(kh.k === 'bu_nghi' && khongQS());
+function nChon() { return Object.keys(S.chon).length; }
+/** Quân số báo theo nhà máy: có khi xem cả phạm vi ② hoặc so theo Nhà máy. Chọn nhân viên / đội, lọc đội thì không (Dương chốt 03/11: giữ như 3.54). */
+function coQS() { return !S.doiLoc && (S.theo === 'nm' || !nChon()); }
+/** Số liệu đang vẽ: bỏ chip quân số khi không có quân số; không còn gì thì về mặc định. */
+function csDung() {
+  var co = coQS(), ds = S.csDs.filter(function (k) { return co || hangCua(k) !== 'qs'; });
+  return ds.length ? ds : ['dk', 'don', 'lam'];
 }
-function theThoiGian(k) { return !/^kh:(doi_nm|nm_ly|nv_nm)$/.test(k); }   // ba bảng "ở đâu, ai" chỉ ở phần cả khoảng
-function dsThe() { return S.thuTu.filter(function (k) { return S.bat[k] && duocKhoa(k) && theThoiGian(k); }); }
-function dsBang() { return S.thuTu.filter(function (k) { return S.bat[k] && duocKhoa(k) && !theThoiGian(k); }); }
+/** Tỷ lệ đậu của nhân viên / đội không tính người rớt vì "Công ty không có kế hoạch" (phía nhà máy) — Dương chốt 03/11. */
+function csThat(cs) { return cs === 'ty_dau' && S.theo !== 'nm' ? 'ty_dau_nv' : cs; }
+function theoTy(o) {
+  var c = {};
+  for (var k in o) c[k] = o[k];
+  if (S.theo !== 'nm') c.ty_dau = o.ty_dau_nv;
+  return c;
+}
 
 // ============================================================
 // KỲ — chọn trên cây hoặc gõ ô ngày; biểu đồ chia theo cấp nhỏ hơn
@@ -579,11 +659,42 @@ function dsKy() {
   }
   return { ds: ra, chia: kc.chia, kc: kc };
 }
-/** Cùng kỳ năm trước: ngày / tuần lùi 52 tuần (cùng thứ), tháng / quý lùi đúng một năm. Trước khi kho có số → null. */
+/**
+ * Cùng kỳ năm trước: ngày / tuần lùi 52 tuần (cùng thứ), tháng / quý lùi đúng một năm. Kỳ đang dở thì so đúng ngần ấy ngày năm trước,
+ * không so cả kỳ (đợt 2). Trước khi kho có số → null.
+ */
 function namTruoc(k, chia) {
-  var q = chia === 'ngay' || chia === 'tuan' ? { tu: isoCong(k.tu, -364), den: isoCong(k.den, -364) }
-    : { tu: (Number(k.tu.slice(0, 4)) - 1) + k.tu.slice(4), den: (Number(k.den.slice(0, 4)) - 1) + k.den.slice(4) };
+  var den = k.dang ? nho(k.den, HOM_NAY) : k.den;
+  var q = chia === 'ngay' || chia === 'tuan' ? { tu: isoCong(k.tu, -364), den: isoCong(den, -364) }
+    : { tu: (Number(k.tu.slice(0, 4)) - 1) + k.tu.slice(4), den: (Number(den.slice(0, 4)) - 1) + den.slice(4) };
   return q.tu < BAT_DAU ? null : q;
+}
+/**
+ * Kỳ trước để so, CÙNG SỐ NGÀY (tháng mới tới ngày 20 thì so với ngày 1–20 tháng trước, kẻo tháng đang chạy luôn thành "giảm").
+ * Chọn một mục trên cây → mục liền trước cùng cấp; khoảng hay tự chọn → khoảng liền trước dài bằng. Nằm trước mốc có số → null (không so).
+ */
+function kyTruoc(kc) {
+  var den = nho(kc.den, HOM_NAY), n = soNgay(kc.tu, den), t = S.tg, k, tu;
+  if (t.cap !== 'tu_chon' && t.a === t.b) {
+    if (t.cap === 'tuan') tu = isoCong(kc.tu, -7);
+    else if (t.cap === 'nam') tu = (Number(kc.tu.slice(0, 4)) - 1) + '-01-01';
+    else {
+      var y = Number(kc.tu.slice(0, 4)), m = Number(kc.tu.slice(5, 7)) - (t.cap === 'quy' ? 3 : 1);
+      if (m < 1) { m += 12; y--; }
+      tu = dauThang(y, m);
+    }
+    k = { tu: tu, den: nho(isoCong(tu, n - 1), kyCua(t.cap, tu).den) };
+  } else k = { tu: isoCong(kc.tu, -n), den: isoCong(kc.tu, -1) };
+  if (k.tu < BAT_DAU) return null;
+  k.ten = dm(k.tu) + ' – ' + dm(k.den);
+  return k;
+}
+/** Kỳ chỉ tiêu của khoảng đang xem: đúng MỘT tuần / tháng / quý (chọn trên cây, hoặc gõ ngày trùng khít). Khác thì không so chỉ tiêu (Dương chốt 03/11). */
+function kyCT0(kc) {
+  var t = S.tg, kieu = '';
+  if (t.cap !== 'tu_chon') { if (t.a === t.b && t.cap !== 'nam') kieu = t.cap; }
+  else ['tuan', 'thang', 'quy'].forEach(function (x) { var k = kyCua(x, kc.tu); if (!kieu && k.tu === kc.tu && k.den === kc.den) kieu = x; });
+  return kieu ? { kieu: kieu, tu: kc.tu, den: kc.den } : null;
 }
 
 // ============================================================
@@ -602,8 +713,6 @@ function dsMuc(loai) {
   if (loai === 'ca_nhan') NHAN_VIEN.forEach(function (n) { them(String(n.ma), n.ten, n.doi.join(' · ') || CHUA_DOI); });
   return ra.sort(function (a, b) { return a.ten.localeCompare(b.ten, 'vi'); });
 }
-function tenMuc(loai, ma) { return loai === 'nha_may' ? (CT_MA[ma] ? CT_MA[ma].ten : ma) : (loai === 'ca_nhan' ? (NV_MA[ma] ? NV_MA[ma].ten : '?') : ma); }
-function tenLoai() { return LOAI.filter(function (l) { return l.k === S.loai; })[0].ten; }
 /** Bộ lọc một nhóm mục: fp(phiếu — máy chủ đã lọc theo quyền), fc(nhà máy, cho quân số — trưởng nhóm không có quân số nhà máy ngoài nhóm). */
 function locCua(loai, dsMa) {
   var co = {};
@@ -635,65 +744,141 @@ function locCua(loai, dsMa) {
     }
   };
 }
-function dsDuong() {
-  if (S.loai === 'cong_ty') return [{ ten: laTN() ? 'Phạm vi của bạn' : 'Toàn công ty', ma: '', mot: true, mau: MAU[0], loc: locCua('cong_ty', []) }];
-  if (!S.chon.length) return [];
-  if (S.cach === 'gop' || S.chon.length > TOI_DA) {
-    return [{ ten: (S.chon.length === dsMuc(S.loai).length ? 'Tất cả ' : 'Gộp ') + S.chon.length + ' ' + tenLoai().toLowerCase(), mot: S.chon.length === 1, ma: S.chon.length === 1 ? S.chon[0] : '',
-              mau: MAU[0], loc: locCua(S.loai, S.chon) }];
-  }
-  return S.chon.map(function (m) { return { ma: m, mot: true, ten: tenMuc(S.loai, m), mau: MAU[S.mauDT[m]], loc: locCua(S.loai, [m]) }; });
+/**
+ * Phạm vi đang xem = ② Ở đâu (nhà máy, mảng) + đội đang đi sâu. fp lọc phiếu / lượt sổ · fc lọc nhà máy cho quân số (trưởng nhóm
+ * không có quân số nhà máy ngoài nhóm; lọc theo đội thì không có quân số) · nv = nhân viên thuộc phạm vi dù chưa có phiếu.
+ */
+function locPV() {
+  var dsNM = Object.keys(S.nm).sort(), co = {}, doi = S.doiLoc, mang = S.mang;
+  dsNM.forEach(function (m) { co[m] = true; });
+  var trongNM = function (c) { return !!c && (!dsNM.length || !!co[c.ma_ct]) && (!mang || c.mang === mang); };
+  var cuaDoi = function (n) { return !!n && (n.doi.length ? n.doi : [CHUA_DOI]).indexOf(doi) >= 0; };
+  return {
+    khoa: 'pv:' + dsNM.join(',') + '|' + mang + '|' + doi,
+    nv: function (n) { return !n.khoa && (doi ? cuaDoi(n) : (!laTN() || nvDoiMinh(n.ma))); },
+    fp: function (p) { return trongNM(CT_MA[p[1]]) && (!doi || cuaDoi(NV_MA[p[2]])); },
+    fc: function (c) { return !doi && trongNM(c) && !c.ngoai; }
+  };
 }
-function locPhamVi() { return S.loai === 'cong_ty' ? locCua('cong_ty', []) : locCua(S.loai, S.chon); }
+/** Phiếu thuộc hàng nào của bảng: nhân viên = người tuyển (phiếu tên chưa khớp không vào hàng nào) · đội = đội người tuyển (người ở 2 đội vào cả hai) · nhà máy. */
+function khoaHang(theo) {
+  if (theo === 'nm') return function (p) { return [p[1]]; };
+  if (theo === 'doi') return function (p) { var n = NV_MA[p[2]]; return n ? (n.doi.length ? n.doi : [CHUA_DOI]) : []; };
+  return function (p) { return p[2] ? [String(p[2])] : []; };
+}
+/** Bộ lọc của một / nhiều hàng trong phạm vi: phiếu của các hàng đó · quân số (chỉ hàng nhà máy) · nhân viên thuộc hàng (đếm số người của đội). */
+function locHang(theo, dsMa, pv) {
+  var co = {}, kh = khoaHang(theo);
+  dsMa.forEach(function (m) { co[m] = true; });
+  return {
+    khoa: pv.khoa + '|' + theo + ':' + dsMa.slice().sort().join(','),
+    fp: function (p) { return pv.fp(p) && kh(p).some(function (k) { return co[k]; }); },
+    fc: function (c) { return theo === 'nm' && !!c && !!co[c.ma_ct] && pv.fc(c); },
+    nv: function (n) {
+      if (n.khoa) return false;
+      if (theo === 'nv') return !!co[String(n.ma)];
+      if (theo === 'doi') return (n.doi.length ? n.doi : [CHUA_DOI]).some(function (d) { return co[d]; });
+      return false;
+    }
+  };
+}
+/** Hàng của bảng: nhân viên thuộc phạm vi (cả người chưa có phiếu — người cần hỏi) · đội · nhà máy trong ②. Hàng có phiếu trong khoảng luôn có. */
+function dsHang(theo, pv, co) {
+  if (theo === 'nv') return NHAN_VIEN.filter(function (n) { return co[String(n.ma)] || pv.nv(n); })
+    .map(function (n) { return { id: String(n.ma), ten: n.ten, phu: n.doi.join(' · ') || CHUA_DOI }; });
+  if (theo === 'doi') return dsMuc('doi').filter(function (d) { return co[d.ma] || !laTN() || (VAI.nhom || []).indexOf(d.ma) >= 0; })
+    .map(function (d) { return { id: d.ma, ten: d.ten, phu: '' }; });
+  var nm = Object.keys(S.nm);
+  return CONG_TY.filter(function (c) { return (!nm.length || S.nm[c.ma_ct]) && (!S.mang || c.mang === S.mang) && (co[c.ma_ct] || !laTN() || !c.ngoai); })
+    .map(function (c) { return { id: c.ma_ct, ten: c.ten, phu: c.khu_vuc + (c.mang === 'chinh_thuc' ? ' · chính thức' : '') + (c.ngoai ? ' · ngoài nhóm, chỉ người đội bạn' : '') }; });
+}
+/** Tên nơi đang xem cho tiêu đề: tới 3 nhà máy thì ghi tên, nhiều hơn thì ghi số. */
+function tenPV() {
+  var ds = Object.keys(S.nm).map(function (m) { return CT_MA[m] ? CT_MA[m].ten : m; });
+  var noi = ds.length ? (ds.length <= 3 ? ds.join(', ') : ds.length + ' nhà máy') : (laTN() ? 'Phạm vi của bạn' : 'Toàn công ty');
+  return noi + (S.mang === 'thoi_vu' ? ' · Thời vụ' : (S.mang === 'chinh_thuc' ? ' · Chính thức' : ''));
+}
 
 // ============================================================
 // TÍNH SỐ
 // ============================================================
 var NHO = {};
 var HANG_TT = { lam: 5, khong: 4, don: 3, huy: 2, chua_don: 1, cho: 0 };   // kết quả của một người trong kỳ = phiếu có hạng cao nhất
+/** "Công ty không có kế hoạch" là phía nhà máy: không tính vào tỷ lệ đậu của nhân viên / đội. */
+function laLyCty(l) { return /khong co ke hoach/.test(boDau(l)); }
+function ngayP(p) { return p[0]; }
+function moiO() { return { luot: 0, ai: {}, ly: {}, nguoi: {}, rotNV: {}, moi_tuyen: 0, tuyen_lai: 0 }; }
+function themP(o, p) {
+  o.luot++;
+  if (p[2]) o.nguoi[p[2]] = true;
+  var h = HANG_TT[p[3]] || 0;
+  if (!(p[6] in o.ai) || h > o.ai[p[6]]) o.ai[p[6]] = h;
+  if (p[3] === 'khong') { var l = p[4] || 'Chưa ghi lý do'; o.ly[l] = (o.ly[l] || 0) + 1; if (!laLyCty(l)) o.rotNV[p[6]] = true; }
+}
+function themL(o, l) { if (l[3] === 1) o.moi_tuyen++; else o.tuyen_lai++; }
 /**
  * Đếm NGƯỜI (3.54): một người nhiều phiếu tính một, lấy kết quả tốt nhất. `luot` = số phiếu. Lý do rớt giữ theo phiếu: rớt hai lần là hai sự việc.
- * Kỳ đang dở chỉ tính tới hôm nay, phiếu hẹn ngày tới chưa phải kết quả.
+ * `ty_dau_nv` bỏ người chỉ rớt vì "Công ty không có kế hoạch" (đợt 2). `loc.nv` (nếu có) = nhân viên thuộc phạm vi dù chưa có phiếu.
  */
+function xongO(o, loc) {
+  var r = { dk: 0, luot: o.luot, don: 0, lam: 0, khong: 0, khong_ct: 0, huy: 0, vang: 0, chua_bao: 0, toi: 0, ly: o.ly, nguoi: o.nguoi, moi_tuyen: o.moi_tuyen, tuyen_lai: o.tuyen_lai };
+  Object.keys(o.ai).forEach(function (m) {
+    var h = o.ai[m];
+    r.dk++;
+    if (h >= 1) r.toi++;
+    if (h >= 3) r.don++;
+    if (h === 5) r.lam++;
+    if (h === 4) { r.khong++; if (!o.rotNV[m]) r.khong_ct++; }
+    if (h === 3) r.chua_bao++;
+    if (h === 2) r.huy++;
+    if (h === 1) r.vang++;
+  });
+  r.ty_den = r.toi ? r.don / r.toi : null;
+  r.ty_dau = (r.lam + r.khong) ? r.lam / (r.lam + r.khong) : null;
+  r.ty_dau_nv = (r.lam + r.khong - r.khong_ct) ? r.lam / (r.lam + r.khong - r.khong_ct) : null;
+  r.ty_ra = r.toi ? r.lam / r.toi : null;
+  var nv = {};
+  Object.keys(o.nguoi).forEach(function (m) { nv[m] = true; });
+  if (loc && loc.nv) NHAN_VIEN.forEach(function (n) { if (loc.nv(n)) nv[n.ma] = true; });
+  r.so_nguoi = Object.keys(nv).length;
+  r.lam_ng = r.so_nguoi ? r.lam / r.so_nguoi : null;
+  return r;
+}
+/** Kỳ đang dở chỉ tính tới hôm nay, phiếu hẹn ngày tới chưa phải kết quả. */
 function tinhTD(tu, den, loc) {
   den = nho(den, HOM_NAY);
   var k = 'td|' + tu + '|' + den + '|' + loc.khoa;
   if (NHO[k]) return NHO[k];
-  var o = { dk: 0, luot: 0, don: 0, lam: 0, khong: 0, huy: 0, vang: 0, chua_bao: 0, toi: 0, ly: {}, nguoi: {} }, ai = {};
-  for (var i = tim(PHIEU, isoCong(tu, -1), function (p) { return p[0]; }) + 1; i < PHIEU.length && PHIEU[i][0] <= den; i++) {
-    var p = PHIEU[i];
-    if (!loc.fp(p)) continue;
-    o.luot++;
-    if (p[2]) o.nguoi[p[2]] = true;
-    var h = HANG_TT[p[3]] || 0;
-    if (!(p[6] in ai) || h > ai[p[6]]) ai[p[6]] = h;
-    if (p[3] === 'khong') { var l = p[4] || 'Chưa ghi lý do'; o.ly[l] = (o.ly[l] || 0) + 1; }
+  var o = moiO();
+  for (var i = tim(PHIEU, isoCong(tu, -1), ngayP) + 1; i < PHIEU.length && PHIEU[i][0] <= den; i++) if (loc.fp(PHIEU[i])) themP(o, PHIEU[i]);
+  for (var j = tim(LUOT, isoCong(tu, -1), ngayP) + 1; j < LUOT.length && LUOT[j][0] <= den; j++) if (loc.fp(LUOT[j])) themL(o, LUOT[j]);
+  return (NHO[k] = xongO(o, loc));
+}
+/**
+ * MỘT lượt qua phiếu + lượt sổ → số của từng hàng (cả khoảng + từng kỳ trong KD), chưa chốt (chốt bằng xongO). Nhanh hơn gọi tinhTD
+ * cho từng hàng × từng kỳ (60 người × 12 tháng). Mỗi ô khớp tinhTD với bộ lọc của hàng đó. `co` = hàng có phiếu / lượt trong khoảng.
+ */
+function gomHang(tu, den, KD, pv, kh) {
+  den = nho(den, HOM_NAY);
+  var hang = {}, co = {};
+  function chay(ds, them) {
+    var ik = 0;
+    for (var i = tim(ds, isoCong(tu, -1), ngayP) + 1; i < ds.length && ds[i][0] <= den; i++) {
+      var p = ds[i];
+      if (!pv.fp(p)) continue;
+      while (ik < KD.length - 1 && p[0] > KD[ik].den) ik++;
+      var trongKy = KD.length && p[0] >= KD[ik].tu && p[0] <= KD[ik].den;
+      kh(p).forEach(function (m) {
+        var h = hang[m] || (hang[m] = { ca: moiO(), ky: KD.map(function () { return moiO(); }) });
+        co[m] = true;
+        them(h.ca, p);
+        if (trongKy) them(h.ky[ik], p);
+      });
+    }
   }
-  Object.keys(ai).forEach(function (m) {
-    var h2 = ai[m];
-    o.dk++;
-    if (h2 >= 1) o.toi++;
-    if (h2 >= 3) o.don++;
-    if (h2 === 5) o.lam++;
-    if (h2 === 4) o.khong++;
-    if (h2 === 3) o.chua_bao++;
-    if (h2 === 2) o.huy++;
-    if (h2 === 1) o.vang++;
-  });
-  o.moi_tuyen = 0; o.tuyen_lai = 0;
-  for (var j = tim(LUOT, isoCong(tu, -1), function (p) { return p[0]; }) + 1; j < LUOT.length && LUOT[j][0] <= den; j++) {
-    if (!loc.fp(LUOT[j])) continue;
-    if (LUOT[j][3] === 1) o.moi_tuyen++; else o.tuyen_lai++;
-  }
-  o.ty_den = o.toi ? o.don / o.toi : null;
-  o.ty_dau = (o.lam + o.khong) ? o.lam / (o.lam + o.khong) : null;
-  o.ty_ra = o.toi ? o.lam / o.toi : null;
-  var nv = {};
-  Object.keys(o.nguoi).forEach(function (m) { nv[m] = true; });
-  if (loc.nv) NHAN_VIEN.forEach(function (n) { if (loc.nv(n)) nv[n.ma] = true; });
-  o.so_nguoi = Object.keys(nv).length;
-  o.lam_ng = o.so_nguoi ? o.lam / o.so_nguoi : null;
-  return (NHO[k] = o);
+  chay(PHIEU, themP);
+  chay(LUOT, themL);
+  return { hang: hang, co: co };
 }
 var QS_NHAC_NGAY = 3, QS_BO_NGAY = 30;   // không báo từ 3 ngày thì nêu tên; quá 30 ngày thì bỏ khỏi tổng, kẻo cộng mãi một số cũ
 /** Quân số các nhà máy `fc` tại ngày: mỗi đơn vị lấy bản mới nhất ≤ ngày, quá QS_BO_NGAY thì bỏ. Không còn đơn vị nào → null (không phải 0). */
@@ -757,9 +942,11 @@ function giaTri(cs, tu, den, loc) {
   var o = tinhTD(tu, den, loc);
   return o[cs] === undefined ? null : o[cs];
 }
-function giaTriKhoang(cs, KD, loc) {   // cả khoảng: tồn → số cuối kỳ cuối; còn lại → tính trên cả khoảng
-  var cuoi = KD[KD.length - 1];
-  return CHI_SO[cs].ton ? giaTri(cs, cuoi.tu, cuoi.den, loc) : giaTri(cs, KD[0].tu, nho(cuoi.den, HOM_NAY), loc);
+/** Vào / ra từng kỳ của các nhà máy loc.fc: mới vào (báo cáo quân số) và rời đi (tự nghỉ + cắt giảm). Kỳ chưa có báo cáo → null, không phải 0. */
+function vaoRa(KD, loc) {
+  var moi = [], nghi = [];
+  KD.forEach(function (p) { var q = tinhQS(p.tu, p.den, loc); moi.push(q.cuoi ? q.moi : null); nghi.push(q.cuoi ? q.nghi : null); });
+  return { moi: moi, nghi: nghi };
 }
 
 // ---------- chỉ tiêu ----------
@@ -794,14 +981,21 @@ function chiTieu(k, d, chiSo) {
   }
   return null;
 }
-/** Chỉ tiêu của một kỳ trên biểu đồ (chỉ khi xem MỘT đối tượng; kỳ lẻ / theo ngày thì không có). */
-function chiTieuKy(p, chia, duong, chiSo) {
-  if (!duong.mot || p.le || chia === 'ngay') return null;
-  var c = chiTieu({ kieu: chia, tu: p.tu, den: p.den }, { loai: S.loai, ma: S.loai === 'ca_nhan' ? Number(duong.ma) : duong.ma }, chiSo);
-  return c ? c.so : null;
+/** Đối tượng chỉ tiêu của một hàng. Nhân viên / đội chỉ so khi ② là toàn công ty, đủ mảng (chọn vài nhà máy thì số chỉ là một phần). */
+function dtHang(theo, id) {
+  if (theo === 'nm') return { loai: 'nha_may', ma: id };
+  if (Object.keys(S.nm).length || S.mang) return null;
+  return theo === 'nv' ? { loai: 'ca_nhan', ma: Number(id) } : { loai: 'doi', ma: id };
+}
+/** Đối tượng chỉ tiêu khi chưa chọn hàng nào: đội đang đi sâu · một nhà máy ở ② · toàn công ty. Nhiều nhà máy / một mảng → null (cộng từng nhà máy). */
+function dtPV() {
+  var nm = Object.keys(S.nm);
+  if (S.doiLoc) return nm.length || S.mang ? null : { loai: 'doi', ma: S.doiLoc };
+  if (nm.length === 1) return { loai: 'nha_may', ma: nm[0] };
+  return nm.length || S.mang ? null : { loai: 'cong_ty', ma: '' };
 }
 
-// ---------- định dạng + xu hướng ----------
+// ---------- định dạng ----------
 function mot(v) { return String(Math.round(v * 10) / 10).replace('.', ','); }
 function dinh(cs, v) {
   if (v == null) return '—';
@@ -809,171 +1003,18 @@ function dinh(cs, v) {
   if (CHI_SO[cs].tb) return mot(v);
   return String(Math.round(v));
 }
-function chuChenh(x, ngan) { var r = Math.round(x.chenh); return (r > 0 ? '+' : (r < 0 ? '−' : '')) + Math.abs(r) + (x.ty ? (ngan ? ' đ%' : ' điểm %') : '%'); }
-function chenhCua(cs, dau, cuoi, cach) {
-  var ty = !!CHI_SO[cs].ty, chenh = ty ? (cuoi - dau) * 100 : (dau ? (cuoi - dau) / dau * 100 : (cuoi ? 100 : 0)), nguong = ty ? 3 : 5;
-  return { chenh: chenh, ty: ty, cach: cach, huong: chenh >= nguong ? 1 : (chenh <= -nguong ? -1 : 0) };
+function soVN(n) { return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); }
+function phanTram(x) { return Math.round(x * 100) + '%'; }
+/** Ô bảng: '—' khi chưa có số (không bày 0). */
+function dinhCot(k, v) {
+  if (v == null) return '—';
+  if (k === 'dat') return phanTram(v);
+  if (!CHI_SO[k]) return soVN(v);
+  return CHI_SO[k].ty ? phanTram(v) : (CHI_SO[k].tb ? mot(v) : soVN(Math.round(v)));
 }
-/** Xu hướng qua các kỳ — chỉ kỳ ĐỦ SỐ (bỏ kỳ đang dở, kỳ lẻ, kỳ chưa có / một phần số). ≥ 6 kỳ: TB 3 cuối so 3 đầu. */
-function xuHuong(gt, KD, cs, chia) {
-  var idx = [];
-  KD.forEach(function (k, i) { if (!k.dang && !k.le && !k.chuaCo && !k.motPhan && gt[i] != null) idx.push(i); });
-  if (idx.length < 2) return null;
-  var tb = function (ds) { var s = 0; ds.forEach(function (i) { s += gt[i]; }); return s / ds.length; }, don = TEN_CHIA[chia];
-  if (idx.length >= 6) return chenhCua(cs, tb(idx.slice(0, 3)), tb(idx.slice(-3)), 'trung bình 3 ' + don + ' cuối so với 3 ' + don + ' đầu');
-  return chenhCua(cs, gt[idx[0]], gt[idx[idx.length - 1]], KD[idx[idx.length - 1]].nhan + ' so với ' + KD[idx[0]].nhan);
-}
-/** Xem theo NGÀY: Chủ nhật lúc nào cũng thấp → không tính xu hướng từng ngày, so CẢ KHOẢNG với khoảng liền trước. */
-function soTruoc(cs, KD, loc) {
-  var tu = KD[0].tu, den = nho(KD[KD.length - 1].den, HOM_NAY), n = soNgay(tu, den), tTu = isoCong(tu, -n), tDen = isoCong(tu, -1);
-  if (tTu < BAT_DAU) return null;
-  var a = CHI_SO[cs].ton ? giaTri(cs, tDen, tDen, loc) : giaTri(cs, tTu, tDen, loc), b = CHI_SO[cs].ton ? giaTri(cs, den, den, loc) : giaTri(cs, tu, den, loc);
-  if (a == null || b == null) return null;
-  return chenhCua(cs, a, b, (n === 7 && thuCua(tu) === 1 ? 'cả tuần so với tuần trước' : 'cả ' + n + ' ngày so với ' + n + ' ngày liền trước') + ' (' + dm(tTu) + ' – ' + dm(tDen) + ')');
-}
-function soNamTruoc(cs, KD, chia, loc) {
-  var a = 0, b = 0, co = 0;
-  if (CHI_SO[cs].ty || CHI_SO[cs].tb || CHI_SO[cs].ton) {
-    var k = KD[KD.length - 1], q = namTruoc(k, chia);
-    if (!q) return null;
-    var va = giaTri(cs, q.tu, q.den, loc), vb = giaTri(cs, k.tu, k.den, loc);
-    return va == null || vb == null ? null : chenhCua(cs, va, vb, k.nhan + ' so với cùng kỳ năm trước');
-  }
-  KD.forEach(function (k) { var q = namTruoc(k, chia); if (!q || k.chuaCo) return; var va = giaTri(cs, q.tu, q.den, loc), vb = giaTri(cs, k.tu, k.den, loc); if (va == null || vb == null) return; a += va; b += vb; co++; });
-  return co ? chenhCua(cs, a, b, co + ' ' + TEN_CHIA[chia] + ' có số năm trước, so cùng kỳ') : null;
-}
-function chuXu(x, cs) {
-  if (!x) return '<span class="ngang">Chưa đủ kỳ có số để thấy xu hướng</span>';
-  var tot = x.huong === 0 ? 'ngang' : ((x.huong > 0) !== !!CHI_SO[cs].nguoc ? 'tang' : 'giam');
-  var so2 = Math.abs(Math.round(x.chenh)) + (x.ty ? ' điểm %' : '%');
-  var chu = x.huong > 0 ? '▲ Đang tăng ' + so2 : (x.huong < 0 ? '▼ Đang giảm ' + so2 : '→ Đi ngang (' + chuChenh(x) + ')');
-  return '<b class="' + tot + '">' + chu + '</b> <span class="mo">· ' + x.cach + '</span>';
-}
-
-// ============================================================
-// THẺ — tên · số · xu hướng · một biểu đồ theo thời gian (thời gian nằm ngang, số lượng dựng đứng)
-// ============================================================
-function moTaThe(key, T, duong, pv) {
-  var KD = T.ds, chia = T.chia, t = key.split(':'), k = t[1], tieuDe, ds, cs, so2, nhan, xu, ct = null, nam = null, moc = null, them = '', tom = '', canh = '', loaiVe = 'duong';
-  var xuCua = function (c, gt, loc) { return chia === 'ngay' ? soTruoc(c, KD, loc) : xuHuong(gt, KD, c, chia); };
-  if (canQS(key) && QS_LOI) {
-    return { key: key, tieuDe: t[0] === 'so' ? CHI_SO[k].ten : (k === 'vao_ra' ? 'Vào / ra từng kỳ' : 'Tuyển có bù kịp nghỉ việc?'), loi: QS_LOI, so: '—', nhan: '', xu: '', them: '', ds: [], cs: 'qs_t' };
-  }
-  if (t[0] === 'so' && TU_SO[k] && LUOT_LOI) {
-    return { key: key, tieuDe: CHI_SO[k].ten, loi: LUOT_LOI, so: '—', nhan: '', xu: '', them: '', ds: [], cs: k };
-  }
-  if (t[0] === 'so') {
-    var m = CHI_SO[k];
-    cs = k; tieuDe = m.ten;
-    ds = duong.map(function (d) { return { ten: d.ten, mau: d.mau, gt: KD.map(function (p) { return giaTri(k, p.tu, p.den, d.loc); }) }; });
-    var tong = duong.length === 1 ? ds[0].gt : KD.map(function (p) { return giaTri(k, p.tu, p.den, pv); });
-    so2 = dinh(k, giaTriKhoang(k, KD, pv)) + (m.dv && !m.ty ? ' <span>' + m.dv + '</span>' : '');
-    nhan = m.ton ? 'cuối kỳ' : (m.ty || m.tb ? 'cả khoảng' : (m.nguoi ? 'không trùng, cả khoảng' : 'cộng cả khoảng'));
-    if (k === 'dk') nhan += ' · ' + dinh('luot', giaTriKhoang('luot', KD, pv)) + ' lượt';
-    if (k === 'qs_t') {
-      var cuoiKy = nho(KD[KD.length - 1].den, HOM_NAY), cu = donViCu(cuoiKy, pv.fc);
-      them += chuDonViCu(cu);
-      if (cu.cu.length || cu.bo.length) canh = '○ <b>' + (cu.cu.length + cu.bo.length) + ' đơn vị</b> chưa báo quân số, số Đang đi làm có thể lệch: ' + cu.cu.concat(cu.bo).slice(0, 3).map(function (x) { return thoat(x.ten); }).join(', ') + '.';
-      ds.forEach(function (s) { s.rong = KD.map(function (p) { var c = donViCu(nho(p.den, HOM_NAY), pv.fc); return c.cu.length + c.bo.length > 0; }); });
-    }
-    xu = xuCua(k, tong, pv);
-    if (m.ct && duong.length === 1) {
-      ct = KD.map(function (p) { return chiTieuKy(p, chia, duong[0], m.ct); });
-      var sCT = 0, sThuc = 0, co = 0, cuoiCT = null;
-      ct.forEach(function (v, i) { if (v == null || tong[i] == null) return; if (m.ton) cuoiCT = { v: v, thuc: tong[i] }; else if (!KD[i].dang) { sCT += v; sThuc += tong[i]; co++; } });
-      if (co && sCT) them += '<br>🎯 Đạt <b>' + Math.round(sThuc / sCT * 100) + '%</b> chỉ tiêu (' + co + ' ' + TEN_CHIA[chia] + ' đã hết)';
-      if (cuoiCT && cuoiCT.v) them += '<br>🎯 Kỳ cuối đạt <b>' + Math.round(cuoiCT.thuc / cuoiCT.v * 100) + '%</b> chỉ tiêu quân số (' + cuoiCT.v + ')';
-      if (!ct.some(function (v) { return v != null; })) ct = null;
-      if (laTN() && motPhanTN({ loai: S.loai, ma: duong[0].ma })) them += '<br><span class="mo">Chỉ tiêu tính theo đội — chọn ③ "Đội" để so.</span>';
-    }
-    if (S.namTruoc) {
-      var nt = soNamTruoc(k, KD, chia, pv);
-      them += '<br>' + (nt ? '📆 ' + chuXu(nt, k) : '<span class="mo">📆 Năm trước chưa có số để so</span>');
-      if (duong.length === 1) nam = KD.map(function (p) { var q = namTruoc(p, chia); return q ? giaTri(k, q.tu, q.den, duong[0].loc) : null; });
-    }
-    if (ds.length > 1) {
-      var xs = ds.map(function (s, i) { return { ten: s.ten, x: xuCua(k, s.gt, duong[i].loc) }; }).filter(function (s) { return s.x; });
-      xs.sort(function (a, b) { return (b.x.chenh - a.x.chenh) * (m.nguoc ? -1 : 1); });
-      if (xs.length >= 2) them += '<br>Tốt nhất: <b>' + thoat(xs[0].ten) + '</b> (' + chuChenh(xs[0].x) + ') · Kém nhất: <b>' + thoat(xs[xs.length - 1].ten) + '</b> (' + chuChenh(xs[xs.length - 1].x) + ')';
-    }
-    if (TU_SO[k] && KD[0].tu < BAT_DAU_SO) them += '<br><span class="mo">Đếm từ sổ lao động — có số từ ' + dmy(BAT_DAU_SO) + '.</span>';
-    if (xu) tom = '<b>' + m.ten + '</b>: ' + chuXu(xu, k).replace(/<span class="mo">.*<\/span>/, '');
-  } else if (k === 'pheu') {
-    tieuDe = 'Phễu tuyển dụng — tỷ lệ qua các kỳ'; cs = 'ty_den';
-    ds = [['ty_den', 'Tỷ lệ đến'], ['ty_dau', 'Tỷ lệ đậu'], ['ty_ra', 'Tỷ lệ ra người']].map(function (x, i) {
-      return { ten: x[1], mau: MAU[i], gt: KD.map(function (p) { return giaTri(x[0], p.tu, p.den, pv); }) };
-    });
-    so2 = dinh('ty_ra', giaTriKhoang('ty_ra', KD, pv)); nhan = 'ra người cả khoảng (vào làm ÷ tới hẹn)';
-    xu = xuCua('ty_ra', ds[2].gt, pv);
-    var xd = xuCua('ty_den', ds[0].gt, pv), xp = xuCua('ty_dau', ds[1].gt, pv);
-    if (xd && xp) {
-      var xau = xd.chenh < xp.chenh ? ['đến ngày hẹn', xd] : ['phỏng vấn / sau khi đến', xp];
-      them += '<br>Khâu xấu đi nhiều nhất: <b>' + xau[0] + '</b> (' + chuChenh(xau[1]) + ')';
-      if (xau[1].huong < 0) tom = '🔻 Phễu: khâu <b class="giam">' + xau[0] + '</b> đang xấu đi (' + chuChenh(xau[1]) + ') — ' + (xau[1] === xd ? 'siết gọi xác nhận / xe đón.' : 'xem lý do không vào làm.');
-    }
-    them += '<br><span class="mo">Cả phạm vi đang xem (không tách từng mục).</span>';
-  } else if (k === 'ly_do') {
-    tieuDe = 'Lý do không vào làm — qua các kỳ'; cs = 'khong';
-    var bo = {}, lyDs = [];
-    KD.forEach(function (p) { if (p.chuaCo) return; var o = tinhTD(p.tu, p.den, pv); Object.keys(o.ly).forEach(function (l) { bo[l] = (bo[l] || 0) + o.ly[l]; }); });
-    lyDs = Object.keys(bo).sort(function (a, b) { return bo[b] - bo[a]; });
-    if (lyDs.length > TOI_DA) lyDs = lyDs.slice(0, TOI_DA - 1).concat(['Lý do khác']);
-    ds = lyDs.map(function (l, i) {
-      return { ten: l, mau: MAU[i], gt: KD.map(function (p) {
-        if (p.chuaCo) return null;
-        var o = tinhTD(p.tu, p.den, pv);
-        if (l !== 'Lý do khác') return o.ly[l] || 0;
-        var s = 0; Object.keys(o.ly).forEach(function (x) { if (lyDs.indexOf(x) < 0) s += o.ly[x]; }); return s;
-      }) };
-    });
-    var tong2 = KD.map(function (p) { return giaTri('khong', p.tu, p.den, pv); });
-    so2 = dinh('khong', giaTriKhoang('khong', KD, pv)) + ' <span>người</span>'; nhan = 'không vào làm cả khoảng';
-    xu = xuCua('khong', tong2, pv);
-    var lyXu = ds.map(function (s) { return { ten: s.ten, x: xuHuong(s.gt, KD, 'khong', chia) }; }).filter(function (s) { return s.x; }).sort(function (a, b) { return b.x.chenh - a.x.chenh; })[0];
-    if (lyXu && lyXu.x.huong > 0) { them += '<br>Tăng nhanh nhất: <b class="giam">' + thoat(lyXu.ten) + '</b> (' + chuChenh(lyXu.x) + ')'; tom = '❓ Lý do rớt tăng nhanh nhất: <b>' + thoat(lyXu.ten) + '</b> (' + chuChenh(lyXu.x) + ').'; }
-    if (!ds.length) ds = [{ ten: 'Không vào làm', mau: MAU[1], gt: tong2 }];
-  } else if (k === 'vao_ra') {
-    tieuDe = 'Vào / ra từng ' + TEN_CHIA[chia]; cs = 'qs_moi'; loaiVe = 'vao_ra';
-    var moi = KD.map(function (p) { var q = tinhQS(p.tu, p.den, pv); return q.cuoi ? q.moi : null; }), nv = KD.map(function (p) { var q = tinhQS(p.tu, p.den, pv); return q.cuoi ? q.nghi : null; });
-    ds = [{ ten: 'Mới vào', mau: MAU[2], gt: moi }, { ten: 'Tự nghỉ + cắt giảm', mau: MAU[1], gt: nv }];
-    var sm = 0, sn = 0, am = 0, het = 0;
-    KD.forEach(function (p, i) { if (moi[i] == null) return; sm += moi[i]; sn += nv[i]; if (!p.dang) { het++; if (nv[i] > moi[i]) am++; } });
-    so2 = (sm - sn > 0 ? '+' : '') + (sm - sn) + ' <span>người</span>'; nhan = 'chênh mới vào − tự nghỉ, cắt giảm, cả khoảng';
-    them = !het ? '<span class="mo">Chưa có báo cáo quân số trong khoảng này</span>' : (am ? '<b class="giam">' + am + '/' + het + ' ' + TEN_CHIA[chia] + '</b> người rời đi nhiều hơn mới vào' : '<b class="tang">Kỳ nào mới vào cũng nhiều hơn người rời đi</b>');
-    if (am) tom = '↕️ <b class="giam">' + am + '/' + het + ' ' + TEN_CHIA[chia] + '</b> có người rời đi nhiều hơn mới vào — lực lượng đang bị rút.';
-  } else if (k === 'bu_nghi') {
-    tieuDe = 'Tuyển có bù kịp nghỉ việc? — tỷ lệ bù từng nhà máy'; cs = 'ty_bu'; moc = 1;
-    var kh = { tu: KD[0].tu, den: nho(KD[KD.length - 1].den, HOM_NAY) }, nm = CONG_TY.filter(function (c) { return pv.fc(c); });
-    if (nm.length > TOI_DA) {   // quá 6 đường thì khó đọc → 6 nhà máy nghỉ việc nhiều nhất
-      nm = nm.map(function (c) { return { c: c, nv: tinhQS(kh.tu, kh.den, locCua('nha_may', [c.ma_ct])).nghi }; }).sort(function (a, b) { return b.nv - a.nv; }).slice(0, TOI_DA).map(function (x) { return x.c; });
-      them = '<span class="mo">Vẽ 6 nhà máy nghỉ việc nhiều nhất — đủ cả ở bảng "Đối chiếu cả khoảng".</span><br>';
-    }
-    ds = nm.map(function (c, i) {
-      var lc = locCua('nha_may', [c.ma_ct]), lp = { khoa: pv.khoa + '|' + lc.khoa, fp: function (p) { return lc.fp(p) && pv.fp(p); } };
-      return { ten: c.ten, mau: MAU[i], gt: KD.map(function (p) { var q = tinhQS(p.tu, p.den, lc); return q.cuoi && q.nghi && p.den >= BAT_DAU ? tinhTD(p.tu, p.den, lp).lam / q.nghi : null; }) };
-    });
-    var duoi = ds.filter(function (s) { var x = s.gt.filter(function (v, i) { return v != null && !KD[i].dang; }); return x.length && x[x.length - 1] < 1; });
-    so2 = duoi.length + ' <span>nhà máy</span>'; nhan = 'dưới 100% ở ' + TEN_CHIA[chia] + ' gần nhất đã hết';
-    them += duoi.length ? 'Dưới 100% = tuyển KHÔNG bù kịp người nghỉ: <b class="giam">' + duoi.map(function (s) { return thoat(s.ten); }).join(', ') + '</b>' : '<b class="tang">Chưa thấy nhà máy nào bù thiếu</b>';
-    if (duoi.length) tom = '⚖️ <b class="giam">' + duoi.length + ' nhà máy tuyển không bù kịp nghỉ việc</b>: ' + duoi.map(function (s) { return thoat(s.ten); }).join(', ') + '.';
-  }
-  return { key: key, tieuDe: tieuDe, ds: ds, cs: cs, so: so2, nhan: nhan,
-           xu: xu ? chuXu(xu, k === 'pheu' ? 'ty_ra' : cs) : (loaiVe === 'vao_ra' || k === 'bu_nghi' ? '' : chuXu(null)),
-           them: them, ct: ct, nam: nam, moc: moc, loaiVe: loaiVe, tom: tom, canh: canh };
-}
-function htmlThe(m, lon2) {
-  var nutLon = lon2 ? '' : '<button type="button" class="nut-lon" data-chinh="' + m.key + '">⤢ Xem lớn</button>';
-  if (m.loi) return '<div class="dau-the"><h3>' + thoat(m.tieuDe) + '</h3>' + nutLon + '</div><div class="loi-the">⚠️ ' + thoat(m.loi) + '</div>';
-  var chuThich = '';
-  if (lon2 && (m.ds.length > 1 || m.ct || m.nam || m.moc)) {
-    chuThich = '<div class="chu-thich">' + (m.ds.length > 1 ? m.ds.map(function (s) { return '<span><i class="gach" style="border-color:' + s.mau + '"></i>' + thoat(s.ten) + '</span>'; }).join('') : '') +
-      (m.ct ? '<span><i class="gach dut" style="border-color:#3c4753"></i>Chỉ tiêu</span>' : '') + (m.nam ? '<span><i class="gach dut" style="border-color:#9aa3ad"></i>Cùng kỳ năm trước</span>' : '') +
-      (m.moc ? '<span><i class="gach" style="border-color:#1f2933"></i>100% = bù đủ</span>' : '') + '</div>';
-  }
-  return '<div class="dau-the"><h3>' + thoat(m.tieuDe) + '</h3>' + nutLon + '</div>' +
-    '<div class="so-the"><b>' + m.so + '</b><span>' + m.nhan + '</span></div>' +
-    '<div class="xu-the">' + m.xu + (lon2 ? m.them : '') + '</div>' + chuThich + '<div class="bd" id="' + (lon2 ? 'bd_chinh' : 'bd_' + m.key.replace(':', '_')) + '"></div>';
-}
+function chenh(a, b) { if (!b) return '—'; var x = Math.round((a - b) / b * 100); return (x > 0 ? '▲ +' : (x < 0 ? '▼ −' : '→ ')) + Math.abs(x) + '%'; }
+/** Tìm không phân biệt dấu, hoa thường: "LAN" tìm ra "Lan", "hu" ra "Hùng". */
+function boDau(s) { return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase(); }
 
 // ============================================================
 // VẼ — thời gian NẰM NGANG ở dưới, số lượng DỰNG ĐỨNG bên trái; ≥ 4 kỳ đường, ≤ 3 kỳ cột; một trục
@@ -1007,7 +1048,7 @@ function veThe(id, KD, m, H) {
   }
   var o = cot ? pw / n : (n > 1 ? pw / (n - 1) : pw);
   var x = function (i) { return cot ? L + (i + .5) * o : L + (n > 1 ? i * o : pw / 2); }, y = function (v) { return T + ph - ((v - lo) / (top - lo || 1)) * ph; };
-  var h = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + thoat(m.tieuDe) + ' — số từng kỳ ở bảng số cuối trang">';
+  var h = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + thoat(m.tieuDe) + ' — rê chuột để xem số từng kỳ">';
   for (var g = 0; g <= 4; g++) {
     var gv = lo + (top - lo) * g / 4, gy = y(gv);
     h += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + gy + '" y2="' + gy + '" stroke="' + (g ? 'var(--luoi)' : 'var(--truc)') + '"/><text x="' + (L - 6) + '" y="' + (gy + 4) + '" text-anchor="end">' +
@@ -1048,7 +1089,7 @@ function veThe(id, KD, m, H) {
         if (truoc >= 0) { var a = 'M' + x(truoc).toFixed(1) + ' ' + y(s.gt[truoc]).toFixed(1) + 'L' + p; if (yeu) dut += a; else lien += a; }
         truoc = i;
       });
-      h += '<path d="' + lien + '" fill="none" stroke="' + s.mau + '" stroke-width="2.5" stroke-linejoin="round"/>';
+      h += '<path d="' + lien + '" fill="none" stroke="' + s.mau + '" stroke-width="2.5" stroke-linejoin="round"' + (s.dut ? ' stroke-dasharray="6 4"' : '') + '/>';
       if (dut) h += '<path d="' + dut + '" fill="none" stroke="' + s.mau + '" stroke-width="2.5" stroke-dasharray="5 5"/>';
       s.gt.forEach(function (v, i) {
         if (v == null) return;
@@ -1090,7 +1131,7 @@ function veVaoRa(id, KD, moi, nv, H) {
 /** Ô gợi ý khi rê chuột: kỳ + số từng đường + năm trước + chỉ tiêu. */
 document.addEventListener('mousemove', function (e) {
   var v = e.target.closest ? e.target.closest('.vung-re') : null;
-  document.querySelectorAll('.goi-y-bd').forEach(function (t) { if (!v || t.parentNode !== v.closest('.the')) t.remove(); });
+  document.querySelectorAll('.goi-y-bd').forEach(function (t) { if (!v || t.parentNode !== v.closest('.the, .the-bd')) t.remove(); });
   document.querySelectorAll('.truc-chon').forEach(function (l) { if (!v || l.ownerSVGElement !== v.ownerSVGElement) l.setAttribute('visibility', 'hidden'); });
   if (!v) return;
   var bd = v.closest('.bd'), d = bd && BD[bd.id];
@@ -1103,7 +1144,7 @@ document.addEventListener('mousemove', function (e) {
   d.m.ds.forEach(function (s) { hh += '<br><i style="background:' + s.mau + '"></i>' + thoat(s.ten) + ': <b>' + (k.chuaCo ? 'chưa có số' : dinh(d.m.cs, s.gt[i])) + '</b>'; });
   if (d.m.nam && d.m.nam[i] != null) hh += '<br>┄ Cùng kỳ năm trước: <b>' + dinh(d.m.cs, d.m.nam[i]) + '</b>';
   if (d.m.ct && d.m.ct[i] != null) hh += '<br>┄ Chỉ tiêu: <b>' + d.m.ct[i] + '</b>';
-  var the = bd.closest('.the'), tip = the.querySelector('.goi-y-bd');
+  var the = bd.closest('.the, .the-bd'), tip = the.querySelector('.goi-y-bd');
   if (!tip) { tip = document.createElement('div'); tip.className = 'goi-y-bd'; the.appendChild(tip); }
   tip.innerHTML = hh;
   var tr = the.getBoundingClientRect(), left = e.clientX - tr.left + 14;
@@ -1120,6 +1161,20 @@ function veNho(gt, KD, mau) {
   return '<svg width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true" style="vertical-align:middle"><path d="' + d + '" fill="none" stroke="' + mau + '" stroke-width="2"/></svg>';
 }
 function oMau(v, max) { var a = max ? v / max : 0; return 'background:rgba(42,120,214,' + (v ? (.1 + a * .85).toFixed(2) : 0) + ')' + (a > .55 ? '' : ';color:#1f2933'); }
+/** Một ô của lưới biểu đồ nhỏ: chỉ có đường, MỌI ô cùng thước đo `max` để so bằng mắt được. */
+function veNhoO(id, ds, KD, max, H) {
+  var el = $(id);
+  if (!el) return;
+  var W = Math.max(140, el.clientWidth || 150), n = KD.length;
+  var x = function (i) { return n > 1 ? 4 + (W - 8) * i / (n - 1) : W / 2; }, y = function (v) { return 4 + (H - 8) * (1 - v / (max || 1)); };
+  var h = '<svg viewBox="0 0 ' + W + ' ' + H + '" aria-hidden="true"><line x1="0" x2="' + W + '" y1="' + y(0) + '" y2="' + y(0) + '" stroke="#c9d0d8"/>';
+  ds.forEach(function (s) {
+    var d = '', ve = false;
+    s.gt.forEach(function (v, i) { if (v == null) { ve = false; return; } d += (ve ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1); ve = true; });
+    h += '<path d="' + d + '" fill="none" stroke="' + s.mau + '" stroke-width="2"/>';
+  });
+  el.innerHTML = h + '</svg>';
+}
 
 // ============================================================
 // CỘT TRÁI
@@ -1128,39 +1183,6 @@ function vePhan(ma, tom) {
   $('tom_' + ma).innerHTML = tom;
   $('mui_' + ma).textContent = S.moPhan[ma] ? '▲ Thu' : '▼ Mở';
   $('than_' + ma).classList.toggle('an', !S.moPhan[ma]);
-}
-function veXem() {
-  var h = '', tomDs = [];
-  HANG.forEach(function (g) {
-    var bat = !!S.hang[g.k], mo = S.moHang[g.k], soBat = g.so.filter(function (c) { return S.bat['so:' + c] && duocSo(c); }).length,
-        gocBat = g.goc.filter(function (x) { return S.bat['goc:' + x.k]; }).length;
-    if (bat) tomDs.push(g.ten + ': ' + (soBat + gocBat) + ' mục');
-    h += '<div class="nhom' + (bat ? ' bat' : '') + '"><div class="dong-nhom"><button type="button" class="goc" aria-pressed="' + bat + '" data-hang="' + g.k + '" title="' + thoat(g.hoi) + '">' +
-      '<span class="o-tich"></span><span><b>' + g.bt + ' ' + g.ten + '</b>' + (bat ? ' <span class="mo" style="font-size:15px">· ' + (soBat + gocBat) + ' mục</span>' : '') + '</span></button>' +
-      (bat ? '<button type="button" class="nut-mo" data-mo-hang="' + g.k + '" aria-label="' + (mo ? 'Thu' : 'Mở') + '">' + (mo ? '▲' : '▼') + '</button>' : '') + '</div>';
-    if (bat && mo) {
-      h += '<div class="la-ds"><div class="hai-nut"><button type="button" class="chon" data-tat-ca-hang="' + g.k + '">☑ Chọn tất cả</button><button type="button" class="chon" data-bo-hang="' + g.k + '">☐ Bỏ hết</button></div>' +
-        g.so.map(function (c) {
-          var duoc = duocSo(c);
-          return '<button type="button" class="la" aria-pressed="' + !!(S.bat['so:' + c] && duoc) + '" data-khoa="so:' + c + '"' + (duoc ? '' : ' disabled') + ' title="' + thoat(duoc ? CHI_SO[c].mo : 'Không có khi xem ' + tenLoai()) + '">' +
-            '<span class="o-tich"></span>' + CHI_SO[c].ten + (CHI_SO[c].ct ? ' 🎯' : '') + '</button>';
-        }).join('') + '<div class="tieu-la">Góc nhìn</div>' + g.goc.map(function (x) {
-          var duoc = !(x.k === 'vao_ra' && khongQS());
-          return '<button type="button" class="la" aria-pressed="' + !!(S.bat['goc:' + x.k] && duoc) + '" data-khoa="goc:' + x.k + '"' + (duoc ? '' : ' disabled') + ' title="' + thoat(x.mo) + '"><span class="o-tich"></span>' + x.ten + '</button>';
-        }).join('') + '</div>';
-    }
-    h += '</div>';
-  });
-  var khBat = KET_HOP.filter(function (k) { return S.bat['kh:' + k.k] && duocKhoa('kh:' + k.k); }).length;
-  h += '<div class="nhom' + (khBat ? ' bat' : '') + '"><div class="dong-nhom"><span class="goc" style="cursor:default"><span>🔗</span><span><b>Kết hợp</b>' + (khBat ? ' <span class="mo" style="font-size:15px">· ' + khBat + ' mục</span>' : '') +
-    '</span></span></div><div class="la-ds">' + KET_HOP.map(function (k) {
-      var duoc = duocKhoa('kh:' + k.k), can = k.can.map(function (c) { return HANG.filter(function (g) { return g.k === c; })[0].ten; }).join(' + ');
-      return '<button type="button" class="la" aria-pressed="' + !!(S.bat['kh:' + k.k] && duoc) + '" data-khoa="kh:' + k.k + '"' + (duoc ? '' : ' disabled') + ' title="' + thoat(k.mo) + '">' +
-        '<span class="o-tich"></span><span>' + k.ten + (duoc ? '' : ' <span class="phu-la">(' + (k.k === 'bu_nghi' && khongQS() ? 'không có khi xem ' + tenLoai() : 'cần tích ' + can) + ')</span>') + '</span></button>';
-    }).join('') + '</div></div>';
-  if (khBat) tomDs.push('kết hợp ' + khBat);
-  $('than_xem').innerHTML = h;
-  vePhan('xem', tomDs.join(' · ') || 'chưa chọn gì');
 }
 function veThoiGian() {
   var kc = khoangChon(), T = dsKy(), h = '', namNay = Number(HOM_NAY.slice(0, 4)), minNgay = (namNay - 1) + '-01-01';
@@ -1192,150 +1214,506 @@ function veThoiGian() {
   $('than_tg').innerHTML = h;
   vePhan('tg', thoat(kc.ten) + ' · theo ' + TEN_CHIA[T.chia] + (S.namTruoc ? ' · ＋ năm trước' : ''));
 }
-function veXemAi() {
-  var h = '<div class="luoi3">' + LOAI.map(function (l) {
-    return '<button type="button" class="chon" aria-pressed="' + (S.loai === l.k) + '" data-loai="' + l.k + '">' + (l.k === 'cong_ty' && laTN() ? 'Phạm vi của bạn' : l.ten) + '</button>';
-  }).join('') + '</div>';
-  if (S.loai === 'cong_ty') {
-    h += '<div class="ghi" style="margin-top:8px">' + (laTN() ? 'Mọi phiếu ở công ty nhóm bạn + phiếu người đội bạn ở công ty khác.' : 'Cả doanh nghiệp.') + ' Muốn so nhiều mục thì chọn loại ở trên.</div>';
-  } else {
-    var ds = dsMuc(S.loai);
-    h += '<div class="hai-nut" style="margin-top:8px"><button type="button" class="chon" data-tat-ca-dt="1">☑ Chọn tất cả (' + ds.length + ')</button><button type="button" class="chon" data-bo-dt="1">☐ Bỏ hết</button></div>';
-    h += '<div class="hang">' + ds.map(function (x) {
-      var bat = S.chon.indexOf(x.ma) >= 0, mau = bat && S.cach === 'tung' && S.chon.length <= TOI_DA ? MAU[S.mauDT[x.ma]] : '#c9d0d8';
-      return '<button type="button" class="chip" aria-pressed="' + bat + '" data-dt="' + thoat(x.ma) + '" title="' + thoat(x.phu) + '"><span class="cham" style="background:' + mau + '"></span>' + thoat(x.ten) + '</button>';
+function nut(x, v, chu, bat) {
+  return '<button type="button" class="chon" data-x="' + x + '"' + (v ? ' data-v="' + thoat(v) + '"' : '') + ' aria-pressed="' + !!bat + '">' + chu + '</button>';
+}
+function theoTen(a, b) { return a.ten.localeCompare(b.ten, 'vi'); }
+function tenCuoi(t) { return String(t).split(' ').pop(); }
+function cuoiDs(a, b, cuoi) { return a === cuoi ? 1 : (b === cuoi ? -1 : a.localeCompare(b, 'vi')); }   // "Chưa xếp đội" / "Chưa ghi khu vực" xuống cuối
+/** ② Ở đâu: mảng · ô tìm · cây khu vực → nhà máy (tích cả khu vực một lượt). */
+function veODau() {
+  $('than_o').innerHTML = '<div class="luoi3">' + nut('mang', '', 'Tất cả', !S.mang) + nut('mang', 'thoi_vu', 'Thời vụ', S.mang === 'thoi_vu') + nut('mang', 'chinh_thuc', 'Chính thức', S.mang === 'chinh_thuc') + '</div>' +
+    '<input class="o-tim" id="tim_nm" placeholder="🔎 Tìm nhà máy, khu vực" autocomplete="off" value="' + thoat(S.timNM) + '"><div id="ds_nm"></div>';
+  veDsNM();
+  vePhan('o', thoat(tenPV()));
+}
+function veDsNM() {
+  var q = boDau(S.timNM), kv = [], theoKV = {};
+  CONG_TY.forEach(function (c) {
+    if ((S.mang && c.mang !== S.mang) || (q && boDau(c.ten + ' ' + c.khu_vuc).indexOf(q) < 0)) return;
+    if (!theoKV[c.khu_vuc]) { theoKV[c.khu_vuc] = []; kv.push(c.khu_vuc); }
+    theoKV[c.khu_vuc].push(c);
+  });
+  kv.sort(function (a, b) { return cuoiDs(a, b, CHUA_KV); });
+  var h = '<button type="button" class="dong-chon" data-x="toan" aria-pressed="' + !Object.keys(S.nm).length + '"><span class="tich"></span>' + (laTN() ? 'Phạm vi của bạn' : 'Toàn công ty') + '</button>';
+  kv.forEach(function (k) {
+    var ds = theoKV[k].sort(theoTen), co = ds.filter(function (c) { return S.nm[c.ma_ct]; }).length, mo = S.moKV[k] || q;
+    h += '<div class="nhom-hang"><button type="button" class="dong-chon nhom-dau" data-x="kv" data-v="' + thoat(k) + '" aria-pressed="' + (co === ds.length ? 'true' : (co ? 'mixed' : 'false')) + '">' +
+      '<span class="tich"></span>' + thoat(k) + '<span class="so">' + co + '/' + ds.length + '</span></button>' +
+      '<button type="button" class="nut-mo" data-x="mo_kv" data-v="' + thoat(k) + '" aria-label="' + (mo ? 'Thu' : 'Mở') + ' danh sách ' + thoat(k) + '">' + (mo ? '▲' : '▼') + '</button></div>';
+    if (mo) h += '<div class="con">' + ds.map(function (c) {
+      return '<button type="button" class="dong-chon" data-x="nm" data-v="' + thoat(c.ma_ct) + '" aria-pressed="' + !!S.nm[c.ma_ct] + '"><span class="tich"></span>' + thoat(c.ten) + (c.ngoai ? '<span class="so">ngoài nhóm</span>' : '') + '</button>';
     }).join('') + '</div>';
-    h += '<div class="luoi2" style="margin-top:8px"><button type="button" class="chon" aria-pressed="' + (S.cach === 'tung') + '" data-cach="tung">So từng mục</button>' +
-      '<button type="button" class="chon" aria-pressed="' + (S.cach === 'gop') + '" data-cach="gop">Gộp chung</button></div>';
-    if (S.cach === 'tung' && S.chon.length > TOI_DA) h += '<div class="ghi" style="margin-top:6px">Chọn ' + S.chon.length + ' mục: biểu đồ vẽ <b>tổng</b>; từng mục xem ở bảng so sánh cuối trang.</div>';
-    if (S.loai === 'doi') h += '<div class="ghi" style="margin-top:6px">Đội = đội của người tuyển (cột nhom NGUOI_DON). Quân số không tính theo đội, muốn xem thì chọn Nhà máy.</div>';
-    if (S.loai === 'khu_vuc') h += '<div class="ghi" style="margin-top:6px">Khu vực lấy ở cột khu_vuc của tab CONGTY.</div>';
-    if (S.loi) h += '<div class="loi-chon">' + S.loi + '</div>';
+  });
+  if (!kv.length) h += '<div class="ghi">Không có nhà máy nào khớp "' + thoat(S.timNM) + '".</div>';
+  $('ds_nm').innerHTML = h;
+}
+/** ③ So theo ai: Nhân viên · Đội · Nhà máy. Nhân viên có ô tìm, xếp, "chỉ người có phiếu", gom theo đội (30–60 người vẫn chọn nhanh). */
+function veAi() {
+  var h = '<div class="luoi3">' + nut('theo', 'nv', 'Nhân viên', S.theo === 'nv') + nut('theo', 'doi', 'Đội', S.theo === 'doi') + nut('theo', 'nm', 'Nhà máy', S.theo === 'nm') + '</div>';
+  if (S.doiLoc) h += '<div class="loc-doi">👥 Đang xem đội <b>' + thoat(S.doiLoc) + '</b><button type="button" class="nut-phu" data-x="bo_doi">✕ Bỏ lọc</button></div>';
+  if (S.theo === 'nv') h += '<input class="o-tim" id="tim_nv" placeholder="🔎 Gõ tên hoặc đội" autocomplete="off" value="' + thoat(S.tim) + '">' +
+    '<div class="luoi2" style="margin-top:6px">' + nut('xep_nv', 'az', 'A → Z', S.xepNV === 'az') + nut('xep_nv', 'lam', 'Vào làm cao → thấp', S.xepNV === 'lam') + '</div>' +
+    '<button type="button" class="dong-chon" data-x="co_phieu" aria-pressed="' + S.coPhieu + '"><span class="tich"></span>Chỉ người có phiếu trong kỳ</button>';
+  $('than_ai').innerHTML = h + '<div id="ds_chon"></div>';
+  veDsChon();
+  var n = nChon();
+  vePhan('ai', TEN_THEO_HOA[S.theo] + (S.doiLoc ? ' · đội ' + thoat(S.doiLoc) : '') + (n ? ' · đã chọn ' + n : ' · tất cả'));
+}
+/** Hàng đang hiện ở ③ (sau ô tìm + "chỉ người có phiếu") — "Chọn tất cả đang hiện" / tích cả đội chỉ chọn trong số này. */
+function dsHienAi() {
+  if (!R) return [];
+  var q = S.theo === 'nv' ? boDau(S.tim) : '';
+  return R.ds.filter(function (r) { return S.theo !== 'nv' || ((!S.coPhieu || !r.rong) && (!q || boDau(r.ten + ' ' + r.phu).indexOf(q) >= 0)); });
+}
+function doiCua(id) { var n = NV_MA[Number(id)]; return n && n.doi.length ? n.doi : [CHUA_DOI]; }
+function veDsChon() {
+  var hop = $('ds_chon');
+  if (!hop || !R) return;
+  var n = nChon(), hang = dsHienAi();
+  if (S.theo !== 'nv') {
+    hop.innerHTML = '<div class="da-chon"><span>Đã chọn ' + n + '</span><button type="button" class="nut-phu" data-x="bo_het">☐ Bỏ hết</button></div>' + hang.map(function (r) {
+      return '<button type="button" class="dong-chon" data-x="tich" data-v="' + thoat(r.id) + '" aria-pressed="' + !!S.chon[r.id] + '"><span class="tich"></span>' + thoat(r.ten) + '<span class="so">' + r.v.lam + ' vào làm</span></button>';
+    }).join('');
+    return;
   }
-  $('than_ai').innerHTML = h;
-  vePhan('ai', S.loai === 'cong_ty' ? (laTN() ? 'Phạm vi của bạn' : 'Toàn công ty') :
-    (S.chon.length ? S.chon.length + ' ' + tenLoai().toLowerCase() + (S.chon.length > 1 ? ' · ' + (S.cach === 'gop' || S.chon.length > TOI_DA ? 'gộp chung' : 'so từng mục') : '') : 'chưa chọn'));
+  hang = hang.slice().sort(S.xepNV === 'az' ? function (a, b) { return tenCuoi(a.ten).localeCompare(tenCuoi(b.ten), 'vi'); } : function (a, b) { return b.v.lam - a.v.lam; });
+  var h = '<div class="da-chon"><button type="button" class="nut-phu" data-x="tat_ca">☑ Chọn tất cả đang hiện (' + hang.length + ')</button><button type="button" class="nut-phu" data-x="bo_het">☐ Bỏ hết</button></div>' +
+    '<div class="ghi" style="margin:2px 0">Đã chọn <b>' + n + '</b> người</div>', dsDoi = [], theoDoi = {}, q = S.tim;
+  hang.forEach(function (r) { doiCua(r.id).forEach(function (d) { if (!theoDoi[d]) { theoDoi[d] = []; dsDoi.push(d); } theoDoi[d].push(r); }); });
+  dsDoi.sort(function (a, b) { return cuoiDs(a, b, CHUA_DOI); });
+  dsDoi.forEach(function (d) {
+    var nho2 = theoDoi[d], co = nho2.filter(function (r) { return S.chon[r.id]; }).length, mo = S.moDoi[d] || q;
+    h += '<div class="nhom-hang"><button type="button" class="dong-chon nhom-dau" data-x="doi_ca" data-v="' + thoat(d) + '" aria-pressed="' + (co === nho2.length ? 'true' : (co ? 'mixed' : 'false')) + '">' +
+      '<span class="tich"></span>' + thoat(d) + '<span class="so">' + co + '/' + nho2.length + '</span></button>' +
+      '<button type="button" class="nut-mo" data-x="mo_doi" data-v="' + thoat(d) + '" aria-label="' + (mo ? 'Thu' : 'Mở') + ' danh sách ' + thoat(d) + '">' + (mo ? '▲' : '▼') + '</button></div>';
+    if (mo) h += '<div class="con">' + nho2.map(function (r) {
+      return '<button type="button" class="dong-chon" data-x="tich" data-v="' + r.id + '" aria-pressed="' + !!S.chon[r.id] + '"><span class="tich"></span>' + thoat(r.ten) + '<span class="so">' + r.v.lam + '</span></button>';
+    }).join('') + '</div>';
+  });
+  if (!hang.length) h += '<div class="ghi">Không có ai khớp' + (q ? ' "' + thoat(q) + '"' : '') + '.</div>';
+  hop.innerHTML = h;
 }
 
 // ============================================================
-// CỘT PHẢI
+// CỘT PHẢI — vùng cố định (≤ 40% màn: tiêu đề · chỉ tiêu · biểu đồ) + phần dưới cuộn riêng (tóm lại · bảng / phân tích)
 // ============================================================
-function veChinh() {
+/** Số cho cả màn: hàng của bảng (cả khoảng + từng kỳ + kỳ trước), dòng Cộng, kỳ trước, kỳ chỉ tiêu. Mỗi khoảng một lượt qua phiếu. */
+function dungBang() {
   NHO = {};
-  var T = dsKy(), KD = T.ds, duong = dsDuong(), the = dsThe(), bang = dsBang();
-  var tenAi = S.loai === 'cong_ty' ? (laTN() ? 'Phạm vi của bạn' : 'Toàn công ty') : (S.chon.length ? S.chon.map(function (m) { return tenMuc(S.loai, m); }).join(', ') : 'chưa chọn');
-  $('tieu_xem').innerHTML = '🗓️ <b>' + thoat(T.kc.ten) + '</b> · theo ' + TEN_CHIA[T.chia] + ' &nbsp;·&nbsp; 👥 <b>' + thoat(tenAi) + '</b>' +
-    (S.loai !== 'cong_ty' && S.chon.length > 1 ? ' (' + (S.cach === 'gop' || S.chon.length > TOI_DA ? 'gộp chung' : 'so từng mục') + ')' : '');
-  var trong = !the.length && !bang.length ? '👈 Tích ít nhất một số liệu hoặc góc nhìn ở ① Xem gì.' : (!duong.length ? '👈 ③ Chọn ít nhất một ' + tenLoai().toLowerCase() + '.' : (!KD.length ? '👈 ② Chọn thời gian.' : ''));
-  if (trong) { $('khoi_chinh').innerHTML = '<div class="trong">' + trong + '</div>'; $('luoi_the').innerHTML = ''; $('khoang').innerHTML = ''; $('tom_lai').classList.add('an'); return; }
-  $('tom_lai').classList.remove('an');
-  var pv = locPhamVi(), moTa = {}, tom = [], tomVD = [];
-  if (THIEU_NGAY && S.hang.td) tomVD.push('⚠️ ' + THIEU_NGAY + ' phiếu không đọc được ngày hẹn — chưa tính vào kỳ nào (sửa ngày hẹn ở bảng đăng ký).');
-  the.forEach(function (k) { if (k !== 'goc:xep_hang') { moTa[k] = moTaThe(k, T, duong, pv); if (moTa[k].tom) (k.indexOf('so:') === 0 ? tom : tomVD).push(moTa[k].tom); if (moTa[k].canh) tomVD.push(moTa[k].canh); } });
-  if (the.indexOf('goc:xep_hang') >= 0 && KD.length) {
-    var rongNV = dsNVKy({ tu: KD[0].tu, den: nho(KD[KD.length - 1].den, HOM_NAY) }, pv).filter(function (x) { return !x.o.luot; });
-    if (rongNV.length) tomVD.push('⚠ <b>' + rongNV.length + ' nhân viên chưa có hoạt động</b> trong kỳ này: ' + rongNV.slice(0, 4).map(function (x) { return thoat(x.n.ten); }).join(', ') + (rongNV.length > 4 ? '…' : '') + '.');
-  }
-  // Biểu đồ CHÍNH (đứng yên). Thẻ đang chọn bị bỏ → lấy thẻ biểu đồ đầu tiên.
-  var duocLon = the.filter(function (k) { return k !== 'goc:xep_hang'; });
-  if (duocLon.indexOf(S.chinh) < 0) S.chinh = duocLon[0] || '';
-  var Hchinh = Math.max(190, Math.min(260, (window.innerHeight || 900) - 560));
-  $('khoi_chinh').innerHTML = S.chinh ? '<div class="the the-chinh">' + htmlThe(moTa[S.chinh], true) + '</div>' : '<div class="trong">Chưa có biểu đồ — tích một số liệu ở ① Xem gì.</div>';
-  var hl = '';
-  the.forEach(function (k) {
-    if (k === 'goc:xep_hang') { hl += theXepHang(KD, T, pv); return; }
-    hl += '<div class="the' + (k === S.chinh ? ' dang-lon' : '') + '" data-chinh="' + k + '">' + htmlThe(moTa[k], false) + '</div>';
+  var T = dsKy(), KD = T.ds, kc = T.kc;
+  if (!KD.length) return null;
+  var pv = locPV(), tu = KD[0].tu, den = nho(KD[KD.length - 1].den, HOM_NAY), kh = khoaHang(S.theo), g = gomHang(tu, den, KD, pv, kh);
+  var tr = kyTruoc(kc), gt = tr ? gomHang(tr.tu, tr.den, [], pv, kh) : null, K = kyCT0(kc), rong = moiO();
+  var ds = dsHang(S.theo, pv, g.co).map(function (h) {
+    var o = g.hang[h.id], loc = locHang(S.theo, [h.id], pv), v = theoTy(xongO(o ? o.ca : rong, loc)), dt = K ? dtHang(S.theo, h.id) : null, c = dt ? chiTieu(K, dt, 'vao_lam') : null;
+    var x = { id: h.id, ten: h.ten, phu: h.phu, loc: loc, v: v, rong: !v.luot,
+              ky: KD.map(function (p, i) { return theoTy(xongO(o ? o.ky[i] : rong, null)); }),
+              truoc: gt ? theoTy(xongO(gt.hang[h.id] ? gt.hang[h.id].ca : rong, null)) : null };
+    v.ct = c ? c.so : null;
+    if (S.theo === 'doi') x.phu = v.so_nguoi + ' người';
+    if (S.theo === 'nm') {
+      ganQS(v, tinhQS(tu, den, loc));
+      var cq = dt && K ? chiTieu(K, dt, 'quan_so') : null;
+      v.thieu = cq && v.qs_t != null ? Math.max(0, cq.so - v.qs_t) : null;
+    }
+    return x;
   });
-  $('luoi_the').innerHTML = hl;
-  if (S.chinh) veThe('bd_chinh', KD, moTa[S.chinh], Hchinh);
-  the.forEach(function (k) { if (moTa[k]) veThe('bd_' + k.replace(':', '_'), KD, moTa[k], 168); });
-  var r = veKhoang(KD, T, pv, duong, the, bang);
-  $('khoang').innerHTML = r.h;
-  tom = tomVD.concat(r.tom, tom);
-  $('tom_lai_ds').innerHTML = tom.length ? tom.slice(0, 8).map(function (x) { return '<li>' + x + '</li>'; }).join('') : '<li>Chưa đủ kỳ có số để rút ra xu hướng.</li>';
+  var tong = theoTy(tinhTD(tu, den, pv));
+  if (S.theo === 'nm') ganQS(tong, tinhQS(tu, den, pv));
+  return { kc: kc, KD: KD, chia: T.chia, pv: pv, loc: pv, tu: tu, den: den, ds: ds, tong: tong, K: K,
+           truoc: tr ? theoTy(tinhTD(tr.tu, tr.den, pv)) : null, tenTruoc: tr ? tr.ten : '' };
+}
+function ganQS(v, q) {
+  var c = q.cuoi;
+  v.qs_t = c ? c.t : null; v.qs_moi = c ? q.moi : null; v.qs_nv = c ? q.nv : null; v.qs_cg = c ? q.cg : null; v.qs_ty_nghi = c ? q.ty_nghi : null; v.qs_kp = c ? q.kp : null;
+}
+function dsChon(r) { return r.ds.filter(function (x) { return S.chon[x.id]; }); }
+/** Phạm vi phân tích: chưa chọn ai = cả phạm vi; đã chọn = đúng các hàng đó gộp lại, đếm người không trùng. `chung` = cả phạm vi, để so. */
+function rCua(r) {
+  var c = xepDong(dsChon(r));
+  if (!c.length) return r;
+  var loc = locHang(S.theo, c.map(function (x) { return x.id; }), r.pv), tr = r.truoc ? kyTruoc(r.kc) : null, tong = theoTy(tinhTD(r.tu, r.den, loc));
+  if (S.theo === 'nm') ganQS(tong, tinhQS(r.tu, r.den, loc));
+  return { kc: r.kc, KD: r.KD, chia: r.chia, pv: r.pv, loc: loc, tu: r.tu, den: r.den, ds: c, tong: tong, K: r.K,
+           truoc: tr ? theoTy(tinhTD(tr.tu, tr.den, loc)) : null, tenTruoc: r.tenTruoc, chon: c, chung: r.tong };
+}
+function layV(x, k) { if (k === 'ten') return x.ten; if (k === 'dat') return x.v.ct ? x.v.lam / x.v.ct : null; var v = x.v[k]; return v === undefined ? null : v; }
+/** Xếp theo cột đang chọn; ô chưa có số ("—") luôn nằm cuối, cả hai chiều. */
+function xepDong(ds) {
+  var k = S.xep.k, d = S.xep.d;
+  return ds.slice().sort(function (a, b) {
+    var x = layV(a, k), y = layV(b, k);
+    if (x == null && y == null) return 0;
+    if (x == null) return 1;
+    if (y == null) return -1;
+    if (k === 'ten') return (S.theo === 'nv' ? tenCuoi(x).localeCompare(tenCuoi(y), 'vi') : String(x).localeCompare(String(y), 'vi')) * d;
+    return (x - y) * d;
+  });
+}
+
+// ---------- chỉ tiêu trên đầu ----------
+/** Dải chỉ tiêu theo đúng đối tượng đang chọn; chưa chọn thì theo phạm vi (đội / nhà máy / công ty); không có thì cộng các nhà máy có chỉ tiêu. */
+function ctTinh(r) {
+  var K = r.K;
+  if (!K) return null;
+  var chon = dsChon(r), tong = 0, lam = 0, co = 0, thieu = [], ten = '', qs = null;
+  if (chon.length) {
+    chon.forEach(function (x) { if (x.v.ct) { tong += x.v.ct; lam += x.v.lam; co++; } else thieu.push(x.ten); });
+    ten = chon.length === 1 ? chon[0].ten : co + '/' + chon.length + ' mục đã chọn có chỉ tiêu';
+  } else {
+    var d = dtPV(), c = d ? chiTieu(K, d, 'vao_lam') : null;
+    if (c) {
+      tong = c.so; lam = r.tong.lam; co = 1; ten = tenDT(d);
+      var cq = d.loai !== 'doi' ? chiTieu(K, d, 'quan_so') : null, q = cq ? tinhQS(K.tu, K.den, r.pv) : null;
+      if (q && q.cuoi) qs = { so: cq.so, thuc: q.cuoi.t };
+    } else if (!S.doiLoc) {
+      CONG_TY.forEach(function (n) {
+        if (!r.pv.fc(n)) return;
+        var c2 = chiTieu(K, { loai: 'nha_may', ma: n.ma_ct }, 'vao_lam');
+        if (c2) { tong += c2.so; lam += tinhTD(K.tu, K.den, locHang('nm', [n.ma_ct], r.pv)).lam; co++; } else thieu.push(n.ten);
+      });
+      ten = co ? co + ' nhà máy có chỉ tiêu' : '';
+    }
+  }
+  if (!tong) return null;
+  var conNgay = K.den > HOM_NAY ? soNgay(HOM_NAY, K.den) - 1 : 0, qua = soNgay(K.tu, nho(K.den, HOM_NAY)) / soNgay(K.tu, K.den), dat = lam / tong;
+  return { tong: tong, lam: lam, dat: dat, conNgay: conNgay, qua: qua, cham: conNgay > 0 && dat < qua, thieu: thieu, ten: ten, qs: qs,
+           canMoiNgay: conNgay > 0 ? Math.ceil(Math.max(0, tong - lam) / conNgay) : 0 };
+}
+function daiCT(c) {
+  if (!c) return '';
+  var h = '<div><b>🎯 Vào làm ' + soVN(c.lam) + '/' + soVN(c.tong) + ' · đạt ' + Math.round(c.dat * 100) + '%</b>' + (c.ten ? ' <span class="mo">(' + thoat(c.ten) + ')</span>' : '') +
+    (c.dat >= 1 ? ' · <b class="tang">✅ đã đạt chỉ tiêu</b>' : (c.conNgay > 0 ? ' · còn ' + (c.tong - c.lam) + ' · cần ' + c.canMoiNgay + ' người/ngày · ' +
+      (c.cham ? '<b class="giam">▼ chậm hơn nhịp</b>' : '<b class="tang">▲ đúng nhịp</b>') : ' · <b class="giam">chưa đạt</b>')) +
+    (c.thieu.length ? ' <span class="mo" title="Chưa đặt chỉ tiêu: ' + thoat(c.thieu.join(', ')) + '">· ' + c.thieu.length + ' mục chưa đặt</span>' : '') +
+    (c.qs ? ' · 👷 Đang làm <b>' + soVN(c.qs.thuc) + '/' + soVN(c.qs.so) + '</b>' + (c.qs.thuc < c.qs.so ? ' (thiếu ' + soVN(c.qs.so - c.qs.thuc) + ')' : '') : '') + '</div>';
+  return '<div class="dai-ct' + (c.cham ? ' cham' : '') + '">' + h + '<div class="ray" title="Vạch đen = nhịp thời gian đã qua"><i style="width:' + Math.min(100, c.dat * 100) + '%"></i>' +
+    (c.conNgay > 0 ? '<s style="left:' + (c.qua * 100) + '%"></s>' : '') + '</div></div>';
+}
+
+// ---------- biểu đồ cố định ----------
+function tenCS(k) { return CHI_SO[k].ten; }
+/** Một số liệu qua các kỳ: của một hàng (x) hoặc cả phạm vi (x = null). Kỳ chưa có số → null, không phải 0. */
+function giaCS(x, cs, r) {
+  return r.KD.map(function (p, i) {
+    if (hangCua(cs) === 'qs') return giaTri(cs, p.tu, p.den, x ? x.loc : r.pv);
+    if (p.chuaCo || (TU_SO[cs] && (LUOT_LOI || p.den < BAT_DAU_SO))) return null;
+    if (!x) return giaTri(csThat(cs), p.tu, p.den, r.pv);
+    var v = x.ky[i][cs];
+    return v === undefined ? null : v;
+  });
+}
+function dongCS(x, cs, mau, r) {
+  return cs.map(function (k) {
+    var s = { ten: tenCS(k), mau: mau[k], gt: giaCS(x, k, r) };
+    if (k === 'qs_t') s.rong = r.KD.map(function (p) { var d = donViCu(nho(p.den, HOM_NAY), x ? x.loc.fc : r.pv.fc); return d.cu.length + d.bo.length > 0; });
+    return s;
+  });
+}
+/** Đường chỉ tiêu từng kỳ: một đối tượng, một số liệu (Vào làm / Đang làm), chia theo tuần / tháng / quý. */
+function ctDuong(r, x, cs) {
+  var chiSo = cs === 'lam' ? 'vao_lam' : (cs === 'qs_t' ? 'quan_so' : ''), d = x ? dtHang(S.theo, x.id) : dtPV();
+  if (!chiSo || !d || r.chia === 'ngay' || (chiSo === 'quan_so' && (d.loai === 'ca_nhan' || d.loai === 'doi'))) return null;
+  var ct = r.KD.map(function (p) { if (p.le) return null; var c = chiTieu({ kieu: r.chia, tu: p.tu, den: p.den }, d, chiSo); return c ? c.so : null; });
+  return ct.some(function (v) { return v != null; }) ? ct : null;
+}
+function namDuong(r, x, cs) {
+  if (!S.namTruoc) return null;
+  var loc = x ? x.loc : r.pv, k2 = hangCua(cs) === 'qs' ? cs : csThat(cs);
+  return r.KD.map(function (p) { var q = namTruoc(p, r.chia); return q ? giaTri(k2, q.tu, q.den, loc) : null; });
+}
+function tieuChu() { return R ? R.kc.ten + ' · ' + tenPV() + (S.doiLoc ? ' · Đội ' + S.doiLoc : '') : ''; }
+function bamTen() { return S.theo === 'nv' ? 'mo' : (S.theo === 'doi' ? 'sau_doi' : 'sau_nm'); }
+/**
+ * Vùng cố định: tiêu đề MỘT dòng (tên dài nằm sau "Xem tên") · dải chỉ tiêu · biểu đồ với chip số liệu. Chưa chọn ai = tổng phạm vi;
+ * 1 = mỗi số liệu một đường; 2–6 + một số liệu = mỗi đối tượng một đường; nhiều hơn = lưới biểu đồ nhỏ cùng thước đo. Không tự gộp, không quá 6 đường.
+ */
+function veCoDinh(r) {
+  var c = xepDong(dsChon(r)), n = c.length, cs = csDung(), kieu = kieuCS(cs[0]), luoi = n > TOI_DA || (n >= 2 && (cs.length > 1 || kieu === 'vao_ra')), mau = mauCS(cs), co = coQS();
+  var ai = n ? n + ' ' + TEN_THEO[S.theo] + (n <= 2 ? ': ' + c.map(function (x) { return x.ten; }).join(', ') : '') + (luoi ? ' · mỗi ' + (S.theo === 'nv' ? 'người' : TEN_THEO[S.theo]) + ' một ô' : '')
+    : 'tổng ' + r.ds.length + ' ' + TEN_THEO[S.theo];
+  var h = '<div class="tieu"><span class="chu">🗓️ <b>' + thoat(r.kc.ten) + '</b> · theo ' + TEN_CHIA[r.chia] + ' · 📍 <b>' + thoat(tenPV()) + '</b>' + (S.doiLoc ? ' · Đội <b>' + thoat(S.doiLoc) + '</b>' : '') +
+    ' · 👥 <b>' + thoat(ai) + '</b></span>' + (n > 2 ? '<button type="button" class="nut-phu" data-x="xem_ten">' + (S.xemTen ? 'Ẩn tên' : 'Xem tên') + '</button>' : '') +
+    (S.xemTen && n > 2 ? '<div class="pop">' + c.map(function (x) { return thoat(x.ten); }).join(' · ') + '</div>' : '') + '</div>';
+  h += daiCT(ctTinh(r));
+  h += '<div class="the-bd"><div class="dau-bd"><span class="nhom-cs">' + nut('nhom_cs', 'td', '📥 Tuyển dụng', S.nhomCS === 'td') + nut('nhom_cs', 'qs', '👷 Quân số', S.nhomCS === 'qs') + '</span><span class="ds-chip">' +
+    NHOM_CS[S.nhomCS].map(function (k) {
+      var bat = cs.indexOf(k) >= 0, duoc = co || hangCua(k) !== 'qs';
+      return '<button type="button" class="chip-cs" data-x="cs" data-v="' + k + '" aria-pressed="' + bat + '"' + (duoc ? '' : ' disabled') + ' title="' +
+        thoat(duoc ? CHI_SO[k].mo : 'Quân số báo theo nhà máy: có khi chưa chọn ai, hoặc ③ So theo Nhà máy') + '"><i' + (bat ? ' style="background:' + mau[k] + '"' : '') + '></i>' + tenCS(k) + '</button>';
+    }).join('') + '</span><button type="button" class="nut-phu" data-x="gon">' + (S.gon ? '⌄ Mở biểu đồ' : '⌃ Thu gọn') + '</button></div>';
+  var ghi = [], coQSCS = cs.some(function (k) { return hangCua(k) === 'qs'; }), loi = coQSCS && QS_LOI;
+  if (S.nhomCS === 'qs' && !co) ghi.push('👷 Quân số báo theo nhà máy: có khi chưa chọn ai, hoặc ③ So theo Nhà máy. Đang vẽ số tuyển dụng.');
+  if (loi) ghi.push('⚠️ ' + thoat(QS_LOI));
+  if (cs.some(function (k) { return TU_SO[k]; })) {
+    if (LUOT_LOI) ghi.push('⚠️ ' + thoat(LUOT_LOI));
+    else if (r.KD[0].tu < BAT_DAU_SO) ghi.push('Người mới đếm từ sổ lao động — có số từ ' + dmy(BAT_DAU_SO) + '.');
+  }
+  if (coQSCS && !loi) { var cu = donViCu(r.den, n ? locHang(S.theo, c.map(function (x) { return x.id; }), r.pv).fc : r.pv.fc); if (cu.cu.length + cu.bo.length) ghi.push('○ ' + (cu.cu.length + cu.bo.length) + ' đơn vị chưa báo quân số từ ' + QS_NHAC_NGAY + ' ngày, số có thể lệch (chấm rỗng) — tên ở Soát số dưới bảng.'); }
+  if (ghi.length) h += '<div class="ghi-bd">' + ghi.join('<br>') + '</div>';
+  if (!S.gon && !loi) h += '<div class="chu-thich" id="ct_bd"></div>' + (luoi ? '<div class="luoi-nho" id="luoi_nho"></div>' : '<div class="bd" id="bd_chinh"></div>');
+  $('co_dinh').innerHTML = h + '</div>';
+  BD_MO = null;
+  if (S.gon || loi) return;
+  var cao = (window.innerWidth || 1400) <= 1000 ? 240 : Math.max(120, Math.floor((window.innerHeight || 900) * .4) - ($('co_dinh').offsetHeight || 0) - 8);
+  if (luoi) {
+    var dsO = c.map(function (x) { return kieu === 'vao_ra' ? veVaoRaDs(r.KD, x.loc) : dongCS(x, cs, mau, r); }), mx = 1, kX = S.xep.k !== 'ten' && layV(c[0], S.xep.k) !== null ? S.xep.k : 'lam';
+    dsO.forEach(function (ds) { ds.forEach(function (s) { s.gt.forEach(function (v) { if (v != null && v > mx) mx = v; }); }); });
+    if (kieu !== 'ty') mx = trucDep(mx);
+    var hop = $('luoi_nho');
+    if (hop.style) hop.style.maxHeight = cao + 'px';
+    hop.innerHTML = c.map(function (x, i) {
+      return '<button type="button" class="o-nho" data-x="' + bamTen() + '" data-v="' + thoat(x.id) + '"><span class="ten"><span>' + thoat(x.ten) + '</span><b>' + dinhCot(kX, layV(x, kX)) + '</b></span><div class="bd" id="nho_' + i + '"></div></button>';
+    }).join('');
+    dsO.forEach(function (ds, i) { veNhoO('nho_' + i, ds, r.KD, mx, n <= TOI_DA ? Math.max(48, cao - 34) : 48); });
+    if (kieu === 'vao_ra') $('ct_bd').innerHTML = chuThich(dsO[0]);
+    return;
+  }
+  if (kieu === 'vao_ra') {   // cột mới vào trên vạch 0, rời đi dưới vạch 0
+    var vr = vaoRa(r.KD, n ? c[0].loc : r.pv);
+    veVaoRa('bd_chinh', r.KD, vr.moi, vr.nghi, cao);
+    BD_MO = { ds: veVaoRaDs(r.KD, n ? c[0].loc : r.pv) };
+    $('ct_bd').innerHTML = chuThich(BD_MO.ds);
+    return;
+  }
+  var m;
+  if (n >= 2) m = { ds: c.map(function (x, i) { return { ten: x.ten, mau: MAU[i], gt: giaCS(x, cs[0], r) }; }) };
+  else {
+    var x0 = n ? c[0] : null;
+    m = { ds: dongCS(x0, cs, mau, r) };
+    if (n === 1 && S.theo === 'nv' && cs.length === 1 && kieu === 'nguoi' && r.ds.length > 1) {
+      m.ds.push({ ten: 'Trung bình mỗi người', mau: '#7d8895', dut: true, gt: giaCS(null, cs[0], r).map(function (v) { return v == null ? null : v / r.ds.length; }) });
+    }
+    if (cs.length === 1) { m.ct = ctDuong(r, x0, cs[0]); m.nam = namDuong(r, x0, cs[0]); }
+  }
+  m.cs = cs[0];
+  m.tieuDe = cs.map(tenCS).join(', ');
+  veThe('bd_chinh', r.KD, m, cao);
+  BD_MO = m;
+  var them = (n >= 2 ? m.ds : m.ds.slice(cs.length)).slice();
+  if (them.length || m.ct || m.nam) $('ct_bd').innerHTML = chuThich(them) + (m.ct ? '<span><i class="gach dut" style="border-color:#3c4753"></i>Chỉ tiêu</span>' : '') +
+    (m.nam ? '<span><i class="gach dut" style="border-color:#9aa3ad"></i>Cùng kỳ năm trước</span>' : '');
+}
+function veVaoRaDs(KD, loc) { var vr = vaoRa(KD, loc); return [{ ten: 'Mới vào', mau: MAU[2], gt: vr.moi }, { ten: 'Tự nghỉ + cắt giảm', mau: MAU[1], gt: vr.nghi }]; }
+function chuThich(ds) { return ds.map(function (s) { return '<span><i class="gach' + (s.dut ? ' dut' : '') + '" style="border-color:' + s.mau + '"></i>' + thoat(s.ten) + '</span>'; }).join(''); }
+
+// ---------- phần dưới: tóm lại + bảng / phân tích ----------
+function veDuoi(r) {
+  var ds = xepDong(r.ds);
+  if (S.chiChon) ds = ds.filter(function (x) { return S.chon[x.id]; });
+  DS = ds;
+  var tl = tomLai(rCua(r), r), hien = S.duoi === 'pt' || S.tomMo ? tl : tl.slice(0, 2);
+  var h = '<div class="tom-lai"><div class="dau-tom"><b>👉 Tóm lại</b>' + (S.duoi === 'pt' || tl.length <= 2 ? '' : '<button type="button" class="nut-phu" data-x="tom_gon">' + (S.tomMo ? '⌃ Thu lại' : '⌄ Xem đủ ' + tl.length + ' ý') + '</button>') + '</div>' +
+    (hien.length ? '<ul>' + hien.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' : '<div class="ghi">Chưa đủ số để đánh giá.</div>') + '</div>';
+  h += '<div class="tab-duoi"><button type="button" data-x="duoi" data-v="bang" aria-pressed="' + (S.duoi === 'bang') + '">📋 Bảng so sánh</button>' +
+    '<button type="button" data-x="duoi" data-v="pt" aria-pressed="' + (S.duoi === 'pt') + '">🔻 Phân tích: phễu, đánh giá, lý do, bù nghỉ</button>' +
+    (S.duoi === 'bang' ? '<span class="goi-y">👉 Bấm tiêu đề cột: cao → thấp, bấm lần nữa thấp → cao. Bấm tên ' + (S.theo === 'nv' ? 'xem chi tiết người đó' : 'xem bên trong') + '. Tích ô để so trên biểu đồ.</span>' : '') + '</div>';
+  $('cuon').innerHTML = h + (S.duoi === 'bang' ? veBang(r, ds) : vePhanTich(r));
+}
+function cotBang() { return S.theo === 'nm' ? COT_NM.concat(COT_CHUNG) : (S.theo === 'doi' ? COT_DOI.concat(COT_CHUNG) : COT_CHUNG); }
+function veBang(r, ds) {
+  var cot = cotBang(), n = nChon(), kX = cot.some(function (c) { return c[0] === S.xep.k; }) && CHI_SO[S.xep.k] && S.xep.k !== 'lam_ng' ? S.xep.k : 'lam';
+  var mui = function (k) { return S.xep.k === k ? (S.xep.d < 0 ? ' ▼' : ' ▲') : ''; }, h = '';
+  var thanh = (S.lui.length ? '<button type="button" class="nut-phu" data-x="lui">◀ Quay lại</button>' : '') +
+    (S.doiLoc ? '<button type="button" class="nut-phu" data-x="bo_doi">✕ Bỏ lọc đội ' + thoat(S.doiLoc) + ' (xem mọi người)</button>' : '') +
+    (n ? '<button type="button" class="nut-phu" data-x="chi_chon">' + (S.chiChon ? 'Hiện tất cả' : 'Chỉ hiện ' + n + ' đã chọn') + '</button>' : '');
+  if (thanh) h += '<div class="thanh-bang">' + thanh + '</div>';
+  h += '<div class="khung-bang"><table class="bang-ss"><thead><tr><th class="c-ten' + (S.xep.k === 'ten' ? ' dang' : '') + '"><button type="button" data-x="xep" data-v="ten">Tên' + mui('ten') + '</button></th>' +
+    cot.map(function (c) { return '<th class="' + (S.xep.k === c[0] ? 'dang' : '') + '"><button type="button" data-x="xep" data-v="' + c[0] + '">' + c[1] + mui(c[0]) + '</button></th>'; }).join('') +
+    '<th class="c-ky">Qua các kỳ</th></tr></thead><tbody>';
+  ds.forEach(function (x, i) {
+    h += '<tr class="' + (S.chon[x.id] ? 'chon-dong ' : '') + (x.rong ? 'rong' : '') + '"><td class="c-ten"><div class="o-ten"><button type="button" class="nut-tich" data-x="tich" data-v="' + thoat(x.id) + '" aria-pressed="' + !!S.chon[x.id] + '" aria-label="Chọn ' + thoat(x.ten) + ' để so trên biểu đồ"><span class="tich"></span></button>' +
+      '<button type="button" class="nut-ten" data-x="' + bamTen() + '" data-v="' + thoat(x.id) + '"><b>' + (i + 1) + '. ' + thoat(x.ten) + '</b><span class="' + (x.rong ? 'canh' : '') + '">' +
+      (x.rong ? (S.theo === 'nv' ? '⚠ Chưa có hoạt động' : 'Chưa có phiếu trong kỳ') : thoat(x.phu)) + '</span></button></div></td>' +
+      cot.map(function (c) { return '<td class="' + (S.xep.k === c[0] ? 'c-dang' : '') + '">' + dinhCot(c[0], layV(x, c[0])) + '</td>'; }).join('') + '<td class="c-ky">' + veNho(giaCS(x, kX, r), r.KD, MAU[0]) + '</td></tr>';
+  });
+  if (!ds.length) h += '<tr><td class="c-ten" colspan="' + (cot.length + 2) + '">Không có hàng nào trong phạm vi này.</td></tr>';
+  var t = S.chiChon && n ? rCua(r).tong : r.tong;
+  h += '</tbody><tfoot><tr><td class="c-ten">Cộng (' + ds.length + ')</td>' + cot.map(function (c) { var v = t[c[0]]; return '<td>' + (v === undefined ? '' : dinhCot(c[0], v)) + '</td>'; }).join('') + '<td></td></tr></tfoot></table></div>';
+  h += '<div class="ghi-cong">Một người ở nhiều hàng chỉ tính một lần ở dòng Cộng, nên Cộng có thể nhỏ hơn tổng các hàng. Đăng ký, Đã đến, Vào làm đếm NGƯỜI; Lượt đếm số phiếu.' +
+    (S.theo !== 'nm' ? ' Tỷ lệ đậu ở đây không tính người rớt vì "Công ty không có kế hoạch" (phía nhà máy).' : '') +
+    (r.K ? '' : ' Cột Chỉ tiêu chỉ có khi xem đúng một tuần, tháng hoặc quý.') + '</div>';
+  return h + soatSo(r);
 }
 /** Phiếu trong khoảng mang tên người tuyển chưa khớp tài khoản — không vào hàng nhân viên nào; nói rõ kẻo tổng các hàng < tổng thật. */
-function chuLech(kh) {
+function chuLech(r) {
   var dem = {}, so = 0;
-  PHIEU.forEach(function (p) { if (p[2] || p[0] < kh.tu || p[0] > kh.den) return; so++; dem[p[5]] = (dem[p[5]] || 0) + 1; });
-  return so ? '<div class="chu-y-the">⚠️ <b>' + so + ' phiếu</b> ghi tên người tuyển chưa khớp tài khoản — không vào hàng nào: ' +
-    Object.keys(dem).map(function (t) { return '"' + thoat(t) + '" (' + dem[t] + ')'; }).join(', ') + '. Sửa: khai tên đó ở cột <b>ten_tuyen</b> (tab NGUOI_DON) của đúng người.</div>' : '';
+  PHIEU.forEach(function (p) { if (p[2] || p[0] < r.tu || p[0] > r.den || !r.pv.fp(p)) return; so++; dem[p[5]] = (dem[p[5]] || 0) + 1; });
+  return so ? '⚠️ <b>' + so + ' phiếu</b> ghi tên người tuyển chưa khớp tài khoản — không vào hàng nhân viên nào: ' +
+    Object.keys(dem).map(function (t) { return '"' + thoat(t) + '" (' + dem[t] + ')'; }).join(', ') + '. Sửa: khai tên đó ở cột <b>ten_tuyen</b> (tab NGUOI_DON) của đúng người.' : '';
 }
-/** Nhân viên đưa vào xếp hạng: có phiếu trong khoảng, cộng người trong phạm vi chưa có phiếu nào — chính là người cần hỏi. Tài khoản khoá chưa có phiếu thì thôi. */
-function nvTrongPV(n) {
-  if (n.khoa) return false;
-  if (S.loai === 'ca_nhan') return S.chon.indexOf(String(n.ma)) >= 0;
-  if (S.loai === 'doi') return (n.doi.length ? n.doi : [CHUA_DOI]).some(function (d) { return S.chon.indexOf(d) >= 0; });
-  return !laTN() || nvDoiMinh(n.ma);
-}
-function dsNVKy(kh, pv) {
-  var ds = [];
-  NHAN_VIEN.forEach(function (n) {
-    var loc = { khoa: pv.khoa + '|nv' + n.ma, fp: function (p) { return p[2] === n.ma && pv.fp(p); } }, o = tinhTD(kh.tu, kh.den, loc);
-    if (o.luot || nvTrongPV(n)) ds.push({ n: n, o: o, loc: loc });
-  });
-  return ds.sort(function (a, b) { return (b.o.lam - a.o.lam) || (b.o.dk - a.o.dk); });
-}
-/** Xếp hạng nhân viên theo thời gian: bảng, mỗi người một đường nhỏ (đang lên hay xuống). */
-function theXepHang(KD, T, pv) {
-  var kh = { tu: KD[0].tu, den: nho(KD[KD.length - 1].den, HOM_NAY) }, ds = dsNVKy(kh, pv);
-  ds.forEach(function (x) {
-    x.gt = KD.map(function (p) { return giaTri('lam', p.tu, p.den, x.loc); });
-    x.xu = T.chia === 'ngay' ? soTruoc('lam', KD, x.loc) : xuHuong(x.gt, KD, 'lam', T.chia);
-  });
-  var du = ds.filter(function (x) { return x.o.toi >= 10; }), kem = du.slice().sort(function (a, b) { return a.o.ty_den - b.o.ty_den; })[0];
-  return '<div class="the rong"><div class="dau-the"><h3>🏅 Xếp hạng nhân viên — vào làm, kèm đường qua các ' + TEN_CHIA[T.chia] + '</h3>' + NUT_TO + '</div><div class="the-bang">' +
-    (ds.length ? '<table class="ss"><thead><tr><th>#</th><th style="text-align:left">Nhân viên</th><th>Vào làm</th><th style="text-align:center">Qua các ' + TEN_CHIA[T.chia] + '</th><th>Xu hướng</th>' +
-    '<th>Tỷ lệ đến</th><th>Tỷ lệ đậu</th></tr></thead><tbody>' + ds.map(function (x, i) {
-      var tot = !x.xu || x.xu.huong === 0 ? 'ngang' : (x.xu.huong > 0 ? 'tang' : 'giam');
-      return '<tr><td>' + (i + 1) + '</td><td style="text-align:left">' + thoat(x.n.ten) + (x === kem ? ' 🧭 <span class="mo">cần kèm</span>' : '') + '<span class="nho mo">' + thoat(x.n.doi.join(' · ') || CHUA_DOI) + '</span>' + (x.o.luot ? '' : '<span class="nho chua-hd">⚠ Chưa có hoạt động</span>') + '</td>' +
-        '<td><b>' + x.o.lam + '</b></td><td style="text-align:center">' + veNho(x.gt, KD, MAU[0]) + '</td><td class="' + tot + '">' + (x.xu ? (x.xu.huong > 0 ? '▲ ' : (x.xu.huong < 0 ? '▼ ' : '→ ')) + chuChenh(x.xu) : '—') + '</td>' +
-        '<td>' + (x.o.ty_den == null ? '—' : Math.round(x.o.ty_den * 100) + '%') + '</td><td>' + (x.o.ty_dau == null ? '—' : Math.round(x.o.ty_dau * 100) + '%') + '</td></tr>';
-    }).join('') + '</tbody></table>' : '<div class="ghi">Khoảng này chưa có phiếu của nhân viên đã khớp tài khoản.</div>') + chuLech(kh) + '</div></div>';
+/** Soát số trước khi đánh giá — chỉ để đọc, không chặn gì. Không có gì bất thường thì nói vậy. */
+function soatSo(r) {
+  var ds = [], lech = chuLech(r), cu = chuDonViCu(donViCu(r.den, r.pv.fc));
+  if (lech) ds.push(lech);
+  if (r.tong.chua_bao) ds.push(r.tong.chua_bao + ' người đã đón nhưng chưa báo vào làm / không vào làm.');
+  if (THIEU_NGAY) ds.push('⚠️ ' + THIEU_NGAY + ' phiếu không đọc được ngày hẹn — chưa tính vào kỳ nào (sửa ngày hẹn ở bảng đăng ký).');
+  if (cu) ds.push(cu.replace(/^<br>/, ''));
+  if (!laTN() && TU_KHO && TU_KHO < BAT_DAU) ds.push('📅 Kho có phiếu ghi ngày hẹn từ <b>' + dmy(TU_KHO) + '</b>' + (PHIEU_LA ? ' (' + PHIEU_LA + ' phiếu trang đọc được)' : '') +
+    ', cách xa các phiếu khác hơn ' + NGAY_HO + ' ngày — biểu đồ chỉ tính từ <b>' + dmy(BAT_DAU) + '</b>. Gõ nhầm năm thì sửa ngày hẹn ở bảng đăng ký.');
+  return '<div class="soat"><b>🔍 Soát số trước khi đánh giá</b>' + (ds.length ? '<ul>' + ds.map(function (x) { return '<li>' + x + '</li>'; }).join('') + '</ul>' : '<div>Không thấy gì bất thường.</div>') + '</div>';
 }
 
-// ---------- ĐỐI CHIẾU CẢ KHOẢNG (dạng bản nháp 3) ----------
-function veKhoang(KD, T, pv, duong, the, bang) {
-  var kh = { tu: KD[0].tu, den: nho(KD[KD.length - 1].den, HOM_NAY) }, h = '', tom = [], co = function (k) { return the.indexOf(k) >= 0 || bang.indexOf(k) >= 0; };
-  var cs = the.filter(function (k) { return k.indexOf('so:') === 0; }).map(function (k) { return k.slice(3); });
-  if (co('goc:pheu')) {
-    var o = tinhTD(kh.tu, kh.den, pv), b = [['Đăng ký · ' + o.luot + ' lượt', o.dk, ''], ['Đã tới ngày hẹn', o.toi, ''], ['Đã đến', o.don, '− ' + (o.toi - o.don) + ' không đến (báo không đi ' + o.huy + ' · vắng ' + o.vang + ')'],
-      ['Vào làm', o.lam, '− ' + (o.don - o.lam) + ' rớt sau khi đến (không vào làm ' + o.khong + ' · chưa báo ' + o.chua_bao + ')']];
-    h += '<div class="the"><h3>🔻 Phễu tuyển dụng — cộng cả khoảng</h3><div class="phu">Đếm người, một người nhiều phiếu tính một. Thanh càng ngắn lại là càng rơi người.</div><div class="pheu">' + b.map(function (x, i) {
-      return '<div class="buoc"><span>' + x[0] + '</span><div><div class="khoi" style="width:' + Math.max(12, o.dk ? x[1] / o.dk * 100 : 0) + '%">' + x[1] + (i ? ' · ' + (b[i - 1][1] ? Math.round(x[1] / b[i - 1][1] * 100) : 0) + '%' : '') + '</div></div>' +
-        (x[2] && i > 1 ? '<div class="roi">' + x[2] + '</div>' : '') + '</div>';
-    }).join('') + '</div></div>';
-  }
-  if (co('goc:ly_do')) {
-    var o2 = tinhTD(kh.tu, kh.den, pv), ly = Object.keys(o2.ly).sort(function (a, b2) { return o2.ly[b2] - o2.ly[a]; }), mx = o2.ly[ly[0]] || 1, tongLy = ly.reduce(function (s, l) { return s + o2.ly[l]; }, 0);
-    h += '<div class="the"><h3>❓ Lý do không vào làm — cộng cả khoảng</h3>' + (ly.length ? '<div class="thanh">' + ly.map(function (l) {
-      return '<div class="dong"><span>' + thoat(l) + '</span><div class="ray"><i style="width:' + (o2.ly[l] / mx * 100) + '%;background:' + MAU[1] + '"></i></div><span class="so-p">' + o2.ly[l] + ' · ' + Math.round(o2.ly[l] / tongLy * 100) + '%</span></div>';
-    }).join('') + '</div>' : '<div class="ghi">Khoảng này chưa ai đến rồi không vào làm.</div>') + '</div>';
-  }
-  if (co('kh:bu_nghi') && !QS_LOI) {
-    var hang = CONG_TY.filter(function (c) { return pv.fc(c); }).map(function (c) {
-      var lc = locCua('nha_may', [c.ma_ct]), lp = { khoa: pv.khoa + '|' + lc.khoa, fp: function (p) { return lc.fp(p) && pv.fp(p); } }, q = tinhQS(kh.tu, kh.den, lc), lam = tinhTD(kh.tu, kh.den, lp).lam;
-      return { c: c, lam: lam, nv: q.nghi, co: !!q.cuoi, bu: q.nghi ? lam / q.nghi : null };
-    }).filter(function (x) { return x.co; }).sort(function (a, b2) { return (a.bu == null ? 99 : a.bu) - (b2.bu == null ? 99 : b2.bu); });
-    var mxb = 1.5;
-    hang.forEach(function (x) { if (x.bu != null && x.bu > mxb) mxb = x.bu; });
-    h += '<div class="the"><h3>⚖️ Tuyển có bù kịp nghỉ việc? — cả khoảng</h3><div class="phu"><b>Vạch đen = 100%</b>: bên trái là tuyển không bù kịp người nghỉ. Chỉ nhà máy có báo cáo quân số.</div><div class="thanh">' + hang.map(function (x) {
-      return '<div class="dong"><span>' + thoat(x.c.ten) + '<br><small class="mo">vào ' + x.lam + ' · nghỉ ' + x.nv + '</small></span><div class="ray"><i style="width:' + Math.min(100, (x.bu || 0) / mxb * 100) + '%;background:' +
-        (x.bu != null && x.bu < 1 ? MAU[1] : MAU[2]) + '"></i><b style="left:' + (100 / mxb) + '%"></b></div><span class="so-p ' + (x.bu != null && x.bu < 1 ? 'giam' : '') + '">' + (x.bu == null ? '—' : Math.round(x.bu * 100) + '%') + '</span></div>';
-    }).join('') + '</div></div>';
-  }
-  if (co('goc:xep_hang')) {
-    var ds = dsNVKy(kh, pv);
-    var tg = 0; ds.forEach(function (x) { tg += x.o.lam; });
-    var tb = ds.length ? tg / ds.length : 0, mxl = ds.length && ds[0].o.lam ? ds[0].o.lam : 1;
-    h += '<div class="the"><h3>🏅 Xếp hạng nhân viên — cộng cả khoảng</h3><div class="phu"><b>Vạch đen</b> = trung bình mỗi người (' + mot(tb) + ').</div><div class="thanh">' + ds.map(function (x) {
-      return '<div class="dong"><span>' + thoat(x.n.ten) + '</span><div class="ray"><i style="width:' + (x.o.lam / mxl * 100) + '%;background:' + MAU[0] + '"></i><b style="left:' + (tb / mxl * 100) + '%"></b></div><span class="so-p">' + x.o.lam + '</span></div>';
-    }).join('') + '</div></div>';
-  }
-  bang.forEach(function (k) { var r = MA_TRAN[k.slice(3)](kh, pv); h += r.h; if (r.tom) tom.push(r.tom); });
-  if (cs.length) h += bangSo(KD, T, cs, duong, kh);
-  return { h: h ? '<h2 class="tieu-muc">📋 Đối chiếu cả khoảng</h2><div class="ghi-muc">Cộng từ ' + dmy(kh.tu) + ' đến ' + dmy(kh.den) + ' — trả lời "ở đâu, ai".</div><div class="luoi-khoang">' + h + '</div>' : '', tom: tom };
+// ---------- tóm lại: máy tự đánh giá từ số, vấn đề lên trước ----------
+function buNghi(r) {
+  return CONG_TY.filter(function (c) { return r.pv.fc(c) && (!r.chon || S.theo !== 'nm' || r.chon.some(function (y) { return y.id === c.ma_ct; })); }).map(function (c) {
+    var lc = locHang('nm', [c.ma_ct], r.pv), q = tinhQS(r.tu, r.den, lc), lam = tinhTD(r.tu, r.den, lc).lam;
+    return { c: c, lam: lam, nghi: q.nghi, cat: q.cg, co: !!q.cuoi, bu: q.nghi ? lam / q.nghi : null };
+  }).filter(function (x) { return x.co; }).sort(function (a, b) { return (a.bu == null ? 99 : a.bu) - (b.bu == null ? 99 : b.bu); });
 }
+/** r = phạm vi phân tích (rCua), r0 = cả màn. Tối đa 6 ý; ở thẻ Bảng hiện 2 ý đầu. */
+function tomLai(r, r0) {
+  var t = r.tong, p = r.truoc, ra = [], c = r.chon ? null : ctTinh(r0), mot = r.chon && r.chon.length === 1 ? r.chon[0] : null;
+  if (r.chon && t.toi < 5) ra.push('⚠ <b>Ít số:</b> mới có ' + t.toi + ' người tới hẹn, chưa đủ để kết luận.');
+  if (c && c.cham) ra.push('🎯 <b class="giam">Chậm hơn nhịp chỉ tiêu:</b> mới đạt ' + phanTram(c.dat) + ' trong khi đã qua ' + phanTram(c.qua) + ' thời gian, cần ' + c.canMoiNgay + ' người/ngày trong ' + c.conNgay + ' ngày còn lại.');
+  else if (c && c.dat >= 1) ra.push('🎯 <b class="tang">Đã đạt chỉ tiêu:</b> ' + c.lam + '/' + c.tong + ' người.');
+  if (mot && mot.v.ct) ra.push('🎯 Đạt <b>' + phanTram(mot.v.lam / mot.v.ct) + '</b> chỉ tiêu (' + mot.v.lam + '/' + mot.v.ct + ' người).');
+  if (t.toi) {
+    var r1 = (t.toi - t.don) / t.toi, r2 = t.don ? (t.don - t.lam) / t.don : 0, sau = r2 >= r1;
+    var rt = !p ? null : (sau ? (p.don ? (p.don - p.lam) / p.don : null) : (p.toi ? (p.toi - p.don) / p.toi : null)), xau = rt != null && (sau ? r2 : r1) > rt;
+    ra.push('🔻 Rơi người nhiều nhất ở khâu <b>' + (sau ? 'sau khi đến' : 'trước khi đến') + '</b>: ' + phanTram(sau ? r2 : r1) + (sau ? ' người đã đến không vào làm' : ' người không đến') +
+      (rt != null ? ' (kỳ trước ' + phanTram(rt) + (xau ? ', <b class="giam">xấu đi</b>' : ', <b class="tang">tốt lên</b>') + ')' : '') + '.');
+  }
+  if (p) ra.push('📊 So với ' + r.tenTruoc + ': Đăng ký ' + t.dk + ' (trước ' + p.dk + ', ' + chenh(t.dk, p.dk) + '), Vào làm ' + t.lam + ' (trước ' + p.lam + ', ' + chenh(t.lam, p.lam) + '), Ra người ' +
+    (t.ty_ra != null ? phanTram(t.ty_ra) : '—') + ' (trước ' + (p.ty_ra != null ? phanTram(p.ty_ra) : '—') + ').');
+  if (S.namTruoc) {
+    var nt = namTruoc({ tu: r0.tu, den: r0.kc.den, dang: r0.kc.den >= HOM_NAY }, r0.chia === 'ngay' ? 'ngay' : 'thang');
+    var a = nt ? tinhTD(nt.tu, nt.den, r.loc) : null;
+    ra.push(a ? '📆 Cùng kỳ năm trước (' + dmy(nt.tu) + ' – ' + dmy(nt.den) + '): Vào làm ' + a.lam + ' → nay ' + t.lam + ' (' + chenh(t.lam, a.lam) + ').' : '📆 Năm trước chưa có số để so.');
+  }
+  if (r.chon) {
+    var g = r.chung;
+    ra.push('👥 So với chung: Tỷ lệ đến ' + dinhCot('ty_den', t.ty_den) + ' (chung ' + dinhCot('ty_den', g.ty_den) + '), Tỷ lệ đậu ' + dinhCot('ty_dau', t.ty_dau) + ' (chung ' + dinhCot('ty_dau', g.ty_dau) + '), Ra người ' +
+      dinhCot('ty_ra', t.ty_ra) + ' (chung ' + dinhCot('ty_ra', g.ty_ra) + ').');
+    return ra.slice(0, 6);
+  }
+  var bk = r0.chia === 'ngay' ? 3 : 8, du = r0.ds.filter(function (x) { return x.v.toi >= bk && x.v.ty_ra != null; }).sort(function (a2, b2) { return b2.v.ty_ra - a2.v.ty_ra; });
+  if (du.length >= 2) {
+    var d = du[0], e = du[du.length - 1];
+    ra.push('🏅 Ra người cao nhất: <b>' + thoat(d.ten) + '</b> ' + phanTram(d.v.ty_ra) + ' (' + d.v.lam + '/' + d.v.toi + ') · 🧭 Thấp nhất: <b>' + thoat(e.ten) + '</b> ' + phanTram(e.v.ty_ra) + ' (' + e.v.lam + '/' + e.v.toi + ').');
+  }
+  if (!S.doiLoc && !QS_LOI) {
+    var bu = buNghi(r0).filter(function (x) { return x.bu != null && x.bu < 1; });
+    if (bu.length) ra.push('⚖️ <b class="giam">' + bu.length + ' nhà máy tuyển chưa bù kịp người nghỉ:</b> ' + bu.slice(0, 4).map(function (x) { return thoat(x.c.ten) + ' (vào ' + x.lam + ', nghỉ ' + x.nghi + ')'; }).join(', ') + '.');
+  }
+  var rong = r0.ds.filter(function (x) { return x.rong; });
+  if (rong.length && S.theo === 'nv') ra.push('⚠ <b>' + rong.length + ' nhân viên chưa có hoạt động</b> trong phạm vi này: ' + rong.slice(0, 4).map(function (x) { return thoat(x.ten); }).join(', ') + (rong.length > 4 ? '…' : '') + '.');
+  return ra.slice(0, 6);
+}
+
+// ---------- phân tích ----------
+function giaDG(o, k) { return k === 'moi_tuyen' && LUOT_LOI ? null : o[k]; }
+function thePheu(t, p) {
+  var buoc = [['Đăng ký', t.dk, p && p.dk, t.luot + ' lượt phiếu'],
+    ['Đã đến', t.don, p && p.don, '− ' + (t.toi - t.don) + ' không đến (báo không đi ' + t.huy + ' · vắng ' + t.vang + ')'],
+    ['Vào làm', t.lam, p && p.lam, '− ' + (t.don - t.lam) + ' rơi sau khi đến (không vào làm ' + t.khong + ' · chưa báo ' + t.chua_bao + ')']];
+  return '<div class="the-pt"><h4>🔻 Phễu tuyển dụng — đếm người</h4><div class="phu">Thanh càng ngắn là càng rơi người. % là so với bước trước; dòng nhỏ là so với kỳ trước.</div>' + buoc.map(function (b, i) {
+    var w = t.dk ? Math.max(16, b[1] / t.dk * 100) : 16;
+    return '<div class="buoc"><span>' + b[0] + '<br><span class="mo">' + (p ? chenh(b[1], b[2]) : '—') + '</span></span><div><div class="khoi" style="width:' + w + '%">' + soVN(b[1]) +
+      (i ? ' · ' + (buoc[i - 1][1] ? Math.round(b[1] / buoc[i - 1][1] * 100) : 0) + '%' : '') + '</div></div><div class="roi"' + (i ? '' : ' style="color:var(--mo)"') + '>' + b[3] + '</div></div>';
+  }).join('') + '</div>';
+}
+function theDanhGia(t, p, tenTruoc, chung) {
+  var dg = [['Đăng ký', 'dk', 1], ['Đã đến', 'don', 1], ['Vào làm', 'lam', 1], ['Người mới', 'moi_tuyen', 1], ['Báo không đi', 'huy', -1], ['Không vào làm', 'khong', -1]];
+  var ty = [['Tỷ lệ đến', 'ty_den'], ['Tỷ lệ đậu', 'ty_dau'], ['Ra người', 'ty_ra']];
+  return '<div class="the-pt"><h4>📊 Đánh giá so với kỳ trước</h4><div class="phu">' + (p ? 'So với ' + tenTruoc + ', cùng số ngày.' : 'Kỳ trước chưa có số để so.') + (chung ? ' Cột Chung là cả phạm vi, để so tỷ lệ.' : '') + '</div>' +
+    '<table class="gon"><thead><tr><th>Số liệu</th><th>Kỳ này</th><th>Kỳ trước</th>' + (chung ? '<th>Chung</th>' : '') + '<th>Đánh giá</th></tr></thead><tbody>' +
+    dg.map(function (d) {
+      var a = giaDG(t, d[1]), b = p ? giaDG(p, d[1]) : null, x = b ? (a - b) / b : 0;
+      var tot = a == null || b == null ? '—' : (Math.abs(x) < .05 ? 'Đi ngang' : ((x > 0) === (d[2] > 0) ? '<b class="tang">Tốt lên</b>' : '<b class="giam">Xấu đi</b>'));
+      return '<tr><td>' + d[0] + '</td><td>' + dinhCot(d[1], a) + '</td><td>' + dinhCot(d[1], b) + '</td>' + (chung ? '<td></td>' : '') + '<td class="o-dg">' + (a == null || b == null ? '—' : chenh(a, b) + ' · ' + tot) + '</td></tr>';
+    }).join('') +
+    ty.map(function (d) {
+      var a = t[d[1]], b = p ? p[d[1]] : null, x = a == null || b == null ? null : Math.round((a - b) * 100);
+      var tot = x == null ? '—' : (Math.abs(x) < 3 ? 'Đi ngang' : (x > 0 ? '<b class="tang">Tốt lên</b>' : '<b class="giam">Xấu đi</b>'));
+      return '<tr><td>' + d[0] + '</td><td>' + dinhCot(d[1], a) + '</td><td>' + dinhCot(d[1], b) + '</td>' + (chung ? '<td>' + dinhCot(d[1], chung[d[1]]) + '</td>' : '') +
+        '<td class="o-dg">' + (x == null ? '—' : (x > 0 ? '▲ +' : (x < 0 ? '▼ −' : '→ ')) + Math.abs(x) + ' điểm % · ' + tot) + '</td></tr>';
+    }).join('') + '</tbody></table></div>';
+}
+/** Phễu từng hàng: mỗi hàng một phễu rút gọn + khâu rơi nhiều nhất + vào làm so kỳ trước + đánh giá; xếp được; bấm tên ra phân tích riêng. */
+function theTung(ds) {
+  var mui = function (k) { return S.xep.k === k ? (S.xep.d < 0 ? ' ▼' : ' ▲') : ''; };
+  var cot = [['dk', 'Đăng ký'], ['don', 'Đã đến'], ['lam', 'Vào làm'], ['ty_den', 'Tỷ lệ đến'], ['ty_dau', 'Tỷ lệ đậu'], ['ty_ra', 'Ra người']];
+  return '<div class="the-pt rong-het"><h4>🔻 Phễu từng ' + TEN_THEO[S.theo] + '</h4><div class="phu">Bấm tiêu đề cột để xếp cao ↔ thấp. Bấm tên để xem phân tích riêng. Dưới 5 người tới hẹn ghi "Ít số", chưa nên kết luận.</div>' +
+    '<div style="overflow-x:auto"><table class="gon"><thead><tr><th>Tên</th>' +
+    cot.map(function (c) { return '<th class="' + (S.xep.k === c[0] ? 'dang' : '') + '"><button type="button" class="nut-cot" data-x="xep" data-v="' + c[0] + '">' + c[1] + mui(c[0]) + '</button></th>'; }).join('') +
+    '<th>Khâu rơi nhiều nhất</th><th>Vào làm so kỳ trước</th><th>Đánh giá</th></tr></thead><tbody>' +
+    ds.map(function (x) {
+      var v = x.v, p = x.truoc, r1 = v.toi ? (v.toi - v.don) / v.toi : 0, r2 = v.don ? (v.don - v.lam) / v.don : 0, it = v.toi < 5, d = p && p.lam ? (v.lam - p.lam) / p.lam : 0;
+      var khau = !v.toi ? '—' : (r2 >= r1 ? 'Sau khi đến ' + phanTram(r2) : 'Trước khi đến ' + phanTram(r1));
+      var dg = it ? '<span class="mo">Ít số</span>' : (!p || !p.lam ? '—' : (Math.abs(d) < .05 ? 'Đi ngang' : (d > 0 ? '<b class="tang">Tốt lên</b>' : '<b class="giam">Xấu đi</b>')));
+      return '<tr><td><button type="button" class="nut-cot ten-pt" data-x="pt_mot" data-v="' + thoat(x.id) + '">' + thoat(x.ten) + '</button></td>' +
+        cot.map(function (c) { return '<td class="' + (S.xep.k === c[0] ? 'c-dang' : '') + '">' + dinhCot(c[0], v[c[0]]) + '</td>'; }).join('') +
+        '<td>' + khau + '</td><td>' + (p && p.lam ? chenh(v.lam, p.lam) : '—') + '</td><td>' + dg + '</td></tr>';
+    }).join('') + '</tbody></table></div></div>';
+}
+function theLyDo(ly) {
+  var lyK = Object.keys(ly).sort(function (a, b) { return ly[b] - ly[a]; }), mxL = lyK.length ? ly[lyK[0]] : 1, tongL = lyK.reduce(function (s, k) { return s + ly[k]; }, 0);
+  return '<div class="the-pt"><h4>❓ Vì sao không vào làm</h4><div class="phu">Đếm theo phiếu: một người rớt hai lần là hai lần. "Công ty không có kế hoạch" là phía nhà máy' +
+    (S.theo !== 'nm' ? ', không tính vào tỷ lệ đậu của nhân viên / đội' : '') + '.</div>' + (lyK.length ? lyK.map(function (l) {
+      return '<div class="dong-tt dai"><span>' + thoat(l) + '</span><div class="ray"><i style="width:' + (ly[l] / mxL * 100) + '%;background:' + MAU[1] + '"></i></div><span style="text-align:right">' + ly[l] + ' · ' + phanTram(ly[l] / tongL) + '</span></div>';
+    }).join('') : '<div class="ghi">Kỳ này chưa có ai đến rồi không vào làm.</div>') + '</div>';
+}
+/** Tuyển cho nhà máy nào (một người / đội / nhóm đã chọn): vào làm / người đăng ký từng nhà máy. */
+function theNhaMay(r, rongHet) {
+  var g = gomHang(r.tu, r.den, [], r.loc, function (p) { return [p[1]]; }), ds = Object.keys(g.hang).map(function (m) { return { c: CT_MA[m], o: xongO(g.hang[m].ca, null) }; })
+    .sort(function (a, b) { return b.o.lam - a.o.lam || b.o.dk - a.o.dk; }), mx = ds.length ? Math.max(1, ds[0].o.dk) : 1;
+  return '<div class="the-pt' + (rongHet ? ' rong-het' : '') + '"><h4>🏭 Tuyển cho nhà máy nào</h4><div class="phu">Thanh = người đăng ký; số bên phải: vào làm / đăng ký (người).</div>' + (ds.length ? ds.map(function (x) {
+    return '<div class="dong-tt dai"><span>' + thoat(x.c ? x.c.ten : '?') + '</span><div class="ray"><i style="width:' + (x.o.dk / mx * 100) + '%;background:' + MAU[0] + '"></i></div><span style="text-align:right">' + x.o.lam + '/' + x.o.dk + '</span></div>';
+  }).join('') : '<div class="ghi">Kỳ này chưa có phiếu nào.</div>') + '</div>';
+}
+function theBuNghi(r0) {
+  if (QS_LOI) return '<div class="the-pt"><h4>⚖️ Tuyển có bù kịp người nghỉ?</h4><div class="loi-the">⚠️ ' + thoat(QS_LOI) + '</div></div>';
+  var bu = buNghi(r0), mxB = 1.5;
+  bu.forEach(function (x) { if (x.bu != null && x.bu > mxB) mxB = x.bu; });
+  return '<div class="the-pt"><h4>⚖️ Tuyển có bù kịp người nghỉ?</h4><div class="phu"><b>Vạch đen = 100%.</b> Bên trái vạch là tuyển chưa bù kịp. Nghỉ = Tự nghỉ + Cắt giảm. Chỉ nhà máy có báo cáo quân số.</div>' +
+    (bu.length ? bu.map(function (x) {
+      var duoi = x.bu != null && x.bu < 1;
+      return '<div class="dong-tt dai"><span>' + thoat(x.c.ten) + '<br><span class="mo">vào ' + x.lam + ' · nghỉ ' + x.nghi + (x.cat ? ' (cắt ' + x.cat + ')' : '') + '</span></span><div class="ray"><i style="width:' +
+        Math.min(100, (x.bu || 0) / mxB * 100) + '%;background:' + (duoi ? MAU[1] : MAU[2]) + '"></i><s style="left:' + (100 / mxB) + '%"></s></div><span style="text-align:right">' + (x.bu == null ? '—' : phanTram(x.bu)) + (duoi ? ' ⚠' : '') + '</span></div>';
+    }).join('') : '<div class="ghi">Phạm vi này không có quân số bạn được xem.</div>') + '</div>';
+}
+/** Phân tích theo đúng ① ② ③ đang chọn: chưa chọn = cả phạm vi · chọn 1 = đúng người / đội / nhà máy đó · chọn nhiều = gộp. Đếm người. */
+function vePhanTich(r0) {
+  var r = rCua(r0), t = r.tong, c = r.chon, chiNguoi = c && S.theo === 'nv';
+  var ten = c ? (c.length === 1 ? c[0].ten + (c[0].phu ? ' · ' + c[0].phu : '') : c.length + ' ' + TEN_THEO[S.theo] + ' đã chọn, gộp lại') : tenPV() + (S.doiLoc ? ' · Đội ' + S.doiLoc : '');
+  var h = '<div class="dau-pt"><span>🔎 Đang phân tích: <b>' + thoat(ten) + '</b></span><span class="nut-pt">' + nut('pt_cty', '', laTN() ? 'Phạm vi của bạn' : 'Công ty', !c && !S.doiLoc && !Object.keys(S.nm).length) +
+    nut('theo', 'doi', 'Theo đội', S.theo === 'doi') + nut('theo', 'nv', 'Theo cá nhân', S.theo === 'nv') + nut('theo', 'nm', 'Theo nhà máy', S.theo === 'nm') + '</span></div>';
+  h += '<div class="luoi-pt">' + thePheu(t, r.truoc) + theDanhGia(t, r.truoc, r.tenTruoc, c ? r.chung : null);
+  if (!c || c.length > 1) h += theTung(xepDong(c || r0.ds));
+  h += theLyDo(t.ly);
+  h += (c && S.theo !== 'nm') || S.doiLoc ? theNhaMay(r) : theBuNghi(r);
+  if (!chiNguoi) {
+    var kh = { tu: r.tu, den: r.den };
+    h += MA_TRAN.doi_nm(kh, r.loc).h + MA_TRAN.nm_ly(kh, r.loc).h;
+    if (S.theo === 'nv') h += MA_TRAN.nv_nm(kh, r.loc).h;
+  }
+  return h + '</div>';
+}
+
+// ---------- hồ sơ nhân viên ----------
+function veHoSo() {
+  var id = S.ho, x = R && R.ds.filter(function (y) { return y.id === id; })[0], i = DS.map(function (y) { return y.id; }).indexOf(id), n = NV_MA[Number(id)];
+  if (!x || !n || S.theo !== 'nv') { dongHo(); return; }
+  var v = x.v, cs = S.csDs.filter(function (k) { return hangCua(k) === 'td'; });
+  if (!cs.length) cs = ['dk', 'don', 'lam'];
+  var h = '<div class="dau-ho"><div class="ten"><b>' + thoat(n.ten) + '</b><div class="mo">' + thoat(n.doi.join(' · ') || CHUA_DOI) + ' · ' + thoat(R.kc.ten) + ' · ' + thoat(tenPV()) +
+    ' · hạng ' + (i + 1) + '/' + DS.length + ' theo bảng đang xếp</div></div>' +
+    '<button type="button" class="nut-ho" data-x="hs_lui"' + (i <= 0 ? ' disabled' : '') + '>◀ Người trước</button><button type="button" class="nut-ho" data-x="hs_toi"' + (i < 0 || i >= DS.length - 1 ? ' disabled' : '') + '>Người sau ▶</button>' +
+    '<button type="button" class="nut-ho dam" data-x="hs_dong">✕ Đóng (Esc)</button></div>';
+  h += '<div class="o-so"><div><b>' + v.dk + '</b>người đăng ký<br><span class="mo">' + v.luot + ' lượt</span></div><div><b>' + v.don + '</b>người đã đến</div><div><b>' + v.lam + '</b>vào làm' +
+    (v.ct ? '<br><span class="mo">chỉ tiêu ' + v.ct + ', đạt ' + Math.round(v.lam / v.ct * 100) + '%</span>' : '') + '</div><div><b>' + dinhCot('ty_ra', v.ty_ra) + '</b>ra người</div><div><b>' + dinhCot('moi_tuyen', giaDG(v, 'moi_tuyen')) + '</b>người mới</div></div>';
+  h += '<h4>📈 Qua các ' + TEN_CHIA[R.chia] + '</h4><div class="chu-thich">' + chuThich(dongCS(x, cs, mauCS(cs), R)) + '</div><div class="the-bd ho-bd"><div class="bd" id="hs_bd"></div></div>';
+  h += '<div class="luoi-pt" style="padding:10px 0 0">' + thePheu(v, x.truoc) + theDanhGia(v, x.truoc, R.tenTruoc, R.tong) + theNhaMay({ tu: R.tu, den: R.den, loc: x.loc }, false) + theLyDo(v.ly) + '</div>';
+  $('ho_so').innerHTML = h;
+  $('ho_so').classList.remove('an');
+  $('nen_ho').classList.remove('an');
+  veThe('hs_bd', R.KD, { ds: dongCS(x, cs, mauCS(cs), R), cs: cs[0], tieuDe: n.ten }, 200);
+}
+function dongHo() { if (S) S.ho = null; $('ho_so').classList.add('an'); $('nen_ho').classList.add('an'); }
+
+// ---------- bảng chéo (thẻ Phân tích) ----------
 /** cong (tuỳ chọn): số Cộng không trùng { h(hàng), c(cột), tat } — một người ở nhiều ô chỉ tính một lần. Không có thì cộng các ô. */
 function maTran(tieu, phu, hangDs, cotDs, o, chuY, cong) {
   var max = 0, cH = {}, cC = {};
@@ -1387,29 +1765,6 @@ var MA_TRAN = {
       { h: function (r) { return demBo(hang, r.ma); }, c: function (c) { return demBo(cot, c.ma); }, tat: Object.keys(tat).length }) };
   }
 };
-function bangSo(KD, T, cs, duong, kh) {
-  var nhieu = S.loai !== 'cong_ty' && (duong.length > 1 || S.chon.length > TOI_DA), pv = locPhamVi();
-  var h = '<div class="the rong"><div class="dau-the"><h3>📋 ' + (nhieu ? 'Bảng so sánh — cả khoảng' : 'Bảng số theo ' + TEN_CHIA[T.chia]) + '</h3>' + NUT_TO + '</div><div class="phu">' +
-    (nhieu ? 'Mỗi hàng một ' + tenLoai().toLowerCase() + '; mũi tên = xu hướng qua các kỳ. Một người ở nhiều hàng chỉ tính một lần ở dòng Chung.' : 'Số chính xác của từng kỳ (cùng số với biểu đồ). * = kỳ đang dở. Một người ở nhiều kỳ tính ở mỗi kỳ, nên cộng các kỳ có thể lớn hơn số cả khoảng.') + '</div><div style="overflow-x:auto"><table class="ss"><thead><tr><th>' +
-    (nhieu ? tenLoai() : 'Kỳ') + '</th>' + cs.map(function (c) { return '<th>' + CHI_SO[c].ten + '</th>'; }).join('') + '</tr></thead><tbody>';
-  if (nhieu) {
-    h += S.chon.map(function (m) {
-      var loc = locCua(S.loai, [m]);
-      return '<tr><td>' + thoat(tenMuc(S.loai, m)) + '</td>' + cs.map(function (c) {
-        var xu = T.chia === 'ngay' ? soTruoc(c, KD, loc) : xuHuong(KD.map(function (p) { return giaTri(c, p.tu, p.den, loc); }), KD, c, T.chia), mt = '';
-        if (xu) { var tot = xu.huong === 0 ? 'ngang' : ((xu.huong > 0) !== !!CHI_SO[c].nguoc ? 'tang' : 'giam'); mt = '<span class="nho ' + tot + '">' + (xu.huong > 0 ? '▲' : (xu.huong < 0 ? '▼' : '→')) + ' ' + chuChenh(xu, true) + '</span>'; }
-        return '<td>' + dinh(c, giaTriKhoang(c, KD, loc)) + mt + '</td>';
-      }).join('') + '</tr>';
-    }).join('');
-    h += '<tr class="tong"><td>Chung</td>' + cs.map(function (c) { return '<td>' + dinh(c, giaTriKhoang(c, KD, pv)) + '</td>'; }).join('') + '</tr>';
-  } else {
-    h += KD.slice().reverse().map(function (k) {
-      return '<tr><td>' + thoat(k.ten) + (k.dang ? ' *' : '') + '</td>' + cs.map(function (c) { return '<td>' + (k.chuaCo && hangCua(c) !== 'qs' ? '<span class="mo">chưa có số</span>' : dinh(c, giaTri(c, k.tu, k.den, pv))) + '</td>'; }).join('') + '</tr>';
-    }).join('');
-  }
-  h += '</tbody></table></div>' + (nhieu && (S.loai === 'ca_nhan' || S.loai === 'doi') ? chuLech(kh) : '');
-  return h + '</div>';
-}
 
 // ============================================================
 // XEM TO — một bảng phủ kín màn hình (đủ mọi hàng, mọi cột); ✕ Đóng hoặc phím Esc để quay lại
@@ -1418,7 +1773,7 @@ var NUT_TO = '<button type="button" class="nut-lon" data-to="1" title="Xem cả 
 function moTo(the) {
   var ban = the.cloneNode(true), tieu = ban.querySelector('h3').textContent;
   ban.querySelectorAll('.dau-the').forEach(function (x) { x.remove(); });
-  $('lop_to').innerHTML = '<div class="dau-lop"><div><b>' + thoat(tieu) + '</b><div class="mo">' + $('tieu_xem').innerHTML + '</div></div>' +
+  $('lop_to').innerHTML = '<div class="dau-lop"><div><b>' + thoat(tieu) + '</b><div class="mo">' + thoat(tieuChu()) + '</div></div>' +
     '<button type="button" class="nut-dong" id="dong_to">✕ Đóng (Esc)</button></div>' + ban.innerHTML;
   $('lop_to').classList.remove('an');
   $('lop_to').scrollTop = 0;
@@ -1455,15 +1810,15 @@ function dsMucCT(loai) {
 }
 function moCT() {
   if (laTN()) return;
-  var t = S.tg, k = t.cap !== 'tu_chon' && t.cap !== 'nam' && t.a === t.b ? kyCT(t.cap, t.a) : kyCT('thang', HOM_NAY);
-  var dt = S.loai !== 'cong_ty' && S.chon.length === 1 && S.chon[0] !== CHUA_DOI && S.chon[0] !== CHUA_KV
-    ? { loai: S.loai, ma: S.loai === 'ca_nhan' ? Number(S.chon[0]) : S.chon[0] } : { loai: 'cong_ty', ma: '' };
+  var K = kyCT0(khoangChon()), k = K ? kyCT(K.kieu, K.tu) : kyCT('thang', HOM_NAY), c = R ? dsChon(R) : [];
+  var dt = c.length === 1 ? dtHang(S.theo, c[0].id) : (c.length ? null : dtPV());   // mở sẵn đúng đối tượng đang xem
+  if (!dt || dt.ma === CHUA_DOI || dt.ma === CHUA_KV) dt = { loai: 'cong_ty', ma: '' };
   CT = { ky: k, namXem: Number(k.tu.slice(0, 4)), thangXem: k.tu.slice(0, 7), dt: dt };
   baoCT = '';
   $('lop_ct').classList.remove('an');
   veCT();
 }
-function dongCT() { $('lop_ct').classList.add('an'); if (SO_GOC) veChinh(); }
+function dongCT() { $('lop_ct').classList.add('an'); if (SO_GOC) veHet(); }
 /** Lịch của màn chỉ tiêu: Tuần (chạm một ngày = cả tuần) · Tháng · Quý. Đặt được cả kỳ tới (lập kế hoạch trước). */
 function veLichCT() {
   var k = CT.ky, h = '', namNay = Number(HOM_NAY.slice(0, 4));
@@ -1633,8 +1988,8 @@ function apSo(kq, luc, cu, apLai) {
   (apLai || []).forEach(function (x) { apLuuCT(x.ds); });
   lucSo = luc;
   if (lanDau) macDinh();
-  // Số mới về khi đang chọn: giữ lựa chọn; mục ③ không còn trong số mới thì bỏ.
-  S.chon = S.chon.filter(function (m) { return dsMuc(S.loai).some(function (x) { return x.ma === m; }); });
+  // Số mới về khi đang chọn: giữ lựa chọn; nhà máy không còn trong số mới thì bỏ (hàng ③ không còn thì veHet bỏ).
+  Object.keys(S.nm).forEach(function (m) { if (!CT_MA[m]) delete S.nm[m]; });
   $('ai').textContent = (kq.ai ? kq.ai + ' · ' : '') + (VAI.quan_tri ? 'Quản trị' : 'Trưởng nhóm');
   var nhom = VAI.nhom || [];
   $('pham_quyen').innerHTML = laTN() ? '🔐 Bạn là trưởng nhóm' + (nhom.length ? ' <b>' + thoat(nhom.join(', ')) + '</b>' : '') +
@@ -1646,7 +2001,7 @@ function apSo(kq, luc, cu, apLai) {
   $('cap').classList.remove('an');
   $('noi_dung').classList.remove('an');
   hienMan('man_chinh');
-  veXem(); veThoiGian(); veXemAi(); veChinh();
+  veHet();
   // Đang mở màn chỉ tiêu → KHÔNG vẽ lại nó, kẻo xoá số sếp đang gõ dở (danh sách trong máy đã có số mới, lần chạm sau tự hiện).
 }
 function laySo() {
@@ -1691,17 +2046,84 @@ function baoLoi(cau) {
 // ============================================================
 // SỰ KIỆN
 // ============================================================
-function veHet() { veXem(); veThoiGian(); veXemAi(); veChinh(); }
-function chonMuc(ma) {
-  S.chon.push(ma);
-  var dung = {};
-  Object.keys(S.mauDT).forEach(function (k) { dung[S.mauDT[k]] = true; });
-  for (var i = 0; i < MAU.length; i++) if (!dung[i]) { S.mauDT[ma] = i; return; }
-  S.mauDT[ma] = 0;
+function veBen() { veThoiGian(); veODau(); veAi(); }
+/** Tính lại số rồi vẽ cả màn. Mục ③ không còn trong phạm vi mới thì bỏ chọn. */
+function veHet() {
+  R = dungBang();
+  if (R) Object.keys(S.chon).forEach(function (k) { if (!R.ds.some(function (x) { return x.id === k; })) delete S.chon[k]; });
+  veBen();
+  veChinh();
+}
+/** Vẽ lại bên phải từ số đang có (đổi chip, xếp cột, đổi thẻ, đổi cỡ cửa sổ — không cần tính lại). */
+function veChinh() {
+  if (!R) { $('co_dinh').innerHTML = '<div class="trong">👈 ① Chọn thời gian.</div>'; $('cuon').innerHTML = ''; return; }
+  veDuoi(R);
+  veCoDinh(R);
+  if (S.ho) veHoSo();
+}
+/** Chip số liệu: khác loại (số người · tỷ lệ · Đang làm · Vào / ra) thì thay; cùng loại thì thêm / bớt, tối đa 4, luôn còn ít nhất 1. */
+function chonCS(v) {
+  var cs = csDung(), kieu = kieuCS(v);
+  if (kieuCS(cs[0]) !== kieu || kieu === 'ton' || kieu === 'vao_ra') { S.csDs = [v]; return; }
+  var i = cs.indexOf(v);
+  if (i >= 0) { if (cs.length > 1) cs.splice(i, 1); }
+  else { if (cs.length >= TOI_DA_CS) cs.shift(); cs.push(v); }
+  S.csDs = cs;
+}
+function nhoLui() { S.lui.push({ theo: S.theo, doiLoc: S.doiLoc, nm: JSON.parse(JSON.stringify(S.nm)) }); }
+function bamX(x, v, b, e) {
+  // Chỉ vẽ lại, không tính lại số
+  if (x === 'cs') { chonCS(v); veChinh(); return; }
+  if (x === 'nhom_cs') { S.nhomCS = v; veChinh(); return; }
+  if (x === 'duoi') { S.duoi = v; veChinh(); return; }
+  if (x === 'tom_gon') { S.tomMo = !S.tomMo; veChinh(); return; }
+  if (x === 'gon') { S.gon = !S.gon; veChinh(); return; }
+  if (x === 'xem_ten') { S.xemTen = !S.xemTen; if (e && e.stopPropagation) e.stopPropagation(); veChinh(); return; }
+  if (x === 'chi_chon') { S.chiChon = !S.chiChon; veChinh(); return; }
+  if (x === 'xep') { if (S.xep.k === v) S.xep.d = -S.xep.d; else S.xep = { k: v, d: v === 'ten' ? 1 : -1 }; veChinh(); return; }
+  if (x === 'xep_nv') { S.xepNV = v; veAi(); return; }
+  if (x === 'co_phieu') { S.coPhieu = !S.coPhieu; veAi(); return; }
+  if (x === 'mo_kv') { S.moKV[v] = !S.moKV[v]; veDsNM(); return; }
+  if (x === 'mo_doi') { S.moDoi[v] = !S.moDoi[v]; veDsChon(); return; }
+  if (x === 'mo') { S.ho = v; veHoSo(); return; }
+  if (x === 'hs_dong') { dongHo(); return; }
+  if (x === 'hs_lui' || x === 'hs_toi') {
+    var i = DS.map(function (r) { return r.id; }).indexOf(S.ho) + (x === 'hs_lui' ? -1 : 1);
+    if (DS[i]) { S.ho = DS[i].id; veHoSo(); }
+    return;
+  }
+  // Đổi phạm vi / hàng / chọn → tính lại
+  var m;
+  if (x === 'mang') S.mang = v || '';
+  else if (x === 'toan') S.nm = {};
+  else if (x === 'nm') { if (S.nm[v]) delete S.nm[v]; else S.nm[v] = true; }
+  else if (x === 'kv') {
+    m = CONG_TY.filter(function (c) { return c.khu_vuc === v && (!S.mang || c.mang === S.mang); });
+    var het = m.every(function (c) { return S.nm[c.ma_ct]; });
+    m.forEach(function (c) { if (het) delete S.nm[c.ma_ct]; else S.nm[c.ma_ct] = true; });
+  }
+  else if (x === 'theo') { S.theo = v; S.chon = {}; S.chiChon = false; S.lui = []; if (v !== 'nv') S.doiLoc = ''; S.xep = { k: 'lam', d: -1 }; }
+  else if (x === 'tich') { if (S.chon[v]) delete S.chon[v]; else S.chon[v] = true; }
+  else if (x === 'doi_ca') {
+    m = dsHienAi().filter(function (r) { return doiCua(r.id).indexOf(v) >= 0; });
+    var du = m.every(function (r) { return S.chon[r.id]; });
+    m.forEach(function (r) { if (du) delete S.chon[r.id]; else S.chon[r.id] = true; });
+  }
+  else if (x === 'tat_ca') dsHienAi().forEach(function (r) { S.chon[r.id] = true; });
+  else if (x === 'bo_het') { S.chon = {}; S.chiChon = false; }
+  else if (x === 'pt_mot') { S.chon = {}; S.chon[v] = true; S.chiChon = false; }
+  else if (x === 'pt_cty') { S.chon = {}; S.nm = {}; S.doiLoc = ''; S.chiChon = false; }
+  else if (x === 'bo_doi') S.doiLoc = '';
+  else if (x === 'sau_doi') { nhoLui(); S.theo = 'nv'; S.doiLoc = v; S.chon = {}; S.moDoi[v] = true; }
+  else if (x === 'sau_nm') { nhoLui(); S.theo = 'doi'; S.nm = {}; S.nm[v] = true; S.chon = {}; }
+  else if (x === 'lui') { var l = S.lui.pop(); if (l) { S.theo = l.theo; S.doiLoc = l.doiLoc; S.nm = l.nm; S.chon = {}; } }
+  else return;
+  veHet();
 }
 document.addEventListener('click', function (e) {
-  var b = e.target.closest ? e.target.closest('button, .the[data-chinh]') : null;
-  if (!b || b.disabled) return;
+  var b = e.target.closest ? e.target.closest('button, [data-x]') : null;
+  if (!b) { if (S && S.xemTen) { S.xemTen = false; veChinh(); } return; }
+  if (b.disabled) return;
   var d = b.dataset || {};
   if (b.id === 'nut_lam_moi') { laySo(); return; }
   if (!SO_GOC) return;
@@ -1710,40 +2132,25 @@ document.addEventListener('click', function (e) {
   if (b.id === 'nut_ct') { moCT(); return; }
   if (b.id === 'dong_ct') { dongCT(); return; }
   if (CT && !$('lop_ct').classList.contains('an')) { bamCT(d, b); return; }
-  S.loi = '';
-  if (b.id === 'nut_lai') macDinh();
-  else if (d.phan) S.moPhan[d.phan] = !S.moPhan[d.phan];
-  else if (d.hang) {
-    var g = HANG.filter(function (x) { return x.k === d.hang; })[0];
-    S.hang[d.hang] = !S.hang[d.hang];
-    if (S.hang[d.hang]) { S.moHang[d.hang] = true; if (!g.so.some(function (c) { return S.bat['so:' + c]; })) g.macDinh.forEach(function (c) { batKhoa('so:' + c); }); }
-  }
-  else if (d.moHang) S.moHang[d.moHang] = !S.moHang[d.moHang];
-  else if (d.tatCaHang) { var g2 = HANG.filter(function (x) { return x.k === d.tatCaHang; })[0]; g2.so.forEach(function (c) { if (duocSo(c)) batKhoa('so:' + c); }); g2.goc.forEach(function (x) { batKhoa('goc:' + x.k); }); }
-  else if (d.boHang) { var g3 = HANG.filter(function (x) { return x.k === d.boHang; })[0]; g3.so.forEach(function (c) { tatKhoa('so:' + c); }); g3.goc.forEach(function (x) { tatKhoa('goc:' + x.k); }); }
-  else if (d.khoa) { if (S.bat[d.khoa]) tatKhoa(d.khoa); else batKhoa(d.khoa); }
-  else if (d.chinh) { if (e.target.closest && e.target.closest('.vung-re') && !e.target.closest('button')) return; S.chinh = d.chinh; veChinh(); return; }
-  else if (d.namTruoc) S.namTruoc = !S.namTruoc;
-  else if (d.moCay) S.moCay[d.moCay] = !S.moCay[d.moCay];
-  else if (d.cay) {
+  if (b.id === 'nut_lai') { macDinh(); veHet(); return; }
+  if (d.phan) { S.moPhan[d.phan] = !S.moPhan[d.phan]; veBen(); return; }
+  if (d.namTruoc) { S.namTruoc = !S.namTruoc; veHet(); return; }
+  if (d.moCay) { S.moCay[d.moCay] = !S.moCay[d.moCay]; veThoiGian(); return; }
+  if (d.cay) {
     // Chạm một mục = chọn mục đó. Đang chọn MỘT mục mà chạm thêm một mục CÙNG CẤP = thành khoảng; chạm tiếp = chọn lại từ đầu.
     var t = d.cay.split('|'), tg = S.tg;
     if (tg.cap === t[0] && tg.a === tg.b && tg.a !== t[1]) tg.b = t[1];
     else { tg.cap = t[0]; tg.a = t[1]; tg.b = t[1]; }
     if (t[0] !== 'tuan') S.moCay[t[0] === 'nam' ? t[1].slice(0, 4) : (t[0] === 'quy' ? t[1].slice(0, 4) + '-Q' + Math.ceil(Number(t[1].slice(5, 7)) / 3) : t[1].slice(0, 7))] = true;
+    veHet();
+    return;
   }
-  else if (d.loai) { S.loai = d.loai; S.chon = []; S.mauDT = {}; if (S.loai !== 'cong_ty') dsMuc(S.loai).slice(0, 3).forEach(function (x) { chonMuc(x.ma); }); }
-  else if (d.dt !== undefined) {
-    var i = S.chon.indexOf(d.dt);
-    if (i >= 0) { S.chon.splice(i, 1); delete S.mauDT[d.dt]; }
-    else if (S.cach === 'tung' && S.chon.length >= TOI_DA) S.loi = 'So từng mục được tối đa ' + TOI_DA + ' mục (quá thì đường chồng nhau, khó đọc). Bỏ bớt một mục, hoặc "Gộp chung" / "Chọn tất cả" để xem bảng.';
-    else chonMuc(d.dt);
-  }
-  else if (d.tatCaDt) dsMuc(S.loai).forEach(function (x) { if (S.chon.indexOf(x.ma) < 0) chonMuc(x.ma); });
-  else if (d.boDt) { S.chon = []; S.mauDT = {}; }
-  else if (d.cach) S.cach = d.cach;
-  else return;
-  veHet();
+  if (d.x) bamX(d.x, d.v, b, e);
+});
+document.addEventListener('input', function (e) {
+  if (!SO_GOC || !e.target) return;
+  if (e.target.id === 'tim_nv') { S.tim = e.target.value; veDsChon(); }
+  else if (e.target.id === 'tim_nm') { S.timNM = e.target.value; veDsNM(); }
 });
 document.addEventListener('change', function (e) {
   if (!SO_GOC || !e.target || (e.target.id !== 'tc_tu' && e.target.id !== 'tc_den')) return;
@@ -1756,6 +2163,7 @@ document.addEventListener('keydown', function (e) {
   if (e.key !== 'Escape') return;
   if (!$('lop_to').classList.contains('an')) dongTo();
   else if (!$('lop_ct').classList.contains('an')) dongCT();
+  else if (S && S.ho != null) dongHo();
 });
 var henVe = null;
 window.addEventListener('resize', function () { clearTimeout(henVe); henVe = setTimeout(function () { if (SO_GOC) veChinh(); }, 150); });
