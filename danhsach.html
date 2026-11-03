@@ -78,8 +78,21 @@
   .tim{display:block;width:calc(100% - 28px);margin:10px 14px 0;min-height:44px;padding:11px 12px;font-size:16px;
     border:1px solid #d9dde2;border-radius:10px;background:#fff}
 
-  .ten-ct{margin:18px 14px 0;font-weight:700;font-size:16px;color:var(--chu)}
+  /* 3.56: tên nhà máy là NÚT thu lại / mở ra — chạm cả dòng (người phụ trách nhiều nhà máy có danh sách rất dài) */
+  .ten-ct{display:flex;align-items:center;gap:8px;width:calc(100% - 28px);margin:18px 14px 0;min-height:48px;padding:8px 10px;
+    border:1px solid var(--vien);border-radius:10px;background:#f7f9fb;text-align:left;font:inherit;font-weight:700;font-size:16px;
+    color:var(--chu);cursor:pointer}
   .ten-ct span{font-weight:400;color:var(--mo)}
+  .ten-ct .ten-chu{flex:1;min-width:0;font-weight:700;color:var(--chu)}
+  .ten-ct .mui{flex:none;width:18px;color:var(--chu)}
+  .ten-ct .lam-gi{flex:none;font-size:15px;font-weight:600;color:#1d5fbf}
+  .ten-ct .cg{color:#1d5fbf}
+  .thanh-thu{margin:10px 14px 0;font-size:15px;color:#3c4753}
+  .doi-thu{display:flex;gap:8px;margin-top:6px}
+  .doi-thu button{flex:1;min-height:44px;padding:8px 6px;border:1px solid #c9d8f2;border-radius:9px;background:#f5f8fe;
+    font:inherit;font-size:15px;font-weight:600;color:#1d5fbf;cursor:pointer}
+  /* 3.56: chạm "Đã đến" → hiện dòng chọn tình trạng ngay dưới, như bấm Gọi hiện bốn nút kết quả */
+  .den-tt{margin-top:8px;padding-top:8px;border-top:1px dashed var(--vien);font-size:15px;color:#3c4753}
   .hang{margin:8px 14px 0;padding:11px 12px;border-radius:12px;background:var(--the);
     border:1px solid var(--vien)}
   .hang.xong{background:var(--xanh-nhat);border-color:#bfe0c9}
@@ -120,6 +133,8 @@
   /* Đã đón (3.31) — xuống cuối, tối màu; chữ "đã đón" ở .d2 vẫn in. 3.40 (Dương 26/10): chỉ mờ PHẦN CHỮ — nút Gọi /
      Vào làm / Không / ✏️ Sửa giữ sáng để người dùng biết vẫn bấm chọn bình thường. */
   .hang.da-don .d1 b,.hang.da-don .the-ca,.hang.da-don .d2,.hang.da-don .the-nn{opacity:.55}
+  /* 3.56 (Dương 03/11): chạm "Đã đến" (chưa gửi) thì thẻ tối như thẻ đã đón — vẫn chỉ mờ phần chữ, nút giữ sáng */
+  .hang.se-don .d1 b,.hang.se-don .the-ca,.hang.se-don .d2{opacity:.55}
   /* CA LÀM VIỆC (3.21) — dải màu bên trái, KHÔNG tô cả nền.
      Tô cả nền thì đè lên ba màu trạng thái đã có (đã vào làm / không vào làm / sẽ đón)
      và hai tầng thông tin đánh nhau. Dải bên trái thì cộng thêm, không tranh chỗ.
@@ -161,6 +176,12 @@
   /* ----- Màn LẤY DỮ LIỆU ----- */
   .khoi-x{margin:14px;padding:12px;background:var(--the);border:1px solid var(--vien);border-radius:12px}
   .khoi-x .ten{font-weight:700;font-size:15px}
+  /* 3.56: tên nhà máy ở Lấy dữ liệu cũng là nút thu / mở */
+  .khoi-x .ten-x{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:0;border:0;background:none;
+    text-align:left;font:inherit;font-weight:700;font-size:15px;color:var(--chu);cursor:pointer}
+  .khoi-x .ten-x .ten-chu{flex:1;min-width:0}
+  .khoi-x .ten-x .mui{flex:none;width:18px}
+  .khoi-x .ten-x .lam-gi{flex:none;font-weight:600;color:#1d5fbf}
   .khoi-x .dem{font-size:15px;color:var(--mo);margin-top:2px}
   .doi-x{display:flex;gap:8px;margin-top:10px}
   .doi-x button{flex:1;min-height:48px;padding:12px 8px;border:0;border-radius:10px;font-size:15px;
@@ -308,6 +329,8 @@
   <div id="dai_cho" class="cho an"></div>
   <div id="dai_moi" class="cho an">Số trên màn hình đã hơn 2 phút, có thể đã có số mới.
     Đánh dấu chưa gửi vẫn được giữ.<button type="button" id="nut_lam_moi_ds">Làm mới</button></div>
+  <div id="thanh_thu" class="thanh-thu an"><div class="thu-chu">Chạm tên nhà máy để thu lại hoặc mở ra · <b id="thu_dem">—</b></div>
+    <div class="doi-thu"><button type="button" id="thu_mo">▼ Mở hết</button><button type="button" id="thu_dong">▶ Thu hết</button></div></div>
   <div id="noi"></div>
   <div class="thanh an" id="thanh">
     <div class="goi-y-thanh">👉 Bấm gửi để báo nhóm Zalo — chưa bấm thì nhóm chưa biết.</div>
@@ -913,12 +936,22 @@ function veXuat(kq) {
   var coChon = !!(kq.truong && kq.truong.length);
   var h = coChon ? '' : '<div class="nhac-x" style="padding-left:12px">⚠️ Máy chủ chưa cập nhật bản 3.48 nên chưa chọn được '
     + 'thông tin — bảng dưới theo bộ cột chung.</div>';
+  // 3.56: thu gọn từng nhà máy như danh sách gọi — chạm tên để thu / mở, nhớ trong máy (chỉ mã nhà máy). Dòng số người luôn hiện.
+  var thuX = docThu(KHOA_THU_X);
+  if (kq.nhom.length > 1) {
+    h += '<div class="thanh-thu"><div class="thu-chu">Chạm tên nhà máy để thu lại hoặc mở ra</div><div class="doi-thu">'
+      + '<button type="button" data-thux-het="mo">▼ Mở hết</button><button type="button" data-thux-het="dong">▶ Thu hết</button></div></div>';
+  }
   kq.nhom.forEach(function (g, i) {
     if (coChon) { g._chon = docChon(g.ma_ct, kq); apDungChon(g, kq); }
+    var thu = !!thuX[g.ma_ct];
     h += '<div class="khoi-x" data-i="' + i + '">'
-      +   '<div class="ten">' + thoat(g.ten_cong_ty) + '</div>'
+      +   '<button type="button" class="ten ten-x" data-thux="' + thoat(g.ma_ct) + '" aria-expanded="' + (thu ? 'false' : 'true') + '">'
+      +     '<span class="mui" aria-hidden="true">' + (thu ? '▶' : '▼') + '</span><span class="ten-chu">' + thoat(g.ten_cong_ty) + '</span>'
+      +     '<span class="lam-gi">' + (thu ? 'Mở ra' : 'Thu lại') + '</span></button>'
       +   '<div class="dem">' + g.so + ' người đã vào làm'
       +     (g.dem_qua ? ' · có ' + g.dem_qua + ' người ca đêm hôm qua' : ' hôm nay') + '</div>'
+      +   '<div class="than-x' + (thu ? ' an' : '') + '">'
       +   (coChon ? veKhungChon(g, i, kq) : '')
       +   '<div class="doi-x">'
       +     '<button type="button" data-ten="Sao chép bảng Excel" data-i="' + i + '" data-loai="bang"'
@@ -926,9 +959,35 @@ function veXuat(kq) {
       +   '</div>'
       +   '<div class="mach-x">Bấm <b>tiêu đề cột</b> để chọn cả cột · <b>kéo</b> qua các ô để chọn một vùng, rồi bấm Sao chép (hoặc Ctrl+C).</div>'
       +   '<div class="cuon-x" id="x_cuon_' + i + '">' + bangXuat(g, i) + '</div>'
+      +   '</div>'
       + '</div>';
   });
   $('x_noi').innerHTML = h;
+
+  function datThuX(b, thu) {
+    b.setAttribute('aria-expanded', thu ? 'false' : 'true');
+    b.querySelector('.mui').textContent = thu ? '▶' : '▼';
+    b.querySelector('.lam-gi').textContent = thu ? 'Mở ra' : 'Thu lại';
+    b.parentNode.querySelector('.than-x').classList.toggle('an', thu);
+  }
+  Array.prototype.forEach.call($('x_noi').querySelectorAll('button[data-thux]'), function (b) {
+    b.addEventListener('click', function () {
+      var ma = b.getAttribute('data-thux');
+      if (thuX[ma]) delete thuX[ma]; else thuX[ma] = true;
+      luuThu(KHOA_THU_X, thuX);
+      datThuX(b, !!thuX[ma]);
+    });
+  });
+  Array.prototype.forEach.call($('x_noi').querySelectorAll('button[data-thux-het]'), function (nut) {
+    nut.addEventListener('click', function () {
+      var thu = nut.getAttribute('data-thux-het') === 'dong';
+      Array.prototype.forEach.call($('x_noi').querySelectorAll('button[data-thux]'), function (b) {
+        if (thu) thuX[b.getAttribute('data-thux')] = true; else delete thuX[b.getAttribute('data-thux')];
+        datThuX(b, thu);
+      });
+      luuThu(KHOA_THU_X, thuX);
+    });
+  });
 
   Array.prototype.forEach.call($('x_noi').querySelectorAll('.doi-x button'), function (b) {
     b.addEventListener('click', function () {
@@ -1244,6 +1303,74 @@ function layDanhSachCu(ngay) {
 
 function xoaDanhSachNho() { try { localStorage.removeItem(KHOA_DS); } catch (e) {} }
 
+/* ---------- THU GỌN NHÀ MÁY (bản 3.56) ----------
+ * Dương 03/11/2026: người được giao vài nhà máy (đón cùng người đón chính / phụ) có danh sách rất dài. Chạm tên nhà máy để
+ * thu lại / mở ra; nhớ trong máy cho tới khi người dùng đổi — chỉ là bảng mã nhà máy, không có dữ liệu người. Lần đầu mở hết.
+ * Nhà máy thu lại vẫn còn dòng tên + số người + số chưa gửi, và ô tìm vẫn tìm cả trong đó: không để ai biến mất lặng lẽ.
+ */
+var KHOA_THU = 'ds_thu_ct', KHOA_THU_X = 'xuat_thu_ct';
+function docThu(khoa) {
+  try {
+    var v = JSON.parse(localStorage.getItem(khoa) || '{}');
+    return (v && typeof v === 'object' && !Array.isArray(v)) ? v : {};
+  } catch (e) { return {}; }
+}
+function luuThu(khoa, v) { try { localStorage.setItem(khoa, JSON.stringify(v)); } catch (e) {} }
+var thuCT = docThu(KHOA_THU);
+
+/** Dòng tên một nhà máy — cũng là nút thu / mở. Số chưa gửi điền sau ở capNhatDauCT (đổi theo mỗi lần chạm). */
+function dauCT(g) {
+  var thu = !!thuCT[g.ma_ct], chua = 0;
+  g.ds.forEach(function (r) { if (!r.da_don) chua++; });
+  return '<button type="button" class="ten-ct' + (thu ? ' thu' : '') + '" data-thu="' + thoat(g.ma_ct) + '" aria-expanded="' +
+    (thu ? 'false' : 'true') + '"><span class="mui" aria-hidden="true">' + (thu ? '▶' : '▼') + '</span>' +
+    '<span class="ten-chu">' + thoat(g.ten_cong_ty) + ' <span>· ' + thoat(hoaDau(g.loai)) + ' · ' + g.ds.length +
+    ' người · chưa đón ' + chua + '<b class="cg"></b></span></span><span class="lam-gi">' + (thu ? 'Mở ra' : 'Thu lại') + '</span></button>';
+}
+/** Số người còn đánh dấu chưa gửi của từng nhà máy, ngay trên dòng tên — nhà máy đang thu vẫn nhắc Gửi. */
+function capNhatDauCT() {
+  dsNgay.forEach(function (g) {
+    var b = $('noi').querySelector('button[data-thu="' + g.ma_ct + '"]');
+    var o = b && b.querySelector('.cg');
+    if (!o) return;
+    var n = 0;
+    g.ds.forEach(function (r) {
+      var m = r.ma_ld, c = chonGoi[m];
+      if (chonTT[m] || chonDon[m] || chonSua[m] || (c && (c.ket_qua || c.so_lan_them))) n++;
+    });
+    o.textContent = n ? ' · ✏️ ' + n + ' chưa gửi' : '';
+  });
+}
+/** Dòng "Chạm tên nhà máy…" + Mở hết / Thu hết: chỉ khi có từ 2 nhà máy (nhà máy không còn ai không tính). */
+function veThanhThu() {
+  var n = 0, mo = 0;
+  dsNgay.forEach(function (g) { if (!g.ds.length) return; n++; if (!thuCT[g.ma_ct]) mo++; });
+  $('thanh_thu').classList.toggle('an', n < 2);
+  $('thu_dem').textContent = 'đang mở ' + mo + '/' + n + ' nhà máy';
+}
+/** Đặt trạng thái thu / mở cho một dòng tên đã vẽ — khỏi dựng lại cả danh sách. */
+function datDauCT(b, thu) {
+  b.classList.toggle('thu', thu);
+  b.setAttribute('aria-expanded', thu ? 'false' : 'true');
+  b.querySelector('.mui').textContent = thu ? '▶' : '▼';
+  b.querySelector('.lam-gi').textContent = thu ? 'Mở ra' : 'Thu lại';
+}
+function doiThu(ma) {
+  if (thuCT[ma]) delete thuCT[ma]; else thuCT[ma] = true;
+  luuThu(KHOA_THU, thuCT);
+  var b = $('noi').querySelector('button[data-thu="' + ma + '"]');
+  if (b) datDauCT(b, !!thuCT[ma]);
+  apDungLoc(); veThanhThu();
+}
+function thuHet(thu) {
+  dsNgay.forEach(function (g) { if (thu) thuCT[g.ma_ct] = true; else delete thuCT[g.ma_ct]; });
+  luuThu(KHOA_THU, thuCT);
+  Array.prototype.forEach.call($('noi').querySelectorAll('button[data-thu]'), function (b) { datDauCT(b, thu); });
+  apDungLoc(); veThanhThu();
+}
+$('thu_mo').addEventListener('click', function () { thuHet(false); });
+$('thu_dong').addEventListener('click', function () { thuHet(true); });
+
 /* ---------- Gói đầu của trang chủ (bản 3.36) ----------
  * Trang chủ lấy sẵn danh sách hôm nay + ngày mai trong MỘT lượt (goi-dau.js). Còn tươi (≤ 2 phút, đúng vé) thì
  * dùng luôn, khỏi gọi máy chủ; cũ hơn thì chỉ để BÀY TRƯỚC như bản nhớ. Thiếu goi-dau.js → như chưa có gói. */
@@ -1289,10 +1416,11 @@ function tatDongHo() {
 }
 
 function soChuaGui() {
-  return Object.keys(chonTT).length + Object.keys(chonDon).length + Object.keys(chonSua).length +
-         Object.keys(chonGoi).filter(function (m) {
-           return chonGoi[m].ket_qua || chonGoi[m].so_lan_them;
-         }).length;
+  // 3.56: đếm NGƯỜI, không đếm mục — một người Đã đến + Vào làm là 1 người, không phải 2.
+  var co = {};
+  [chonTT, chonDon, chonSua].forEach(function (m) { Object.keys(m).forEach(function (k) { co[k] = true; }); });
+  Object.keys(chonGoi).forEach(function (m) { if (chonGoi[m].ket_qua || chonGoi[m].so_lan_them) co[m] = true; });
+  return Object.keys(co).length;
 }
 
 window.addEventListener('beforeunload', function (e) {
@@ -1438,15 +1566,17 @@ function ve(kq) {
     (kq.tu_nho_tam ? ' · lấy từ bộ nhớ tạm' : '');
   if (!tong) {
     $('noi').innerHTML = '<div class="trong">' + (laDemQua(ngayXem) ? 'Đêm qua không có ai đi ca đêm.' : 'Ngày này chưa có ai trong danh sách.') + '</div>';
+    veThanhThu();
     return;
   }
   var h = '';
   dsNgay.forEach(function (g) {
-    h += '<div class="ten-ct">' + thoat(g.ten_cong_ty) +
-         ' <span>· ' + thoat(hoaDau(g.loai)) + ' · ' + g.ds.length + ' người</span></div>';
+    h += dauCT(g);
     xepUuTien(g.ds).forEach(function (r) { h += veHang(r); });
   });
   $('noi').innerHTML = h;
+  apDungLoc();
+  veThanhThu();
 }
 
 /**
@@ -1529,9 +1659,19 @@ function veHang(r) {
     // BẢN 3.20: đánh dấu đã đón ngay tại đây, khỏi phải mở trang khác quét thẻ.
     // Nơi đón mặc định là nơi họ đã đăng ký — ai đến nơi KHÁC thì đó đúng là ca cần
     // quét thẻ ở trang đón, nơi có đủ đường xử lý đón-lại.
+    // 3.56 (Dương chốt 03/11): người tự đến — "Đã đến" (đến rồi, đợi vào làm) · "Đón + Vào làm" (đến và vào làm luôn).
+    // Chạm Đã đến thì hiện luôn hai nút tình trạng, như bấm Gọi hiện bốn nút kết quả — đón + vào làm đi chung MỘT lần Gửi.
+    var den = !!chonDon[r.ma_ld], ct = chonTT[r.ma_ld], ma = thoat(r.ma_ld);
+    var vao = !!(ct && ct.tinh_trang === 'da_vao_lam'), khong = !!(ct && ct.tinh_trang === 'khong_vao_lam');
     h += '<div class="d3">' +
-      '<button type="button" class="' + (chonDon[r.ma_ld] ? 'chon-don' : '') +
-      '" data-don="' + thoat(r.ma_ld) + '">Đã đón</button>' + nutSua + '</div>';
+      '<button type="button" class="' + (den ? 'chon-don' : '') + '" data-don="' + ma + '">' + (den ? '✓ Đã đến' : 'Đã đến') + '</button>' +
+      '<button type="button" class="' + (den && vao ? 'chon-v' : '') + '" data-donlam="' + ma + '">✓ Đón + Vào làm</button>' +
+      nutSua + '</div>';
+    if (den || ct) {
+      h += '<div class="den-tt">Đã đến rồi — chọn tình trạng (chưa rõ thì để đó):</div><div class="d3">' +
+        '<button type="button" class="' + (vao ? 'chon-v' : '') + '" data-tt="da_vao_lam" data-ma="' + ma + '">✓ Vào làm</button>' +
+        '<button type="button" class="' + (khong ? 'chon-x' : '') + '" data-tt="khong_vao_lam" data-ma="' + ma + '">✕ Không vào làm</button></div>';
+    }
   }
   return h + '</div>';
 }
@@ -1571,14 +1711,21 @@ $('noi').addEventListener('click', function (e) {
   var nutSua = t.closest ? t.closest('button[data-sua]') : null;
   if (nutSua) { moSua(nutSua.getAttribute('data-sua')); return; }
 
+  // 3.56 — chạm tên nhà máy: thu lại / mở ra.
+  var nutThu = t.closest ? t.closest('button[data-thu]') : null;
+  if (nutThu) { doiThu(nutThu.getAttribute('data-thu')); return; }
+
+  var nutDonLam = t.closest ? t.closest('button[data-donlam]') : null;
+  if (nutDonLam) {
+    var maDL = nutDonLam.getAttribute('data-donlam');
+    chamDonLam(maDL); ghiNho(); veLaiHang(maDL); demChon();
+    return;
+  }
+
   var nutDon = t.closest ? t.closest('button[data-don]') : null;
   if (nutDon) {
     var maD = nutDon.getAttribute('data-don');
-    if (chonDon[maD]) delete chonDon[maD]; else chonDon[maD] = true;
-    nutDon.className = chonDon[maD] ? 'chon-don' : '';
-    var hd = nutDon.closest('.hang');
-    if (hd) hd.classList.toggle('se-don', !!chonDon[maD]);
-    ghiNho(); demChon();
+    chamDaDen(maD); ghiNho(); veLaiHang(maD); demChon();
     return;
   }
 
@@ -1593,6 +1740,26 @@ $('noi').addEventListener('click', function (e) {
     ghiNho(); veLai(ma);
   }, (timHang(ma) || { r: {} }).r.ho_ten);
 });
+
+/** 3.56 — chạm "Đã đến": bật / tắt. Tắt thì bỏ luôn tình trạng đã chọn — chưa đến thì chưa có vào làm. */
+function chamDaDen(ma) {
+  if (chonDon[ma]) { delete chonDon[ma]; delete chonTT[ma]; } else chonDon[ma] = true;
+}
+/** 3.56 — "Đón + Vào làm" = Đã đến + Vào làm trong một chạm. Đang bật cả hai thì chạm lại là bỏ cả hai. */
+function chamDonLam(ma) {
+  if (chonDon[ma] && chonTT[ma] && chonTT[ma].tinh_trang === 'da_vao_lam') { delete chonDon[ma]; delete chonTT[ma]; return; }
+  chonDon[ma] = true;
+  chonTT[ma] = { tinh_trang: 'da_vao_lam', ly_do: '' };
+}
+/** 3.56 — vẽ lại TRỌN một thẻ (chạm Đã đến làm hiện / ẩn cả dòng nút tình trạng), rồi veLai đắp lý do đã chọn. */
+function veLaiHang(ma) {
+  var o = $('noi').querySelector('.hang[data-ma="' + ma + '"]'), x = timHang(ma);
+  if (!o || !x) return;
+  var tam = document.createElement('div');
+  tam.innerHTML = veHang(x.r);
+  o.parentNode.replaceChild(tam.firstChild, o);
+  veLai(ma);
+}
 
 /** Vẽ lại một hàng tại chỗ — nhanh hơn dựng lại cả danh sách, và không mất chỗ đang cuộn. */
 function veLai(ma) {
@@ -1634,6 +1801,7 @@ function demChon() {
   var n = soChuaGui();
   $('dem').textContent = n;
   $('thanh').classList.toggle('an', n === 0);
+  capNhatDauCT();
   // Có lựa chọn mới thì nút GỬI sáng lại, và dòng "đã gửi lúc..." biến đi.
   if (n > 0) {
     $('gui_le').disabled = $('gui_gop').disabled = false;
@@ -1897,21 +2065,19 @@ function hopLoc(t, cum) {
  * một người rồi bấm gửi là cả danh sách bung ra. */
 function apDungLoc() {
   var cum = boDau($('tim').value.trim()).split(/\s+/).filter(function (x) { return x; });
-  var hang = $('noi').querySelectorAll('.hang');
-  for (var i = 0; i < hang.length; i++) {
-    var t = boDau(hang[i].getAttribute('data-tim') || '');
-    hang[i].style.display = (!cum.length || hopLoc(t, cum)) ? '' : 'none';
+  // 3.56: nhà máy đang thu thì ẩn thẻ, GIỮ dòng tên — trừ lúc đang tìm: tìm ra người ở mọi nhà máy, thu hay mở.
+  // Đang tìm mà khối công ty nào không còn ai thì ẩn luôn tiêu đề, khỏi trơ ra giữa danh sách.
+  var con = $('noi').children, dau = null, co = false, thu = false;
+  function chotDau() { if (dau) dau.style.display = (!cum.length || co) ? '' : 'none'; }
+  for (var i = 0; i < con.length; i++) {
+    var e = con[i];
+    if (e.classList.contains('ten-ct')) { chotDau(); dau = e; co = false; thu = !!thuCT[e.getAttribute('data-thu')]; continue; }
+    if (!e.classList.contains('hang')) continue;
+    var hop = !cum.length || hopLoc(boDau(e.getAttribute('data-tim') || ''), cum);
+    if (hop) co = true;
+    e.style.display = (hop && (cum.length || !thu)) ? '' : 'none';
   }
-  // Khối công ty nào không còn ai thì ẩn luôn tiêu đề, khỏi trơ ra giữa danh sách.
-  var tieu = $('noi').querySelectorAll('.ten-ct');
-  for (var k = 0; k < tieu.length; k++) {
-    var co = false, n = tieu[k].nextElementSibling;
-    while (n && n.classList.contains('hang')) {
-      if (n.style.display !== 'none') { co = true; break; }
-      n = n.nextElementSibling;
-    }
-    tieu[k].style.display = co ? '' : 'none';
-  }
+  chotDau();
 }
 $('tim').addEventListener('input', apDungLoc);
 
@@ -2037,26 +2203,29 @@ function capNhatSauGui(kq) {
   var dsXong = kq.ma_ld_xong || [], suaXong = kq.sua_xong || [];
   var xong = {};
   dsXong.forEach(function (m) { xong[m] = true; });
+  // 3.56: máy chủ trả xong_loai {goi, don, lam} — xoá ĐÚNG phần đã ghi: đón được mà vào làm hỏng thì dấu vào làm còn
+  // để gửi lại. Máy chủ cũ không có → như trước (người trong ma_ld_xong bỏ mọi dấu).
+  var xl = kq.xong_loai;
+  function da(loai, m) { return xl ? (xl[loai] || []).indexOf(m) >= 0 : !!xong[m]; }
 
   dsNgay.forEach(function (g) {
     g.ds.forEach(function (r) {
-      if (!xong[r.ma_ld]) return;
       var c = chonGoi[r.ma_ld];
-      if (c) {
+      if (c && da('goi', r.ma_ld)) {
         if (c.ket_qua) r.ket_qua_goi = c.ket_qua;
         r.so_lan_goi = Number(r.so_lan_goi || 0) + Number(c.so_lan_them || 0);
         if (c.ket_qua && !r.so_lan_goi) r.so_lan_goi = 1;
       }
       var tt = chonTT[r.ma_ld];
-      if (tt) { r.tinh_trang_lam = tt.tinh_trang; r.ly_do_khong_lam = tt.ly_do; }
-      if (chonDon[r.ma_ld]) r.da_don = true;
+      if (tt && da('lam', r.ma_ld)) { r.tinh_trang_lam = tt.tinh_trang; r.ly_do_khong_lam = tt.ly_do; }
+      if (chonDon[r.ma_ld] && da('don', r.ma_ld)) r.da_don = true;
     });
   });
 
   // Người báo KHÔNG ĐI thì phiếu đã huỷ — họ không còn trong danh sách đón nữa.
   var boDi = {};
   Object.keys(chonGoi).forEach(function (m) {
-    if (xong[m] && chonGoi[m].ket_qua === 'khong_di') boDi[m] = true;
+    if (da('goi', m) && chonGoi[m].ket_qua === 'khong_di') boDi[m] = true;
   });
   if (Object.keys(boDi).length) {
     dsNgay.forEach(function (g) {
@@ -2064,7 +2233,9 @@ function capNhatSauGui(kq) {
     });
   }
 
-  dsXong.forEach(function (m) { delete chonGoi[m]; delete chonTT[m]; delete chonDon[m]; });
+  Object.keys(chonGoi).forEach(function (m) { if (da('goi', m)) delete chonGoi[m]; });
+  Object.keys(chonTT).forEach(function (m) { if (da('lam', m)) delete chonTT[m]; });
+  Object.keys(chonDon).forEach(function (m) { if (da('don', m)) delete chonDon[m]; });
   // 3.45: máy chủ cũ (không có cờ sua_ngay) báo "sửa xong" mà bỏ qua ngày → giữ mục có ngày, gửi lại sau khi máy chủ lên
   // (phần đã ghi gửi lại là "không đổi"). Không giữ là ngày biến mất lặng lẽ.
   suaXong.forEach(function (m) {
@@ -2118,12 +2289,12 @@ function veLaiTatCa() {
   var h = '';
   dsNgay.forEach(function (g) {
     if (!g.ds.length) return;
-    h += '<div class="ten-ct">' + thoat(g.ten_cong_ty) +
-         ' <span>· ' + thoat(hoaDau(g.loai)) + ' · ' + g.ds.length + ' người</span></div>';
+    h += dauCT(g);
     xepUuTien(g.ds).forEach(function (r) { h += veHang(r); });
   });
   $('noi').innerHTML = h || '<div class="trong">' + (laDemQua(ngayXem) ? 'Đêm qua không có ai đi ca đêm.' : 'Ngày này chưa có ai trong danh sách.') + '</div>';
   apDungLoc();
+  veThanhThu();
 }
 
 $('gui_le').addEventListener('click', function () { gui(false); });
