@@ -46,9 +46,11 @@
   @keyframes che-quay{to{transform:rotate(360deg)}}
   .che-chu{font-size:14px;color:var(--chu);font-weight:600;line-height:1.45}
 
-  /* Thanh ĐO TỐC ĐỘ (chẩn đoán 3.29) — hiện ở đáy màn, chỉ bật khi có số đo. */
-  .do-chi{position:fixed;left:0;right:0;bottom:0;z-index:50;background:#1f2933;color:#cfd8e3;
-    font-size:11px;line-height:1.45;padding:6px 10px;white-space:pre-wrap;word-break:break-word}
+  /* Dòng ĐO TỐC ĐỘ (chẩn đoán 3.29). 3.53.1: ĐỪNG ghim lại vào đáy màn — từng đè kín nút chính của .thanh trên điện
+     thoại (Dương báo 01/11/2026). Nằm cuối trang, ẩn sau nút ⓘ như Trang chủ. */
+  .nut-do{display:block;margin:10px auto 0;min-height:44px;padding:8px 14px;border:0;background:none;font:inherit;
+    font-size:15px;color:var(--mo);text-decoration:underline;cursor:pointer}
+  .do-chi{margin:8px 14px 0;font-size:15px;color:var(--mo);text-align:center;white-space:pre-wrap;word-break:break-word}
 
   .dinh{text-align:center;padding:18px 16px 8px}
   .dinh b{font-size:17.5px}
@@ -71,11 +73,11 @@
   .loi{margin:12px 14px 0;padding:10px 12px;border-radius:9px;background:var(--do-nhat);color:#8a1c13;font-size:13.5px;white-space:pre-line}
   /* 3.36: link về trang chủ · danh sách cũ đang chờ bản mới thì mờ · nút trong dải "có thể đã có số mới" */
   /* Dương 24/10/2026: nút quay lại phải nhìn ra ngay — biểu tượng to + chữ "Về Trang chủ" */
-  .ve-chu{display:inline-flex;align-items:center;gap:7px;margin:10px 0 0 14px;padding:7px 14px 7px 10px;border:1px solid #c9d8f2;
+  .ve-chu{display:inline-flex;align-items:center;gap:7px;min-height:44px;margin:10px 0 0 14px;padding:7px 14px 7px 10px;border:1px solid #c9d8f2;
     border-radius:22px;background:#eef4fd;color:#1d5fbf;font-size:15px;font-weight:700;text-decoration:none}
   .ve-chu-ic{font-size:22px;line-height:1}
   .cu-mo{opacity:.55}
-  .nhac button{margin-left:6px;padding:4px 10px;border:1px solid #e0c98a;border-radius:7px;background:#fff;
+  .nhac button{min-height:44px;margin-left:6px;padding:4px 10px;border:1px solid #e0c98a;border-radius:7px;background:#fff;
     font:inherit;font-weight:600;cursor:pointer}
   .nhac{margin:10px 14px 0;padding:10px 12px;border-radius:10px;background:var(--vang-nhat);border:1px solid var(--vang-vien);
     color:#6b4e00;font-size:13px;line-height:1.55;white-space:pre-line}
@@ -86,22 +88,22 @@
   .nho{font-size:12.5px;color:var(--mo)}
 
   .the-tab{display:flex;gap:6px;margin:4px 14px 10px;background:var(--xam-nut);padding:4px;border-radius:12px}
-  .the-tab button{flex:1;padding:10px;border:0;border-radius:9px;background:transparent;font-size:15px;font-weight:600;color:#3c4753;cursor:pointer}
+  .the-tab button{flex:1;min-height:44px;padding:10px;border:0;border-radius:9px;background:transparent;font-size:15px;font-weight:600;color:#3c4753;cursor:pointer}
   .the-tab button.dang{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);color:var(--chu)}
 
   .hang-ngay{display:flex;gap:6px;padding:0 14px;align-items:center}
-  .hang-ngay input{flex:1;min-width:0;padding:10px;font-size:16px;border:1px solid #d9dde2;border-radius:10px;background:#fff}
-  .hang-ngay button{padding:10px 12px;border:1px solid var(--vien);background:#fff;border-radius:10px;font-size:14.5px;font-weight:600;color:#3c4753;cursor:pointer}
+  .hang-ngay input{flex:1;min-width:0;min-height:44px;padding:10px;font-size:16px;border:1px solid #d9dde2;border-radius:10px;background:#fff}
+  .hang-ngay button{min-width:44px;min-height:44px;padding:10px 12px;border:1px solid var(--vien);background:#fff;border-radius:10px;font-size:14.5px;font-weight:600;color:#3c4753;cursor:pointer}
 
   /* 3.36: dòng TÊN CÔNG TY bấm được — chọn / bỏ cả các ca của công ty đó */
-  .ct-dong{display:flex;align-items:center;gap:10px;margin:14px 14px 0;padding:6px 2px;border:0;background:none;cursor:pointer;
+  .ct-dong{display:flex;align-items:center;gap:10px;min-height:44px;margin:14px 14px 0;padding:6px 2px;border:0;background:none;cursor:pointer;
     width:calc(100% - 28px);text-align:left;font:inherit;color:var(--mo)}
   .ct-dong b{flex:1;min-width:0;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:.02em}
   .ct-dong .dem-ct{font-size:12.5px;font-weight:600;color:var(--xanh)}
   .ct-dong.co b,.ct-dong.mot-phan b{color:var(--chu)}
   .tick.mot-phan{background:#fff;border-color:var(--xanh);color:var(--xanh)}
   .chon-nhanh{display:flex;gap:8px;padding:12px 14px 0}
-  .chon-nhanh button{flex:1;padding:10px 8px;border:1px solid var(--vien);background:#fff;border-radius:10px;
+  .chon-nhanh button{flex:1;min-height:44px;padding:10px 8px;border:1px solid var(--vien);background:#fff;border-radius:10px;
     font:inherit;font-size:14px;font-weight:600;color:#3c4753;cursor:pointer}
   .dv{display:flex;align-items:center;gap:11px;margin:7px 14px 0;padding:12px 13px;border-radius:12px;background:var(--the);
     border:1px solid var(--vien);cursor:pointer;width:calc(100% - 28px);text-align:left;color:var(--chu);font-size:16px}
@@ -137,9 +139,9 @@
   .khoi h3{margin:0 0 4px;font-size:14.5px}
   .bon-so{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
   .bon-so label{font-size:11.5px;color:var(--mo);display:block;text-align:center}
-  .bon-so input{width:100%;padding:9px 4px;font-size:16px;text-align:center;border:1px solid #d9dde2;border-radius:9px}
+  .bon-so input{width:100%;min-height:44px;padding:9px 4px;font-size:16px;text-align:center;border:1px solid #d9dde2;border-radius:9px}
   .so-nen{font-size:14.5px}
-  .nut-nho{display:inline-block;margin-top:8px;padding:8px 12px;border:1px solid var(--vien);background:#fff;border-radius:9px;font-size:13.5px;font-weight:600;color:#3c4753;cursor:pointer}
+  .nut-nho{display:inline-block;min-height:44px;margin-top:8px;padding:8px 12px;border:1px solid var(--vien);background:#fff;border-radius:9px;font-size:13.5px;font-weight:600;color:#3c4753;cursor:pointer}
   .nut-nho.chinh{background:var(--lam);border-color:var(--lam);color:#fff}
 
   details.nhom{margin:10px 14px 0;border-radius:12px;background:var(--the);border:1px solid var(--vien)}
@@ -155,7 +157,7 @@
   .dong-bd:first-of-type{border-top:0}
   .dong-bd .tren{display:flex;align-items:center;gap:10px}
   .dong-bd label{flex:1;font-size:14.5px}
-  .o-so{width:76px;padding:9px 6px;font-size:17px;text-align:center;border:1px solid #d9dde2;border-radius:9px;background:#fff}
+  .o-so{width:76px;min-height:44px;padding:9px 6px;font-size:17px;text-align:center;border:1px solid #d9dde2;border-radius:9px;background:#fff}
   .o-so.sai{border-color:var(--do);background:var(--do-nhat)}
   .o-ct{display:block;width:100%;margin-top:6px;min-height:58px;padding:8px 10px;font-family:inherit;font-size:14px;line-height:1.45;
     border:1px solid #d9dde2;border-radius:9px;resize:vertical}
@@ -170,9 +172,9 @@
   .uv .ten b{font-size:15px}
   .uv .ten > span:not(.nhan-tt){display:block;font-size:12.5px;color:var(--mo)}
   .mt{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:8px 0;border-top:1px dashed var(--vien)}
-  .mt input{width:100%;padding:8px;font-size:15px;border:1px solid #d9dde2;border-radius:8px}
+  .mt input{width:100%;min-height:44px;padding:8px;font-size:15px;border:1px solid #d9dde2;border-radius:8px}
   .mt .bo{grid-column:span 2;text-align:right}
-  .mt .bo button{border:0;background:none;color:var(--do);font-size:13px;cursor:pointer}
+  .mt .bo button{min-width:44px;min-height:44px;border:0;background:none;color:var(--do);font-size:13px;cursor:pointer}
 
   .dy{margin:12px 14px 0;padding:12px 13px;border-radius:12px;background:var(--the);border:1px solid var(--vien)}
   .dy.hong{border-color:#f0b3ae}
@@ -211,7 +213,7 @@
   .ng-tim{position:sticky;top:0;z-index:4;background:var(--nen);padding:8px 14px}
   .ng-tim input{width:100%;padding:12px;font-size:16px;border:1px solid #d9dde2;border-radius:10px;background:#fff}
   .ng-loc{display:flex;gap:6px;flex-wrap:wrap;padding:2px 14px 0}
-  .ng-loc button{min-height:40px;border:1px solid var(--vien);background:#fff;border-radius:20px;font:inherit;font-size:13px;font-weight:600;
+  .ng-loc button{min-height:44px;border:1px solid var(--vien);background:#fff;border-radius:20px;font:inherit;font-size:13px;font-weight:600;
     padding:4px 12px;color:#56606b;cursor:pointer}
   .ng-loc button.dang{background:var(--chu);border-color:var(--chu);color:#fff}
   .ng-hang{display:flex;gap:8px;flex-wrap:wrap;padding:10px 14px 0}
@@ -237,14 +239,14 @@
   .viec button.dang{background:var(--lam);border-color:var(--lam);color:#fff}
   .viec button.nhe{color:var(--mo);font-weight:500}
   .hang-viec{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 4px}
-  .nut-bo{min-height:40px;border:1px solid var(--vien);background:#fff;border-radius:9px;font:inherit;font-size:13.5px;font-weight:600;
+  .nut-bo{min-height:44px;border:1px solid var(--vien);background:#fff;border-radius:9px;font:inherit;font-size:13.5px;font-weight:600;
     padding:4px 12px;color:#8a1c13;cursor:pointer}
   .nhan-nhom{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mo);margin-top:10px}
   .hoi-dan{background:var(--vang-nhat);border:1px solid var(--vang-vien);border-radius:10px;padding:8px 10px;font-size:13.5px;color:#6b4e00;margin-top:6px}
   .hoi-dan button{min-height:44px;margin:6px 6px 0 0;border:1px solid var(--vang-vien);background:#fff;border-radius:9px;font:inherit;font-size:13.5px;
     font-weight:600;padding:4px 10px;cursor:pointer}
   .ng-them{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
-  .ng-them input{width:100%;padding:9px;font-size:16px;border:1px solid #d9dde2;border-radius:8px}
+  .ng-them input{width:100%;min-height:44px;padding:9px;font-size:16px;border:1px solid #d9dde2;border-radius:8px}
   .ng-them input:first-child{grid-column:span 2}
   .dai{font-size:13px;font-weight:500;background:var(--xanh-nhat);color:#17663a;border-radius:9px;padding:5px 10px;margin-bottom:6px}
   .dai.lui{background:var(--lam-nhat);color:#163f7a}
@@ -270,9 +272,6 @@
     <div class="che-chu" id="che_tai_chu">Đang tải dữ liệu, vui lòng đợi…</div>
   </div>
 </div>
-
-<!-- Thanh ĐO TỐC ĐỘ (chẩn đoán 3.29) — ẩn sẵn, hiện số đo sau mỗi lượt đọc lâu -->
-<div id="do_chi" class="do-chi an"></div>
 
 <div class="boc">
 
@@ -411,6 +410,10 @@
   <button type="button" class="nut phu" id="nut_thct_ve">◀ Về tổng hợp</button>
 </div>
 
+<!-- Số đo tốc độ (chẩn đoán 3.29): ẩn sau nút ⓘ — báo chậm thì bấm ra rồi chụp gửi -->
+<button type="button" class="nut-do an" id="nut_do" aria-expanded="false">ⓘ Thông tin kỹ thuật (khi báo chậm)</button>
+<div id="do_chi" class="do-chi an"></div>
+
 </div>
 
 <script src="cau-hinh.js"></script>
@@ -472,8 +475,14 @@ function hienDo(nhan, tTrangMs, kq) {
     s += ' · (máy chủ chưa gửi số đo — bản cũ?)';
   }
   el.textContent = s;
-  el.classList.remove('an');
+  $('nut_do').classList.remove('an');   // 3.53.1: chỉ ghi số; hiện hay không do nút ⓘ
 }
+var xemDo = false;
+$('nut_do').addEventListener('click', function () {
+  xemDo = !xemDo;
+  if (xemDo) $('do_chi').classList.remove('an'); else $('do_chi').classList.add('an');
+  $('nut_do').setAttribute('aria-expanded', xemDo);
+});
 
 /** Mọi lượt gọi tự kèm vé, và tự đá về màn đăng nhập khi vé hết hạn hoặc bị thu hồi.
     choMsg: câu hiện trên lớp báo đang tải (để trống = câu mặc định). */
