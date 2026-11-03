@@ -333,7 +333,7 @@
   </div>
   <div class="goi-y">👉 Chọn thông tin nhà máy cần, bấm "Sao chép bảng Excel" rồi dán vào Excel / Zalo gửi nhà máy.</div>
   <div class="nhac-x"><ul style="margin:0;padding:0">
-    <li>Chỉ có người đã bấm <b>"Vào làm"</b> trong <b>hôm nay</b>.</li>
+    <li>Chỉ có người đã bấm <b>"Vào làm"</b> trong <b>hôm nay</b>, cộng người <b>ca đêm hôm qua</b>.</li>
     <li>Bảng có <b>số căn cước đầy đủ và số điện thoại</b> — chỉ gửi đúng người cần.</li>
     <li>Dán ra chỉ có chữ, số căn cước giữ đủ số 0 đầu.</li>
   </ul></div>
@@ -900,9 +900,11 @@ function moManXuat() {
 }
 
 function veXuat(kq) {
-  $('x_tom').textContent = 'Hôm nay ' + (kq.ngay_hien_thi || '') + ' · ' + kq.tong + ' người đã vào làm';
+  // Máy chủ 3.55 đếm riêng người ca đêm hôm qua (dem_qua); máy chủ cũ không có thì không ghi thêm gì.
+  $('x_tom').textContent = 'Hôm nay ' + (kq.ngay_hien_thi || '') + ' · ' + kq.tong + ' người đã vào làm'
+    + (kq.dem_qua ? ' · có ' + kq.dem_qua + ' người ca đêm hôm qua (' + (kq.ngay_qua_hien_thi || '') + ')' : '');
   if (!kq.tong) {
-    $('x_noi').innerHTML = '<div class="trong">Chưa có ai được xác nhận <b>ĐÃ VÀO LÀM</b> hôm nay.'
+    $('x_noi').innerHTML = '<div class="trong">Chưa có ai được xác nhận <b>ĐÃ VÀO LÀM</b> hôm nay hoặc ca đêm hôm qua.'
       + '<br><br>Người mới được đón mà chưa bấm "đã vào làm" ở màn danh sách thì chưa lên đây.</div>';
     return;
   }
@@ -915,7 +917,8 @@ function veXuat(kq) {
     if (coChon) { g._chon = docChon(g.ma_ct, kq); apDungChon(g, kq); }
     h += '<div class="khoi-x" data-i="' + i + '">'
       +   '<div class="ten">' + thoat(g.ten_cong_ty) + '</div>'
-      +   '<div class="dem">' + g.so + ' người đã vào làm hôm nay</div>'
+      +   '<div class="dem">' + g.so + ' người đã vào làm'
+      +     (g.dem_qua ? ' · có ' + g.dem_qua + ' người ca đêm hôm qua' : ' hôm nay') + '</div>'
       +   (coChon ? veKhungChon(g, i, kq) : '')
       +   '<div class="doi-x">'
       +     '<button type="button" data-ten="Sao chép bảng Excel" data-i="' + i + '" data-loai="bang"'
