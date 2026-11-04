@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<title>Bảng công và phiếu lương</title>
+<!--
+  TRANG CÔNG NHÂN (vé 06) — link chung gửi qua Zalo. Tra số căn cước + họ tên → bảng công / phiếu lương ĐÃ công bố của mọi
+  công ty, 2 tháng gần nhất, trong MỘT lượt gọi máy chủ (cú tra_luong, không đăng nhập).
+  KHÔNG lưu gì trên máy (không localStorage, ô nhập tắt tự điền), không đưa CCCD / tên lên địa chỉ trang. Tra người khác /
+  rời trang là xoá nội dung đang hiện.
+  Phải chạy trong trình duyệt của Zalo: KHÔNG nạp ngoai-zalo.js như trang hệ tuyển dụng; tránh CSS mới (inset, gap của flex).
+  Ngày phát lương đông người: Google trả trang lỗi → tự thử lại 3 lần, cách nhau ngẫu nhiên 2–8 giây; vẫn hỏng thì nói thẳng,
+  KHÔNG BAO GIỜ nói "sai thông tin" khi chưa tra được.
+-->
+<style>
+  :root { --nen:#f1f4f8; --the:#fff; --chu:#1a202c; --mo:#4a5568; --vien:#cbd5e0; --chinh:#1d4ed8; --xanh:#15803d;
+          --do:#b91c1c; --vang:#fef3c7; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", Roboto, Arial, sans-serif; background: var(--nen); color: var(--chu); font-size: 17px;
+         line-height: 1.45; padding: 0 16px 60px; }
+  .khung { max-width: 640px; margin: 0 auto; }
+  header { padding: 16px 0 12px; }
+  header h1 { font-size: 1.2rem; }
+  h2 { font-size: 1.08rem; margin-bottom: 8px; }
+  .the { background: var(--the); border-radius: 12px; box-shadow: 0 1px 8px rgba(0,0,0,.07); padding: 18px 16px; margin-bottom: 14px; }
+  .chi { background: #eff6ff; border-left: 4px solid var(--chinh); padding: 10px 12px; border-radius: 8px; margin-bottom: 6px; }
+  label { display: block; font-weight: 600; margin: 14px 0 6px; }
+  input[type=text] { width: 100%; min-height: 52px; padding: 10px 12px; font-size: 1.1rem; border: 1.5px solid var(--vien); border-radius: 8px; }
+  input.sai { border-color: var(--do); }
+  .loi-o { color: var(--do); font-size: .95rem; margin-top: 4px; }
+  button { min-height: 52px; padding: 10px 16px; font-size: 1.05rem; font-weight: 600; border-radius: 8px; cursor: pointer;
+           border: 1.5px solid var(--chinh); background: #fff; color: var(--chinh); font-family: inherit; }
+  button.chinh { background: var(--chinh); color: #fff; }
+  button:disabled { opacity: .6; cursor: wait; }
+  .rong { width: 100%; }
+  .an { display: none !important; }
+  .ghi { color: var(--mo); font-size: .92rem; margin-top: 10px; }
+  .bao { padding: 10px 12px; border-radius: 8px; margin: 12px 0 0; }
+  .bao.do { background: #fef2f2; border: 1px solid #fecaca; color: var(--do); }
+  .bao.cho { background: var(--vang); border: 1px solid #fde68a; }
+  .dai-do { background: var(--do); color: #fff; padding: 10px 12px; border-radius: 8px; margin: 10px 0; }
+  #nutXem { margin-top: 16px; }
+  /* kết quả */
+  .dau-kq .ten { font-size: 1.1rem; margin-bottom: 10px; }
+  .cac-nut { display: grid; grid-template-columns: 1fr; grid-gap: 8px; }
+  .cac-nut button { width: 100%; text-align: left; color: var(--chu); border-color: var(--vien); font-weight: 600; }
+  .cac-nut button.chon { background: var(--chinh); border-color: var(--chinh); color: #fff; }
+  .nhom-chon + .nhom-chon { margin-top: 16px; }
+  .mot { font-weight: 600; }
+  .phu { color: var(--mo); font-size: .92rem; margin-bottom: 10px; }
+  .chua { background: #f8fafc; border: 1px dashed var(--vien); border-radius: 8px; padding: 12px; color: var(--mo); }
+  /* phiếu (ve-phieu.js) — giống trang nội bộ để kế toán xem trước đúng thứ công nhân thấy */
+  .phieu { border: 1px solid var(--vien); border-radius: 8px; padding: 12px; margin-top: 12px; }
+  .ph-dv { font-weight: 700; font-size: .9rem; }
+  .ph-tieude { text-align: center; font-weight: 700; margin: 8px 0; }
+  .ph-phu { color: var(--mo); font-size: .88rem; }
+  table.bang { width: 100%; border-collapse: collapse; font-size: .9rem; margin-top: 8px; }
+  .bang th, .bang td { border: 1px solid #94a3b8; padding: 5px 6px; vertical-align: top; }
+  .bang td:first-child { text-align: center; width: 34px; }
+  .bang td.so { text-align: right; white-space: nowrap; }
+  .bang tr.muc td { background: #e6efe6; font-weight: 700; }
+  .bang tr.tong td { background: #fef08a; font-weight: 700; }
+  .cong ul { list-style: none; margin: 6px 0 10px; }
+  .cong-tong li { display: -webkit-box; display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding: 4px 0; }
+  .ngay-lam li { display: -webkit-box; display: flex; padding: 6px 0; border-bottom: 1px solid #edf2f7; font-size: .95rem; }
+  .ngay-lam .ngay { min-width: 76px; margin-right: 10px; color: var(--mo); }
+  .cong .bao { background: #f8fafc; border: 1px dashed var(--vien); color: var(--mo); }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .khong-in { display: none !important; }
+    .the { box-shadow: none; padding: 0; margin: 0; }
+    .phieu { border: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="khung">
+  <header class="khong-in"><h1>💵 Bảng công và phiếu lương</h1></header>
+  <div id="daiCauHinh" class="dai-do an khong-in">Trang tra cứu chưa sẵn sàng — báo quản lý của công ty.</div>
+
+  <!-- TRA -->
+  <section id="mTra" class="the khong-in">
+    <div class="chi">👉 Gõ <b>số căn cước</b> và <b>họ tên</b> như trên thẻ căn cước, rồi bấm <b>🔍 Xem</b>. Không cần gõ dấu.</div>
+    <label for="soCccd">Số căn cước (CCCD)</label>
+    <input id="soCccd" type="text" inputmode="numeric" autocomplete="off" maxlength="16" placeholder="12 số trên thẻ">
+    <div class="loi-o an" id="loiCccd"></div>
+    <label for="hoTen">Họ và tên</label>
+    <input id="hoTen" type="text" autocomplete="off" autocapitalize="words" spellcheck="false" maxlength="80" placeholder="Ví dụ: Nguyen Van An">
+    <div class="loi-o an" id="loiTen"></div>
+    <div id="traBao"></div>
+    <button id="nutXem" class="chinh rong">🔍 Xem</button>
+    <p class="ghi">Trang không lưu số căn cước trên điện thoại. Gõ sai 5 lần thì phải đợi 15 phút mới tra lại được.</p>
+  </section>
+
+  <!-- KẾT QUẢ -->
+  <section id="mKetQua" class="an">
+    <div class="the dau-kq khong-in">
+      <div class="ten">Của: <b id="kqTen"></b></div>
+      <button id="nutKhac" class="rong">🔄 Tra người khác</button>
+    </div>
+    <div class="the khong-in">
+      <div class="chi" style="margin-bottom:14px">👉 Chọn tháng và công ty — phiếu lương và bảng công hiện ngay bên dưới.
+        Thấy sai thì báo quản lý của công ty đó.</div>
+      <div class="nhom-chon"><h2>🗓 Tháng</h2><div id="dsKy"></div></div>
+      <div class="nhom-chon"><h2>🏭 Công ty</h2><div id="dsCT"></div></div>
+    </div>
+    <div class="the">
+      <h2 class="khong-in">💵 Phiếu lương</h2>
+      <div id="khungLuong"></div>
+    </div>
+    <div class="the khong-in">
+      <h2>🕒 Bảng công</h2>
+      <div id="khungCong"></div>
+    </div>
+  </section>
+</div>
+
+<script src="cau-hinh-luong.js"></script>
+<script src="ve-phieu.js"></script>
+<script>
+var $ = function (id) { return document.getElementById(id); };
+var e = VePhieu.e;
+var THU_LAI = 3;                                    // ngoài lần đầu → tối đa 4 lần gọi
+var CO_THE_THU_LAI = { TAM: 1, LOI_HE_THONG: 1, DANG_GHI: 1 };
+var TRONG_ZALO = /Zalo/i.test(navigator.userAgent || '');
+var kq = null, chon = { ky: '', i: -1 };
+
+function bao(id, loai, html) { $(id).innerHTML = html ? '<div class="bao ' + loai + '">' + html + '</div>' : ''; }
+function thangNam(ky) { return ky.substring(5) + '/' + ky.substring(0, 4); }
+/** 'yyyy-MM-dd HH:mm' → 'HH:mm ngày dd/MM/yyyy' */
+function lucDep(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(s || '');
+  return m ? m[4] + ' ngày ' + m[3] + '/' + m[2] + '/' + m[1] : String(s || '');
+}
+function loiO(idLoi, idO, cau) { $(idLoi).textContent = cau; $(idLoi).classList.remove('an'); $(idO).classList.add('sai'); }
+function xoaLoiO(idLoi, idO) { $(idLoi).classList.add('an'); $(idO).classList.remove('sai'); }
+
+/** Một lần gọi máy chủ. Google quá tải trả trang lỗi (không phải JSON) → ma TAM để tự thử lại. */
+function goi(goiTin) {
+  var dk = typeof AbortController === 'function' ? new AbortController() : null;
+  var hen = setTimeout(function () { if (dk) dk.abort(); }, 25000);
+  goiTin.token = TOKEN_API;
+  return fetch(URL_API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(goiTin),
+                          signal: dk ? dk.signal : undefined })
+    .then(function (r) { return r.text(); })
+    .then(function (t) {
+      clearTimeout(hen);
+      try { return JSON.parse(t); } catch (x) { return { ok: false, ma: 'TAM' }; }
+    }, function () {
+      clearTimeout(hen);
+      if (navigator.onLine === false) return { ok: false, ma: 'MAT_MANG', loi: 'Điện thoại đang mất mạng — bật 4G hoặc Wi-Fi rồi bấm 🔍 Xem lại.' };
+      return { ok: false, ma: 'TAM' };
+    });
+}
+function cho(giay) { return new Promise(function (xong) { setTimeout(xong, giay * 1000); }); }
+/** Đông người → tự thử lại, cách nhau ngẫu nhiên 2–8 giây để mọi người không cùng bấm lại một lúc. */
+function goiCoThuLai(goiTin, lan) {
+  return goi(goiTin).then(function (r) {
+    if (!CO_THE_THU_LAI[r.ma] || lan >= THU_LAI) return r;
+    bao('traBao', 'cho', '⏳ Đang đông người tra, máy tự thử lại… (lần ' + (lan + 2) + ' / ' + (THU_LAI + 1) + ')');
+    return cho(2 + Math.random() * 6).then(function () { return goiCoThuLai(goiTin, lan + 1); });
+  });
+}
+
+// ---------------- TRA ----------------
+function xem() {
+  var so = ($('soCccd').value || '').replace(/[\s.\-]/g, ''), ten = ($('hoTen').value || '').trim(), sai = false;
+  xoaLoiO('loiCccd', 'soCccd'); xoaLoiO('loiTen', 'hoTen'); bao('traBao');
+  if (!so) { loiO('loiCccd', 'soCccd', 'Chưa gõ số căn cước.'); sai = true; }
+  else if (/\D/.test(so)) { loiO('loiCccd', 'soCccd', 'Số căn cước chỉ gồm chữ số — xoá chữ hoặc dấu lạ.'); sai = true; }
+  else if (so.length !== 12 && so.length !== 9) {
+    loiO('loiCccd', 'soCccd', 'Đang có ' + so.length + ' số. Thẻ căn cước có 12 số (thẻ cũ CMND 9 số).'); sai = true;
+  }
+  if (!ten) { loiO('loiTen', 'hoTen', 'Chưa gõ họ tên.'); sai = true; }
+  if (sai) return;
+  var nut = $('nutXem');
+  nut.disabled = true; nut.textContent = '⏳ Đang tìm…';
+  bao('traBao', 'cho', '⏳ Đang tìm phiếu của anh/chị… (vài giây)');
+  goiCoThuLai({ hanh_dong: 'tra_luong', so_cccd: so, ho_ten: ten }, 0).then(function (r) {
+    nut.disabled = false; nut.textContent = '🔍 Xem';
+    if (r.ok) { bao('traBao'); $('soCccd').value = ''; $('hoTen').value = ''; hienKetQua(r); return; }
+    if (CO_THE_THU_LAI[r.ma]) {
+      bao('traBao', 'do', 'Chưa tra được vì máy chủ đang quá đông hoặc mạng chập chờn — <b>không phải anh/chị gõ sai</b>. ' +
+          'Đợi ít phút rồi bấm 🔍 Xem lại.');
+    } else if (r.ma === 'KHONG_RO' || r.ma === 'SAI_TOKEN' || r.ma === 'SAI_DINH_DANG') {
+      bao('traBao', 'do', 'Trang tra cứu chưa sẵn sàng — báo quản lý của công ty.');
+    } else {
+      bao('traBao', 'do', e(r.loi || 'Chưa tra được — thử lại sau ít phút.'));
+    }
+  });
+}
+
+// ---------------- KẾT QUẢ ----------------
+function hienKetQua(r) {
+  kq = r; chon = { ky: r.muc[0].ky, i: 0 };
+  $('mTra').classList.add('an'); $('mKetQua').classList.remove('an');
+  ve();
+  window.scrollTo(0, 0);
+}
+function chonKy(ky) {
+  chon.ky = ky;
+  for (var i = 0; i < kq.muc.length; i++) if (kq.muc[i].ky === ky) { chon.i = i; break; }
+  ve();
+}
+function chonCT(i) { chon.i = i; ve(); }
+function ve() {
+  var cacKy = [];
+  kq.muc.forEach(function (m) { if (cacKy.indexOf(m.ky) < 0) cacKy.push(m.ky); });
+  $('dsKy').innerHTML = cacKy.length < 2 ? '<div class="mot">Tháng ' + thangNam(cacKy[0]) + '</div>'
+    : '<div class="cac-nut">' + cacKy.map(function (ky) {
+        var la = ky === chon.ky;
+        return '<button class="' + (la ? 'chon' : '') + '" aria-pressed="' + la + '" onclick="chonKy(\'' + ky + '\')">' +
+               (la ? '✔ ' : '') + 'Tháng ' + thangNam(ky) + '</button>';
+      }).join('') + '</div>';
+  var trong = [];
+  kq.muc.forEach(function (m, i) { if (m.ky === chon.ky) trong.push(i); });
+  var trungMa = {};
+  trong.forEach(function (i) { var ma = kq.muc[i].ma_ct; trungMa[ma] = (trungMa[ma] || 0) + 1; });
+  function tenCT(m) { return e(m.ten_ct) + (trungMa[m.ma_ct] > 1 ? ' · hồ sơ ' + e(m.ten_nha_may) : ''); }
+  $('dsCT').innerHTML = trong.length < 2 ? '<div class="mot">' + tenCT(kq.muc[trong[0]]) + '</div>'
+    : '<div class="cac-nut">' + trong.map(function (i) {
+        var la = i === chon.i;
+        return '<button class="' + (la ? 'chon' : '') + '" aria-pressed="' + la + '" onclick="chonCT(' + i + ')">' +
+               (la ? '✔ ' : '') + tenCT(kq.muc[i]) + '</button>';
+      }).join('') + '</div>';
+
+  var m = kq.muc[chon.i];
+  $('kqTen').textContent = m.ten_hien;
+  var chua = '<p class="chua">⏳ <b>Chưa công bố.</b> Kế toán công bố xong mới xem được — quay lại sau.</p>';
+  $('khungLuong').innerHTML = !m.luong ? chua :
+    '<p class="phu khong-in">Cập nhật lúc ' + e(lucDep(m.luong_luc)) + '</p>' +
+    '<button class="rong khong-in" onclick="inPhieu()">🖨 In / Lưu PDF phiếu này</button>' +
+    '<div id="inBao" class="khong-in"></div>' +
+    VePhieu.phieuLuong({ ten_hien: m.ten_hien, ten_nha_may: m.ten_nha_may, luong: m.luong }, { cong_ty: m.ten_ct, ky: m.ky });
+  $('khungCong').innerHTML = !m.cong ? chua :
+    '<p class="phu">Cập nhật lúc ' + e(lucDep(m.cong_luc)) + '</p>' + VePhieu.bangCong({ cong: m.cong });
+}
+function inPhieu() {
+  if (TRONG_ZALO) {
+    bao('inBao', 'cho', 'Đang mở trong Zalo nên không in được. Muốn in hoặc lưu PDF: bấm <b>⋯</b> ở góc trên bên phải → ' +
+        '<b>Mở bằng trình duyệt</b>, rồi tra lại một lần.');
+    return;
+  }
+  window.print();
+}
+/** Tra người khác / rời trang: xoá mọi thứ đang hiện — điện thoại hay dùng chung. */
+function xoaHet() {
+  kq = null; chon = { ky: '', i: -1 };
+  ['kqTen', 'dsKy', 'dsCT', 'khungLuong', 'khungCong', 'traBao'].forEach(function (id) { $(id).innerHTML = ''; });
+  $('soCccd').value = ''; $('hoTen').value = '';
+  xoaLoiO('loiCccd', 'soCccd'); xoaLoiO('loiTen', 'hoTen');
+  $('mKetQua').classList.add('an'); $('mTra').classList.remove('an');
+}
+
+$('nutXem').addEventListener('click', function () { xem(); });
+['soCccd', 'hoTen'].forEach(function (id) {
+  $(id).addEventListener('keydown', function (ev) { if (ev.key === 'Enter') xem(); });
+});
+$('nutKhac').addEventListener('click', function () { xoaHet(); window.scrollTo(0, 0); $('soCccd').focus(); });
+window.addEventListener('pagehide', xoaHet);
+if (typeof URL_API === 'undefined' || !URL_API || typeof TOKEN_API === 'undefined' || !TOKEN_API) {
+  $('daiCauHinh').classList.remove('an'); $('nutXem').disabled = true;
+}
+</script>
+</body>
+</html>

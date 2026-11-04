@@ -6,7 +6,7 @@
 <meta name="robots" content="noindex, nofollow">
 <title>Công–lương nội bộ</title>
 <!--
-  TRANG NỘI BỘ CÔNG–LƯƠNG — kế toán tải file lương từng công ty × tháng (vé 02–04).
+  TRANG NỘI BỘ CÔNG–LƯƠNG — kế toán tải file lương từng công ty × tháng (vé 02–04), công bố bảng công / phiếu lương (vé 05).
   Đọc Excel NGAY TRÊN MÁY (thư viện xlsx), soát bằng doc-file-luong.js, chỉ gửi số đã đọc lên máy chủ.
   BẢO MẬT: đăng nhập CCCD + mật khẩu; mọi quyền kiểm lại ở máy chủ. Đăng xuất xoá hết dữ liệu đang hiện.
   1.1.1 (Dương chốt 31/10): nằm CHUNG kho GitHub với hệ tuyển dụng, vào qua ô Kế toán ở Trang chủ; máy chủ, Sheet, tài khoản vẫn riêng.
@@ -53,6 +53,15 @@
   .ky .chua { color: var(--mo); }
   .ky .roi { color: var(--xanh); }
   .ky .moi { color: #92400e; font-weight: 600; }
+  /* vé 05 — mỗi phần (bảng công / phiếu lương) một dòng trạng thái + nút công bố ngay dưới */
+  .ky .phan { border-top: 1px dashed #e2e8f0; padding: 8px 0; font-size: .93rem; }
+  .ky .phan > span { display: block; margin-bottom: 6px; }
+  .ky .phan .loi-o { margin-top: 6px; }
+  .ky .nut-tai { margin-top: 8px; }
+  .hop-hoi textarea { width: 100%; min-height: 72px; padding: 10px 12px; font-size: 1rem; font-family: inherit;
+         border: 1.5px solid var(--vien); border-radius: 8px; }
+  .hop-hoi textarea.sai { border-color: var(--do); }
+  .hop-hoi .loi-o { margin-bottom: 8px; }
   /* xem trước */
   .loi-ds li { margin: 6px 0 6px 18px; }
   .loi-ds .sua { color: var(--mo); }
@@ -184,7 +193,8 @@
 
   <!-- LƯỚI CÔNG TY × THÁNG -->
   <section id="mLuoi" class="an">
-    <div class="chi">👉 Tìm công ty, chọn đúng tháng, bấm <b>⬆ Tải file lương</b> ngay trong ô tháng đó.</div>
+    <div class="chi">👉 Tìm công ty, chọn đúng tháng, bấm <b>⬆ Tải file lương</b> ngay trong ô tháng đó. Tải xong, bấm
+      <b>📢 Công bố</b> ngay dưới dòng Bảng công / Phiếu lương — công nhân chỉ xem được phần đã công bố.</div>
     <div id="luoiBao"></div>
     <input id="timCT" type="search" placeholder="🔍 Gõ tên hoặc mã công ty để tìm" style="margin-bottom:12px">
     <div id="luoi"></div>
@@ -212,7 +222,7 @@
       <button id="nutQuayLai">↩ Quay lại danh sách</button>
       <button id="nutLuu" class="chinh an">💾 Lưu bản nháp</button>
     </div>
-    <p class="ai">Lưu bản nháp chưa cho công nhân xem. Nút công bố có ở bản sau.</p>
+    <p class="ai">Lưu bản nháp chưa cho công nhân xem — lưu xong, bấm 📢 Công bố ở ô tháng đó.</p>
   </section>
 </div>
 
@@ -333,23 +343,92 @@ function oKy(k, i, j) {
   var file = k.co_file
     ? '<li class="roi">📄 Đã tải ' + e(k.nhap_luc) + ' · ' + e(k.nhap_boi) + '<br>' + k.so_nguoi + ' người · ' + tien(k.tong_thuc_linh) + ' đ</li>'
     : '<li class="chua">📄 Chưa có file</li>';
-  var cong = k.cb_cong_luc ? '<li class="roi">🗓 Bảng công: đã công bố ' + e(k.cb_cong_luc) + '</li>' : '<li class="chua">🗓 Bảng công: chưa công bố</li>';
-  var luong = k.cb_luong_luc ? '<li class="roi">💵 Phiếu lương: đã công bố ' + e(k.cb_luong_luc) + '</li>' : '<li class="chua">💵 Phiếu lương: chưa công bố</li>';
-  var moi = k.co_ban_moi ? '<li class="moi">⚠ Có bản mới chưa công bố</li>' : '';
-  return '<div class="ky"><h3>Tháng ' + thangNam(k.ky) + '</h3><ul>' + file + cong + luong + moi + '</ul>' +
-    '<button class="chinh rong" onclick="moTai(' + i + ',' + j + ')">⬆ ' + (k.co_file ? 'Tải lại file lương' : 'Tải file lương') + '</button></div>';
+  if (!k.co_file) {
+    return '<div class="ky"><h3>Tháng ' + thangNam(k.ky) + '</h3><ul>' + file + '</ul>' +
+      '<button class="chinh rong" onclick="moTai(' + i + ',' + j + ')">⬆ Tải file lương</button></div>';
+  }
+  return '<div class="ky"><h3>Tháng ' + thangNam(k.ky) + '</h3><ul>' + file + '</ul>' + oPhan(k, i, j, 'cong') + oPhan(k, i, j, 'luong') +
+    '<button class="rong nut-tai" onclick="moTai(' + i + ',' + j + ')">⬆ Tải lại file lương</button></div>';
+}
+/** Vé 05 — một phần (bảng công / phiếu lương): trạng thái cho công nhân + nút công bố ngay dưới. */
+var TEN_PHAN = { cong: { icon: '🗓 Bảng công', ten: 'bảng công', HOA: 'BẢNG CÔNG' }, luong: { icon: '💵 Phiếu lương', ten: 'phiếu lương', HOA: 'PHIẾU LƯƠNG' } };
+function oPhan(k, i, j, phan) {
+  var t = TEN_PHAN[phan], cb = k['cb_' + phan + '_phien'] || 0, luc = e(k['cb_' + phan + '_luc'] || '');
+  if (cb && cb === k.phien_ban) {
+    return '<div class="phan"><span class="roi">' + t.icon + ': ✅ đã công bố ' + luc + ' · ' + e(k['cb_' + phan + '_boi'] || '') + '</span></div>';
+  }
+  var chu = cb ? '<span class="moi">' + t.icon + ': công nhân đang xem BẢN CŨ (công bố ' + luc + ') — bản mới chưa công bố</span>'
+               : '<span class="chua">' + t.icon + ': chưa công bố — công nhân chưa xem được</span>';
+  return '<div class="phan">' + chu + '<button class="chinh rong" onclick="congBo(' + i + ',' + j + ',\'' + phan + '\',this)">📢 ' +
+    (cb ? 'Công bố lại ' : 'Công bố ') + t.ten + '</button><div class="loi-o an"></div></div>';
+}
+function congBo(i, j, phan, nut) {
+  var c = trangThai.luoi.cong_ty[i], k = c.ky[j], t = TEN_PHAN[phan], cb = k['cb_' + phan + '_phien'] || 0;
+  var kia = phan === 'cong' ? 'luong' : 'cong', cbKia = k['cb_' + kia + '_phien'] || 0;
+  var html = '<p><b>Công bố ' + t.HOA + '</b> tháng ' + thangNam(k.ky) + ' — ' + e(c.ten) + '?</p>' +
+    '<p>' + k.so_nguoi + ' người sẽ xem được ' + t.ten + ' của mình bằng số CCCD + họ tên (file tải ' + e(k.nhap_luc) + ').</p>' +
+    '<p class="ai">' + TEN_PHAN[kia].icon + ' ' + (cbKia ? 'giữ nguyên như đang công bố.' : 'chưa công bố thì vẫn chưa hiện.') + '</p>' +
+    (cb ? '<p>Công nhân đang xem bản công bố lúc ' + e(k['cb_' + phan + '_luc']) + '. Bản mới sẽ <b>thay</b> bản đó.</p>' +
+          '<label for="cbLyDo">Lý do công bố lại (bắt buộc)</label><textarea id="cbLyDo" maxlength="300" placeholder="Ví dụ: sửa giờ ngày 3 của An"></textarea>' +
+          '<div class="loi-o an" id="loiLyDo"></div>' : '');
+  var lyDo = '';
+  hoi(html, '📢 Công bố ' + t.ten, 'Thôi, chưa công bố', function () { guiCongBo(c, k, phan, lyDo, nut); }, null, cb ? function () {
+    lyDo = $('cbLyDo').value.trim();
+    if (lyDo) return true;
+    $('loiLyDo').textContent = 'Chưa ghi lý do — công nhân sẽ thấy số đã đổi, cần biết vì sao.';
+    $('loiLyDo').classList.remove('an'); $('cbLyDo').classList.add('sai'); $('cbLyDo').focus();
+    return false;
+  } : null);
+}
+function guiCongBo(c, k, phan, lyDo, nut) {
+  var t = TEN_PHAN[phan], loi = nut.nextElementSibling, chu = nut.textContent;
+  nut.disabled = true; nut.textContent = '⏳ Đang công bố… (vài giây)'; loi.classList.add('an');
+  goi({ hanh_dong: 'kt_cong_bo', phien: trangThai.phien, ma_ct: c.ma_ct, ky: k.ky, phan: phan, phien_ban_ky: k.phien_ban, ly_do: lyDo }, 60)
+    .then(function (r) {
+      if (!r.ok) {
+        nut.disabled = false; nut.textContent = chu;
+        loi.innerHTML = '<b>Chưa công bố.</b> ' + e(r.loi) + (r.ma === 'DA_DOI' ? ' <button onclick="taiLuoi()">🔄 Tải lại</button>' : '');
+        loi.classList.remove('an');
+        return;
+      }
+      bao('luoiBao', 'xanh', r.da_co
+        ? '✅ ' + t.icon + ' ' + e(c.ten) + ' tháng ' + thangNam(k.ky) + ' đã được công bố từ trước (' + e(r.luc) + ' · ' + e(r.boi) + ').'
+        : '✅ Đã công bố ' + t.ten + ' ' + e(c.ten) + ' tháng ' + thangNam(k.ky) + ' lúc ' + e(r.luc) + '. Công nhân tra CCCD + họ tên là xem được.');
+      taiLuoiGiuBao($('luoiBao').innerHTML);
+    });
 }
 
 // ---------------- TẢI FILE ----------------
 function moTai(i, j) {
   var c = trangThai.luoi.cong_ty[i], k = c.ky[j];
-  trangThai.dangTai = { ma_ct: c.ma_ct, ten: c.ten, ky: k.ky, phien_ban_ky: k.phien_ban || 0 };
+  trangThai.dangTai = { ma_ct: c.ma_ct, ten: c.ten, ky: k.ky, phien_ban_ky: k.phien_ban || 0, ky_xoa: k.co_file ? [] : kySeXoa(c, k.ky) };
   trangThai.kqDoc = null;
   $('taiTieuDe').textContent = '⬆ ' + c.ten + ' — Tháng ' + thangNam(k.ky);
   $('chonFile').value = ''; $('taiBao').innerHTML = ''; $('xemTruoc').classList.add('an'); $('nutLuu').classList.add('an');
   $('phieuXem').innerHTML = '';
-  if (k.co_file) bao('taiBao', 'cho', 'Tháng này đã có file tải lúc ' + e(k.nhap_luc) + '. Lưu file mới sẽ <b>thay</b> bản nháp đó.');
+  if (k.co_file) bao('taiBao', 'cho', 'Tháng này đã có file tải lúc ' + e(k.nhap_luc) + '. Lưu file mới sẽ <b>thay</b> bản nháp đó' +
+    (k.cb_cong_phien || k.cb_luong_phien ? ' — phần đã công bố vẫn hiện bản cũ cho tới khi anh/chị bấm 📢 Công bố lại.' : '.'));
+  else if (trangThai.dangTai.ky_xoa.length) {
+    bao('taiBao', 'cho', 'Công ty này đã có ' + GIU_KY + ' tháng. Lưu tháng ' + thangNam(k.ky) + ' sẽ <b>xoá tháng ' +
+      trangThai.dangTai.ky_xoa.map(thangNam).join(', ') + '</b> khỏi trang công nhân — máy hỏi lại trước khi lưu.');
+  }
   hien('mTai');
+}
+/** Giống GIU_KY ở Code.gs. Lệch thì máy chủ vẫn hỏi lại (SE_XOA_KY), không xoá gì khi chưa ai đồng ý. */
+var GIU_KY = 2;
+/** Lưu kỳ MỚI `ky` thì những kỳ nào của công ty bị xoá (giữ GIU_KY kỳ mới nhất). */
+function kySeXoa(c, ky) {
+  var co = c.ky.filter(function (x) { return x.co_file; }).map(function (x) { return x.ky; });
+  var giu = co.concat([ky]).sort().reverse().slice(0, GIU_KY);
+  return co.filter(function (x) { return giu.indexOf(x) < 0; }).sort();
+}
+function hoiXoaKy(ds) {
+  var dt = trangThai.dangTai, ten = ds.map(thangNam).join(', ');
+  hoi('<p><b>Lưu tháng ' + thangNam(dt.ky) + ' sẽ XOÁ tháng ' + ten + '</b> của ' + e(dt.ten) + '.</p>' +
+      '<p>Mỗi công ty chỉ giữ ' + GIU_KY + ' tháng gần nhất. Xoá rồi thì công nhân <b>không tra được tháng ' + ten +
+      '</b> nữa, thắc mắc của tháng đó cũng mất. File Excel gốc vẫn ở máy anh/chị.</p>',
+      'Đồng ý, lưu và xoá tháng ' + ten, 'Thôi, chưa lưu', function () { luuNhap(ds); },
+      function () { bao('taiBao', 'cho', 'Chưa lưu gì. Muốn lưu thì bấm 💾 Lưu bản nháp lần nữa.'); });
 }
 
 /** Một trang tính → mảng 2 chiều, hàng 0 = dòng 1, cột 0 = cột A (bù chỗ trống nếu vùng dữ liệu không bắt đầu ở A1). */
@@ -417,20 +496,24 @@ function chonFile(f) {
   r.onerror = function () { bao('taiBao', 'do', 'Máy không đọc được file — thử chọn lại.'); };
   r.readAsArrayBuffer(f);
 }
-function luuNhap() {
+/** `xoaKy` = các kỳ người dùng ĐÃ đồng ý xoá (vé 05). Chưa hỏi mà sẽ xoá kỳ nào thì hỏi trước, chưa gửi gì. */
+function luuNhap(xoaKy) {
   var kq = trangThai.kqDoc, dt = trangThai.dangTai;
   if (!kq || !kq.ok) return;
+  if (!xoaKy && dt.ky_xoa.length) { hoiXoaKy(dt.ky_xoa); return; }
   var nut = $('nutLuu'); nut.disabled = true; nut.textContent = '⏳ Đang lưu… (5–20 giây)';
   bao('taiBao', 'cho', '⏳ Đang gửi ' + kq.tong.so_nguoi + ' người lên máy chủ. Đừng đóng trang.');
   goi({ hanh_dong: 'kt_luu_nhap', phien: trangThai.phien, ma_ct: dt.ma_ct, ky: dt.ky, phien_ban_ky: dt.phien_ban_ky,
-        ten_file: kq.ten_file, nguoi: kq.nguoi }, 120).then(function (r) {
+        ten_file: kq.ten_file, nguoi: kq.nguoi, xoa_ky: xoaKy || [] }, 120).then(function (r) {
     nut.disabled = false; nut.textContent = '💾 Lưu bản nháp';
+    if (!r.ok && r.ma === 'SE_XOA_KY') { dt.ky_xoa = r.ky_xoa; hoiXoaKy(r.ky_xoa); return; }   // danh sách trên trang đã cũ
     if (!r.ok) {
       bao('taiBao', 'do', '<b>Chưa lưu.</b> ' + e(r.loi) + (r.ma === 'DA_DOI' ? ' <button onclick="taiLuoi()">🔄 Tải lại</button>' : ''));
       return;
     }
     bao('luoiBao', 'xanh', '✅ Đã lưu bản nháp ' + e(dt.ten) + ' tháng ' + thangNam(dt.ky) + ' lúc ' + e(r.nhap_luc) + ': ' + r.so_nguoi +
-        ' người, ' + tien(r.tong_thuc_linh) + ' đ. Công nhân CHƯA xem được cho tới khi công bố.');
+        ' người, ' + tien(r.tong_thuc_linh) + ' đ. Công nhân CHƯA xem được cho tới khi bấm 📢 Công bố.' +
+        (r.da_xoa_ky && r.da_xoa_ky.length ? ' Đã xoá tháng ' + r.da_xoa_ky.map(thangNam).join(', ') + ' (giữ ' + GIU_KY + ' tháng).' : ''));
     var giu = $('luoiBao').innerHTML;
     taiLuoiGiuBao(giu);
   });
@@ -442,7 +525,8 @@ function taiLuoiGiuBao(html) {
 }
 
 // ---------------- HỘP HỎI TRONG TRANG (không dùng confirm của trình duyệt) ----------------
-function hoi(html, chuCo, chuKhong, khiCo, khiKhong) {
+/** `kiemCo` (tuỳ chọn): chạy khi bấm nút Có, trả false thì hộp vẫn mở (vd ô bắt buộc còn trống). */
+function hoi(html, chuCo, chuKhong, khiCo, khiKhong, kiemCo) {
   var lop = document.createElement('div');
   lop.className = 'lop-phu';
   lop.innerHTML = '<div class="hop-hoi" role="dialog">' + html + '<div class="nhom-nut"><button class="chinh" data-tl="co">' + e(chuCo) +
@@ -450,8 +534,10 @@ function hoi(html, chuCo, chuKhong, khiCo, khiKhong) {
   lop.addEventListener('click', function (ev) {
     var b = ev.target.closest('button[data-tl]');
     if (!b) return;
+    var co = b.getAttribute('data-tl') === 'co';
+    if (co && kiemCo && !kiemCo()) return;
     document.body.removeChild(lop);
-    if (b.getAttribute('data-tl') === 'co') khiCo(); else if (khiKhong) khiKhong();
+    if (co) khiCo(); else if (khiKhong) khiKhong();
   });
   document.body.appendChild(lop);
 }
@@ -678,7 +764,7 @@ $('timCT').addEventListener('input', locCT);
 $('nutQuayLai').addEventListener('click', taiLuoi);
 $('chonFile').addEventListener('change', function () { chonFile(this.files[0]); });
 $('timNguoi').addEventListener('input', function () { veDanhSach(this.value); });
-$('nutLuu').addEventListener('click', luuNhap);
+$('nutLuu').addEventListener('click', function () { luuNhap(); });   // không truyền sự kiện vào tham số xoaKy
 
 (function batDau() {
   if (!URL_API || !TOKEN_API) { $('daiCauHinh').classList.remove('an'); }
