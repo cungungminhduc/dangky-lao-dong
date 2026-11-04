@@ -11,6 +11,7 @@
   BẢO MẬT: đăng nhập CCCD + mật khẩu; mọi quyền kiểm lại ở máy chủ. Đăng xuất xoá hết dữ liệu đang hiện.
   1.1.1 (Dương chốt 31/10): nằm CHUNG kho GitHub với hệ tuyển dụng, vào qua ô Kế toán ở Trang chủ; máy chủ, Sheet, tài khoản vẫn riêng.
   Tệp cấu hình tên cau-hinh-luong.js — đừng đổi lại cau-hinh.js, tải lên là đè tệp hệ tuyển dụng.
+  1.2.1 (Dương chốt 04/11): lưới công ty THU GỌN — mỗi công ty một dòng + tóm tắt, bấm mới mở các ô tháng, mỗi lúc một công ty, giữ ô tìm.
 -->
 <style>
   :root { --nen:#f1f4f8; --the:#fff; --chu:#1a202c; --mo:#4a5568; --vien:#cbd5e0; --chinh:#1d4ed8; --xanh:#15803d;
@@ -42,9 +43,15 @@
   .bao.xanh { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--xanh); }
   .bao.cho { background: var(--vang); border: 1px solid #fde68a; }
   .dai-do { background: var(--do); color: #fff; padding: 10px 12px; border-radius: 8px; margin: 10px 0; }
-  /* lưới: mỗi công ty một thẻ, các tháng xếp thành ô (điện thoại: xếp dọc) */
-  .ct h2 { font-size: 1.05rem; margin-bottom: 2px; }
-  .ct .phu { color: var(--mo); font-size: .88rem; margin-bottom: 10px; }
+  /* lưới: mỗi công ty một thẻ THU GỌN (một dòng + tóm tắt từng tháng), bấm mới mở các ô tháng; mỗi lúc mở một công ty */
+  .ct { padding: 0; }
+  .dau-ct { width: 100%; border: 0; border-radius: 12px; background: #fff; color: var(--chu); font-weight: 400; text-align: left;
+            justify-content: flex-start; align-items: flex-start; padding: 12px 14px; }
+  .dau-ct .mui { color: var(--chinh); font-size: 1.1rem; min-width: 22px; }
+  .dau-ct b { display: block; font-size: 1.05rem; }
+  .dau-ct .phu, .dau-ct .tom-ct { display: block; color: var(--mo); font-size: .88rem; margin-top: 2px; }
+  .ct.mo .dau-ct { background: #eff6ff; border-radius: 12px 12px 0 0; }
+  .than-ct { padding: 12px 16px 16px; }
   .cac-ky { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
   .ky { border: 1.5px solid var(--vien); border-radius: 10px; padding: 12px; }
   .ky h3 { font-size: 1rem; margin-bottom: 6px; }
@@ -193,7 +200,7 @@
 
   <!-- LƯỚI CÔNG TY × THÁNG -->
   <section id="mLuoi" class="an">
-    <div class="chi">👉 Tìm công ty, chọn đúng tháng, bấm <b>⬆ Tải file lương</b> ngay trong ô tháng đó. Tải xong, bấm
+    <div class="chi">👉 Bấm vào <b>tên công ty</b> để mở, chọn đúng tháng, bấm <b>⬆ Tải file lương</b> ngay trong ô tháng đó. Tải xong, bấm
       <b>📢 Công bố</b> ngay dưới dòng Bảng công / Phiếu lương — công nhân chỉ xem được phần đã công bố.</div>
     <div id="luoiBao"></div>
     <input id="timCT" type="search" placeholder="🔍 Gõ tên hoặc mã công ty để tìm" style="margin-bottom:12px">
@@ -325,19 +332,53 @@ function taiLuoi() {
     bao('luoiBao', canh ? 'cho' : '', canh);
     if (!kq.cong_ty.length) { $('luoi').innerHTML = '<div class="bao cho">Tài khoản chưa được giao công ty nào — báo người quản trị.</div>'; return; }
     $('luoi').innerHTML = kq.cong_ty.map(function (c, i) {
-      return '<div class="the ct" data-tim="' + e(DocFileLuong.chuanTenTra(c.ten + ' ' + c.ma_ct)) + '"><h2>' + e(c.ten) + '</h2><div class="phu">Mã ' + e(c.ma_ct) + (c.dia_ban ? ' · ' + e(c.dia_ban) : '') + '</div>' +
-        '<div class="cac-ky">' + c.ky.map(function (k, j) { return oKy(k, i, j); }).join('') + '</div></div>';
+      return '<div class="the ct" data-ma="' + e(c.ma_ct) + '" data-tim="' + e(DocFileLuong.chuanTenTra(c.ten + ' ' + c.ma_ct)) + '">' +
+        '<button class="dau-ct" aria-expanded="false" onclick="moCT(' + i + ')"><span class="mui">▸</span><span><b>' + e(c.ten) + '</b>' +
+        '<span class="phu">Mã ' + e(c.ma_ct) + (c.dia_ban ? ' · ' + e(c.dia_ban) : '') + '</span><span class="tom-ct">' + tomCT(c) + '</span></span></button>' +
+        '<div class="than-ct an"><div class="cac-ky">' + c.ky.map(function (k, j) { return oKy(k, i, j); }).join('') + '</div></div></div>';
     }).join('') + '<div id="khongCT" class="bao cho an">Không có công ty nào khớp.</div>';
+    if (kq.cong_ty.length === 1) trangThai.moCT = kq.cong_ty[0].ma_ct;
     locCT();
+    veMoCT();
+  });
+}
+/** Một dòng tóm tắt các tháng, gom theo trạng thái, việc cần làm đứng trước — đủ để biết nên mở công ty nào mà chưa cần mở. */
+var TOM_KY = [['moi', '⚠ Có bản mới chưa công bố'], ['cho', '⏳ Chờ công bố'], ['chua', '📄 Chưa có file'], ['xong', '✅ Đã công bố']];
+function tomCT(c) {
+  var nhom = {};
+  c.ky.forEach(function (k) {
+    var c1 = k.cb_cong_phien || 0, c2 = k.cb_luong_phien || 0;
+    var tt = !k.co_file ? 'chua' : (c1 === k.phien_ban && c2 === k.phien_ban) ? 'xong'
+           : ((c1 && c1 < k.phien_ban) || (c2 && c2 < k.phien_ban)) ? 'moi' : 'cho';
+    (nhom[tt] = nhom[tt] || []).push('T' + k.ky.substring(5));
+  });
+  return TOM_KY.filter(function (x) { return nhom[x[0]]; }).map(function (x) { return x[1] + ': ' + nhom[x[0]].join(', '); }).join(' · ');
+}
+/** Bấm tên công ty: mở công ty đó, thu công ty đang mở; bấm lại thì thu. Nhớ công ty đang mở để vẽ lại lưới vẫn giữ. */
+function moCT(i) {
+  var ma = trangThai.luoi.cong_ty[i].ma_ct;
+  trangThai.moCT = trangThai.moCT === ma ? '' : ma;
+  veMoCT();
+  var d = document.querySelector('#luoi .ct.mo');
+  if (d) d.scrollIntoView({ block: 'start' });
+}
+function veMoCT() {
+  [].forEach.call(document.querySelectorAll('#luoi .ct'), function (d) {
+    var mo = d.getAttribute('data-ma') === trangThai.moCT;
+    d.classList.toggle('mo', mo);
+    d.querySelector('.than-ct').classList.toggle('an', !mo);
+    d.querySelector('.dau-ct').setAttribute('aria-expanded', mo);
+    d.querySelector('.mui').textContent = mo ? '▾' : '▸';
   });
 }
 function locCT() {
-  var q = DocFileLuong.chuanTenTra($('timCT').value).replace(/ /g, ''), con = 0;   // "jin bang" vẫn ra JINBANG
+  var q = DocFileLuong.chuanTenTra($('timCT').value).replace(/ /g, ''), con = [];   // "jin bang" vẫn ra JINBANG
   [].forEach.call(document.querySelectorAll('#luoi .ct'), function (d) {
     var thay = !q || d.getAttribute('data-tim').replace(/ /g, '').indexOf(q) >= 0;
-    d.classList.toggle('an', !thay); if (thay) con++;
+    d.classList.toggle('an', !thay); if (thay) con.push(d);
   });
-  if ($('khongCT')) $('khongCT').classList.toggle('an', con > 0);
+  if ($('khongCT')) $('khongCT').classList.toggle('an', con.length > 0);
+  if (q && con.length === 1) { trangThai.moCT = con[0].getAttribute('data-ma'); veMoCT(); }   // tìm ra đúng một công ty → mở luôn
 }
 function oKy(k, i, j) {
   var file = k.co_file
@@ -401,6 +442,7 @@ function guiCongBo(c, k, phan, lyDo, nut) {
 // ---------------- TẢI FILE ----------------
 function moTai(i, j) {
   var c = trangThai.luoi.cong_ty[i], k = c.ky[j];
+  trangThai.moCT = c.ma_ct;   // lưu xong quay về lưới, công ty này vẫn mở
   trangThai.dangTai = { ma_ct: c.ma_ct, ten: c.ten, ky: k.ky, phien_ban_ky: k.phien_ban || 0, ky_xoa: k.co_file ? [] : kySeXoa(c, k.ky) };
   trangThai.kqDoc = null;
   $('taiTieuDe').textContent = '⬆ ' + c.ten + ' — Tháng ' + thangNam(k.ky);
