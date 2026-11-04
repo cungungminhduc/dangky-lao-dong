@@ -1268,7 +1268,7 @@ $('nut_lui').addEventListener('click', function () {
 // ============================================================
 var TEN_TT_NG = { lam: 'Đang đi làm', np: 'Đang nghỉ phép', kp: 'Nghỉ không báo', cv: 'Chờ việc' };
 var TEN_VIEC_NG = { np: 'Nghỉ phép', kp: 'Nghỉ không báo', cv: 'Chờ việc', lam: 'Đi làm lại', nv: 'Nghỉ việc', cg: 'Cắt giảm',
-                    nn: 'Nghỉ ngang', di: 'Sang ca khác' };
+                    nn: 'Nghỉ ngang', di: 'Sang ca khác', trung: 'Nhập trùng (bỏ dòng thừa)' };
 var TRANG_NG = 50, TIM_TOI_DA = 30;
 
 function khoiTao(u) { if (u.theo_nguoi) khoiTaoNguoi(u); else khoiTaoNhap(u); }
@@ -1279,7 +1279,7 @@ function boDauNg(s) {
 function maViecNg(v, tu) {
   if (/^(np|kp|cv)$/.test(v)) return tu === 'lam' ? 'bd_' + v : '';
   if (v === 'lam') return tu && tu !== 'lam' ? 'dll_' + tu : '';
-  return /^(nv|cg|nn|di)$/.test(v) && tu ? v + '_' + tu : '';
+  return /^(nv|cg|nn|di|trung)$/.test(v) && tu ? v + '_' + tu : '';
 }
 function tenViecNg(u, v, ca) {
   if (v !== 'di') return TEN_VIEC_NG[v] || v;
@@ -1444,6 +1444,7 @@ function phuNguoi(p) {
 function viecCua(u, p) {
   var ds = p.tt === 'lam' ? [['np'], ['kp'], ['cv'], ['nv'], ['cg'], ['nn']] : [['lam'], ['nv'], ['cg'], ['nn']];
   (u.theo_nguoi.ca_sang || []).forEach(function (c) { ds.push(['di', c.ma]); });
+  ds.push(['trung']);                    // 3.57 — một người bị nhập hai lần: bỏ dòng thừa, không tính nghỉ việc
   return ds;
 }
 function dongNguoi(u, p, dau) {
@@ -1643,6 +1644,7 @@ function bamNguoi(u, e) {
     return;
   }
   if (b.id === 'ng_them') { themTayNg(u); return; }
+  if (b.id === 'ng_them_van') { themTayNg(u, true); return; }
   if (b.id === 'ng_nen_moi') {
     var tn = u.theo_nguoi;
     if (!confirm('Dùng danh sách đầu ngày mới (báo cáo ngày ' + ngayVN(tn.nen_moi.nguon_ngay) + ' sau đính chính)? Việc đã chọn của người ' +
@@ -1708,11 +1710,31 @@ function veDanNg(u) {
   if (du) h += '<button type="button" class="nut-nho chinh" id="ng_dan_chon">Chọn ' + du + ' người này → chọn một việc cho cả nhóm</button>';
   $('ng_dan_kq').innerHTML = h;
 }
-function themTayNg(u) {
+/**
+ * 3.57 — Tên vừa gõ ở "＋ Người chưa có trong sổ" trùng ai trong ĐƠN VỊ NÀY (danh sách · Mới · Nhận ca · đã thêm tay)?
+ * Người ở ca khác thì trang không có danh sách — máy chủ hỏi ở bảng duyệt (cảnh báo TRUNG_TEN).
+ */
+function trungTenNg(u, ten) {
+  var k = boDauNg(ten), tn = u.theo_nguoi, ra = [];
+  [[u.ng.nen, 'trong danh sách'], [moiCuaDV(u), 'ở mục Mới vào làm'], [tn.nhan, 'ở mục Nhận từ ca khác'], [u.ng.them, 'vừa thêm tay']].forEach(function (x) {
+    x[0].forEach(function (p) {
+      if (boDauNg(p.ho_ten) !== k) return;
+      ra.push('<b>' + thoat(p.ho_ten) + '</b> (' + thoat([p.nam_sinh, p.cccd4 ? '***' + p.cccd4 : '', x[1]].filter(Boolean).join(' · ')) + ')');
+    });
+  });
+  return ra;
+}
+function themTayNg(u, vanThem) {
   var gt = function (id) { return $(id).value.trim(); }, ten = gt('ng_t_ten');
   if (!ten) { $('ng_t_loi').textContent = 'Cần họ tên.'; $('ng_t_ten').focus(); return; }
   var cc = gt('ng_t_cc').replace(/\D/g, '');
   if (cc && (cc.length < 10 || cc.length > 12)) { $('ng_t_loi').textContent = 'Số CCCD phải đủ 12 số (hoặc để trống).'; $('ng_t_cc').focus(); return; }
+  var trung = vanThem ? [] : trungTenNg(u, ten);
+  if (trung.length) {
+    $('ng_t_loi').innerHTML = '<div class="hoi-dan">⚠️ Đơn vị này đã có ' + trung.join(', ') + '. Cùng người → chạm tên đó trong danh sách, ' +
+      'đừng thêm tay.<br><button type="button" id="ng_them_van">Khác người — vẫn thêm</button></div>';
+    return;
+  }
   chupNg(u, 'Thêm tay ' + ten + ' vào Mới');
   u.ng.them = u.ng.them.concat([{ ho_ten: ten, ngay_sinh: gt('ng_t_ns'), sdt: gt('ng_t_sdt'), so_cccd: cc, nguoi_tuyen: gt('ng_t_nt') }]);
   ['ng_t_ten', 'ng_t_ns', 'ng_t_sdt', 'ng_t_cc', 'ng_t_nt'].forEach(function (id) { $(id).value = ''; });
@@ -1959,7 +1981,8 @@ $('tab_bao2').addEventListener('click', function () { moNgay(ngayBao || homNay);
 $('th_xem').addEventListener('click', xemTongHop);
 
 function chipPS(ps) {
-  var ten = { moi: 'Mới', np: 'NP', kp: 'KP', cv: 'CV', dll: 'DLL', nv: 'NV', cg: 'CG', nn: 'NN', di: 'Chuyển ca đi', nhan: 'Nhận ca' };
+  var ten = { moi: 'Mới', np: 'NP', kp: 'KP', cv: 'CV', dll: 'DLL', nv: 'NV', cg: 'CG', nn: 'NN', di: 'Chuyển ca đi', nhan: 'Nhận ca',
+              trung: 'Nhập trùng' };
   var tang = { moi: 1, dll: 1, nhan: 1 };
   return Object.keys(ten).filter(function (k) { return ps && ps[k]; })
     .map(function (k) { return '<span class="chip ' + (tang[k] ? 'tang' : 'giam') + '">' + ten[k] + ' ' + ps[k] + '</span>'; }).join('') ||
@@ -2078,7 +2101,7 @@ $('thct_noi').addEventListener('click', function (e) {
 function luotBien(ma) {
   var n = { moi: 'Mới', bd_np: 'Bắt đầu NP', bd_kp: 'Bắt đầu KP', bd_cv: 'Bắt đầu CV', dll_np: 'NP đi làm lại', dll_kp: 'KP đi làm lại', dll_cv: 'CV đi làm lại' };
   if (n[ma]) return n[ma];
-  var p = ma.split('_'), ly = { nv: 'NV', cg: 'CG', nn: 'NN', di: 'Chuyển ca đi', nhan: 'Nhận từ ca khác' }[p[0]] || p[0];
+  var p = ma.split('_'), ly = { nv: 'NV', cg: 'CG', nn: 'NN', di: 'Chuyển ca đi', nhan: 'Nhận từ ca khác', trung: 'Nhập trùng' }[p[0]] || p[0];
   return ly + ' — ' + ({ lam: 'người đang đi làm', np: 'người đang NP', kp: 'người đang KP', cv: 'người đang CV' }[p[1]] || p[1]);
 }
 $('nut_thct_ve').addEventListener('click', function () { hien('man_th'); });
