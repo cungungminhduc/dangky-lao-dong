@@ -1275,7 +1275,7 @@ var TRANG_NG = 50, TIM_TOI_DA = 30;
 // 3.58.1 — lựa chọn soát là tình trạng TÍNH ĐẾN báo cáo trước (không phải việc hôm nay) → chữ nói rõ "từ trước"
 // 3.63 — danh sách chọn: không tích sẵn; trống = chưa xác nhận (vẫn nằm trong số chưa có tên). Nút là tình trạng HÔM QUA.
 var TEN_SOAT_NG = { lam: 'Đi làm', np: 'Nghỉ phép', kp: 'Nghỉ không báo', cv: 'Chờ việc',
-                    bo: '❌ Không còn làm ở đây', '': 'Chưa xác nhận' };
+                    bo: '❌ Không còn làm ở đây', '': 'Chưa chọn' };
 function coSoatNg(tn) { return !!(tn.soat && tn.soat.length); }
 var TEN_KHAC_NG = { t: 'đi làm', np: 'NP', kp: 'KP', cv: 'CV' };
 
@@ -1493,12 +1493,15 @@ function veNguoi(u) {
          'có thể đã khác.<button type="button" id="ng_nen_moi">Dùng danh sách mới</button></div>';
   }
   if (tn.mot_phan) h += '<div class="dau-ngay" id="ng_dau"></div>';      // 3.58.1 — số đầu ngày đứng đầu màn (veThanhNguoi điền)
-  h += '<div class="tin-tuc">' + (coSoatNg(tn) ? '👉 Chọn lao động ở khối 📋 để lưu lại; người có tên thì chạm tên để chọn việc hôm nay. Người không đổi gì thì để nguyên.'
-                                   : '👉 Chạm tên một người để chọn việc ngay dưới tên. Người không đổi gì thì để nguyên — máy tự giữ.') + '</div>' +
-       '<div class="mach" style="padding:8px 16px 0">' + (tn.kieu === 'soat' ? 'Danh sách có tên: người bạn chọn ở khối 📋.'
+  // 3.63.1 — đơn vị một phần: việc chính là BÁO SỐ (khối 🔢 ngay dưới); tên chỉ là gợi ý, chọn dần qua nhiều ngày
+  h += '<div class="tin-tuc">' + (tn.mot_phan ? '👉 Việc chính: báo số hôm nay ở khối 🔢 ngay dưới. Người đã có tên thì chạm tên để chọn việc.' +
+                                     (coSoatNg(tn) ? ' Danh sách 📋 Gợi ý tên chỉ là gợi ý, không bắt buộc — rảnh thì chọn dần.' : '')
+                                   : '👉 Chạm tên một người để chọn việc ngay dưới tên. Người không đổi gì thì để nguyên — máy tự giữ.') + '</div>' + veKhacNg(u) +
+       '<div class="mach" style="padding:8px 16px 0">' + (tn.mot_phan ? '<b>👥 Người đã có tên.</b> ' : '') +
+         (tn.kieu === 'soat' ? 'Danh sách có tên: người bạn chọn ở 📋 Gợi ý tên (cuối danh sách).'
          : 'Danh sách đầu ngày: ' + (/^NAP-/.test(ng.nguon_ma_bc) ? 'nạp ngày ' + ngayVN(ng.nguon_ngay) : 'báo cáo ngày ' + ngayVN(ng.nguon_ngay)) +
            ' — ' + ng.nen.length + ' người' + (tn.nap_them ? ' (gồm ' + tn.nap_them + ' người vừa nạp bổ sung)' : '') + '.') +
-         (tn.mot_phan ? ' Người cũ chưa có tên: khối 🔢.' : '') + '</div>' +
+         (tn.mot_phan ? ' Người chưa có tên: gõ số ở khối 🔢 phía trên.' : '') + '</div>' +
        '<div class="ng-tim"><input type="search" id="ng_tim" placeholder="🔎 Tên · 4 số cuối CCCD · năm sinh" aria-label="Tìm người"' +
        ' autocomplete="off"></div>' +
        '<div class="ng-loc" id="ng_loc"></div>' +
@@ -1508,7 +1511,7 @@ function veNguoi(u) {
        '4 số cuối căn cước sau tên để phân biệt người trùng tên. Máy tìm từng người, rồi bạn chọn một việc cho cả nhóm.</div>' +
        '<textarea id="ng_dan_o" class="o-ct" style="min-height:110px" placeholder="Nguyễn Văn An&#10;Trần Thị Bình 1998"></textarea>' +
        '<button type="button" class="nut-nho chinh" id="ng_dan_tim">Tìm những người này</button><div id="ng_dan_kq"></div></div>' +
-       '<div id="ng_ds"></div>' + veKhacNg(u) +
+       '<div id="ng_ds"></div>' +
        '<div class="khoi"><h3>＋ Người chưa có trong sổ</h3><div class="ghi">' + (tn.mot_phan
          ? 'Người mới chưa có trong tool. Bắt buộc họ tên. Chỉ ghi lên báo cáo (tính vào số người chưa có tên), KHÔNG lưu vào dữ liệu — ' +
            'chờ quản trị tải danh sách chuẩn lên.'
@@ -1526,13 +1529,16 @@ function veNguoi(u) {
   nutNhieu(u);
   veDsNguoi(u);
 }
-/** 3.58 — khối 🔢 Người cũ chưa có tên: gõ số + tên như màn gõ số (không có Mới). Vẽ MỘT lần cùng khung — gõ không vẽ lại. */
+/**
+ * 3.58 — khối 🔢 người cũ chưa có tên: gõ số + tên như màn gõ số (không có Mới). Vẽ MỘT lần cùng khung — gõ không vẽ lại.
+ * 3.63.1 — đây là việc chính của người báo: đứng ngay dưới dòng 📊, tên "Báo số hôm nay".
+ */
 function veKhacNg(u) {
   var ng = u.ng, tn = u.theo_nguoi;
   if (!tn.mot_phan) return '';
-  var h = '<div class="khoi" id="ng_khac"><h3>🔢 Người cũ chưa có tên</h3><div class="ghi" id="ng_khac_tom"></div>' +
-    '<div class="ghi">👉 Người làm từ trước, chưa có trong danh sách: gõ số và tên như trước đây. Người mới vào làm thì chọn ở mục ' +
-    '"Mới vào làm" (có tên). Nạp danh sách đối chiếu xong thì phần này tự hết.</div>';
+  var h = '<div class="khoi" id="ng_khac"><h3>🔢 Báo số hôm nay</h3><div class="ghi" id="ng_khac_tom"></div>' +
+    '<div class="ghi">👉 Người chưa có tên trong danh sách: gõ số và tên như trước đây. Người mới vào làm đã có sẵn ở mục ' +
+    '"🆕 Mới vào làm" phía dưới — không gõ ở đây. Nạp danh sách đối chiếu xong thì phần này tự hết.</div>';
   if (tn.kieu === 'soat' && tn.khac_nen_tay) {
     h += '<div class="ghi"><b>Đơn vị chưa từng báo — nhập tổng quân số đầu ngày một lần</b> (gồm cả người ở khối 📋). Phải khớp ' +
          'T + NP + KP + CV = Q.</div><div class="bon-so">' + ['t', 'q', 'np', 'kp', 'cv'].map(function (k) {
@@ -1585,18 +1591,18 @@ function dauNgayNg(u, r) {
   var tn = u.theo_nguoi, ng = u.ng, n = r.nen;
   if (!tn.mot_phan) return '';
   var trong = tn.khac_nen_tay && ['t', 'q', 'np', 'kp', 'cv'].every(function (k) { return !String(ng.nen_tay[k] == null ? '' : ng.nen_tay[k]).trim(); });
-  if (r.khac_loi || trong) return '📊 Đơn vị chưa từng báo — nhập tổng quân số đầu ngày ở khối 🔢 cuối trang.';
+  if (r.khac_loi || trong) return '📊 Đơn vị chưa từng báo — nhập tổng quân số đầu ngày ở khối 🔢 ngay dưới.';
   var co = ng.nen.length;
   return '<b>📊 Đầu ngày (' + (tn.khac_nen_tay ? 'nhập tay ở khối 🔢' : 'theo báo cáo ngày ' + ngayVN(ng.nguon_ngay)) + '): SL ' + n.t + '/' + n.q +
          ' · NP ' + n.np + ' · KP ' + n.kp + ' · CV ' + n.cv + '</b><br>Có tên ' + co + ' người (danh sách bên dưới) · chưa có tên ' + (n.q - co) +
-         ' người (gõ số ở khối 🔢 cuối trang).';
+         ' người (gõ số ở khối 🔢 ngay dưới).';
 }
 /** 3.58.1 — câu thêm ở mục "Còn lại": phần chưa có tên đầu ngày (nút lọc chỉ đếm người có tên). */
 function conLaiKhacNg(u) {
   var k = khacNenNg(u);
   if (!k || k.loi) return '';
   return '<br>Người cũ chưa có tên (đầu ngày): <b>' + (k.t + k.np + k.kp + k.cv) + '</b> — ' +
-    ['t', 'np', 'kp', 'cv'].map(function (x) { return TEN_KHAC_NG[x] + ' ' + k[x]; }).join(' · ') + ' → gõ số ở khối 🔢 cuối trang.';
+    ['t', 'np', 'kp', 'cv'].map(function (x) { return TEN_KHAC_NG[x] + ' ' + k[x]; }).join(' · ') + ' → gõ số ở khối 🔢 phía trên.';
 }
 /**
  * 3.58.1 — Nghỉ phép / Không báo / Chờ việc lúc soát = ĐÃ nằm trong số báo cáo trước. Báo cáo trước không còn người ở tình trạng đó
@@ -1612,26 +1618,36 @@ function anSoatNg(u, ma) {
   });
 }
 
-/** 3.58 — khối 📋 soát lần đầu. Người đã đổi khỏi "Đi làm" hiện sẵn; người để "Đi làm" gom một dòng, bấm mới mở (chuẩn 10). */
+/**
+ * 3.63 — khối 📋 danh sách chọn (không tích sẵn).
+ * 3.63.1 — chỉ là GỢI Ý, không bắt buộc: đóng sẵn một dòng, bấm mới mở (`ng.soat_lam`); người báo chọn dần qua nhiều ngày.
+ * Đang gõ tìm 🔎 thì chỉ bày người khớp (đóng hay mở đều vậy); không ai khớp → không bày khối.
+ */
 function veSoatNg(u) {
   var ng = u.ng, ds = u.theo_nguoi.soat || [], dem = {};
   if (!ds.length) return '';
-  ds.forEach(function (p) { var v = ng.soat[p.ma_lam] || ''; dem[v] = (dem[v] || 0) + 1; });
-  var chua = dem[''] || 0;
-  var h = '<div class="khoi"><h3>📋 Lao động trong tool · ' + ds.length + ' người</h3>' +
-    '<div class="tin-tuc" style="margin:0 0 8px">👉 Chọn lao động từ đây để lưu lại. Chưa có tên thì cứ ghi tay ở dưới — quản trị sẽ tải danh sách chuẩn lên sau.</div>' +
-    '<div class="ghi">Đây chỉ là danh sách — người chưa chọn <b>không</b> làm đổi số báo cáo. Chạm tên → chọn <b>hôm qua</b> người đó đang gì ' +
-    (u.theo_nguoi.khac_nen_tay ? '' : '(tính đến báo cáo ngày ' + ngayVN(ng.nguon_ngay) + ') ') + '→ chọn <b>hôm nay</b> có gì mới.</div>' +
-    '<div class="ghi"><b>Còn ' + chua + ' người chưa xác nhận</b>' + Object.keys(TEN_SOAT_NG).filter(function (v) { return v && dem[v]; }).map(function (v) {
-      return ' · ' + thoat(TEN_SOAT_NG[v]) + ' <b>' + dem[v] + '</b>'; }).join('') + '</div>';
-  ds.filter(function (p) { return ng.tim ? khopNg(p, ng.tim) : ng.soat[p.ma_lam] !== ''; }).forEach(function (p) { h += dongSoatNg(u, p); });
-  var cho = ds.filter(function (p) { return ng.soat[p.ma_lam] === ''; });
-  if (!ng.tim && cho.length) {
-    var mo = cho.length <= 15 || ng.soat_lam;          // danh sách dài: thu gọn, bấm mới mở (ô tìm 🔎 vẫn tìm được)
-    if (cho.length > 15) h += '<button type="button" class="nut-nho" data-ng-soat-lam="1">' + (ng.soat_lam ? '▾ Thu gọn người chưa xác nhận'
-                                : '▸ Xem ' + cho.length + ' người chưa xác nhận') + '</button>';
-    if (mo) cho.forEach(function (p) { h += dongSoatNg(u, p); });
+  if (ng.tim) {
+    var kq = ds.filter(function (p) { return khopNg(p, ng.tim); });
+    if (!kq.length) return '';
+    return '<div class="khoi"><h3>📋 Gợi ý tên từ tool — người khớp</h3>' + kq.map(function (p) { return dongSoatNg(u, p); }).join('') + '</div>';
   }
+  ds.forEach(function (p) { var v = ng.soat[p.ma_lam] || ''; dem[v] = (dem[v] || 0) + 1; });
+  var chua = dem[''] || 0, daChon = ds.length - chua;
+  var h = '<div class="khoi"><h3>📋 Gợi ý tên từ tool · ' + ds.length + ' người</h3>';
+  if (!ng.soat_lam) {
+    return h + '<div class="ghi">Không bắt buộc — người chưa chọn vẫn được tính trong số ở khối 🔢. Rảnh thì mở ra chọn dần.' +
+      (daChon ? ' Đã chọn <b>' + daChon + '</b> người.' : '') + '</div>' +
+      '<button type="button" class="nut-nho" data-ng-soat-lam="1">▸ Mở danh sách gợi ý (' + chua + ' người chưa chọn)</button></div>';
+  }
+  h += '<button type="button" class="nut-nho" data-ng-soat-lam="1">▾ Thu gọn danh sách gợi ý</button>' +
+    '<div class="tin-tuc" style="margin:8px 0">👉 Không bắt buộc. Rảnh thì chọn dần, mỗi lần vài người — người chưa chọn vẫn được tính trong số ở khối 🔢. ' +
+    'Quản trị sẽ tải danh sách chuẩn lên sau.</div>' +
+    '<div class="ghi">Chạm tên → chọn <b>hôm qua</b> người đó đang gì ' +
+    (u.theo_nguoi.khac_nen_tay ? '' : '(tính đến báo cáo ngày ' + ngayVN(ng.nguon_ngay) + ') ') + '→ chọn <b>hôm nay</b> có gì mới.</div>' +
+    '<div class="ghi"><b>Còn ' + chua + ' người chưa chọn</b>' + Object.keys(TEN_SOAT_NG).filter(function (v) { return v && dem[v]; }).map(function (v) {
+      return ' · ' + thoat(TEN_SOAT_NG[v]) + ' <b>' + dem[v] + '</b>'; }).join('') + '</div>';
+  ds.filter(function (p) { return ng.soat[p.ma_lam] !== ''; }).forEach(function (p) { h += dongSoatNg(u, p); });     // người đã chọn trước
+  ds.filter(function (p) { return ng.soat[p.ma_lam] === ''; }).forEach(function (p) { h += dongSoatNg(u, p); });
   return h + '</div>';
 }
 function dongSoatNg(u, p) {
@@ -1642,7 +1658,7 @@ function dongSoatNg(u, p) {
   (p.noi_khac || []).forEach(function (k) {
     h += '<span class="chip-dong"><span class="nhan-tt vang">⚠️ đang làm ở ' + thoat(k.ten) + ' từ ' + ngayNgan(k.tu) + '</span></span>';
   });
-  var chu = !v ? 'Chưa xác nhận' : v === 'bo' ? TEN_SOAT_NG.bo
+  var chu = !v ? TEN_SOAT_NG[''] : v === 'bo' ? TEN_SOAT_NG.bo
           : 'Hôm qua: ' + TEN_SOAT_NG[v] + ' · Hôm nay: ' + (viec ? tenViecNg(u, viec, ng.sang_ca[ma]) : 'không đổi');
   h += '<span class="chip-dong"><span class="nhan-tt ' + (v === 'bo' ? 'do' : v === 'lam' ? 'lam' : 'vang') + '">→ ' + thoat(chu) + '</span></span>' +
        '</span><span class="mui">' + (mo ? '▾' : '▸') + '</span></button>';
@@ -1739,10 +1755,11 @@ function veDsNguoi(u) {
   if (ng.nhieu && Object.keys(ng.chon).length) {
     h += theNguoi(u, '☑ Đang chọn', ng.nen.filter(function (p) { return ng.chon[p.ma_lam]; }));
   }
-  if (coSoatNg(tn) && !ng.nhieu) h += veSoatNg(u);      // 3.63 — danh sách chọn đứng trên cùng, mọi lần báo tới khi chọn hết
   if (ng.tim) {
     var kq = ng.nen.filter(function (p) { return khopNg(p, ng.tim); });
-    h += theNguoi(u, 'Tìm "' + thoat(ng.timGoc) + '"', kq.slice(0, TIM_TOI_DA), 'Không thấy ai. Thử gõ ít chữ hơn, hoặc 4 số cuối căn cước.');
+    var coGoiY = coSoatNg(tn) && !ng.nhieu && tn.soat.some(function (p) { return khopNg(p, ng.tim); });   // 3.63.1 — gợi ý nằm dưới
+    h += theNguoi(u, 'Tìm "' + thoat(ng.timGoc) + '"', kq.slice(0, TIM_TOI_DA), coGoiY ? 'Chưa có trong danh sách có tên — có trong 📋 Gợi ý tên ngay dưới.'
+                  : 'Không thấy ai. Thử gõ ít chữ hơn, hoặc 4 số cuối căn cước.');
     if (kq.length > TIM_TOI_DA) h += '<div class="mach" style="text-align:center">Còn ' + (kq.length - TIM_TOI_DA) + ' người khớp nữa — gõ thêm chữ hoặc năm sinh để thu hẹp.</div>';
   } else if (ng.loc === 'goi') {
     var moi = moiCuaDV(u), dx = ng.nen.filter(function (p) { return p.de_xuat; });
@@ -1796,6 +1813,7 @@ function veDsNguoi(u) {
   } else {
     h += theNguoi(u, TEN_TT_NG[ng.loc], ng.nen.filter(function (p) { return p.tt === ng.loc; }));
   }
+  if (coSoatNg(tn) && !ng.nhieu) h += veSoatNg(u);      // 3.63.1 — gợi ý tên đứng CUỐI danh sách, đóng sẵn (3.63: đứng trên cùng, bày sẵn)
   $('ng_ds').innerHTML = h;
   veThanhNguoi(u);
 }
