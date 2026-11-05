@@ -1270,6 +1270,46 @@ var TEN_TT_NG = { lam: 'Đang đi làm', np: 'Đang nghỉ phép', kp: 'Nghỉ k
 var TEN_VIEC_NG = { np: 'Nghỉ phép', kp: 'Nghỉ không báo', cv: 'Chờ việc', lam: 'Đi làm lại', nv: 'Nghỉ việc', cg: 'Cắt giảm',
                     nn: 'Nghỉ ngang', di: 'Sang ca khác', trung: 'Nhập trùng (bỏ dòng thừa)' };
 var TRANG_NG = 50, TIM_TOI_DA = 30;
+// 3.58 — theo người MỘT PHẦN: lựa chọn lúc soát lần đầu · tên phần chưa có tên
+var TEN_SOAT_NG = { lam: 'Đi làm', np: 'Nghỉ phép', kp: 'Nghỉ không báo', cv: 'Chờ việc', bo: '❌ Không còn làm ở đây', '': 'Không thuộc ca này' };
+var TEN_KHAC_NG = { t: 'đi làm', np: 'NP', kp: 'KP', cv: 'CV' };
+
+/** Soát lần đầu: người giữ → danh sách có tên đúng tình trạng chọn; việc không còn hợp tình trạng mới thì bỏ. */
+function apSoatNg(u) {
+  var ng = u.ng, tn = u.theo_nguoi;
+  if (tn.kieu !== 'soat') return;
+  ng.nen = tn.soat.filter(function (p) { return !!TEN_TT_NG[ng.soat[p.ma_lam]]; }).map(function (p) {
+    var x = {}; for (var k in p) x[k] = p[k];
+    x.tt = ng.soat[p.ma_lam];
+    return x;
+  });
+  Object.keys(ng.viec).forEach(function (m) {
+    var p = nguoiNen(u, m);
+    if (!p || !maViecNg(ng.viec[m], p.tt)) { delete ng.viec[m]; delete ng.sang_ca[m]; }
+  });
+}
+/**
+ * Phần chưa có tên của NỀN {t,np,kp,cv}: kế thừa, hoặc lúc soát = nền số (báo cáo trước / nền tay) − người giữ.
+ * null = đơn vị theo người đầy đủ; { loi } = nền tay sai.
+ */
+function khacNenNg(u) {
+  var ng = u.ng, tn = u.theo_nguoi, goc = ng.khac_goc;
+  if (!tn.mot_phan) return null;
+  if (tn.kieu === 'soat' && tn.khac_nen_tay) {
+    goc = {};
+    for (var k in ng.nen_tay) {
+      var s = String(ng.nen_tay[k] == null ? '' : ng.nen_tay[k]).trim();
+      if (s && !/^\d+$/.test(s)) return { loi: 'Số nền nhập tay chỉ nhận số nguyên từ 0 trở lên.' };
+      goc[k] = Number(s || 0);
+    }
+    if (goc.t + goc.np + goc.kp + goc.cv !== goc.q) return { loi: 'Số nền lệch: T + NP + KP + CV phải bằng Q.' };
+  }
+  if (!goc) return null;
+  var c = { t: goc.t || 0, np: goc.np || 0, kp: goc.kp || 0, cv: goc.cv || 0 };
+  if (tn.kieu === 'soat') ng.nen.forEach(function (p) { c[p.tt === 'lam' ? 't' : p.tt]--; });
+  return c;
+}
+function bienKhacNg(u) { return bienDung(u).filter(function (b) { return b.ma !== 'moi'; }); }
 
 function khoiTao(u) { if (u.theo_nguoi) khoiTaoNguoi(u); else khoiTaoNhap(u); }
 function boDauNg(s) {
@@ -1295,7 +1335,12 @@ function khoiTaoNguoi(u) {
   var tn = u.theo_nguoi, hh = u.hien_hanh;
   var ng = { phien_ban_goc: hh ? hh.phien_ban : 0, nguon_ma_bc: tn.nguon_ma_bc, nguon_ngay: tn.nguon_ngay, nen: tn.nen,
              viec: {}, sang_ca: {}, moi: {}, nhan: {}, them: [], ghi_chu: hh ? (hh.ghi_chu || '') : '', thong_bao: '',
-             tim: '', loc: 'goi', trang: 1, mo: '', nhieu: false, chon: {}, lich: [], dai: '', daiLui: false, dan: null };
+             tim: '', loc: 'goi', trang: 1, mo: '', nhieu: false, chon: {}, lich: [], dai: '', daiLui: false, dan: null,
+             soat: {}, soat_lam: false, khac_goc: tn.khac || null, khac_so: {}, khac_ct: {}, nen_tay: { t: '', q: '', np: '', kp: '', cv: '' } };
+  (tn.soat || []).forEach(function (p) { ng.soat[p.ma_lam] = p.chua_ghi_ca ? '' : 'lam'; });   // chưa ghi ca: không chọn sẵn
+  Object.keys(tn.khac_da_chon || {}).forEach(function (m) {
+    ng.khac_so[m] = String(tn.khac_da_chon[m].so || ''); ng.khac_ct[m] = (tn.khac_da_chon[m].ten || []).join('\n');
+  });
   if (tn.da_chon) {
     Object.keys(tn.da_chon.viec || {}).forEach(function (m) { ng.viec[m] = tn.da_chon.viec[m]; });
     Object.keys(tn.da_chon.sang_ca || {}).forEach(function (m) { ng.sang_ca[m] = tn.da_chon.sang_ca[m]; });
@@ -1307,12 +1352,18 @@ function khoiTaoNguoi(u) {
     tn.nen.forEach(function (p) { if (p.de_xuat) ng.viec[p.ma_lam] = 'nv'; });      // đề xuất nghỉ của người tuyển: tích sẵn
   }
   u.ng = ng;
+  if (tn.kieu === 'soat') apSoatNg(u);
   var dl = u.nhap && u.nhap.du_lieu;
   var nguonNhap = dl && dl.theo_nguoi && (dl.nguon_ma_bc === tn.nguon_ma_bc || (tn.nen_moi && dl.nguon_ma_bc === tn.nen_moi.nguon_ma_bc));
   if (dl && dl.theo_nguoi && dl.phien_ban_goc === ng.phien_ban_goc && nguonNhap) {
     if (tn.nen_moi && dl.nguon_ma_bc === tn.nen_moi.nguon_ma_bc) {
-      ng.nguon_ma_bc = tn.nen_moi.nguon_ma_bc; ng.nguon_ngay = tn.nen_moi.nguon_ngay; ng.nen = tn.nen_moi.nen;
+      ng.nguon_ma_bc = tn.nen_moi.nguon_ma_bc; ng.nguon_ngay = tn.nen_moi.nguon_ngay; ng.nen = tn.nen_moi.nen; ng.khac_goc = tn.nen_moi.khac || null;
     }
+    // 3.58 — lựa chọn soát, số gõ cho người chưa có tên, nền tay: lấy lại từ nháp (chỉ người còn trong danh sách soát)
+    (tn.soat || []).forEach(function (p) { if (dl.soat && dl.soat[p.ma_lam] !== undefined) ng.soat[p.ma_lam] = dl.soat[p.ma_lam]; });
+    if (dl.khac_so) { ng.khac_so = dl.khac_so; ng.khac_ct = dl.khac_ct || {}; }
+    if (dl.nen_tay) ng.nen_tay = dl.nen_tay;
+    if (tn.kieu === 'soat') apSoatNg(u);
     var coNen = trongNen(u), coMoi = {}, coNhan = {};
     tn.moi.forEach(function (x) { coMoi[x.ma_lam] = true; });
     tn.nhan.forEach(function (x) { coNhan[x.ma_lam] = true; });
@@ -1337,7 +1388,7 @@ function khoiTaoNguoi(u) {
 /** Chụp trạng thái TRƯỚC khi đổi → "↩ Hoàn tác" trả đúng bước đó (kể cả bước cả nhóm). Giữ tối đa 50 bước. */
 function chupNg(u, moTa) {
   var ng = u.ng;
-  ng.lich.push({ moTa: moTa, s: JSON.stringify({ viec: ng.viec, sang_ca: ng.sang_ca, moi: ng.moi, nhan: ng.nhan, them: ng.them }) });
+  ng.lich.push({ moTa: moTa, s: JSON.stringify({ viec: ng.viec, sang_ca: ng.sang_ca, moi: ng.moi, nhan: ng.nhan, them: ng.them, soat: ng.soat }) });
   if (ng.lich.length > 50) ng.lich.shift();
   ng.dai = '✅ ' + moTa; ng.daiLui = false;
 }
@@ -1346,15 +1397,31 @@ function hoanTacNg(u) {
   if (!b) return;
   var s = JSON.parse(b.s);
   ng.viec = s.viec; ng.sang_ca = s.sang_ca; ng.moi = s.moi; ng.nhan = s.nhan; ng.them = s.them;
+  if (s.soat && u.theo_nguoi.kieu === 'soat') { ng.soat = s.soat; apSoatNg(u); ng.viec = s.viec; }
   ng.dai = '↩ Đã hoàn tác: ' + b.moTa; ng.daiLui = true; ng.mo = '';
   veDsNguoi(u);
 }
 
-/** Số tạm: nền đếm từ danh sách + từng việc đã chọn qua bảng công thức máy chủ (bien.d). */
+/**
+ * Số tạm: nền đếm từ danh sách (+ phần chưa có tên, 3.58) + từng việc đã chọn qua bảng công thức máy chủ (bien.d).
+ * khac = phần chưa có tên cuối ngày (null = theo người đầy đủ); khac_loi = nền tay sai.
+ */
 function tinhNguoi(u) {
   var ng = u.ng, c = { t: 0, q: 0, np: 0, kp: 0, cv: 0 }, nhom = {};
   ng.nen.forEach(function (p) { c.q++; c[p.tt === 'lam' ? 't' : p.tt]++; });
+  var kn = u.theo_nguoi.mot_phan ? khacNenNg(u) : null, khac = null, khacLoi = kn && kn.loi ? kn.loi : '';
+  if (kn && !kn.loi) {
+    khac = { t: kn.t, np: kn.np, kp: kn.kp, cv: kn.cv };
+    ['t', 'np', 'kp', 'cv'].forEach(function (k) { c[k] += kn[k]; c.q += kn[k]; });
+  }
   var nen = { t: c.t, q: c.q, np: c.np, kp: c.kp, cv: c.cv };
+  if (khac) bienKhacNg(u).forEach(function (b) {
+    var s = String(ng.khac_so[b.ma] == null ? '' : ng.khac_so[b.ma]).trim(), n = /^\d+$/.test(s) ? Number(s) : 0;
+    if (!n) return;
+    Object.keys(b.d).forEach(function (k) { c[k] += b.d[k] * n; if (k !== 'q') khac[k] += b.d[k] * n; });
+    var ten = dongChiTiet(ng.khac_ct[b.ma]).map(function (x) { return x.ten; });
+    for (var i = 0; i < n; i++) (nhom[b.nhom] = nhom[b.nhom] || []).push(ten[i] || '');
+  });
   var ap = function (ma, ten) {
     var b = bienTheoMa(ma);
     if (!b) return;
@@ -1365,7 +1432,7 @@ function tinhNguoi(u) {
   moiCuaDV(u).forEach(function (x) { if (ng.moi[x.ma_lam]) ap('moi', x.ho_ten); });
   ng.them.forEach(function (t) { if (String(t.ho_ten || '').trim()) ap('moi', t.ho_ten); });
   u.theo_nguoi.nhan.forEach(function (x) { if (ng.nhan[x.ma_lam]) ap('nhan_' + x.tt, x.ho_ten); });
-  return { nen: nen, cuoi: c, nhom: nhom };
+  return { nen: nen, cuoi: c, nhom: nhom, khac: khac, khac_loi: khacLoi };
 }
 
 function yeuCauNguoi(u) {
@@ -1375,19 +1442,35 @@ function yeuCauNguoi(u) {
     viec[m] = ng.viec[m];
     if (ng.viec[m] === 'di' && ng.sang_ca[m]) sangCa[m] = ng.sang_ca[m];
   });
-  return { ma_ct: u.ma_ct, ca: u.ca, phien_ban_goc: ng.phien_ban_goc, nguon_ma_bc: ng.nguon_ma_bc, ghi_chu: ng.ghi_chu,
+  var y = { ma_ct: u.ma_ct, ca: u.ca, phien_ban_goc: ng.phien_ban_goc, nguon_ma_bc: ng.nguon_ma_bc, ghi_chu: ng.ghi_chu,
            theo_nguoi: { viec: viec, sang_ca: sangCa,
                          moi: moiCuaDV(u).filter(function (x) { return ng.moi[x.ma_lam]; }).map(function (x) { return x.ma_lam; }),
                          nhan: tn.nhan.filter(function (x) { return ng.nhan[x.ma_lam]; }).map(function (x) { return x.ma_lam; }),
                          them: ng.them.filter(function (t) { return String(t.ho_ten || '').trim(); }),
                          da_xem: tn.moi.filter(function (x) { return x.goi_y; }).concat(tn.nhan).map(function (x) { return x.ma_lam; }),
                          de_xuat_da_xem: ng.nen.filter(function (p) { return p.de_xuat; }).map(function (p) { return p.ma_lam; }) } };
+  // 3.58 — một phần: lựa chọn soát (đủ mọi người trong danh sách soát) · số + tên gõ cho người chưa có tên · nền tay
+  if (tn.kieu === 'soat') {
+    y.theo_nguoi.soat = {};
+    tn.soat.forEach(function (p) { y.theo_nguoi.soat[p.ma_lam] = ng.soat[p.ma_lam] || ''; });
+    if (tn.khac_nen_tay) y.nen_tay = ng.nen_tay;
+  }
+  if (tn.mot_phan) {
+    var k = {};
+    bienKhacNg(u).forEach(function (b) {
+      var so = String(ng.khac_so[b.ma] == null ? '' : ng.khac_so[b.ma]).trim(), ct = dongChiTiet(ng.khac_ct[b.ma]);
+      if (so || ct.length) k[b.ma] = { so: so, chi_tiet: ct };
+    });
+    y.theo_nguoi.khac = k;
+  }
+  return y;
 }
 function nhapNguoi(u) {
   var y = yeuCauNguoi(u);
   return { theo_nguoi: true, phien_ban_goc: y.phien_ban_goc, nguon_ma_bc: y.nguon_ma_bc, viec: y.theo_nguoi.viec,
            sang_ca: y.theo_nguoi.sang_ca, moi: y.theo_nguoi.moi, nhan: y.theo_nguoi.nhan, them: u.ng.them,
-           ghi_chu: u.ng.ghi_chu, da_xem: y.theo_nguoi.da_xem };
+           ghi_chu: u.ng.ghi_chu, da_xem: y.theo_nguoi.da_xem,
+           soat: u.ng.soat, khac_so: u.ng.khac_so, khac_ct: u.ng.khac_ct, nen_tay: u.ng.nen_tay };
 }
 
 // ---------- vẽ ----------
@@ -1403,9 +1486,12 @@ function veNguoi(u) {
     h += '<div class="nhac">Báo cáo ngày ' + ngayVN(tn.nen_moi.nguon_ngay) + ' vừa được đính chính sau khi bản này chốt — danh sách đầu ngày ' +
          'có thể đã khác.<button type="button" id="ng_nen_moi">Dùng danh sách mới</button></div>';
   }
-  h += '<div class="tin-tuc">👉 Chạm tên một người để chọn việc ngay dưới tên. Người không đổi gì thì để nguyên — máy tự giữ.</div>' +
-       '<div class="mach" style="padding:8px 16px 0">Danh sách đầu ngày: ' + (/^NAP-/.test(ng.nguon_ma_bc)
-         ? 'nạp ngày ' + ngayVN(ng.nguon_ngay) : 'báo cáo ngày ' + ngayVN(ng.nguon_ngay)) + ' — ' + ng.nen.length + ' người.</div>' +
+  h += '<div class="tin-tuc">' + (tn.kieu === 'soat' ? '👉 Lần đầu báo theo người: soát người từ tool ở khối 📋 trước, rồi chạm tên để chọn việc hôm nay.'
+                                   : '👉 Chạm tên một người để chọn việc ngay dưới tên. Người không đổi gì thì để nguyên — máy tự giữ.') + '</div>' +
+       '<div class="mach" style="padding:8px 16px 0">' + (tn.kieu === 'soat' ? 'Danh sách có tên: người vào làm qua tool (soát ở dưới).'
+         : 'Danh sách đầu ngày: ' + (/^NAP-/.test(ng.nguon_ma_bc) ? 'nạp ngày ' + ngayVN(ng.nguon_ngay) : 'báo cáo ngày ' + ngayVN(ng.nguon_ngay)) +
+           ' — ' + ng.nen.length + ' người' + (tn.nap_them ? ' (gồm ' + tn.nap_them + ' người vừa nạp bổ sung)' : '') + '.') +
+         (tn.mot_phan ? ' Người cũ chưa có tên: khối 🔢.' : '') + '</div>' +
        '<div class="ng-tim"><input type="search" id="ng_tim" placeholder="🔎 Tên · 4 số cuối CCCD · năm sinh" aria-label="Tìm người"' +
        ' autocomplete="off"></div>' +
        '<div class="ng-loc" id="ng_loc"></div>' +
@@ -1415,7 +1501,7 @@ function veNguoi(u) {
        '4 số cuối căn cước sau tên để phân biệt người trùng tên. Máy tìm từng người, rồi bạn chọn một việc cho cả nhóm.</div>' +
        '<textarea id="ng_dan_o" class="o-ct" style="min-height:110px" placeholder="Nguyễn Văn An&#10;Trần Thị Bình 1998"></textarea>' +
        '<button type="button" class="nut-nho chinh" id="ng_dan_tim">Tìm những người này</button><div id="ng_dan_kq"></div></div>' +
-       '<div id="ng_ds"></div>' +
+       '<div id="ng_ds"></div>' + veKhacNg(u) +
        '<div class="khoi"><h3>＋ Người chưa có trong sổ</h3><div class="ghi">Người tới bằng đường ngoài hệ thống. Bắt buộc họ tên; chốt xong máy ' +
        'tạo lượt làm mới cho họ (vào làm ngày ' + ngayVN(luot.ngay) + ').</div><div class="ng-them">' +
        '<input id="ng_t_ten" placeholder="Họ tên, vd Đinh Văn Toàn" autocomplete="off"><input id="ng_t_ns" placeholder="Ngày sinh" autocomplete="off">' +
@@ -1430,6 +1516,77 @@ function veNguoi(u) {
   nutNhieu(u);
   veDsNguoi(u);
 }
+/** 3.58 — khối 🔢 Người cũ chưa có tên: gõ số + tên như màn gõ số (không có Mới). Vẽ MỘT lần cùng khung — gõ không vẽ lại. */
+function veKhacNg(u) {
+  var ng = u.ng, tn = u.theo_nguoi;
+  if (!tn.mot_phan) return '';
+  var h = '<div class="khoi" id="ng_khac"><h3>🔢 Người cũ chưa có tên</h3><div class="ghi" id="ng_khac_tom"></div>' +
+    '<div class="ghi">👉 Người làm từ trước, chưa có trong danh sách: gõ số và tên như trước đây. Người mới vào làm thì chọn ở mục ' +
+    '"Mới vào làm" (có tên). Nạp danh sách đối chiếu xong thì phần này tự hết.</div>';
+  if (tn.kieu === 'soat' && tn.khac_nen_tay) {
+    h += '<div class="ghi"><b>Đơn vị chưa từng báo — nhập tổng quân số đầu ngày một lần</b> (gồm cả người ở khối 📋). Phải khớp ' +
+         'T + NP + KP + CV = Q.</div><div class="bon-so">' + ['t', 'q', 'np', 'kp', 'cv'].map(function (k) {
+           return '<div><label for="kn_' + k + '">' + { t: 'Đi làm (T)', q: 'Tổng (Q)', np: 'Đang NP', kp: 'Đang KP', cv: 'Đang CV' }[k] + '</label>' +
+                  '<input id="kn_' + k + '" data-knen="' + k + '" inputmode="numeric" autocomplete="off" value="' + thoat(ng.nen_tay[k]) + '"></div>';
+         }).join('') + '</div>';
+  }
+  NHOM_UI.forEach(function (g) {
+    if (g.ca && u.mang === 'chinh_thuc') return;
+    var co = g.ma.some(function (ma) { return String(ng.khac_so[ma] || '').trim() || String(ng.khac_ct[ma] || '').trim(); });
+    h += '<details class="nhom"' + (co ? ' open' : '') + '><summary>' + thoat(g.ten) + '</summary><div class="ruot"><div class="ghi">' + thoat(g.ghi) + '</div>';
+    g.ma.forEach(function (ma) {
+      h += '<div class="dong-bd"><div class="tren"><label for="ks_' + ma + '">' + thoat(nhanNgan(ma)) + '</label>' +
+           '<input class="o-so" id="ks_' + ma + '" data-kso="' + ma + '" inputmode="numeric" autocomplete="off" value="' + thoat(ng.khac_so[ma] || '') + '"></div>' +
+           '<textarea class="o-ct" data-kct="' + ma + '" placeholder="Mỗi dòng một người: tên — ghi chú">' + thoat(ng.khac_ct[ma] || '') + '</textarea></div>';
+    });
+    h += '</div></details>';
+  });
+  return h + '</div>';
+}
+/** Dòng tóm tắt khối 🔢 — số CUỐI ngày; âm / nền tay sai thì nói thẳng việc cần sửa. */
+function tomKhacNg(r) {
+  if (r.khac_loi) return '<b style="color:#c0392b">⚠ ' + thoat(r.khac_loi) + '</b>';
+  var k = r.khac, am = ['t', 'np', 'kp', 'cv'].filter(function (x) { return k[x] < 0; });
+  var ds = ['t', 'np', 'kp', 'cv'].map(function (x) { return TEN_KHAC_NG[x] + ' ' + k[x]; }).join(' · ');
+  if (am.length) return '<b style="color:#c0392b">⚠ Phần chưa có tên ra số âm (' + thoat(ds) + ') — soát lại khối 📋 hoặc sửa ô số ở đây.</b>';
+  return 'Còn <b>' + (k.t + k.np + k.kp + k.cv) + '</b> người chưa có tên (cuối ngày): ' + thoat(ds);
+}
+
+/** 3.58 — khối 📋 soát lần đầu. Người đã đổi khỏi "Đi làm" hiện sẵn; người để "Đi làm" gom một dòng, bấm mới mở (chuẩn 10). */
+function veSoatNg(u) {
+  var ng = u.ng, ds = u.theo_nguoi.soat || [], dem = {};
+  if (!ds.length) return '';
+  ds.forEach(function (p) { var v = ng.soat[p.ma_lam] || ''; dem[v] = (dem[v] || 0) + 1; });
+  var h = '<div class="khoi"><h3>📋 Lần đầu báo theo người — soát ' + ds.length + ' người từ tool</h3>' +
+    '<div class="ghi">👉 Đây là người vào làm qua tool trước hôm nay. Ai <b>không còn làm ở đây</b> thì chạm tên → bấm ❌. Ai đang nghỉ phép / ' +
+    'không báo / chờ việc thì chọn đúng. Còn lại để nguyên "Đi làm". Chỉ soát một lần.</div><div class="ghi">' +
+    Object.keys(TEN_SOAT_NG).filter(function (v) { return dem[v]; }).map(function (v) { return thoat(TEN_SOAT_NG[v]) + ' <b>' + dem[v] + '</b>'; }).join(' · ') + '</div>';
+  ds.filter(function (p) { return ng.tim ? khopNg(p, ng.tim) : ng.soat[p.ma_lam] !== 'lam'; }).forEach(function (p) { h += dongSoatNg(u, p); });
+  var lam = ds.filter(function (p) { return ng.soat[p.ma_lam] === 'lam'; });
+  if (!ng.tim && lam.length) {
+    h += '<button type="button" class="nut-nho" data-ng-soat-lam="1">' + (ng.soat_lam ? '▾ Thu gọn người để "Đi làm"' : '▸ Xem ' + lam.length + ' người đang để "Đi làm"') + '</button>';
+    if (ng.soat_lam) lam.forEach(function (p) { h += dongSoatNg(u, p); });
+  }
+  return h + '</div>';
+}
+function dongSoatNg(u, p) {
+  var ng = u.ng, ma = p.ma_lam, v = ng.soat[ma] || '', mo = ng.mo === 'soat:' + ma;
+  var h = '<div class="ng' + (v === 'bo' ? ' canh' : v !== 'lam' ? ' co-viec' : '') + '"><button type="button" class="dong-ng" data-ng-soat-mo="' + thoat(ma) + '">' +
+    '<span class="ng-ten"><b>' + thoat(p.ho_ten) + '</b><span class="phu">' + thoat([p.nam_sinh, p.cccd4 ? '***' + p.cccd4 : '',
+      p.vao_lam ? 'vào làm ' + ngayNgan(p.vao_lam) : '', p.nguoi_tuyen ? p.nguoi_tuyen + ' tuyển' : '', p.chua_ghi_ca ? 'chưa ghi ca' : ''].filter(String).join(' · ')) + '</span>';
+  (p.noi_khac || []).forEach(function (k) {
+    h += '<span class="chip-dong"><span class="nhan-tt vang">⚠️ đang làm ở ' + thoat(k.ten) + ' từ ' + ngayNgan(k.tu) + '</span></span>';
+  });
+  h += '<span class="chip-dong"><span class="nhan-tt ' + (v === 'bo' ? 'do' : v === 'lam' ? 'lam' : 'vang') + '">→ ' + thoat(TEN_SOAT_NG[v]) + '</span></span>' +
+       '</span><span class="mui">' + (mo ? '▾' : '▸') + '</span></button>';
+  if (mo) {
+    h += '<div class="viec">' + ['lam', 'np', 'kp', 'cv', 'bo'].concat(p.chua_ghi_ca ? [''] : []).map(function (x) {
+      return '<button type="button" data-ng-soat="' + x + '" data-ng-sid="' + thoat(ma) + '"' + (v === x ? ' class="dang"' : '') + '>' + thoat(TEN_SOAT_NG[x]) + '</button>';
+    }).join('') + '</div>';
+  }
+  return h + '</div>';
+}
+
 function nutNhieu(u) {
   var b = $('ng_nhieu');
   if (!b) return;
@@ -1500,6 +1657,7 @@ function veDsNguoi(u) {
   if (ng.nhieu && Object.keys(ng.chon).length) {
     h += theNguoi(u, '☑ Đang chọn', ng.nen.filter(function (p) { return ng.chon[p.ma_lam]; }));
   }
+  if (tn.kieu === 'soat' && !ng.nhieu) h += veSoatNg(u);      // 3.58 — soát lần đầu đứng trên cùng
   if (ng.tim) {
     var kq = ng.nen.filter(function (p) { return khopNg(p, ng.tim); });
     h += theNguoi(u, 'Tìm "' + thoat(ng.timGoc) + '"', kq.slice(0, TIM_TOI_DA), 'Không thấy ai. Thử gõ ít chữ hơn, hoặc 4 số cuối căn cước.');
@@ -1576,6 +1734,7 @@ function veThanhNguoi(u) {
     return;
   }
   var r = tinhNguoi(u), c = r.cuoi, n0 = r.nen;
+  if ($('ng_khac_tom')) $('ng_khac_tom').innerHTML = tomKhacNg(r);            // 3.58 — khối 🔢 cập nhật theo từng lần gõ / chạm
   var thu = (luot.nhomTin || []).filter(function (x) { return r.nhom[x.ma]; }).map(function (x) { return x.nhan + ' ' + r.nhom[x.ma].length; });
   el.innerHTML = (ng.dai ? '<div class="dai' + (ng.daiLui ? ' lui' : '') + '">' + thoat(ng.dai) + '</div>' : '') +
     '<span class="sl">SL ' + c.t + '/' + c.q + '</span> <span class="ton">(đầu ngày ' + n0.t + '/' + n0.q + ') · NP ' + c.np + ' · KP ' + c.kp +
@@ -1589,6 +1748,15 @@ function bamNguoi(u, e) {
   var ng = u.ng, b = e.target.closest('button');
   if (!b) return;
   var d = b.dataset;
+  // 3.58 — soát lần đầu: chạm tên mở hàng lựa chọn; chọn xong danh sách có tên + khối 🔢 tính lại ngay
+  if (d.ngSoatMo) { ng.mo = ng.mo === 'soat:' + d.ngSoatMo ? '' : 'soat:' + d.ngSoatMo; veDsNguoi(u); return; }
+  if (d.ngSoat !== undefined && d.ngSid) {
+    var ps = u.theo_nguoi.soat.filter(function (x) { return x.ma_lam === d.ngSid; })[0];
+    chupNg(u, ps.ho_ten + ' → ' + TEN_SOAT_NG[d.ngSoat]);
+    ng.soat[d.ngSid] = d.ngSoat; apSoatNg(u); ng.mo = '';
+    veDsNguoi(u); return;
+  }
+  if (d.ngSoatLam) { ng.soat_lam = !ng.soat_lam; veDsNguoi(u); return; }
   if (d.ngMo) {
     if (ng.nhieu) { if (ng.chon[d.ngMo]) delete ng.chon[d.ngMo]; else ng.chon[d.ngMo] = true; }
     else ng.mo = ng.mo === d.ngMo ? '' : d.ngMo;
@@ -1650,6 +1818,7 @@ function bamNguoi(u, e) {
     if (!confirm('Dùng danh sách đầu ngày mới (báo cáo ngày ' + ngayVN(tn.nen_moi.nguon_ngay) + ' sau đính chính)? Việc đã chọn của người ' +
                  'không còn trong danh sách sẽ bị bỏ.')) return;
     ng.nguon_ma_bc = tn.nen_moi.nguon_ma_bc; ng.nguon_ngay = tn.nen_moi.nguon_ngay; ng.nen = tn.nen_moi.nen; ng.lich = [];
+    ng.khac_goc = tn.nen_moi.khac || null;
     ng.thong_bao = 'Đang dùng danh sách đầu ngày mới — báo cáo ngày ' + ngayVN(ng.nguon_ngay) + '.';
     veNguoi(u);
   }
@@ -1658,6 +1827,10 @@ function goNguoi(u, e) {
   var t = e.target;
   if (t.id === 'ng_tim') { u.ng.timGoc = t.value.trim(); u.ng.tim = boDauNg(t.value); u.ng.mo = ''; veDsNguoi(u); }
   else if (t.id === 'ng_ghichu') u.ng.ghi_chu = t.value;
+  // 3.58 — khối 🔢: chỉ cập nhật số tạm + dòng tóm tắt, không vẽ lại ô đang gõ (giữ bộ gõ tiếng Việt)
+  else if (t.dataset.kso !== undefined) { u.ng.khac_so[t.dataset.kso] = t.value; veThanhNguoi(u); }
+  else if (t.dataset.kct !== undefined) { u.ng.khac_ct[t.dataset.kct] = t.value; veThanhNguoi(u); }
+  else if (t.dataset.knen !== undefined) { u.ng.nen_tay[t.dataset.knen] = t.value; veThanhNguoi(u); }
 }
 $('nh_so').addEventListener('click', function (e) {
   var u = luot && luot.dv[luot.i], b = e.target.closest('button');
@@ -1800,7 +1973,8 @@ function veDuyet() {
     if (d.cuoi) {
       var ps = [];
       luot.bien.forEach(function (b) { var s = Number(d.so[b.ma]) || 0; if (s) ps.push(thoat(b.nhan) + ' ' + s); });
-      h += '<table class="bang-so"><tr><td>Nền' + (d.theo_nguoi ? ' (danh sách ' + (d.nen_tu_nhap ? 'nạp ' : 'ngày ') + ngayNgan(d.nguon_ngay) + ')'
+      // 3.58 — lần đầu soát ở đơn vị chưa từng báo: nền nhập tay, không có ngày nguồn
+      h += '<table class="bang-so"><tr><td>Nền' + (d.theo_nguoi ? (d.nen_tu_nhap && !d.nguon_ngay ? ' (nhập tay)' : ' (danh sách ' + (d.nen_tu_nhap ? 'nạp ' : 'ngày ') + ngayNgan(d.nguon_ngay) + ')')
              : d.nen_tu_nhap ? ' (nhập tay)' : ' (kế thừa ' + ngayNgan(d.nguon_ngay) + ')') + '</td><td>SL ' + soSL(d.nen) + '</td></tr>' +
            '<tr><td>Cuối</td><td>SL ' + soSL(d.cuoi) + '</td></tr>' +
            '<tr><td>Đang NP / KP / CV</td><td>' + d.cuoi.np + ' / ' + d.cuoi.kp + ' / ' + d.cuoi.cv + '</td></tr>' +
