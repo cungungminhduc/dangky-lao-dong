@@ -1,14 +1,14 @@
 /**
- * ĐỌC FILE GIỜ TUYỂN DỤNG + FILE BẢNG GIÁ (đợt 3a) — HÀM THUẦN, không đụng trình duyệt hay mạng.
- * Đặc tả: tool-tuyendung-zalo/.scratch/gio-tien-tuyen-dung/DAC-TA.md · mẫu: cong-luong-doi-soat/MAU-FILE-GIO.md.
+ * ĐỌC FILE GIỜ TUYỂN DỤNG (đợt 3a) — HÀM THUẦN, không đụng trình duyệt hay mạng.
+ * Đặc tả: tool-tuyendung-zalo/.scratch/gio-tien-tuyen-dung/DAC-TA.md MỤC 0 · mẫu: cong-luong-doi-soat/MAU-FILE-GIO.md.
+ * Từ 05/11/2026 CHỈ CÒN GIỜ + Đạt (Dương bỏ tiền): không bảng giá, không tiền, không đọc cột Ngoại tỉnh.
  *
- *   DocFileGio.docFile({ '<tên trang>': [[...], ...] }, { thang: '2026-08', gia: { VHSX: 2500, NGOAITINH: 2000 } })
+ *   DocFileGio.docFile({ '<tên trang>': [[...], ...] }, { thang: '2026-08' })
  *     → { ok, loi: [{trang, o, loi, cach_sua}], dong: [...], tong: {...}, nha_may: [...], trang: [...] }
- *   DocFileGio.docBangGia({ '<tên trang>': [[...]] }) → { ok, loi, gia: [{ ma, ten, don_gia, dong }] }
- *   DocFileGio.tinhDong(dongTho, gia) → dòng đã có tinh_trang / don_gia / tien (máy chủ có bản GIỐNG HỆT: tinhDongGio_)
+ *   DocFileGio.tinhDong({ cccd, dat }) → { tinh_trang: 'dat' | 'khong_dat' | 'chua_ro', ly_do } (máy chủ có bản GIỐNG HỆT: tinhDongGio_)
  *
- * `ok` = không có lỗi chặn. Lỗi chặn = file sai cần kế toán sửa (cột Đạt lỗi, giờ lỗi, chưa có giá…).
- * KHÔNG phải lỗi: không đạt, thiếu CCCD — đó là luật "không tính" (Dương chốt 31/10), dòng vẫn được lưu để báo lại.
+ * `ok` = không có lỗi chặn. Lỗi chặn = file sai về GIỜ / định danh (giờ lỗi, thiếu nhà máy / người tuyển, trùng, hai CCCD khác nhau).
+ * KHÔNG chặn: không đạt, ô Đạt trống / lỗi (→ chưa rõ), thiếu CCCD — dòng vẫn lưu với giờ, ghi chú để báo lại.
  */
 (function (goc) {
   'use strict';
@@ -20,9 +20,8 @@
       .split('đ').join('d').split('Đ').join('D');
   }
   function chuanChu(v) { return boDau(v).toLowerCase().replace(/\s+/g, ' ').trim(); }
-  /** Mã tính lương / mã nhà máy: IN HOA, bỏ dấu, bỏ khoảng trắng ("Ngoại tỉnh" → "NGOAITINH", "FEVC ĐM" → "FEVCDM"). */
+  /** Mã tính lương / mã nhà máy: IN HOA, bỏ dấu, bỏ khoảng trắng ("FEVC ĐM" → "FEVCDM"). */
   function chuanMa(v) { return boDau(String(v == null ? '' : v).trim()).toUpperCase().replace(/\s+/g, ''); }
-  var MA_NGOAI_TINH = 'NGOAITINH';
 
   /** Đúng 12 số CCCD; ô kiểu số mất 0 đầu (10–11 số) thì thêm lại. CMND 9 số không nhận — không làm thuế được. */
   function chuanCCCD(v) {
@@ -62,11 +61,11 @@
   // ---------- mẫu file giờ ----------
 
   // Cột (tính từ 1): D=4 CCCD (Bắc Giang), E=5 CCCD (Quảng Ninh), F=6 họ tên, J=10 người tuyển, T=20 tổng giờ,
-  // U=21 nhà máy, AB=28 xét điều kiện, AN=40 ngoại tỉnh.
-  var C = { D: 4, E: 5, F: 6, J: 10, T: 20, U: 21, AB: 28, AN: 40 };
+  // U=21 nhà máy, AB=28 xét điều kiện Đạt. (Cột AN "ngoại tỉnh" là để tính giá — không đọc từ 05/11/2026.)
+  var C = { D: 4, E: 5, F: 6, J: 10, T: 20, U: 21, AB: 28 };
   /** Ô tiêu đề dòng 1 phải chứa — lệch là file khác mẫu, từ chối thay vì đọc nhầm cột. */
   var MOC = [[C.D, 'ma code'], [C.F, 'ho va ten'], [C.J, 'nguoi tuyen dung'], [C.T, 'tong gio'], [C.U, 'ten nha may'],
-             [C.AB, 'xet dieu kien'], [C.AN, 'kv1']];
+             [C.AB, 'xet dieu kien']];
   var DONG_DAU = 4;
 
   function laTrangGio(ten) { return chuanChu(ten).replace(/\s/g, '').indexOf('2.cgt') === 0; }
@@ -79,18 +78,14 @@
   function thangHien(t) { return t ? Number(t.substring(5)) + '/' + t.substring(0, 4) : ''; }
 
   /**
-   * Một dòng thô (đã đọc từ ô) → áp luật tính. Dùng chung trang + máy chủ (máy chủ có bản giống hệt).
-   * Trả { tinh_trang: 'tinh' | 'khong_dat' | 'thieu_cccd', ly_do, don_gia, tien } hoặc { loi } nếu thiếu giá.
+   * Một dòng thô → tình trạng Đạt + ghi chú. Dùng chung trang + máy chủ (máy chủ có bản giống hệt).
+   * `dat`: true = ĐẠT · false = KHÔNG ĐẠT · null = ô Đạt trống / lỗi (chưa rõ). Thiếu CCCD chỉ là ghi chú — giờ vẫn giữ.
    */
-  function tinhDong(d, gia) {
-    var maGia = d.ngoai_tinh ? MA_NGOAI_TINH : chuanMa(d.ma_tinh_luong);
-    var g = gia && Object.prototype.hasOwnProperty.call(gia, maGia) ? Number(gia[maGia]) : null;
-    if (!d.cccd) return { tinh_trang: 'thieu_cccd', ly_do: 'Thiếu số CCCD 12 số — không tính', don_gia: g, tien: 0 };
-    if (!d.dat) return { tinh_trang: 'khong_dat', ly_do: 'Không đạt — không tính', don_gia: g, tien: 0 };
-    if (g == null || !(g > 0)) {
-      return { loi: d.ngoai_tinh ? 'Chưa có đơn giá Ngoại tỉnh' : 'Chưa có đơn giá cho nhà máy "' + d.ma_tinh_luong + '"' };
-    }
-    return { tinh_trang: 'tinh', ly_do: '', don_gia: g, tien: Math.round(d.gio * g) };
+  function tinhDong(d) {
+    var ghi = [];
+    if (!d.cccd) ghi.push('Thiếu số CCCD 12 số trong file');
+    if (d.dat !== true && d.dat !== false) ghi.push('Ô Đạt trống hoặc lỗi trong file');
+    return { tinh_trang: d.dat === true ? 'dat' : d.dat === false ? 'khong_dat' : 'chua_ro', ly_do: ghi.join(' · ') };
   }
 
   function docFile(cacTrang, tc) {
@@ -126,13 +121,8 @@
           them(ten, 'D' + r, 'Hai ô CCCD (D' + r + ' và E' + r + ') khác nhau.', 'Để đúng một số CCCD của người này.');
           dongLoi = true;
         }
+        // Ô Đạt trống / lỗi công thức / chữ lạ → chưa rõ, KHÔNG chặn (Dương chốt 05/11: kế toán chỉ cần đẩy giờ lên)
         var dat = chuanChu(o(bang, r, C.AB));
-        if (dat !== 'dat' && dat !== 'khong dat') {
-          them(ten, 'AB' + r, trong(o(bang, r, C.AB)) ? 'Cột Đạt đang trống hoặc lỗi công thức.'
-                              : 'Cột Đạt đang là "' + String(o(bang, r, C.AB)).substring(0, 20) + '" (cần DAT hoặc KHONG DAT).',
-               'Cột Đạt đọc công thức từ file khác — chọn cả cột, Sao chép, Dán đặc biệt → Chỉ giá trị (Values), lưu rồi tải lại.');
-          dongLoi = true;
-        }
         var gio = so(o(bang, r, C.T));
         if (gio == null || isNaN(gio) || gio < 0) {
           them(ten, 'T' + r, 'Tổng giờ không phải số hợp lệ.', 'Sửa ô Tổng giờ.');
@@ -143,8 +133,11 @@
         var nt = String(o(bang, r, C.J) == null ? '' : o(bang, r, C.J)).replace(/\s+/g, ' ').trim();
         if (!nt) { them(ten, 'J' + r, 'Thiếu người tuyển dụng.', 'Điền tên người tuyển.'); dongLoi = true; }
         if (dongLoi) continue;
-        dong.push({ trang: ten, dong: r, ma_tinh_luong: ma, cccd: cD || cE, ho_ten: String(o(bang, r, C.F)).replace(/\s+/g, ' ').trim(),
-                    nguoi_tuyen: nt, gio: Math.round(gio * 10000) / 10000, dat: dat === 'dat', ngoai_tinh: !trong(o(bang, r, C.AN)) });
+        var d = { trang: ten, dong: r, ma_tinh_luong: ma, cccd: cD || cE, ho_ten: String(o(bang, r, C.F)).replace(/\s+/g, ' ').trim(),
+                  nguoi_tuyen: nt, gio: Math.round(gio * 10000) / 10000, dat: dat === 'dat' ? true : dat === 'khong dat' ? false : null };
+        var t = tinhDong(d);
+        d.tinh_trang = t.tinh_trang; d.ly_do = t.ly_do;
+        dong.push(d);
       }
     });
 
@@ -164,67 +157,27 @@
       });
     });
 
-    // Áp giá — thiếu giá báo MỘT lỗi cho mỗi nhà máy (không phải trăm dòng giống nhau)
-    var thieuGia = {};
-    dong.forEach(function (d) {
-      var t = tinhDong(d, tc.gia || {});
-      if (t.loi) { (thieuGia[t.loi] = thieuGia[t.loi] || []).push(d.trang + ' dòng ' + d.dong); return; }
-      d.tinh_trang = t.tinh_trang; d.ly_do = t.ly_do; d.don_gia = t.don_gia; d.tien = t.tien;
-    });
-    Object.keys(thieuGia).forEach(function (cau) {
-      them('', '', cau + ' (' + thieuGia[cau].length + ' dòng, vd ' + thieuGia[cau][0] + ').',
-           'Thêm giá ở mục 💲 Bảng giá tuyển dụng rồi chọn lại file.');
-    });
     return ketQua(loi, dong, ds);
   }
 
+  /** Tổng: giờ của MỌI dòng (không còn "được tính"); đếm Đạt / Không đạt / chưa rõ / thiếu CCCD. */
   function ketQua(loi, dong, ds) {
-    var tong = { so_dong: dong.length, so_tinh: 0, so_khong_dat: 0, so_thieu_cccd: 0, tong_gio: 0, tong_tien: 0 };
+    var tong = { so_dong: dong.length, so_dat: 0, so_khong_dat: 0, so_chua_ro: 0, so_thieu_cccd: 0, tong_gio: 0 };
     var nm = {};
     dong.forEach(function (d) {
       var k = chuanMa(d.ma_tinh_luong);
-      var n = nm[k] = nm[k] || { ma: d.ma_tinh_luong, so_dong: 0, so_tinh: 0, gio: 0, tien: 0 };
-      n.so_dong++;
-      if (d.tinh_trang === 'tinh') { tong.so_tinh++; tong.tong_gio += d.gio; tong.tong_tien += d.tien; n.so_tinh++; n.gio += d.gio; n.tien += d.tien; }
+      var n = nm[k] = nm[k] || { ma: d.ma_tinh_luong, so_dong: 0, so_dat: 0, gio: 0 };
+      n.so_dong++; n.gio += d.gio; tong.tong_gio += d.gio;
+      if (d.tinh_trang === 'dat') { tong.so_dat++; n.so_dat++; }
       else if (d.tinh_trang === 'khong_dat') tong.so_khong_dat++;
-      else if (d.tinh_trang === 'thieu_cccd') tong.so_thieu_cccd++;
+      else tong.so_chua_ro++;
+      if (!d.cccd) tong.so_thieu_cccd++;
     });
     tong.tong_gio = Math.round(tong.tong_gio * 100) / 100;
     var dsNM = Object.keys(nm).sort().map(function (k) { nm[k].gio = Math.round(nm[k].gio * 100) / 100; return nm[k]; });
     return { ok: !loi.length, loi: loi, dong: dong, tong: tong, nha_may: dsNM, trang: ds };
   }
 
-  // ---------- file bảng giá ----------
-
-  /**
-   * Trang đầu tiên của file: cột A = mã tính lương (đúng chữ cột "Tên nhà máy làm việc" của file giờ, hoặc "Ngoại tỉnh"),
-   * cột B = đơn giá (đồng / giờ). Dòng tiêu đề (cột B không phải số) được bỏ qua.
-   */
-  function docBangGia(cacTrang) {
-    var loi = [], gia = [], daCo = {};
-    var ten = Object.keys(cacTrang || {})[0];
-    if (!ten) return { ok: false, loi: [{ trang: '', o: '', loi: 'File không có trang nào.', cach_sua: '' }], gia: [] };
-    var bang = cacTrang[ten];
-    for (var r = 1; r <= bang.length; r++) {
-      var ma = String(o(bang, r, 1) == null ? '' : o(bang, r, 1)).trim(), vg = o(bang, r, 2);
-      if (!ma && trong(vg)) continue;
-      var g = so(vg);
-      if (g == null || isNaN(g)) {
-        if (r <= 3 && !gia.length) continue;                       // dòng tiêu đề
-        loi.push({ trang: ten, o: 'B' + r, loi: 'Đơn giá của "' + ma + '" không phải số.', cach_sua: 'Ghi số đồng / giờ, vd 2500.' });
-        continue;
-      }
-      if (!ma) { loi.push({ trang: ten, o: 'A' + r, loi: 'Thiếu mã nhà máy.', cach_sua: 'Ghi đúng tên nhà máy như cột U của file giờ.' }); continue; }
-      if (!(g > 0)) { loi.push({ trang: ten, o: 'B' + r, loi: 'Đơn giá phải lớn hơn 0.', cach_sua: '' }); continue; }
-      var k = chuanMa(ma);
-      if (daCo[k]) { loi.push({ trang: ten, o: 'A' + r, loi: '"' + ma + '" có 2 dòng (dòng ' + daCo[k] + ' và ' + r + ').', cach_sua: 'Để một dòng.' }); continue; }
-      daCo[k] = r;
-      gia.push({ ma: k, ten: ma, don_gia: g, dong: r });
-    }
-    if (!gia.length && !loi.length) loi.push({ trang: ten, o: '', loi: 'Không đọc được dòng giá nào.', cach_sua: 'Cột A mã nhà máy, cột B đơn giá.' });
-    return { ok: !loi.length, loi: loi, gia: gia };
-  }
-
-  goc.DocFileGio = { docFile: docFile, docBangGia: docBangGia, tinhDong: tinhDong, chuanMa: chuanMa, chuanCCCD: chuanCCCD,
-                     chuanChu: chuanChu, thangCuaTrang: thangCuaTrang, MA_NGOAI_TINH: MA_NGOAI_TINH };
+  goc.DocFileGio = { docFile: docFile, tinhDong: tinhDong, chuanMa: chuanMa, chuanCCCD: chuanCCCD,
+                     chuanChu: chuanChu, thangCuaTrang: thangCuaTrang };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>Giờ & tiền tuyển dụng</title>
+<title>Giờ làm của người tôi tuyển</title>
 <!--
-  TRANG GIỜ & TIỀN TUYỂN DỤNG — bản 3.52. Đặc tả: .scratch/gio-tien-tuyen-dung/DAC-TA.md mục 6
+  TRANG GIỜ LÀM CỦA NGƯỜI TÔI TUYỂN — bản 3.52; 3.62 bỏ hẳn phần tiền (Dương chốt 05/11/2026).
+  Đặc tả: .scratch/gio-tien-tuyen-dung/DAC-TA.md mục 0 (mục 6 là bản cũ có tiền).
 
-  Người tuyển xem giờ + tiền tuyển dụng từng tháng của người mình tuyển. Số do KẾ TOÁN tải ở hệ công–lương; máy chủ hỏi
-  sang (cú gt_lay) — trang này không bao giờ gọi thẳng hệ lương. Lối vào từ trang Dữ liệu tuyển, CHUNG vé đăng nhập.
-  Quản trị có thêm chế độ "Tất cả" + mục "Cần báo lại".
+  Người tuyển xem SỐ GIỜ đi làm từng tháng của từng người mình tuyển + Đạt / Không đạt (cột cuối). Số do KẾ TOÁN tải ở
+  hệ công–lương; máy chủ hỏi sang (cú gt_lay) — trang này không bao giờ gọi thẳng hệ lương. Lối vào từ trang Dữ liệu tuyển,
+  CHUNG vé đăng nhập. Quản trị có thêm chế độ "Tất cả" + mục "Cần báo lại". Tên tệp giotien.html giữ nguyên để không gãy lối vào.
 
   BẢO MẬT: trang chỉ nhận CCCD 4 số cuối; KHÔNG cất dữ liệu lao động vào bộ nhớ trình duyệt, chỉ cất vé.
 -->
@@ -84,7 +85,7 @@
   .bang th,.bang td{padding:6px 10px;border-right:1px solid #e1e5ea;border-bottom:1px solid #e1e5ea;white-space:nowrap;background:#fff;text-align:left}
   .bang thead th{position:sticky;top:0;z-index:3;background:#eef1f4;font-weight:700;color:#3c4753}
   .bang tfoot td{position:sticky;bottom:0;z-index:3;background:#e3ecfb;font-weight:800;color:#163f7a;border-top:2px solid #9fbbe6}
-  /* c0 rộng ĐÚNG 44px — hẹp hơn thì cột Họ tên (dính ở left:44px) lệch sang phải, che mất số cột Tiền */
+  /* c0 rộng ĐÚNG 44px — hẹp hơn thì cột Họ tên (dính ở left:44px) lệch sang phải, che mất số cột Giờ */
   .bang .c0{position:sticky;left:0;z-index:2;width:44px;min-width:44px;max-width:44px;text-align:right;color:var(--mo)}
   .bang .c1{position:sticky;left:44px;z-index:2;font-weight:600;box-shadow:1px 0 0 #c9d0d8}
   .bang thead .c0,.bang thead .c1,.bang tfoot .c0,.bang tfoot .c1{z-index:4}
@@ -92,11 +93,10 @@
   .bang tfoot .c0,.bang tfoot .c1{background:#e3ecfb}
   .bang td.so,.bang th.so{text-align:right;font-variant-numeric:tabular-nums}
   .bang tbody tr:nth-child(even) td{background:#f8fafc}
-  .bang tbody tr.khong td{color:#7b8794}
-  .bang tbody tr.khong td.c1{color:#5f6b76}
-  .tt-tinh{color:#17663a;font-weight:600}
+  .tt-dat{color:#17663a;font-weight:600}
   .tt-khong_dat{color:#5f6b76;font-weight:600}
-  .tt-thieu_cccd{color:#8a1c13;font-weight:600}
+  .tt-chua_ro{color:#6b4e00;font-weight:600}
+  .tt-thieu{color:#8a1c13;font-weight:600}
   .tt-he{color:#6b4e00;font-weight:600}
   .goi-bang{margin:6px 14px 0;font-size:15px;color:var(--mo)}
   .trong{padding:22px 14px;color:var(--mo);text-align:center;font-size:15px}
@@ -122,7 +122,7 @@
 <!-- ĐĂNG NHẬP -->
 <div id="man_dn" class="an">
   <a class="ve-chu" href="trangchu.html"><span class="ve-chu-ic" aria-hidden="true">🏠</span>Về Trang chủ</a>
-  <div class="dinh"><b>Giờ & tiền tuyển dụng</b><div class="phu">Giờ làm và tiền tuyển dụng của người bạn tuyển</div></div>
+  <div class="dinh"><b>⏱ Giờ làm của người tôi tuyển</b><div class="phu">Số giờ đi làm của từng người bạn tuyển</div></div>
   <div class="goi-y" style="margin-top:6px">👉 Gõ số căn cước + mật khẩu rồi bấm "Đăng nhập".</div>
   <div class="o">
     <div class="nhan">Số căn cước (12 số)</div>
@@ -143,8 +143,8 @@
 <!-- TRANG CHÍNH -->
 <div id="man_chinh" class="an">
   <a class="ve-chu" href="dulieutuyen.html"><span class="ve-chu-ic" aria-hidden="true">←</span>Về Dữ liệu tuyển</a>
-  <div class="dinh"><b>💰 Giờ & tiền tuyển dụng</b><div class="phu" id="ds_ai">—</div></div>
-  <div class="goi-y" id="goi_y">👉 Chọn tháng để xem giờ và tiền của người bạn tuyển. Số do kế toán tính — thấy sai thì báo kế toán.</div>
+  <div class="dinh"><b>⏱ Giờ làm của người tôi tuyển</b><div class="phu" id="ds_ai">—</div></div>
+  <div class="goi-y" id="goi_y">👉 Chọn tháng để xem mỗi người bạn tuyển đi làm bao nhiêu giờ. Số do kế toán tải — thấy sai thì báo kế toán.</div>
   <div id="trang_loi" class="loi an"></div>
 
   <div class="che-do an" id="che_do">
@@ -163,8 +163,9 @@
       <select id="loc_nm" aria-label="Lọc nhà máy"><option value="">Mọi nhà máy</option></select>
       <select id="loc_tt" aria-label="Lọc tình trạng">
         <option value="">Mọi tình trạng</option>
-        <option value="tinh">✅ Được tính</option>
+        <option value="dat">✅ Đạt</option>
         <option value="khong_dat">⏸ Không đạt</option>
+        <option value="chua_ro">❔ Chưa rõ Đạt</option>
         <option value="thieu_cccd">⛔ Thiếu CCCD</option>
         <option value="he">⚠ Không có trong hệ</option>
       </select>
@@ -226,7 +227,8 @@ function thoat(s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 function cauLoi(e) { return (e && e.message) || 'Không nối được máy chủ.'; }
-function tien(n) { return n == null ? '–' : Number(n).toLocaleString('vi-VN'); }
+function so(n) { return n == null ? '–' : Number(n).toLocaleString('vi-VN'); }
+function lamTron(g) { return Math.round(g * 100) / 100; }
 function thangNam(t) { return t ? t.substring(5) + '/' + t.substring(0, 4) : ''; }
 function hien(id) {
   ['man_dn', 'man_chinh'].forEach(function (i) { $(i).classList.add('an'); });
@@ -287,13 +289,13 @@ $('nut_thoat').addEventListener('click', function () {
 });
 
 // ============================================================
-// SỐ GIỜ & TIỀN (gt_lay)
+// SỐ GIỜ (gt_lay) — chỉ giờ + Đạt, không tiền (3.62)
 // ============================================================
 var duLieu = null, xem = 'cua_toi';
 
 function taiSo(thang) {
   $('trang_loi').classList.add('an');
-  return goiAPI({ token: TOKEN_API, hanh_dong: 'gt_lay', thang: thang || '', xem: xem }, 'Đang lấy số từ hệ lương…').then(function (kq) {
+  return goiAPI({ token: TOKEN_API, hanh_dong: 'gt_lay', thang: thang || '', xem: xem }, 'Đang lấy giờ làm từ hệ lương…').then(function (kq) {
     if (!kq || kq.ma === 'HET_PHIEN') return;
     hien('man_chinh');
     if (!kq.ok) { $('khoi_so').classList.add('an'); baoLoiTrang(kq.loi || 'Máy chủ không trả dữ liệu.', kq.ma === 'LOI_HE_LUONG'); return; }
@@ -331,7 +333,9 @@ $('che_do').addEventListener('click', function (e) {
   taiSo(duLieu ? duLieu.thang : '');
 });
 
-var NHAN_TT = { tinh: '✅ Được tính', khong_dat: '⏸ Không đạt', thieu_cccd: '⛔ Thiếu CCCD' };
+/** Đạt: 'dat' | 'khong_dat' | '' (ô Đạt trong file kế toán trống / lỗi). */
+var NHAN_DAT = { dat: '✅ Đạt', khong_dat: '⏸ Không đạt', '': '❔ Chưa rõ' };
+function khoaDat(d) { return d.dat === 'dat' || d.dat === 'khong_dat' ? d.dat : ''; }
 function veSo() {
   var kq = duLieu;
   if (!kq.thang || !kq.co_thang) {
@@ -340,29 +344,32 @@ function veSo() {
     return;
   }
   $('khoi_so').classList.remove('an');
-  var ds = kq.ds, tinh = ds.filter(function (d) { return d.tinh_trang === 'tinh'; });
-  var tongTien = tinh.reduce(function (s, d) { return s + d.tien; }, 0), tongGio = tinh.reduce(function (s, d) { return s + d.gio; }, 0);
-  $('tong').innerHTML = 'Tháng ' + thangNam(kq.thang) + ' — tổng tiền tuyển dụng<span class="lon">' + tien(tongTien) + ' đ</span>' +
-    '<div class="ba"><span>⏱ ' + tien(Math.round(tongGio * 100) / 100) + ' giờ</span><span>👥 ' + tinh.length + ' người được tính</span>' +
-    (ds.length > tinh.length ? '<span>' + (ds.length - tinh.length) + ' người không tính</span>' : '') + '</div>' +
+  // Giờ là của MỌI người (Dương bỏ tiền 05/11/2026) — không còn "được tính / không tính"
+  var ds = kq.ds, tongGio = 0, dem = { dat: 0, khong_dat: 0, '': 0 };
+  ds.forEach(function (d) { tongGio += d.gio; dem[khoaDat(d)]++; });
+  $('tong').innerHTML = 'Tháng ' + thangNam(kq.thang) + ' — tổng giờ làm<span class="lon">' + so(lamTron(tongGio)) + ' giờ</span>' +
+    '<div class="ba"><span>👥 ' + ds.length + ' người</span><span>✅ ' + dem.dat + ' Đạt</span><span>⏸ ' + dem.khong_dat + ' Không đạt</span>' +
+    (dem[''] ? '<span>❔ ' + dem[''] + ' chưa rõ Đạt</span>' : '') + '</div>' +
     '<div style="margin-top:4px">Kế toán cập nhật lúc ' + thoat(kq.cap_nhat_luc || '—') + (kq.loi_doi_chieu ? '<br>' + thoat(kq.loi_doi_chieu) : '') + '</div>';
   // Quản trị: mục Cần báo lại
   if (kq.xem === 'tat_ca') {
-    var lech = {}, he = 0, thieu = 0;
+    var lech = {}, he = 0, thieu = 0, chuaRo = dem[''];
     ds.forEach(function (d) {
-      if (!d.khop_tk) { var k = d.nguoi_tuyen; lech[k] = lech[k] || { so: 0, tien: 0 }; lech[k].so++; lech[k].tien += d.tien; }
+      if (!d.khop_tk) lech[d.nguoi_tuyen] = (lech[d.nguoi_tuyen] || 0) + 1;
       if (d.khong_trong_he) he++;
-      if (d.tinh_trang === 'thieu_cccd') thieu++;
+      if (!d.cccd4) thieu++;
     });
-    var tenLech = Object.keys(lech).sort();
-    $('bao_lai').innerHTML = (tenLech.length || he || thieu)
+    var tenLech = Object.keys(lech).sort(), co = tenLech.length || he || thieu || chuaRo;
+    $('bao_lai').innerHTML = co
       ? '<b class="dau">⚠ Cần báo lại</b><ul>' +
         (tenLech.length ? '<li>Tên người tuyển <b>không khớp tài khoản nào</b> (thêm vào cột ten_tuyen tab NGUOI_DON, hoặc báo kế toán sửa tên): ' +
-          tenLech.map(function (t) { return thoat(t) + ' (' + lech[t].so + ' người, ' + tien(lech[t].tien) + ' đ)'; }).join(' · ') + '</li>' : '') +
-        (he ? '<li><b>' + he + '</b> người có CCCD nhưng <b>không có trong hệ tuyển dụng</b> — vẫn tính tiền. Lọc "⚠ Không có trong hệ" để xem.</li>' : '') +
-        (thieu ? '<li><b>' + thieu + '</b> người <b>thiếu số CCCD</b> trong file kế toán — không tính. Lọc "⛔ Thiếu CCCD" để xem.</li>' : '') + '</ul>'
+          tenLech.map(function (t) { return thoat(t) + ' (' + lech[t] + ' người)'; }).join(' · ') + '</li>' : '') +
+        (he ? '<li><b>' + he + '</b> người có CCCD nhưng <b>không có trong hệ tuyển dụng</b> — vẫn hiện giờ. Lọc "⚠ Không có trong hệ" để xem.</li>' : '') +
+        (thieu ? '<li><b>' + thieu + '</b> người <b>thiếu số CCCD</b> trong file kế toán. Lọc "⛔ Thiếu CCCD" để xem.</li>' : '') +
+        (chuaRo ? '<li><b>' + chuaRo + '</b> người có <b>ô Đạt trống hoặc lỗi</b> trong file kế toán — báo kế toán dán giá trị cột Đạt rồi tải lại. ' +
+          'Lọc "❔ Chưa rõ Đạt" để xem.</li>' : '') + '</ul>'
       : '';
-    $('bao_lai').classList.toggle('an', !(tenLech.length || he || thieu));
+    $('bao_lai').classList.toggle('an', !co);
   } else $('bao_lai').classList.add('an');
   var nm = {};
   ds.forEach(function (d) { nm[d.nha_may] = true; });
@@ -378,7 +385,7 @@ function dangHien() {
   var nm = $('loc_nm').value, tt = $('loc_tt').value;
   return duLieu.ds.filter(function (d) {
     if (nm && d.nha_may !== nm) return false;
-    if (tt === 'he' ? !d.khong_trong_he : (tt && d.tinh_trang !== tt)) return false;
+    if (tt === 'he' ? !d.khong_trong_he : tt === 'thieu_cccd' ? !!d.cccd4 : (tt && khoaDat(d) !== (tt === 'chua_ro' ? '' : tt))) return false;
     if (q && d.ho_ten.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').indexOf(q) < 0) return false;
     return true;
   });
@@ -392,40 +399,38 @@ function veDs() {
     $('nut_excel').classList.add('an');
     return;
   }
-  var gioTinh = 0, tienTinh = 0, soTinh = 0;
+  var gio = 0;
   var hang = ds.map(function (d, i) {
-    var tinh = d.tinh_trang === 'tinh';
-    if (tinh) { gioTinh += d.gio; tienTinh += d.tien; soTinh++; }
-    var ghi = [];
-    if (d.ngoai_tinh) ghi.push('Giá ngoại tỉnh');
-    if (d.khong_trong_he) ghi.push('<span class="tt-he">⚠ Không có trong hệ — vẫn tính</span>');
+    gio += d.gio;
+    var ghi = [], k = khoaDat(d);
+    if (!d.cccd4) ghi.push('<span class="tt-thieu">⛔ File kế toán thiếu CCCD</span>');
+    if (d.khong_trong_he) ghi.push('<span class="tt-he">⚠ Không có trong hệ</span>');
     if (tatCa && !d.khop_tk) ghi.push('<span class="tt-he">⚠ Tên tuyển không khớp tài khoản</span>');
-    // Tiền · Giờ · Đơn giá đứng NGAY sau Họ tên — điện thoại không phải vuốt ngang mới thấy số chính
-    return '<tr' + (tinh ? '' : ' class="khong"') + '><td class="c0">' + (i + 1) + '</td><td class="c1">' + thoat(d.ho_ten) + '</td>' +
-      '<td class="so">' + (tinh ? tien(d.tien) : '0') + '</td><td class="so">' + tien(d.gio) + '</td>' +
-      '<td class="so">' + (d.don_gia == null ? '—' : tien(d.don_gia)) + '</td>' +
-      '<td class="tt-' + thoat(d.tinh_trang) + '">' + thoat(NHAN_TT[d.tinh_trang] || d.tinh_trang) + '</td>' +
-      '<td>' + thoat(d.nha_may) + '</td>' + (tatCa ? '<td>' + thoat(d.nguoi_tuyen) + '</td>' : '') +
-      '<td>' + thoat(d.cccd4 || '—') + '</td><td>' + ghi.join(' · ') + '</td></tr>';
+    // Giờ đứng NGAY sau Họ tên — điện thoại không phải vuốt ngang mới thấy số chính. Đạt ở cột CUỐI (Dương chốt 05/11/2026)
+    return '<tr><td class="c0">' + (i + 1) + '</td><td class="c1">' + thoat(d.ho_ten) + '</td>' +
+      '<td class="so">' + so(d.gio) + '</td><td>' + thoat(d.nha_may) + '</td>' + (tatCa ? '<td>' + thoat(d.nguoi_tuyen) + '</td>' : '') +
+      '<td>' + thoat(d.cccd4 || '—') + '</td><td>' + ghi.join(' · ') + '</td>' +
+      '<td class="tt-' + (k || 'chua_ro') + '">' + NHAN_DAT[k] + '</td></tr>';
   }).join('');
-  $('ds').innerHTML = '<table class="bang"><thead><tr><th class="c0">#</th><th class="c1">Họ tên</th><th class="so">Tiền (đ)</th>' +
-    '<th class="so">Giờ</th><th class="so">Đơn giá</th><th>Tình trạng</th><th>Nhà máy</th>' + (tatCa ? '<th>Người tuyển</th>' : '') +
-    '<th>CCCD</th><th>Ghi chú</th></tr></thead>' +
-    '<tbody>' + hang + '</tbody><tfoot><tr><td class="c0"></td><td class="c1">Tổng ' + soTinh + '/' + ds.length + ' người được tính</td>' +
-    '<td class="so">' + tien(tienTinh) + '</td><td class="so">' + tien(Math.round(gioTinh * 100) / 100) + '</td>' +
-    '<td></td><td></td><td></td>' + (tatCa ? '<td></td>' : '') + '<td></td><td></td></tr></tfoot></table>';
+  $('ds').innerHTML = '<table class="bang"><thead><tr><th class="c0">#</th><th class="c1">Họ tên</th><th class="so">Giờ</th><th>Nhà máy</th>' +
+    (tatCa ? '<th>Người tuyển</th>' : '') + '<th>CCCD</th><th>Ghi chú</th><th>Đạt</th></tr></thead>' +
+    '<tbody>' + hang + '</tbody><tfoot><tr><td class="c0"></td><td class="c1">Tổng ' + ds.length + ' người</td>' +
+    '<td class="so">' + so(lamTron(gio)) + '</td><td></td>' + (tatCa ? '<td></td>' : '') + '<td></td><td></td><td></td></tr></tfoot></table>';
   $('goi_bang').textContent = ds.length + ' người' + (ds.length < duLieu.ds.length ? ' (đang lọc)' : '') +
-    ' · dòng chữ xám = không tính · bảng rộng thì vuốt ngang, cột Họ tên đứng yên.';
+    ' · Đạt / Không đạt ở cột cuối · bảng rộng thì vuốt ngang, cột Họ tên đứng yên.';
   $('nut_excel').classList.remove('an');
 }
 ['loc_ten', 'loc_nm', 'loc_tt'].forEach(function (id) { $(id).addEventListener(id === 'loc_ten' ? 'input' : 'change', veDs); });
 $('nut_excel').addEventListener('click', function () {
   var tatCa = duLieu.xem === 'tat_ca';
-  var dong = [['Họ tên', 'Tiền', 'Giờ', 'Đơn giá', 'Tình trạng', 'Nhà máy'].concat(tatCa ? ['Người tuyển'] : [], ['CCCD (4 số cuối)'])]
+  var dong = [['Họ tên', 'Giờ', 'Nhà máy'].concat(tatCa ? ['Người tuyển'] : [], ['CCCD (4 số cuối)', 'Ghi chú', 'Đạt'])]
     .concat(dangHien().map(function (d) {
-      return [d.ho_ten, d.tinh_trang === 'tinh' ? d.tien : 0, d.gio, d.don_gia == null ? '' : d.don_gia,
-              (NHAN_TT[d.tinh_trang] || d.tinh_trang).replace(/^\S+ /, '') + (d.khong_trong_he ? ' · không có trong hệ' : ''), d.nha_may]
-        .concat(tatCa ? [d.nguoi_tuyen] : [], [d.cccd4]);
+      var ghi = [];
+      if (!d.cccd4) ghi.push('File kế toán thiếu CCCD');
+      if (d.khong_trong_he) ghi.push('Không có trong hệ tuyển dụng');
+      if (tatCa && !d.khop_tk) ghi.push('Tên tuyển không khớp tài khoản');
+      return [d.ho_ten, d.gio, d.nha_may].concat(tatCa ? [d.nguoi_tuyen] : [],
+        [d.cccd4, ghi.join(' · '), NHAN_DAT[khoaDat(d)].replace(/^\S+ /, '')]);
     }));
   var chu = dong.map(function (h) { return h.join('\t'); }).join('\n'), nut = this;
   var xong = function () { nut.textContent = '✅ Đã chép — dán vào Excel'; setTimeout(function () { nut.textContent = '📋 Sao chép Excel (người đang hiện)'; }, 2500); };
