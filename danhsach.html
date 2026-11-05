@@ -200,6 +200,7 @@
   .cuon-x td.chon{background:#cfe4ff}
   .cuon-x th.chon{background:#a9ccf5}
   .cuon-x tr:last-child td{border-bottom:0}
+  .cuon-x tr.ngan-dq td{background:#eef1f4;font-weight:700;color:#3e4c59;cursor:default;padding:8px 9px}
   .mach-x{margin-top:8px;font-size:15px;color:var(--mo);line-height:1.5}
   .thanh-chon{position:sticky;bottom:0;z-index:20;background:#fff;
     border-top:1px solid var(--vien);padding:10px 14px;box-shadow:0 -3px 12px rgba(0,0,0,.08)}
@@ -841,7 +842,7 @@ function veChon() {
   var bang = $('x_bang_' + v.i);
   if (!bang) { thanh.classList.add('an'); return; }
   for (var r = v.r1; r <= v.r2; r++) {
-    var tr = bang.querySelectorAll('tbody tr')[r];
+    var tr = bang.querySelectorAll('tbody tr:not(.ngan-dq)')[r];
     if (!tr) continue;
     for (var c = v.c1; c <= v.c2; c++) if (tr.cells[c]) tr.cells[c].classList.add('chon');
   }
@@ -944,6 +945,7 @@ function veXuat(kq) {
   }
   kq.nhom.forEach(function (g, i) {
     if (coChon) { g._chon = docChon(g.ma_ct, kq); apDungChon(g, kq); }
+    g._ngay_qua = kq.ngay_qua_hien_thi || '';
     var thu = !!thuX[g.ma_ct];
     h += '<div class="khoi-x" data-i="' + i + '">'
       +   '<button type="button" class="ten ten-x" data-thux="' + thoat(g.ma_ct) + '" aria-expanded="' + (thu ? 'false' : 'true') + '">'
@@ -1083,13 +1085,18 @@ function veKhungChon(g, i, kq) {
 
 function bangXuat(g, i) {
   if (!g.cot.length) return '<div class="trong-x">👉 Tích ít nhất một thông tin ở trên.</div>';
+  // 3.59: máy chủ xếp người ca đêm hôm qua xuống cuối (cờ dem_qua_cuoi) → kẻ một dòng ngăn trước họ. Dòng ngăn chỉ là chữ
+  // trên màn: không có data-r nên không chọn / chép được; bảng Excel dựng từ g.hang nên không có dòng này.
+  var ngan = (g.dem_qua_cuoi && g.dem_qua > 0) ? g.hang.length - g.dem_qua : -1;
   return '<table id="x_bang_' + i + '"><thead><tr>'
     + g.cot.map(function (c, ci) {
         return '<th data-c="' + ci + '" title="Bấm để chọn cả cột">' + thoat(c) + '</th>';
       }).join('')
     + '</tr></thead><tbody>'
     + g.hang.map(function (r, ri) {
-        return '<tr>' + r.map(function (v, ci) {
+        return (ri === ngan ? '<tr class="ngan-dq"><td colspan="' + g.cot.length + '">🌙 Ca đêm hôm qua'
+                  + (g._ngay_qua ? ' (' + thoat(String(g._ngay_qua).slice(0, 5)) + ')' : '') + ' · ' + g.dem_qua + ' người</td></tr>' : '')
+          + '<tr>' + r.map(function (v, ci) {
           return '<td data-r="' + ri + '" data-c="' + ci + '">' + thoat(v) + '</td>';
         }).join('') + '</tr>';
       }).join('')

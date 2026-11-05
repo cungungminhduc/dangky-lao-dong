@@ -491,7 +491,7 @@ function nhanSo(kq) {
   PHIEU = (kq.phieu || []).map(function (p, i) {
     var l = p[2] < 0 ? (lech[-p[2] - 1] || { ten: '?' }) : null;
     var ten = l ? l.ten + (l.trung ? ' (tên này 2 tài khoản cùng khai)' : '') : (p[2] === 0 ? '(ô người tuyển để trống)' : '');
-    return [p[0], ct[p[1]].ma_ct, p[2] > 0 ? p[2] : 0, p[3], p[4] >= 0 ? ly[p[4]] : '', ten, p[5] > 0 ? p[5] : -(i + 1)];
+    return [p[0], ct[p[1]].ma_ct, p[2] > 0 ? p[2] : 0, p[3], p[4] >= 0 ? ly[p[4]] : '', ten, p[5] > 0 ? p[5] : -(i + 1), p[6] || 0];
   }).sort(function (a, b) { return a[0] < b[0] ? -1 : (a[0] > b[0] ? 1 : 0); });
   // Mốc có số (đợt 2): phiếu gõ nhầm năm, nằm cách khúc chính hơn NGAY_HO ngày, không được kéo mốc về đầu năm (bày 0 cả chục tháng → "tăng 100%" giả).
   TU_KHO = tuKho;
@@ -1543,10 +1543,26 @@ function chuLech(r) {
   return so ? '⚠️ <b>' + so + ' phiếu</b> ghi tên người tuyển chưa khớp tài khoản — không vào hàng nhân viên nào: ' +
     Object.keys(dem).map(function (t) { return '"' + thoat(t) + '" (' + dem[t] + ')'; }).join(', ') + '. Sửa: khai tên đó ở cột <b>ten_tuyen</b> (tab NGUOI_DON) của đúng người.' : '';
 }
+/**
+ * 3.59 — phiếu mang dấu (1 = nhập bù · 2 = đã đổi người tuyển, máy chủ 3.59) trong khoảng + phạm vi đang xem:
+ * "<b>N phiếu …</b> (tên nhân viên đang giữ phiếu + số)". Không có → ''. Máy chủ cũ không gửi dấu → ''.
+ */
+function chuDau(r, bit, ten, truocTen) {
+  var dem = {}, so = 0;
+  PHIEU.forEach(function (p) {
+    if (!(p[7] & bit) || p[0] < r.tu || p[0] > r.den || !r.pv.fp(p)) return;
+    so++;
+    var t = p[2] ? (NV_MA[p[2]] || {}).ten || '?' : (p[5] || '?');
+    dem[t] = (dem[t] || 0) + 1;
+  });
+  return so ? '<b>' + so + ' phiếu ' + ten + '</b> (' + truocTen + Object.keys(dem).sort().map(function (t) { return thoat(t) + ' ' + dem[t]; }).join(', ') + ')' : '';
+}
 /** Soát số trước khi đánh giá — chỉ để đọc, không chặn gì. Không có gì bất thường thì nói vậy. */
 function soatSo(r) {
   var ds = [], lech = chuLech(r), cu = chuDonViCu(donViCu(r.den, r.pv.fc));
   if (lech) ds.push(lech);
+  var dau = [chuDau(r, 1, 'nhập bù', ''), chuDau(r, 2, 'đã đổi người tuyển', 'nay tính cho: ')].filter(String);
+  if (dau.length) ds.push('📝 Trong khoảng đang xem có ' + dau.join(' và ') + ' — số của những người này có phần ghi bù / chuyển từ người khác sang; xem lại trước khi đánh giá.');
   if (r.tong.chua_bao) ds.push(r.tong.chua_bao + ' người đã đón nhưng chưa báo vào làm / không vào làm.');
   if (THIEU_NGAY) ds.push('⚠️ ' + THIEU_NGAY + ' phiếu không đọc được ngày hẹn — chưa tính vào kỳ nào (sửa ngày hẹn ở bảng đăng ký).');
   if (cu) ds.push(cu.replace(/^<br>/, ''));
@@ -1866,9 +1882,10 @@ function veCT() {
   $('ct_qs').value = qs ? String(qs.so) : '';
   $('ct_lam').classList.remove('sai');
   $('ct_qs').classList.remove('sai');
-  $('ct_qs_khoi').classList.toggle('an', CT.dt.loai === 'ca_nhan');
+  var chiLam = CT.dt.loai === 'ca_nhan' || CT.dt.loai === 'doi';      // 3.59 — đội cũng chỉ có vào làm
+  $('ct_qs_khoi').classList.toggle('an', chiLam);
   $('ct_ghi').innerHTML = (lam && lam.nguon === 'cong_thang' ? 'Quý này chưa đặt riêng — đang dùng <b>' + lam.so + '</b> = cộng chỉ tiêu 3 tháng. Gõ số để đặt riêng cho quý. ' : '') +
-    (CT.dt.loai === 'ca_nhan' ? 'Cá nhân chỉ có chỉ tiêu vào làm (quân số tính theo nhà máy).' : 'Để trống ô nào là không đặt chỉ tiêu đó.');
+    (chiLam ? (CT.dt.loai === 'doi' ? 'Đội' : 'Cá nhân') + ' chỉ có chỉ tiêu vào làm (quân số tính theo nhà máy).' : 'Để trống ô nào là không đặt chỉ tiêu đó.');
   var x = timCT(khoaKy(CT.ky), CT.dt, 'vao_lam') || timCT(khoaKy(CT.ky), CT.dt, 'quan_so');
   $('ct_vet').textContent = x ? 'Sửa lần cuối ' + gioVN(x.sua_luc) + (x.sua_boi ? ' bởi ' + x.sua_boi : '') + '.' : 'Kỳ này chưa đặt chỉ tiêu cho đối tượng này.';
   $('ct_loi').classList.add('an');
@@ -1883,7 +1900,8 @@ function veCT() {
   $('nut_luu_ct').textContent = dangLuuCT ? '⏳ Đang lưu… đừng đóng trang' : '💾 Lưu chỉ tiêu';
   var nam = CT.ky.tu.slice(0, 4);
   $('ct_nam').textContent = nam;
-  var ds2 = CHI_TIEU.filter(function (c) { return c.ky.replace(/^W/, '').slice(0, 4) === nam; }).sort(function (a, b) { return a.ky.replace(/^W/, '') < b.ky.replace(/^W/, '') ? -1 : 1; });
+  // 3.59 — chỉ tiêu quân số đội đặt từ trước vẫn nằm trong Sheet nhưng không dùng ở đâu → không bày ra.
+  var ds2 = CHI_TIEU.filter(function (c) { return c.ky.replace(/^W/, '').slice(0, 4) === nam && !(c.loai === 'doi' && c.chi_so === 'quan_so'); }).sort(function (a, b) { return a.ky.replace(/^W/, '') < b.ky.replace(/^W/, '') ? -1 : 1; });
   $('ct_ds').innerHTML = ds2.length ? ds2.map(function (c) {
     return '<div class="dong-ct"><span><b>' + thoat(tenKyCT(kyTuKhoa(c.ky))) + '</b> · ' + thoat(tenDT(c)) + '<br>' + (c.chi_so === 'vao_lam' ? 'Vào làm' : 'Quân số cuối kỳ') + ': <b>' + c.so + '</b></span>' +
       '<button type="button" data-ct-sua="' + CHI_TIEU.indexOf(c) + '">✏️ Sửa</button></div>';
@@ -1899,7 +1917,8 @@ function docSo(v) {
 }
 function luuCT() {
   if (dangLuuCT) return;
-  var loi = [], o = { lam: docSo($('ct_lam').value), qs: CT.dt.loai === 'ca_nhan' ? '' : docSo($('ct_qs').value) };
+  var chiLam = CT.dt.loai === 'ca_nhan' || CT.dt.loai === 'doi';
+  var loi = [], o = { lam: docSo($('ct_lam').value), qs: chiLam ? '' : docSo($('ct_qs').value) };
   $('ct_lam').classList.toggle('sai', o.lam === null);
   $('ct_qs').classList.toggle('sai', o.qs === null);
   if (o.lam === null) loi.push('Ô "Vào làm" đang ghi "' + thoat($('ct_lam').value) + '" — chỉ gõ số người, ví dụ 250.');
@@ -1907,7 +1926,7 @@ function luuCT() {
   if (loi.length) { $('ct_loi').innerHTML = loi.join('<br>'); $('ct_loi').classList.remove('an'); return; }
   var b = { token: TOKEN_API, hanh_dong: 'bd_ct_luu', ky: khoaKy(CT.ky), loai: CT.dt.loai,
             ma: CT.dt.loai === 'ca_nhan' ? (NV_MA[CT.dt.ma] || {}).tt || '' : String(CT.dt.ma), vao_lam: String(o.lam) };
-  if (CT.dt.loai !== 'ca_nhan') b.quan_so = String(o.qs);
+  if (!chiLam) b.quan_so = String(o.qs);
   var khoa = JSON.stringify([b.ky, b.loai, b.ma, b.vao_lam, b.quan_so]);
   if (!guiCT || guiCT.khoa !== khoa) guiCT = { ma: maYC(), khoa: khoa };
   b.ma_yeu_cau = guiCT.ma;
