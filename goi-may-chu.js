@@ -21,7 +21,9 @@ var GOI_CHI_DOC = ['danh_sach_cong_ty', 'kiem_tra', 'tra_cuu_don', 'cong_ty_cua_
                    // 3.33 — trang dữ liệu tuyển. dlt_dang_ky_lai là cú GHI, dlt_xuat ghi vết: không thêm vào đây.
                    'dlt_mo', 'dlt_kiem',
                    // 3.36 — gói đầu của trang chủ: chỉ đọc (lan_mo_cuoi là vết, ghi lại vô hại)
-                   'goi_dau'];
+                   'goi_dau',
+                   // 3.64 — mục 🏢 Công ty công khai của khung Văn phòng: chỉ đọc hai tab, không ghi gì
+                   'cong_khai'];
 
 // Cú GHI mà gửi lại vô hại (bản 3.32): `dang_nhap` chỉ ghi mốc "đăng nhập lần cuối" + một dòng nhật ký,
 // vé mới thay vé cũ. Trước 3.32 nó bị tính là cú ghi: hạn 90 giây, không thử lại — Dương báo 16/10/2026

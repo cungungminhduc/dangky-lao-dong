@@ -20,6 +20,10 @@
 
   3.39 (Dương 25/10/2026): ô chia HAI nhóm có tiêu đề + dòng hướng dẫn — "Không cần đăng nhập" (ở trên) / "Cần đăng nhập" — và
   ghi chú "phải chờ" ở cả màn đăng nhập lẫn trang chủ, để ai mở lần đầu không cần người chỉ cũng biết cách dùng.
+
+  3.64 (Dương 05/11/2026): KHUNG VĂN PHÒNG ngay ở link này — thanh menu phòng ban + mục 🏢 Công ty công khai (vanphong.js,
+  vanphong.css; đặc tả .scratch/van-phong/DAC-TA.md). Màn đăng nhập + ô việc dưới đây giữ nguyên, nằm trong #vp_cu: khung
+  quyết định lúc nào cho chúng hiện (trang chủ khi đã có vé · #dang-nhap khi chưa có vé).
 -->
 <style>
   :root{
@@ -91,11 +95,23 @@
   .lop .hop .hop-dong{background:var(--xanh);border:0;color:#fff;font-weight:700}
   .lop .hop .hop-thoi{background:#fff;border:1px solid #c9d0d8;color:var(--chu)}
 </style>
-<!-- 3.32: mở trong Zalo thì nhắc mở bằng Chrome (thiếu tệp thì trang vẫn chạy như cũ) -->
-<script src="ngoai-zalo.js" defer></script>
+<!-- 3.64: ngoai-zalo.js (trang chặn "Mở bằng trình duyệt") KHÔNG nạp ở đây nữa — vanphong.js chèn nó khi vào màn đăng nhập /
+     phần cần đăng nhập, để mục công khai xem được trong Zalo (DAC-TA mục 4, đổi có chủ ý). -->
+<link rel="stylesheet" href="vanphong.css">
 </head>
 <body>
-<div class="boc">
+<!-- ===== KHUNG VĂN PHÒNG (3.64) — vanphong.js vẽ menu + vùng dữ liệu. Màn hẹp ≤ 860px: không menu, ô việc + "◀ Trang chủ" ===== -->
+<header class="vp-thanh" id="vp_thanh">
+  <div class="vp-thanh-trong">
+    <a class="vp-ve" id="vp_ve" href="#trang-chu">◀ Trang chủ</a>
+    <a class="vp-logo" href="#trang-chu" title="Về trang chủ"><span class="vp-cham" aria-hidden="true">MĐ</span><span>VĂN PHÒNG<small>Cung ứng lao động Minh Đức</small></span></a>
+    <nav class="vp-menu" id="vp_menu" aria-label="Các phòng"></nav>
+    <a class="vp-tk" id="vp_tk" href="#dang-nhap">🔐 Đăng nhập</a>
+  </div>
+</header>
+<main class="vp-trang an" id="vp_trang"></main>
+
+<div class="boc an" id="vp_cu">
 
 <!-- ===== ĐĂNG NHẬP ===== -->
 <div id="man_dn">
@@ -103,7 +119,7 @@
     <b>TUYỂN DỤNG</b>
     <div class="phu">Một chỗ vào mọi việc — đăng nhập một lần</div>
   </div>
-  <div class="goi-y">👉 Đăng ký hay quét thẻ thì chạm ô ngay dưới. Việc khác: gõ số căn cước + mật khẩu rồi bấm "Đăng nhập".</div>
+  <div class="goi-y">👉 Đăng ký hay quét thẻ thì chạm ô ngay dưới. Việc khác: gõ tên đăng nhập (hoặc số căn cước) + mật khẩu rồi bấm "Đăng nhập".</div>
   <div class="ke">🔓 Không cần đăng nhập — ai cũng dùng được</div>
   <div class="ke-ghi">Đăng ký = ghi người <b>sẽ</b> đến nhà máy (chụp thẻ là tự điền). Quét thẻ đón = ở cổng nhà máy, đánh dấu
     người <b>đã</b> đến.</div>
@@ -112,10 +128,11 @@
     <a class="o-viec mo-cong" href="doncong.html"><span class="bt" aria-hidden="true">📷</span><b>Quét thẻ đón</b><span class="mt">Đánh dấu người đã đến</span></a>
   </div>
   <div class="ke">🔐 Cần đăng nhập</div>
-  <div class="ke-ghi">Danh sách gọi · phân công đón · báo quân số · dữ liệu tuyển. Dùng số căn cước + mật khẩu được cấp.</div>
+  <div class="ke-ghi">Danh sách gọi · phân công đón · báo quân số · dữ liệu tuyển. Dùng tên đăng nhập (hoặc số căn cước) + mật khẩu được cấp.</div>
   <div class="o">
-    <div class="nhan">Số căn cước của bạn (12 số)</div>
-    <input id="dn_cccd" inputmode="numeric" maxlength="12" autocomplete="username" placeholder="Ví dụ 024303008090">
+    <!-- 3.64: một ô cho cả tên đăng nhập lẫn số căn cước (gõ toàn số = số căn cước 12 số như trước). Không maxlength: dán số có dấu cách vẫn đủ -->
+    <div class="nhan">Tên đăng nhập hoặc số căn cước</div>
+    <input id="dn_cccd" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false" placeholder="Ví dụ: hungphat hoặc 024303008090">
     <div class="nhan">Mật khẩu</div>
     <div class="mk-o" id="mk_o">
       <input id="dn_mk" type="password" autocomplete="current-password" placeholder="Mật khẩu được cấp">
@@ -146,6 +163,8 @@
     trang.</b></div>
   <div class="loi an" id="chu_loi"></div>
   <div id="chu_o"></div>
+  <!-- 3.64: khung Văn phòng điền nhóm 🏢 Công ty vào đây — điện thoại không có thanh menu, đây là đường tới mục công khai -->
+  <div id="vp_them"></div>
   <button type="button" class="nut phu" id="nut_lam_moi">🔄 Làm mới số</button>
   <button type="button" class="nut phu an" id="nut_cai">Thêm vào màn hình chính (mở nhanh, khỏi đăng nhập lại)</button>
   <button type="button" class="nut vien" id="nut_thoat">Đăng xuất</button>
@@ -159,6 +178,7 @@
 <script src="cau-hinh.js"></script>
 <script src="goi-may-chu.js"></script>
 <script src="goi-dau.js"></script>
+<script src="vanphong.js"></script>
 <script>
 // ====== CẤU HÌNH: URL_API + TOKEN_API nằm ở tệp cau-hinh.js, dùng chung cho mọi trang ======
 if (typeof URL_API === 'undefined' || typeof TOKEN_API === 'undefined' || !URL_API) {
@@ -184,6 +204,8 @@ if (typeof layGoi_ !== 'function') {
   window.conTuoi_ = function () { return false; };
   window.gioLuc_ = function () { return ''; };
 }
+// 3.64: thiếu vanphong.js → không có thanh menu, hiện thẳng trang chủ cũ như trước (vẫn đủ việc)
+if (typeof vpDoiMan_ !== 'function') document.getElementById('vp_cu').classList.remove('an');
 // ==========================================================================================
 
 var $ = function (id) { return document.getElementById(id); };
@@ -219,6 +241,8 @@ function cauLoi(e) { return (e && e.message) || 'Không nối được máy ch�
 function hien(el) {
   ['man_dn', 'man_chu'].forEach(function (i) { $(i).classList.add('an'); });
   $(el).classList.remove('an');
+  // 3.64: báo khung Văn phòng (vanphong.js) — nó quyết định lúc nào cho màn cũ hiện, đăng nhập xong thì về trang chủ
+  if (typeof vpDoiMan_ === 'function') vpDoiMan_(el);
 }
 
 /**
@@ -277,7 +301,8 @@ var O_VIEC = [
   { bt: '📈', ten: 'Biểu đồ', mt: 'Biến động tuyển dụng · quân số · nhân viên', href: 'bieudo.html', can: 'phan_cong', muc: '' },
   // 3.49: mọi tài khoản đã đăng nhập; trang tự báo nếu mở trên điện thoại (chỉ chạy Chrome / Edge máy tính)
   { bt: '🗂️', ten: 'Hồ sơ scan', mt: 'Bản scan căn cước tự đặt tên, xếp thư mục (máy tính)', href: 'hososcan.html', can: 'dang_nhap', muc: '' },
-  // Hệ công–lương riêng, tài khoản riêng (Dương chốt 31/10): quản trị đã đăng nhập thì không còn thấy màn đầu nên cần ô ở đây
+  // Hệ công–lương riêng, tài khoản riêng (Dương chốt 31/10): quản trị đã đăng nhập thì không còn thấy màn đầu nên cần ô ở đây.
+  // 3.64: kế toán có tài khoản tuyển dụng (phòng Kế toán) → cũng thấy ô này.
   { bt: '📒', ten: 'Kế toán – công lương', mt: 'Bảng giá · file giờ — đăng nhập riêng', href: 'noibo.html', can: 'quan_tri', muc: '' },
   { bt: '📝', ten: 'Đăng ký lao động', mt: 'Ghi người sẽ đến nhà máy', href: 'index.html', can: '', muc: '' },
   { bt: '📷', ten: 'Quét thẻ đón', mt: 'Đánh dấu người đã đến', href: 'doncong.html', can: '', muc: '' }
@@ -297,9 +322,13 @@ var NHOM_O = [
 /** Ô nào hiện. `tk` null = chưa biết quyền (máy chủ chưa trả lời) → hiện hết, trang con tự kiểm quyền.
  *  `xemDlt` undefined = máy chủ cũ không nói → hiện, trang dữ liệu tuyển tự từ chối nếu chưa được duyệt. */
 function oDuocXem(tk, xemDlt) {
+  // 3.64 (khung Văn phòng): ô cần đăng nhập là việc phòng Vận hành — Hành chính, Kế toán, đối tác, phòng gõ lạ ('') chỉ còn ô ai
+  // cũng dùng. Quản trị thấy hết. Máy chủ cũ không gửi `phong` → coi là Vận hành như trước.
+  var vanHanh = !tk || tk.la_quan_tri || tk.phong === undefined || tk.phong === 'van_hanh';
   return O_VIEC.filter(function (o) {
-    if (o.can === 'quan_tri') return !!(tk && tk.la_quan_tri);   // chưa rõ quyền thì chưa hiện — ô này không phải việc của đa số
+    if (o.can === 'quan_tri') return !!(tk && (tk.la_quan_tri || tk.phong === 'ke_toan'));   // chưa rõ quyền thì chưa hiện
     if (!o.can || !tk) return true;
+    if (!vanHanh) return false;
     if (o.can === 'phan_cong') return !!tk.phan_cong_duoc;
     if (o.can === 'du_lieu_tuyen') return xemDlt !== false;
     return true;
@@ -414,24 +443,27 @@ function baoLoi(t) { $('dn_loi').textContent = t; $('dn_loi').classList.remove('
 
 // Đăng nhập tay cũng chỉ MỘT lượt: máy chủ trả kèm gói (cờ `goi`). Máy chủ cũ bỏ qua cờ → vẫn vào được, ô theo quyền.
 $('nut_dn').addEventListener('click', function () {
-  var cccd = ($('dn_cccd').value || '').replace(/\D/g, '');
+  // 3.64: một ô "Tên đăng nhập hoặc số căn cước" — gõ toàn số thì là số căn cước, phải đủ 12 số như trước
+  var vao = ($('dn_cccd').value || '').trim();
+  var laSo = /^[\d\s.]*$/.test(vao);
+  var cccd = laSo ? vao.replace(/\D/g, '') : '';
   var mk = $('dn_mk').value || '';
   // 3.44: soát HẾT một lượt, báo ngay dưới ô sai (trước dừng ở lỗi đầu, báo chung một khung)
   xoaLoiO('dn_cccd'); xoaLoiO('mk_o'); $('dn_loi').classList.add('an');
   var sai = false;
-  if (cccd.length !== 12) {
-    baoLoiO('dn_cccd', cccd.length ? 'Số căn cước đang có ' + cccd.length + ' số, cần đúng 12' : 'Chưa gõ số căn cước — 12 số trên thẻ');
-    sai = true;
-  }
+  if (!vao) { baoLoiO('dn_cccd', 'Chưa gõ tên đăng nhập (hoặc số căn cước 12 số trên thẻ)'); sai = true; }
+  else if (laSo && cccd.length !== 12) { baoLoiO('dn_cccd', 'Số căn cước đang có ' + cccd.length + ' số, cần đúng 12'); sai = true; }
   if (!mk) { baoLoiO('mk_o', 'Chưa gõ mật khẩu'); sai = true; }
   if (sai) return;
   var n = this; n.disabled = true; n.textContent = 'Đang kiểm tra…';
   var t0 = Date.now();
-  goiAPI({ token: TOKEN_API, hanh_dong: 'dang_nhap', so_cccd: cccd, mat_khau: mk, goi: true, phien: '-' })
+  var gui = { token: TOKEN_API, hanh_dong: 'dang_nhap', mat_khau: mk, goi: true, phien: '-' };
+  if (laSo) gui.so_cccd = cccd; else gui.ten_dang_nhap = vao;
+  goiAPI(gui)
     .then(function (kq) {
       if (!(kq && kq.ok)) {
         // Máy chủ cố ý không nói sai ô nào (chống dò mật khẩu) → câu đứng dưới ô mật khẩu, nói gõ lại cả hai.
-        if (kq && kq.ma === 'SAI_DANG_NHAP') baoLoiO('mk_o', 'Sai số căn cước hoặc mật khẩu — gõ lại cả hai cho chắc.');
+        if (kq && kq.ma === 'SAI_DANG_NHAP') baoLoiO('mk_o', 'Sai tên đăng nhập hoặc mật khẩu — gõ lại cả hai cho chắc.');
         else baoLoi((kq && kq.loi) || 'Không đăng nhập được.');
         return;
       }
@@ -458,7 +490,7 @@ function hienMatKhau(bat) {
 $('nut_hien_mk').addEventListener('click', function () { hienMatKhau($('dn_mk').type === 'password'); });
 
 $('nut_thoat').addEventListener('click', function () {
-  hopHoi({ tieu: 'Đăng xuất khỏi máy này?', noi: 'Số đã lưu trong máy cũng bị xoá. Lần sau phải gõ lại số căn cước + mật khẩu.',
+  hopHoi({ tieu: 'Đăng xuất khỏi máy này?', noi: 'Số đã lưu trong máy cũng bị xoá. Lần sau phải gõ lại tên đăng nhập (hoặc số căn cước) + mật khẩu.',
            dong: 'Đăng xuất', thoi: 'Thôi' }).then(function (ok) {
     if (!ok) return;
     xoaHetBanNho_();

@@ -1,0 +1,88 @@
+/* ============================================================
+ * KHUNG VĂN PHÒNG (bản 3.64) — thanh menu phòng ban + mục công khai. CHỈ trangchu.html dùng (cùng vanphong.js).
+ * Mọi lớp mang tiền tố vp- để không đụng lớp cũ của trang chủ (.nut, .o-viec, .luoi, .ke…). Màu lấy biến :root của trang.
+ * Màn hẹp ≤ 860 px: không thanh menu, màn đầu là ô việc, trong việc có "◀ Trang chủ" (Dương chốt 05/11/2026, mục 0.18).
+ * ============================================================ */
+
+/* ---- Thanh trên cùng ---- */
+.vp-thanh{position:sticky;top:0;z-index:30;background:var(--the);border-bottom:1px solid var(--vien);box-shadow:0 1px 3px rgba(0,0,0,.05)}
+.vp-thanh-trong{display:flex;align-items:center;gap:6px;max-width:1440px;margin:0 auto;padding:0 12px;min-height:60px}
+.vp-logo{display:flex;align-items:center;gap:8px;min-height:44px;padding:6px 4px;margin-right:8px;color:var(--chu);
+  text-decoration:none;font-weight:700;white-space:nowrap}
+.vp-cham{width:32px;height:32px;border-radius:8px;background:var(--xanh);color:#fff;display:flex;align-items:center;
+  justify-content:center;font-size:15px;flex:none}
+.vp-logo small{display:block;font-weight:500;color:var(--mo);font-size:15px;line-height:1.15}
+.vp-menu{display:flex;flex-wrap:wrap;gap:2px;flex:1}
+.vp-dm{position:relative}
+.vp-dm>button{display:flex;align-items:center;gap:6px;min-height:44px;padding:6px 12px;border:0;border-radius:8px;background:none;
+  font:inherit;font-weight:600;color:var(--chu);cursor:pointer;white-space:nowrap}
+.vp-dm>button:hover,.vp-dm.vp-mo>button{background:var(--xam-nut)}
+.vp-dm.vp-dang>button{background:var(--xanh-nhat);color:#157a41}
+.vp-mui{font-size:15px;color:var(--mo)}
+.vp-tha{display:none;position:absolute;top:calc(100% + 4px);left:0;min-width:330px;background:var(--the);border:1px solid var(--vien);
+  border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:6px;z-index:31}
+.vp-dm.vp-mo .vp-tha{display:block}
+.vp-viec{display:flex;gap:10px;align-items:flex-start;min-height:48px;padding:9px 10px;border-radius:8px;color:var(--chu);text-decoration:none}
+.vp-viec:hover{background:var(--xam-nut)}
+.vp-viec.vp-dang{background:var(--xanh-nhat)}
+.vp-viec .vp-bt{font-size:20px;width:26px;text-align:center;flex:none}
+.vp-viec b{display:block;font-weight:600}
+.vp-viec .vp-mt{display:block;font-size:15px;color:var(--mo)}
+.vp-tk{display:flex;align-items:center;min-height:44px;margin-left:auto;padding:8px 14px;border:1px solid #c9d0d8;border-radius:10px;
+  background:#fff;color:var(--chu);font-weight:700;text-decoration:none;white-space:nowrap;max-width:46vw;overflow:hidden;
+  text-overflow:ellipsis}
+.vp-tk.vp-dang{background:var(--xanh-nhat);border-color:#bfe0c9}
+.vp-ve{display:none;align-items:center;min-height:44px;padding:8px 14px;border:1px solid #c9d0d8;border-radius:10px;
+  background:#fff;color:var(--chu);font-weight:700;text-decoration:none;white-space:nowrap}
+
+/* ---- Vùng dữ liệu ---- */
+.vp-trang{max-width:1100px;margin:0 auto;padding:16px 16px 28px}
+.vp-trang h1{font-size:21px;margin:2px 0 10px;line-height:1.3}
+.vp-duong{font-size:15px;color:var(--mo)}
+.vp-goi-y{background:var(--xanh-nhat);border-left:4px solid var(--xanh);border-radius:8px;padding:9px 12px;margin:0 0 14px;
+  font-size:15.5px;line-height:1.5}
+.vp-nhom{margin:0 0 18px}
+.vp-nhom-ten{font-weight:700;font-size:16.5px;margin:0 0 2px}
+.vp-nhom-ghi{font-size:15px;color:var(--mo);margin:0 0 8px;line-height:1.5}
+.vp-luoi{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px}
+.vp-o{display:flex;flex-direction:column;min-height:104px;padding:13px 14px;border-radius:14px;background:var(--the);
+  border:1px solid var(--vien);color:var(--chu);text-decoration:none}
+.vp-o:hover{background:var(--xanh-nhat)}
+.vp-o .vp-bt{font-size:26px;line-height:1;margin-bottom:6px}
+.vp-o b{font-size:16px;line-height:1.3}
+.vp-o .vp-mt{font-size:15px;color:var(--mo);margin-top:3px;line-height:1.4}
+.vp-nut-chinh{display:block;max-width:420px;min-height:52px;margin:14px 0 0;padding:14px;border-radius:12px;background:var(--xanh);
+  color:#fff;font-weight:700;text-align:center;text-decoration:none}
+.vp-nut{display:inline-block;min-height:44px;margin:0 0 12px;padding:10px 16px;border:1px solid #c9d0d8;border-radius:10px;
+  background:#fff;color:var(--chu);font:inherit;font-weight:600;cursor:pointer}
+.vp-the{background:var(--the);border:1px solid var(--vien);border-radius:12px;padding:14px 16px;margin:0 0 12px}
+.vp-ghi-mo{color:var(--mo)}
+.vp-cho{padding:10px 12px;border-radius:10px;background:#fff8e6;border:1px solid #f0dda0;color:#6b4e00;font-size:15px;line-height:1.5}
+.vp-loi{padding:10px 12px;margin:0 0 10px;border-radius:10px;background:var(--do-nhat);color:#8a1c13;font-size:15px;line-height:1.5}
+
+/* Thông tin công ty: tên gọi | giá trị */
+.vp-tt{margin:0 0 12px}
+.vp-tt-dong{display:grid;grid-template-columns:minmax(150px,240px) 1fr;gap:2px 16px;padding:10px 0;border-bottom:1px solid var(--vien)}
+.vp-tt-dong:last-child{border-bottom:0}
+.vp-tt dt{color:var(--mo);font-weight:600}
+.vp-tt dd{margin:0;word-break:break-word}
+/* Thông báo chung */
+.vp-tb-tieu{font-size:17px;font-weight:700;line-height:1.35}
+.vp-tb-phu{font-size:15px;color:var(--mo);margin-top:2px}
+.vp-tb-noi{margin-top:8px;white-space:pre-line;line-height:1.55;word-break:break-word}
+/* Nhà máy đang tuyển */
+.vp-nm-ds{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0 16px}
+.vp-nm-ds li{padding:9px 0;border-bottom:1px solid var(--vien)}
+
+@media (max-width: 860px){
+  .vp-menu{display:none}
+  .vp-logo small{display:none}
+  body.vp-trong-viec .vp-ve{display:flex}
+  body.vp-trong-viec .vp-logo{display:none}
+  .vp-thanh-trong{padding:0 10px;gap:8px}
+  .vp-trang{padding:12px 16px 24px}
+  .vp-trang h1{font-size:19px}
+  .vp-luoi{grid-template-columns:1fr 1fr}
+  .vp-o{padding:12px}
+  .vp-tt-dong{grid-template-columns:1fr}
+}
