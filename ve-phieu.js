@@ -67,5 +67,57 @@
     return h + '<b>Từng ngày đi làm</b><ul class="ngay-lam">' + dong + '</ul></div>';
   }
 
-  goc.VePhieu = { phieuLuong: phieuLuong, bangCong: bangCong, tien: tien, e: e };
+  /**
+   * Hạng mục phản hồi của công nhân — hạng mục quyết định ai nhận (đặc tả mục 0c, Dương chốt 06/11/2026); `vai` = chữ công nhân thấy
+   * thay cho tên người. Bản GIỐNG HỆT HANG_MUC_PH ở Code.gs — bộ kiểm so hai bên.
+   */
+  var HANG_MUC = {
+    cong: { ten: '🕒 Bảng công sai', vai: 'quản lý công ty' },
+    luong: { ten: '💵 Phiếu lương sai', vai: 'quản lý công ty' },
+    nha_o: { ten: '🏠 Nhà ở, đưa đón', vai: 'quản lý công ty' },
+    trong_xuong: { ten: '🏭 Trong xưởng, công việc', vai: 'quản lý công ty' },
+    phan_anh_ql: { ten: '🙊 Phản ánh về quản lý công ty', vai: 'trưởng nhóm' },
+    phan_anh_tn: { ten: '🙊 Phản ánh về trưởng nhóm', vai: 'giám đốc' },
+    khac: { ten: '✍️ Khác', vai: 'quản lý công ty' }
+  };
+
+  /**
+   * Những gì công nhân chọn được khi báo sai, đúng thứ tự trên phiếu: [{ ma: mã gửi máy chủ, ten: nhãn, them: html số giờ / số tiền, nhom }].
+   * `nhom` = mục thu gọn (tuần / I / II / III), không có thì đứng riêng một dòng. `ma` + `ten` giống hệt mucChonPH_ ở Code.gs — bộ kiểm so
+   * hai bên. Hạng mục khác → [] (không phải chọn).
+   */
+  function mucChon(hm, n) {
+    var ra = [];
+    if (hm === 'cong') {
+      var c = n.cong;
+      if (c.co_chi_tiet) {
+        c.ngay.forEach(function (ngay, j) {
+          if (!ngay) return;
+          var o = c.ca.filter(function (x) { return x.gio[j] != null && x.gio[j] !== 0; })
+            .map(function (x) { return e(x.ten) + ' <b>' + e(gio(x.gio[j])) + '</b>'; });
+          ra.push({ ma: ngay, ten: ngayNgan(ngay), them: o.length ? o.join(' · ') : 'Không có giờ' });
+        });
+        ra.forEach(function (x, i) {                  // 7 ngày một tuần, tính từ đầu kỳ
+          var dau = i - i % 7, cuoi = Math.min(dau + 6, ra.length - 1);
+          x.nhom = 'Tuần ' + (dau / 7 + 1) + ' · ' + ra[dau].ten.substring(3) + ' → ' + ra[cuoi].ten.substring(3);
+        });
+      } else {
+        c.ca.forEach(function (x) {
+          ra.push({ ma: 'CA:' + x.ma, ten: 'Tổng giờ ' + x.ten, them: x.tong ? '<b>' + gio(x.tong) + '</b> giờ' : 'Không có giờ' });
+        });
+      }
+    } else if (hm === 'luong') {
+      var l = n.luong;
+      [['I', 'I. Lương', l.luong], ['II', 'II. Các khoản phụ cấp', l.phu_cap], ['III', 'III. Các khoản khấu trừ', l.khau_tru]].forEach(function (nh) {
+        nh[2].forEach(function (x, i) {
+          var ma = nh[0] + '.' + (i + 1);
+          ra.push({ ma: ma, ten: ma + ' ' + x.ten, them: x.tien == null ? '–' : '<b>' + tien(x.tien) + '</b> đ', nhom: nh[1] });
+        });
+      });
+      ra.push({ ma: 'IV', ten: 'IV Thực lĩnh', them: '<b>' + tien(l.thuc_linh) + '</b> đ' });
+    }
+    return ra;
+  }
+
+  goc.VePhieu = { phieuLuong: phieuLuong, bangCong: bangCong, tien: tien, e: e, HANG_MUC: HANG_MUC, mucChon: mucChon };
 })(typeof window !== 'undefined' ? window : globalThis);

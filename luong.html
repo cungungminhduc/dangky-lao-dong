@@ -14,6 +14,10 @@
   Phải chạy trong trình duyệt của Zalo: KHÔNG nạp ngoai-zalo.js như trang hệ tuyển dụng; tránh CSS mới (inset, gap của flex).
   Ngày phát lương đông người: Google trả trang lỗi → tự thử lại 3 lần, cách nhau ngẫu nhiên 2–8 giây; vẫn hỏng thì nói thẳng,
   KHÔNG BAO GIỜ nói "sai thông tin" khi chưa tra được.
+  1.3 (Chặng 4 vé 12): dưới phiếu lương / bảng công đã công bố có khung "💬 Báo sai" — gửi bằng VÉ TRA máy chủ trả ở lượt tra
+  (giữ trong bộ nhớ, sống 30 phút). Máy chủ cũ không trả vé → không hiện khung. Việc GHI không tự thử lại (tránh gửi trùng).
+  1.4 (vé 12b, đặc tả mục 0c): một nút "💬 Báo sai / thắc mắc" → chọn hạng mục (hạng mục quyết định ai nhận) → 🕒 chọn ngày / 💵 tích mục →
+  ô chữ. Thêm khối "✍️ Thắc mắc khác" + ghi chú 📸 chụp màn hình. Máy chủ trước 1.4 (ph không có hạng mục khac) → ẩn phần báo sai.
 -->
 <style>
   :root { --nen:#f1f4f8; --the:#fff; --chu:#1a202c; --mo:#4a5568; --vien:#cbd5e0; --chinh:#1d4ed8; --xanh:#15803d;
@@ -68,6 +72,42 @@
   .ngay-lam li { display: -webkit-box; display: flex; padding: 6px 0; border-bottom: 1px solid #edf2f7; font-size: .95rem; }
   .ngay-lam .ngay { min-width: 76px; margin-right: 10px; color: var(--mo); }
   .cong .bao { background: #f8fafc; border: 1px dashed var(--vien); color: var(--mo); }
+  /* 1.3 — báo sai ngay dưới phiếu lương / bảng công */
+  .bao.xanh { background: #f0fdf4; border: 1px solid #bbf7d0; color: var(--xanh); }
+  textarea { width: 100%; min-height: 96px; padding: 10px 12px; font-size: 1.05rem; font-family: inherit; border: 1.5px solid var(--vien);
+             border-radius: 8px; }
+  .ph { border-top: 2px solid #e2e8f0; margin-top: 14px; padding-top: 12px; }
+  .ph h3 { font-size: 1rem; margin-bottom: 6px; }
+  .ph .tt { font-weight: 700; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--vien); background: #f8fafc; }
+  .ph .tt.gui, .ph .tt.nhan { background: #eff6ff; border-color: #bfdbfe; }
+  .ph .tt.xu_ly { background: var(--vang); border-color: #fde68a; }
+  .ph .tt.xong { background: #f0fdf4; border-color: #bbf7d0; color: var(--xanh); }
+  .tin { border-left: 4px solid var(--vien); padding: 6px 10px; margin-top: 8px; background: #fafafa; }
+  .tin.ql { border-left-color: var(--xanh); background: #f0fdf4; }
+  .tin .ai-gui { font-size: .85rem; color: var(--mo); }
+  .tin p { white-space: pre-wrap; word-wrap: break-word; }
+  .dem { text-align: right; font-size: .85rem; color: var(--mo); }
+  .het { background: #f8fafc; border: 1px dashed var(--vien); border-radius: 8px; padding: 10px 12px; color: var(--mo); margin-top: 10px; }
+  .hai-nut button { width: 100%; margin-top: 8px; }
+  /* 1.4 — ghi chú chụp màn hình + biểu mẫu chọn hạng mục (không dùng gap của flex: trình duyệt Zalo đời cũ) */
+  .chup { background: #fff8e6; border: 1px dashed #e0b44a; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: .95rem; }
+  .viec + .viec, .viec + .form, .viec + button { margin-top: 14px; }
+  .buoc { font-weight: 700; margin: 14px 0 6px; }
+  .buoc span { font-weight: 400; color: var(--mo); font-size: .92rem; }
+  .cac-hm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-gap: 8px; }
+  .cac-hm button { width: 100%; padding: 8px 10px; font-size: .95rem; line-height: 1.25; text-align: left; color: var(--chu); border-color: var(--vien); }
+  .cac-hm button.chon { background: var(--chinh); border-color: var(--chinh); color: #fff; }
+  .toi { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 10px; font-weight: 600; margin: 10px 0; }
+  .o-chon { display: -webkit-box; display: flex; align-items: center; width: 100%; margin-top: 6px; padding: 8px 10px; text-align: left;
+            font-size: .95rem; font-weight: 400; color: var(--chu); border-color: var(--vien); }
+  .o-chon .o { flex: 0 0 26px; width: 26px; height: 26px; line-height: 22px; margin-right: 10px; border: 2px solid var(--vien); border-radius: 6px;
+               text-align: center; font-weight: 700; }
+  .o-chon.chon { background: #eff6ff; border-color: var(--chinh); }
+  .o-chon.chon .o { background: var(--chinh); border-color: var(--chinh); color: #fff; }
+  details { border: 1px solid var(--vien); border-radius: 8px; margin-top: 6px; padding: 0 8px; }
+  details[open] { padding-bottom: 8px; }
+  summary { min-height: 48px; padding: 12px 4px; font-weight: 600; cursor: pointer; }
+  .da-chon { font-size: .92rem; margin: 2px 0; }
   @media print {
     body { background: #fff; padding: 0; }
     .khong-in { display: none !important; }
@@ -103,7 +143,7 @@
     </div>
     <div class="the khong-in">
       <div class="chi" style="margin-bottom:14px">👉 Chọn tháng và công ty — phiếu lương và bảng công hiện ngay bên dưới.
-        Thấy sai thì báo quản lý của công ty đó.</div>
+        Thấy sai thì bấm <b>💬 Báo sai / thắc mắc</b> ngay dưới phần đó.</div>
       <div class="nhom-chon"><h2>🗓 Tháng</h2><div id="dsKy"></div></div>
       <div class="nhom-chon"><h2>🏭 Công ty</h2><div id="dsCT"></div></div>
     </div>
@@ -114,6 +154,11 @@
     <div class="the khong-in">
       <h2>🕒 Bảng công</h2>
       <div id="khungCong"></div>
+    </div>
+    <div class="the khong-in an" id="theKhac">
+      <h2>✍️ Thắc mắc khác</h2>
+      <p class="phu">Nhà ở, xe đưa đón, chuyện trong xưởng, phản ánh về quản lý…</p>
+      <div id="khungKhac"></div>
     </div>
   </section>
 </div>
@@ -196,9 +241,11 @@ function xem() {
 // ---------------- KẾT QUẢ ----------------
 function hienKetQua(r) {
   kq = r; chon = { ky: r.muc[0].ky, i: 0 };
+  var giu = moLaiChuGiu();
   $('mTra').classList.add('an'); $('mKetQua').classList.remove('an');
   ve();
   window.scrollTo(0, 0);
+  if (giu) { var o = $('form'); if (o) o.scrollIntoView(); }
 }
 function chonKy(ky) {
   chon.ky = ky;
@@ -231,12 +278,224 @@ function ve() {
   $('kqTen').textContent = m.ten_hien;
   var chua = '<p class="chua">⏳ <b>Chưa công bố.</b> Kế toán công bố xong mới xem được — quay lại sau.</p>';
   $('khungLuong').innerHTML = !m.luong ? chua :
-    '<p class="phu khong-in">Cập nhật lúc ' + e(lucDep(m.luong_luc)) + '</p>' +
+    CHUP + '<p class="phu khong-in">Cập nhật lúc ' + e(lucDep(m.luong_luc)) + '</p>' +
     '<button class="rong khong-in" onclick="inPhieu()">🖨 In / Lưu PDF phiếu này</button>' +
     '<div id="inBao" class="khong-in"></div>' +
-    VePhieu.phieuLuong({ ten_hien: m.ten_hien, ten_nha_may: m.ten_nha_may, luong: m.luong }, { cong_ty: m.ten_ct, ky: m.ky });
+    VePhieu.phieuLuong({ ten_hien: m.ten_hien, ten_nha_may: m.ten_nha_may, luong: m.luong }, { cong_ty: m.ten_ct, ky: m.ky }) +
+    hopPH(chon.i, 'luong');
   $('khungCong').innerHTML = !m.cong ? chua :
-    '<p class="phu">Cập nhật lúc ' + e(lucDep(m.cong_luc)) + '</p>' + VePhieu.bangCong({ cong: m.cong });
+    CHUP + '<p class="phu">Cập nhật lúc ' + e(lucDep(m.cong_luc)) + '</p>' + VePhieu.bangCong({ cong: m.cong }) + hopPH(chon.i, 'cong');
+  var khac = hopPH(chon.i, 'khac');
+  $('khungKhac').innerHTML = khac;
+  $('theKhac').classList.toggle('an', !khac);
+}
+
+// ---------------- BÁO SAI / THẮC MẮC (1.4 — vé 12b) ----------------
+var HM = VePhieu.HANG_MUC;
+var HM_KHAC = Object.keys(HM).filter(function (k) { return k !== 'cong' && k !== 'luong'; });
+var CHUP = '<div class="chup khong-in">📸 Chụp màn hình phần này để lần sau xem lại trong máy, khỏi phải tra lại — ngày đông người tra, mạng rất chậm.</div>';
+var ph = { form: null, bao: {} };                     // form = biểu mẫu đang mở (mỗi lúc một cái) · bao theo khoá 'chỉ số lựa chọn|hạng mục'
+var nhapCho = null;                                   // biểu mẫu gõ dở khi vé tra hết hạn — giữ tới lúc tra lại, rời trang là xoá
+var TEN_PH = { luong: 'phiếu lương', cong: 'bảng công' };
+function ngayDep(s) { return s ? s.substring(8, 10) + '/' + s.substring(5, 7) : ''; }
+function lucNgan(s) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(s || ''); return m ? m[4] + ' ngày ' + m[3] + '/' + m[2] : String(s || ''); }
+function hoaDau(s) { return s.charAt(0).toUpperCase() + s.substring(1); }
+function ttPH(tt, vai) {
+  return { gui: '📨 Đã gửi — chờ ' + vai + ' xem', nhan: '🙋 ' + hoaDau(vai) + ' đã nhận', xu_ly: '🔧 ' + hoaDau(vai) + ' đang xử lý',
+           xong: '✅ ' + hoaDau(vai) + ' đã trả lời' }[tt];
+}
+function toiPH(hm, m) {
+  if (hm === 'phan_anh_ql') return 'Trưởng nhóm phụ trách ' + m.ma_ct + ' (quản lý công ty KHÔNG thấy phiếu này)';
+  if (hm === 'phan_anh_tn') return 'Giám đốc (trưởng nhóm KHÔNG thấy phiếu này)';
+  return 'Quản lý công ty ' + m.ma_ct;
+}
+/** Phần báo sai dưới phiếu lương (noi = luong) / bảng công (cong) / trong khối thắc mắc khác (khac). */
+function hopPH(i, noi) {
+  var m = kq.muc[i];
+  if (!kq.ve || !m.ph || !m.ph.khac) return '';       // máy chủ trước 1.4 / đọc phản hồi hỏng
+  var moTai = ph.form && !ph.form.them && ph.form.i === i && ph.form.noi === noi;
+  var mo = 'moForm(' + i + ',\'' + noi + '\')', h = '<div class="ph khong-in">';
+  if (noi === 'khac') {
+    HM_KHAC.forEach(function (hm) { if (m.ph[hm].tt) h += viecPH(i, hm); });
+    return h + (moTai ? veForm(m) : '<button class="rong" onclick="' + mo + '">💬 Gửi thắc mắc khác</button>') + '</div>';
+  }
+  var p = m.ph[noi], k = i + '|' + noi;
+  if (p.tt) h += viecPH(i, noi);
+  else {
+    h += '<div id="viec' + k + '">' + (p.mo ? '' : '<div class="het">⌛ Đã hết hạn báo sai ' + TEN_PH[noi] + ' (hạn ' + ngayDep(p.han) + '). Cần hỏi thêm thì gặp quản lý công ty.</div>') +
+         (ph.bao[k] || '') + '</div>';
+  }
+  if (moTai) h += veForm(m);
+  else if (!p.tt && p.mo) {
+    h += '<button class="rong" onclick="' + mo + '">💬 Báo sai / thắc mắc</button>' +
+         (p.han ? '<p class="ghi">Thấy sai thì báo — gửi được đến <b>hết ngày ' + ngayDep(p.han) + '</b>. Quản lý công ty trả lời ngay tại đây.</p>' : '');
+  }
+  return h + '</div>';
+}
+/** Một việc đã gửi: trạng thái, các tin, gửi thêm. */
+function viecPH(i, hm) {
+  var m = kq.muc[i], p = m.ph[hm], k = i + '|' + hm, vai = HM[hm].vai, f = ph.form;
+  var h = '<div class="viec" id="viec' + k + '"><h3>' + HM[hm].ten + '</h3><div class="tt ' + p.tt + '">' + ttPH(p.tt, p.giu === 'ke_toan' ? 'kế toán' : vai) + '</div>';
+  p.tin.forEach(function (t) {
+    h += '<div class="tin' + (t.ai === 'ql' ? ' ql' : '') + '"><div class="ai-gui">' + (t.ai === 'ql' ? '💼 ' + (t.vai === 'ke_toan' ? 'Kế toán' : hoaDau(vai)) : '👷 Anh/chị') +
+         ' · ' + e(lucNgan(t.luc)) + '</div>' + (t.chon ? '<div class="da-chon">Đã chọn: <b>' + t.chon.map(function (x) { return e(x); }).join(' · ') + '</b></div>' : '') +
+         '<p>' + e(t.nd) + '</p></div>';
+  });
+  if (!p.mo) {
+    h += '<div class="het">' + (p.het === 'DU_TIN' ? 'Đã gửi đủ 10 tin — chờ ' + vai + ' trả lời.'
+         : '⌛ Đã hết hạn gửi thêm (hạn ' + ngayDep(p.han_them) + '). Cần hỏi thêm thì gặp ' + vai + '.') + '</div>';
+  } else if (f && f.them && f.i === i && f.hm === hm) h += veForm(m);
+  else {
+    h += '<div class="hai-nut"><button onclick="moThem(' + i + ',\'' + hm + '\')">✍️ Gửi thêm</button></div>' +
+         (p.tt === 'xong' && p.han_them ? '<p class="ghi">Chưa đúng thì gửi thêm được đến hết ngày ' + ngayDep(p.han_them) + '.</p>'
+          : '<p class="ghi">Nhớ thêm gì thì bấm Gửi thêm — vào cùng việc này, không phải gửi lại từ đầu.</p>');
+  }
+  return h + (ph.bao[k] || '') + '</div>';
+}
+function loiForm(id, cau) { return cau ? '<div class="loi-o" id="' + id + '">⚠ ' + e(cau) + '</div>' : ''; }
+/** Biểu mẫu: chọn hạng mục → 👉 tới ai → chọn ngày / mục (công, lương) → ô chữ. Gửi thêm vào việc đã có thì chỉ có ô chữ. */
+function veForm(m) {
+  var f = ph.form, hm = f.hm, tat = f.dang ? ' disabled' : '', nhan = 'Gửi thêm cho ' + (hm ? HM[hm].vai : '') + ' (tối đa 500 chữ)';
+  var h = '<div class="form" id="form">';
+  if (!f.them) {
+    h += '<h3>💬 Báo sai / thắc mắc</h3><p class="buoc">1️⃣ Chọn hạng mục</p><div class="cac-hm">';
+    Object.keys(HM).forEach(function (k) {
+      if (!m.ph[k] || !m.ph[k].mo) return;            // phần chưa công bố / đã hết hạn / đủ tin
+      var la = hm === k;
+      h += '<button class="' + (la ? 'chon' : '') + '" aria-pressed="' + la + '"' + tat + ' onclick="chonHM(\'' + k + '\')">' + (la ? '✔ ' : '') + HM[k].ten + '</button>';
+    });
+    h += '</div>' + loiForm('loiHm', f.loi.hm);
+    if (hm) {
+      var coChon = hm === 'cong' || hm === 'luong';
+      h += '<div class="toi">👉 Phiếu này tới: ' + e(toiPH(hm, m)) + '</div>';
+      if (m.ph[hm] && m.ph[hm].tt) h += '<p class="ghi">Anh/chị đã có phiếu hạng mục này — tin này vào cùng phiếu đó.</p>';
+      if (coChon) h += veChon(f, m, tat) + loiForm('loiChon', f.loi.chon);
+      nhan = (coChon ? '3️⃣ ' : '2️⃣ ') + (hm === 'cong' ? 'Sai ở đâu?' : 'Anh/chị muốn nói gì?') + ' (tối đa 500 chữ)';
+    }
+  }
+  if (hm) {
+    h += '<label for="goND">' + nhan + '</label><textarea id="goND" maxlength="500" oninput="goChu(this)" placeholder="' +
+         (hm === 'cong' ? 'Ví dụ: hôm đó tôi đi ca ngày nhưng bảng công không có' : 'Viết ngắn gọn, rõ việc') + '">' + e(f.nd) + '</textarea>' +
+         '<div class="dem" id="demND">' + f.nd.length + ' / 500 chữ</div>' + loiForm('loiNd', f.loi.nd);
+  }
+  return h + (f.bao || '') + '<div class="hai-nut"><button class="chinh"' + tat + ' onclick="guiPH()">' + (f.dang ? '⏳ Đang gửi… (vài giây)' : '📤 Gửi') + '</button>' +
+         '<button' + tat + ' onclick="dongForm()">Thôi</button></div></div>';
+}
+/** Bước chọn: danh sách dài (ngày theo tuần, phiếu lương theo mục I / II / III) thu gọn, mỗi lúc mở một mục; mục không có nhóm đứng riêng một dòng. */
+function veChon(f, m, tat) {
+  var ds = VePhieu.mucChon(f.hm, m), thu = 0;
+  function o(x) {
+    var la = f.chon.indexOf(x.ma) >= 0;
+    return '<button class="o-chon' + (la ? ' chon' : '') + '" aria-pressed="' + la + '" data-ma="' + e(x.ma) + '"' + tat + ' onclick="batChon(this)"><span class="o">' +
+           (la ? '✓' : '') + '</span><span>' + e(x.ten) + ' · ' + x.them + '</span></button>';
+  }
+  var h = '<p class="buoc">2️⃣ ' + (f.hm === 'luong' ? 'Tích các mục thấy sai trên phiếu lương <span>(chọn nhiều mục được)</span>'
+        : m.cong.co_chi_tiet ? 'Chạm vào ngày bị sai <span>(chọn nhiều ngày được; ngày không có giờ cũng chọn được)</span>'
+        : 'Chạm vào dòng giờ bị sai <span>(chọn nhiều dòng được)</span>') + '</p>';
+  for (var i = 0; i < ds.length;) {
+    var x = ds[i];
+    if (!x.nhom) { h += o(x); i++; continue; }
+    var t = ds.filter(function (y) { return y.nhom === x.nhom; }), so = t.filter(function (y) { return f.chon.indexOf(y.ma) >= 0; }).length;
+    h += '<details data-nhom="' + thu + '"' + (f.nhomMo === thu ? ' open' : '') + ' ontoggle="moNhom(this)"><summary>' + e(x.nhom) +
+         (so ? ' · đã chọn ' + so : '') + '</summary>' + t.map(o).join('') + '</details>';
+    thu++; i += t.length;
+  }
+  return h;
+}
+function moForm(i, noi) {
+  if (ph.form && ph.form.dang) return;
+  ph.bao = {};
+  ph.form = { i: i, noi: noi, hm: noi === 'khac' ? '' : noi, them: false, chon: [], nhomMo: 0, nd: ph.form ? ph.form.nd : '', loi: {}, bao: '' };
+  ve();
+  $('form').scrollIntoView();
+}
+function moThem(i, hm) {
+  if (ph.form && ph.form.dang) return;
+  ph.bao = {};
+  ph.form = { i: i, noi: '', hm: hm, them: true, chon: [], nhomMo: 0, nd: ph.form ? ph.form.nd : '', loi: {}, bao: '' };
+  ve();
+  $('goND').focus();
+}
+function dongForm() { ph.form = null; ve(); }
+function chonHM(k) { var f = ph.form; f.hm = k; f.chon = []; f.nhomMo = 0; f.loi = {}; ve(); }
+function batChon(nut) {
+  var f = ph.form, ma = nut.getAttribute('data-ma'), j = f.chon.indexOf(ma);
+  if (j < 0) f.chon.push(ma); else f.chon.splice(j, 1);
+  f.loi.chon = '';
+  ve();
+}
+/** Mở một mục thì mục đang mở tự thu; mục trên thu lại làm trang dịch nên cuộn mục vừa mở lên đầu màn. */
+function moNhom(d) {
+  var j = Number(d.getAttribute('data-nhom')), f = ph.form;
+  if (!f) return;
+  if (!d.open) { if (f.nhomMo === j) f.nhomMo = -1; return; }
+  f.nhomMo = j;
+  var ds = d.parentNode.querySelectorAll('details'), dong = false;
+  for (var x = 0; x < ds.length; x++) if (ds[x] !== d && ds[x].open) { ds[x].open = false; dong = true; }
+  if (dong) d.scrollIntoView();
+}
+function goChu(o) { ph.form.nd = o.value; $('demND').textContent = o.value.length + ' / 500 chữ'; }
+function guiPH() {
+  var f = ph.form, hm = f.hm, m = kq.muc[f.i], nd = f.nd.trim(), k = f.i + '|' + hm;
+  f.loi = {}; f.bao = '';
+  if (!hm) f.loi.hm = 'Chọn một hạng mục ở bước 1 — hạng mục quyết định ai sẽ giải quyết.';
+  else {
+    if (!f.them && !f.chon.length) {
+      if (hm === 'luong') f.loi.chon = 'Tích ít nhất một mục bị sai trên phiếu.';
+      else if (hm === 'cong') f.loi.chon = m.cong.co_chi_tiet ? 'Chạm vào ít nhất một ngày bị sai.' : 'Chạm vào ít nhất một dòng giờ bị sai.';
+    }
+    if (!nd) f.loi.nd = 'Viết vài chữ cho người xử lý biết sai thế nào.';
+  }
+  if (f.loi.hm || f.loi.chon || f.loi.nd) {
+    ve();
+    $(f.loi.hm ? 'loiHm' : f.loi.chon ? 'loiChon' : 'loiNd').scrollIntoView({ block: 'center' });
+    return;
+  }
+  f.dang = 1; ve();
+  var giu = kq, goiTin = { hanh_dong: 'ph_gui', ve: kq.ve, ma_ct: m.ma_ct, ky: m.ky, hs: m.hs, hang_muc: hm, noi_dung: nd };
+  if (f.chon.length) goiTin.chon = f.chon;
+  goi(goiTin).then(function (r) {
+    if (kq !== giu) return;                           // đã tra người khác / rời trang trong lúc chờ
+    f.dang = 0;
+    if (r.ok || r.ph) {                               // r.ph: hết hạn / đủ tin — vẽ lại đúng trạng thái máy chủ
+      m.ph[hm] = r.ph; ph.form = null;
+      ph.bao[k] = r.ok ? '<div class="bao xanh">✅ Đã gửi. ' + hoaDau(HM[hm].vai) + ' sẽ trả lời ngay tại đây — lần sau tra lại để xem.</div>'
+                       : '<div class="bao do">' + e(r.loi) + '</div>';
+      ve();
+      var o = $('viec' + k); if (o) o.scrollIntoView();
+      return;
+    }
+    if (r.ma === 'HET_VE') {
+      f.bao = '<div class="bao do">' + e(r.loi) + ' Chữ anh/chị vừa gõ được giữ lại.' +
+              '<div class="hai-nut"><button onclick="traLaiGiuChu()">🔄 Tra lại</button></div></div>';
+    } else if (r.ma === 'THIEU_CHON' || r.ma === 'SAI_CHON') f.loi.chon = r.loi;
+    else if (CO_THE_THU_LAI[r.ma] || r.ma === 'MAT_MANG') {
+      f.bao = '<div class="bao do">Chưa chắc đã gửi được vì mạng chập chờn hoặc máy chủ đang đông (chữ vẫn còn trong ô). ' +
+              'Đợi ít phút rồi bấm Gửi lại.</div>';
+    } else f.bao = '<div class="bao do">' + e(r.loi || 'Chưa gửi được — thử lại sau ít phút.') + '</div>';
+    ve();
+  });
+}
+function traLaiGiuChu() {
+  var f = ph.form, m = kq.muc[f.i], giu = { ma_ct: m.ma_ct, ky: m.ky, hs: m.hs, noi: f.noi, hm: f.hm, them: f.them, chon: f.chon, nd: f.nd };
+  xoaHet(); nhapCho = giu;
+  window.scrollTo(0, 0); $('soCccd').focus();
+  bao('traBao', 'cho', 'Gõ lại số căn cước và họ tên rồi bấm 🔍 Xem — chữ anh/chị gõ lúc nãy vẫn còn.');
+}
+/** Tra lại sau khi vé hết hạn: mở lại đúng biểu mẫu đang gõ dở. */
+function moLaiChuGiu() {
+  var g = nhapCho; nhapCho = null;
+  if (!g) return false;
+  for (var j = 0; j < kq.muc.length; j++) {
+    var m = kq.muc[j];
+    if (m.ma_ct === g.ma_ct && m.ky === g.ky && m.hs === g.hs) {
+      chon = { ky: m.ky, i: j };
+      ph.form = { i: j, noi: g.noi, hm: g.hm, them: g.them, chon: g.chon, nhomMo: 0, nd: g.nd, loi: {},
+                  bao: '<div class="bao cho">Chữ anh/chị gõ lúc nãy vẫn còn — bấm Gửi lần nữa.</div>' };
+      return true;
+    }
+  }
+  return false;
 }
 function inPhieu() {
   if (TRONG_ZALO) {
@@ -249,7 +508,9 @@ function inPhieu() {
 /** Tra người khác / rời trang: xoá mọi thứ đang hiện — điện thoại hay dùng chung. */
 function xoaHet() {
   kq = null; chon = { ky: '', i: -1 };
-  ['kqTen', 'dsKy', 'dsCT', 'khungLuong', 'khungCong', 'traBao'].forEach(function (id) { $(id).innerHTML = ''; });
+  ph = { form: null, bao: {} }; nhapCho = null;
+  ['kqTen', 'dsKy', 'dsCT', 'khungLuong', 'khungCong', 'khungKhac', 'traBao'].forEach(function (id) { $(id).innerHTML = ''; });
+  $('theKhac').classList.add('an');
   $('soCccd').value = ''; $('hoTen').value = '';
   xoaLoiO('loiCccd', 'soCccd'); xoaLoiO('loiTen', 'hoTen');
   $('mKetQua').classList.add('an'); $('mTra').classList.remove('an');

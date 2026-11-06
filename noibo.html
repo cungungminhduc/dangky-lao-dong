@@ -12,6 +12,7 @@
   1.1.1 (Dương chốt 31/10): nằm CHUNG kho GitHub với hệ tuyển dụng, vào qua ô Kế toán ở Trang chủ; máy chủ, Sheet, tài khoản vẫn riêng.
   Tệp cấu hình tên cau-hinh-luong.js — đừng đổi lại cau-hinh.js, tải lên là đè tệp hệ tuyển dụng.
   1.2.1 (Dương chốt 04/11): lưới công ty THU GỌN — mỗi công ty một dòng + tóm tắt, bấm mới mở các ô tháng, mỗi lúc một công ty, giữ ô tìm.
+  1.4 (vé 13): mục 💬 Phản hồi công nhân — quản lý + trưởng nhóm vào thẳng mục này, kế toán + quản trị có thêm nút trên menu. Phiếu nào ai thấy kiểm ở máy chủ (thayPH_).
 -->
 <style>
   :root { --nen:#f1f4f8; --the:#fff; --chu:#1a202c; --mo:#4a5568; --vien:#cbd5e0; --chinh:#1d4ed8; --xanh:#15803d;
@@ -116,6 +117,26 @@
   .lop-phu { position: fixed; inset: 0; background: rgba(15,23,42,.45); display: flex; align-items: center; justify-content: center; padding: 16px; z-index: 50; }
   .hop-hoi { background: #fff; border-radius: 12px; padding: 18px 16px; max-width: 460px; width: 100%; }
   .hop-hoi p { margin-bottom: 10px; }
+  /* 1.4 — 💬 phản hồi công nhân */
+  .loc-ph { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+  .loc-ph button { flex: 1 1 140px; }
+  .loc-ph button.dang { background: var(--chinh); color: #fff; }
+  #mPH select { width: 100%; min-height: 48px; padding: 8px 10px; font-size: 1rem; border: 1.5px solid var(--vien); border-radius: 8px; background: #fff; }
+  .viec-ph { border: 1.5px solid var(--vien); border-radius: 10px; padding: 12px; margin-bottom: 12px; }
+  .viec-ph.qua { border-color: var(--do); }
+  .viec-ph .tt { font-weight: 600; margin-top: 6px; padding: 6px 10px; border-radius: 8px; border: 1px solid var(--vien); background: #f8fafc; }
+  .viec-ph .tt.gui, .viec-ph .tt.nhan { background: #eff6ff; border-color: #bfdbfe; }
+  .viec-ph .tt.xu_ly { background: var(--vang); border-color: #fde68a; }
+  .viec-ph .tt.xong { background: #f0fdf4; border-color: #bbf7d0; color: var(--xanh); }
+  .viec-ph textarea { width: 100%; min-height: 88px; padding: 10px 12px; font-size: 16px; font-family: inherit; border: 1.5px solid var(--vien); border-radius: 8px; }
+  .viec-ph .loi-o { margin-top: 6px; }
+  .qua-han { color: var(--do); font-weight: 600; margin-top: 6px; }
+  .tin { border-left: 4px solid var(--vien); padding: 6px 10px; margin-top: 8px; background: #fafafa; }
+  .tin.ql { border-left-color: var(--xanh); background: #f0fdf4; }
+  .tin.he { color: var(--mo); font-size: .93rem; }
+  .tin .ai-gui { font-size: .85rem; color: var(--mo); }
+  .tin p { white-space: pre-wrap; word-wrap: break-word; }
+  .da-chon { font-size: .92rem; margin: 2px 0; }
 </style>
 </head>
 <body>
@@ -144,6 +165,7 @@
   <nav id="menuViec" class="menu-viec an">
     <button data-viec="luong">📄 Lương công nhân</button>
     <button data-viec="gio">⏱ Giờ tuyển dụng</button>
+    <button data-viec="ph" id="nutMenuPH">💬 Phản hồi công nhân</button>
   </nav>
 
   <!-- GIỜ TUYỂN DỤNG — chỉ giờ + Đạt, không tiền (Dương chốt 05/11/2026) -->
@@ -164,6 +186,19 @@
       <h2 style="font-size:1.05rem">Các tháng đã lưu</h2>
       <div id="gioCacThang" style="margin-top:8px"></div>
     </div>
+  </section>
+
+  <!-- 💬 PHẢN HỒI CÔNG NHÂN (vé 13) -->
+  <section id="mPH" class="an">
+    <div class="chi" id="phChi"></div>
+    <div id="phBao"></div>
+    <div id="phCanh"></div>
+    <input id="timPH" type="search" placeholder="🔍 Gõ tên công nhân hoặc 4 số cuối căn cước">
+    <div class="loc-ph" id="phLoc"></div>
+    <label for="locHM" style="margin-top:0">Hạng mục</label>
+    <select id="locHM"></select>
+    <div id="dsPH" style="margin-top:12px"></div>
+    <button id="nutLamMoiPH">🔄 Làm mới</button>
   </section>
 
   <!-- LƯỚI CÔNG TY × THÁNG -->
@@ -214,9 +249,9 @@ var trangThai = { phien: '', tk: null, luoi: null, dangTai: null, kqDoc: null };
 function nho(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (x) {} }
 function doc(k) { try { return localStorage.getItem(k); } catch (x) { return null; } }
 function hien(id) {
-  ['mDangNhap', 'mLuoi', 'mTai', 'mGio'].forEach(function (m) { $(m).classList.toggle('an', m !== id); });
-  var viec = { mLuoi: 'luong', mTai: 'luong', mGio: 'gio' }[id];
-  $('menuViec').classList.toggle('an', !viec || !trangThai.tk || trangThai.tk.vai_tro === 'quan_ly');
+  ['mDangNhap', 'mLuoi', 'mTai', 'mGio', 'mPH'].forEach(function (m) { $(m).classList.toggle('an', m !== id); });
+  var viec = { mLuoi: 'luong', mTai: 'luong', mGio: 'gio', mPH: 'ph' }[id];
+  $('menuViec').classList.toggle('an', !viec || !trangThai.tk || chiXuLyPH());
   [].forEach.call(document.querySelectorAll('#menuViec button'), function (b) { b.classList.toggle('dang', b.getAttribute('data-viec') === viec); });
   window.scrollTo(0, 0);
 }
@@ -274,17 +309,17 @@ function dangXuat() {
   $('luoi').innerHTML = ''; $('dsNguoi').innerHTML = ''; $('phieuXem').innerHTML = ''; $('tom').innerHTML = '';
   ['gioXem', 'gioBao', 'gioCacThang'].forEach(function (id) { $(id).innerHTML = ''; });
   $('nutLuuGio').classList.add('an');
+  ph = phMoi();
+  ['dsPH', 'phBao', 'phCanh', 'phLoc', 'locHM'].forEach(function (id) { $(id).innerHTML = ''; });
+  $('timPH').value = '';
+  demMenuPH(null);
   $('thanhTK').classList.add('an');
   hien('mDangNhap');
 }
 function vaoViec() {
   $('ai').textContent = trangThai.tk.ho_ten + ' · ' + trangThai.tk.ten_vai_tro;
   $('thanhTK').classList.remove('an');
-  if (trangThai.tk.vai_tro === 'quan_ly') {
-    hien('mLuoi'); $('luoi').innerHTML = '';
-    bao('luoiBao', 'cho', 'Tài khoản Quản lý dùng mục Thắc mắc — mục này có ở bản sau.');
-    return;
-  }
+  if (chiXuLyPH()) { moPH(); return; }                // quản lý, trưởng nhóm chỉ có việc này
   taiLuoi();
 }
 
@@ -295,6 +330,7 @@ function taiLuoi() {
   goi({ hanh_dong: 'kt_luoi', phien: trangThai.phien }).then(function (kq) {
     if (!kq.ok) { bao('luoiBao', 'do', e(kq.loi) + ' <button onclick="taiLuoi()">Thử lại</button>'); return; }
     trangThai.luoi = kq;
+    demMenuPH(kq.ph_can_lam);
     var canh = kq.ma_khong_co && kq.ma_khong_co.length
       ? 'Tài khoản có khai công ty ' + e(kq.ma_khong_co.join(', ')) + ' nhưng tab CONG_TY chưa có — báo người quản trị thêm vào.' : '';
     bao('luoiBao', canh ? 'cho' : '', canh);
@@ -680,12 +716,164 @@ function luuGio(dongY) {
 }
 $('nutLuuGio').addEventListener('click', luuGio);
 
+// ---------------- 💬 PHẢN HỒI CÔNG NHÂN (1.4 — vé 13) ----------------
+var HM = VePhieu.HANG_MUC;
+var ph = { ds: null, loc: 'can', hm: '', tim: '', mo: '', nhap: {}, bao: {}, dang: {}, vuaXong: {} };   // nhap / bao / dang / vuaXong theo mã việc
+function phMoi() { return { ds: null, loc: 'can', hm: '', tim: '', mo: '', nhap: {}, bao: {}, dang: {}, vuaXong: {} }; }
+function chiXuLyPH() { var v = trangThai.tk && trangThai.tk.vai_tro; return v === 'quan_ly' || v === 'truong_nhom'; }
+function demMenuPH(n) { $('nutMenuPH').textContent = '💬 Phản hồi công nhân' + (n == null ? '' : ' (' + n + ' cần làm)'); }
+function ngayNgan(s) { return s ? s.substring(8, 10) + '/' + s.substring(5, 7) : ''; }
+function lucNgan(s) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(s || ''); return m ? m[4] + ' ngày ' + m[3] + '/' + m[2] : String(s || ''); }
+function quaPH(v) { return v.qua_han || v.qua_24h; }
+function tatCaViec() { return [].concat.apply([], ph.ds.cong_ty.map(function (c) { return c.viec; })); }
+function timViecPH(ma) { return tatCaViec().filter(function (v) { return v.ma === ma; })[0]; }
+function thayViecPH(moi) {
+  ph.ds.cong_ty.forEach(function (c) { c.viec = c.viec.map(function (v) { return v.ma === moi.ma ? moi : v; }); });
+}
+
+function moPH() {
+  hien('mPH');
+  $('phChi').innerHTML = (trangThai.tk.vai_tro === 'truong_nhom' ? '👉 Đây là phiếu công nhân phản ánh về quản lý công ty — quản lý đó không thấy. ' : '👉 ') +
+    'Bấm <b>tên công ty</b> để mở. Bấm <b>🙋 Tôi nhận việc này</b> để người khác biết đã có người lo; gõ câu trả lời rồi bấm <b>📤 Gửi trả lời</b> — ' +
+    'công nhân thấy ngay dưới phiếu của họ khi tra lại, chỉ thấy vai chứ không thấy tên anh/chị.';
+  bao('phBao', 'cho', '⏳ Đang lấy phản hồi… (vài giây)');
+  goi({ hanh_dong: 'ph_ds', phien: trangThai.phien }).then(function (kq) {
+    if (!kq.ok) { bao('phBao', 'do', e(kq.loi) + ' <button onclick="moPH()">Thử lại</button>'); return; }
+    ph.ds = kq; ph.vuaXong = {}; ph.bao = {};
+    bao('phBao');
+    $('phCanh').innerHTML = kq.canh_bao.map(function (c) { return '<div class="bao do">⚠ ' + e(c) + '</div>'; }).join('');
+    vePH();
+  });
+}
+function khopTimPH(v) {
+  var q = DocFileLuong.chuanTenTra(ph.tim).replace(/ /g, '');
+  return !q || DocFileLuong.chuanTenTra(v.ho_ten).replace(/ /g, '').indexOf(q) >= 0 || v.cccd4.indexOf(q) >= 0;
+}
+/** Việc vừa trả lời xong vẫn đứng yên ở chỗ cũ tới lần đổi lọc / tải lại — để người trả lời thấy câu xác nhận. */
+function dungLocPH(v) { return ph.vuaXong[v.ma] || (ph.loc === 'xong') === (v.tt === 'xong'); }
+function vePH() {
+  if (!ph.ds) return;
+  var tat = tatCaViec(), can = tat.filter(function (v) { return v.tt !== 'xong'; }).length;
+  demMenuPH(can);
+  $('phLoc').innerHTML = [['can', '🔧 Cần làm', can], ['xong', '✅ Đã xong', tat.length - can]].map(function (x) {
+    return '<button class="' + (ph.loc === x[0] ? 'dang' : '') + '" aria-pressed="' + (ph.loc === x[0]) + '" onclick="datLocPH(\'' + x[0] + '\')">' + x[1] + ' (' + x[2] + ')</button>';
+  }).join('');
+  var dem = {};
+  tat.forEach(function (v) { if (dungLocPH(v)) dem[v.hm] = (dem[v.hm] || 0) + 1; });
+  $('locHM').innerHTML = '<option value="">Mọi hạng mục</option>' + Object.keys(HM).filter(function (k) { return dem[k] || k === ph.hm; }).map(function (k) {
+    return '<option value="' + k + '"' + (k === ph.hm ? ' selected' : '') + '>' + HM[k].ten + ' (' + (dem[k] || 0) + ')</option>';
+  }).join('');
+  $('locHM').value = ph.hm;
+  if (!ph.ds.cong_ty.length) { $('dsPH').innerHTML = '<div class="bao cho">Tài khoản chưa được giao công ty nào — báo người quản trị.</div>'; return; }
+  var coViec = [], khong = [];
+  ph.ds.cong_ty.forEach(function (c) {
+    var vs = c.viec.filter(function (v) { return dungLocPH(v) && (!ph.hm || v.hm === ph.hm) && khopTimPH(v); });
+    if (vs.length) coViec.push({ c: c, vs: vs }); else khong.push(c.ma_ct);
+  });
+  if (!coViec.length) {
+    $('dsPH').innerHTML = '<div class="the">' + (ph.tim ? 'Không thấy ai tên / số "' + e(ph.tim) + '".' : ph.hm ? 'Không có phiếu nào ở hạng mục này.' :
+      ph.loc === 'can' ? '🎉 Không còn phản hồi nào cần làm.' : 'Chưa có việc nào xong.') + '</div>';
+    return;
+  }
+  var moSan = coViec.length === 1 ? coViec[0].c.ma_ct : ph.mo;   // chuẩn 10: chỉ một mục thì mở sẵn, tìm còn một mục cũng vậy
+  $('dsPH').innerHTML = coViec.map(function (x) {
+    var mo = moSan === x.c.ma_ct, ma = e(x.c.ma_ct);
+    return '<div class="the ct' + (mo ? ' mo' : '') + '" id="phct-' + ma + '"><button class="dau-ct" aria-expanded="' + mo + '" data-ma="' + ma + '" onclick="moCtPH(this)"><span class="mui">' +
+           (mo ? '▾' : '▸') + '</span><span><b>' + e(x.c.ten) + '</b><span class="tom-ct">' + tomPH(x.vs) + '</span></span></button>' +
+           (mo ? '<div class="than-ct">' + x.vs.map(theViecPH).join('') + '</div>' : '') + '</div>';
+  }).join('') + (khong.length && !ph.tim && !ph.hm ? '<p class="ai">Không có việc ở mục này: ' + e(khong.join(', ')) + '</p>' : '');
+}
+/** Một dòng tóm tắt, việc cần làm đứng trước — đủ để biết nên mở công ty nào. */
+function tomPH(vs) {
+  var d = { qua: 0, gui: 0, nhan: 0, xu_ly: 0, chuyen: 0, xong: 0 };
+  vs.forEach(function (v) {
+    if (quaPH(v)) d.qua++;
+    if (v.tt === 'xu_ly' && v.chuyen_ke_toan) d.chuyen++; else d[v.tt]++;
+  });
+  return [d.qua ? '⏰ ' + d.qua + ' quá hạn' : '', d.gui ? '📨 ' + d.gui + ' chờ nhận' : '', d.nhan ? '🙋 ' + d.nhan + ' đã nhận' : '',
+          d.xu_ly ? '🔧 ' + d.xu_ly + ' đang xử lý' : '', d.chuyen ? '↪️ ' + d.chuyen + ' chuyển kế toán' : '', d.xong ? '✅ ' + d.xong + ' đã xong' : '']
+    .filter(Boolean).join(' · ');
+}
+function ttViecPH(v) {
+  var toi = trangThai.tk.ho_ten, ai = v.nhan_boi === toi ? 'Anh/chị' : v.nhan_boi;
+  if (v.tt === 'gui') return '📨 Chờ nhận';
+  if (v.tt === 'xong') return '✅ Đã trả lời';
+  if (v.tt === 'xu_ly' && v.chuyen_ke_toan) return '↪️ Đã chuyển kế toán — đang xử lý';
+  if (v.tt === 'nhan') return '🙋 ' + e(ai) + ' đã nhận (' + e(lucNgan(v.nhan_luc)) + ')';
+  return '🔧 ' + (ai ? e(ai) + ' đang xử lý' : 'Đang xử lý') + ' — công nhân vừa gửi thêm';
+}
+function theViecPH(v) {
+  var ma = e(v.ma), dang = ph.dang[v.ma], tat = dang ? ' disabled' : '', tk = trangThai.tk, hm = HM[v.hm];
+  var h = '<div class="viec-ph' + (quaPH(v) ? ' qua' : '') + '"><b>' + (hm ? hm.ten : e(v.hm)) + '</b> · Tháng ' + thangNam(v.ky) +
+          '<div>' + e(v.ho_ten) + ' <span class="ai">· CCCD ••••' + e(v.cccd4) + '</span></div><div class="tt ' + v.tt + '">' + ttViecPH(v) + '</div>';
+  if (v.qua_han) h += '<div class="qua-han">⏰ Đã quá hạn gửi (' + ngayNgan(v.han) + ') mà chưa xong</div>';
+  if (v.qua_24h) h += '<div class="qua-han">⏰ Quá 24 giờ chưa ai nhận</div>';
+  v.tin.forEach(function (t) {
+    if (t.ai === 'he') { h += '<div class="tin he">' + e(t.ten) + ' · ' + e(lucNgan(t.luc)) + ': ' + e(t.nd) + '</div>'; return; }
+    h += '<div class="tin' + (t.ai === 'ql' ? ' ql' : '') + '"><div class="ai-gui">' + (t.ai === 'ql' ? '💼 ' + e(t.ten) : '👷 Công nhân') + ' · ' + e(lucNgan(t.luc)) + '</div>' +
+         (t.chon ? '<div class="da-chon">Đã chọn: <b>' + t.chon.map(function (x) { return e(x); }).join(' · ') + '</b></div>' : '') + '<p>' + e(t.nd) + '</p></div>';
+  });
+  if (v.tt === 'xong') return h + (ph.bao[v.ma] || '') + '<p class="ai" style="margin-top:8px">Công nhân gửi thêm thì việc tự quay về <b>Cần làm</b>.</p></div>';
+  if (v.nhan_boi && v.nhan_boi !== tk.ho_ten) h += '<p class="ai" style="margin-top:8px">' + e(v.nhan_boi) + ' đang lo việc này — anh/chị vẫn trả lời được nếu cần.</p>';
+  if ((tk.vai_tro === 'ke_toan' || tk.vai_tro === 'quan_tri') && hm && hm.vai === 'quản lý công ty' && !v.chuyen_ke_toan) {
+    h += '<p class="ai" style="margin-top:8px">(' + e(tk.ten_vai_tro) + ' trả lời dự phòng khi quản lý vắng.)</p>';
+  }
+  var nutPhu = (v.nhan_boi ? '' : '<button' + tat + ' data-ma="' + ma + '" onclick="nhanPH(this)">🙋 Tôi nhận việc này</button>') +
+               ((v.hm === 'cong' || v.hm === 'luong') && !v.chuyen_ke_toan && tk.vai_tro !== 'ke_toan'
+                 ? '<button' + tat + ' data-ma="' + ma + '" onclick="chuyenPH(this)">↪️ Chuyển kế toán</button>' : '');
+  if (nutPhu) h += '<div class="nhom-nut">' + nutPhu + '</div>';
+  var chu = ph.nhap[v.ma] || '';
+  return h + '<label for="tl-' + ma + '">Câu trả lời cho công nhân (tối đa 500 chữ)</label><textarea id="tl-' + ma + '" maxlength="500"' + tat + ' data-ma="' + ma +
+         '" oninput="goPH(this)">' + e(chu) + '</textarea>' + (ph.bao[v.ma] || '') +
+         '<div class="nhom-nut"><button class="chinh"' + tat + ' data-ma="' + ma + '" onclick="traPH(this)">' + (dang ? '⏳ Đang gửi… (vài giây)' : '📤 Gửi trả lời (xong việc)') + '</button></div></div>';
+}
+function datLocPH(loc) { ph.loc = loc; ph.vuaXong = {}; vePH(); }
+function moCtPH(nut) {
+  var ma = nut.getAttribute('data-ma');
+  ph.mo = ph.mo === ma ? '' : ma;
+  vePH();
+  var d = $('phct-' + ph.mo);
+  if (ph.mo && d) d.scrollIntoView({ block: 'start' });
+}
+function goPH(o) { ph.nhap[o.getAttribute('data-ma')] = o.value; }
+/** Một cú ghi trên một việc. Máy chủ chống ghi trùng (bấm lại / trình duyệt gửi lại) nên mất mạng thì bấm lại được. */
+function ghiPH(ma, goiTin, khiXong) {
+  if (ph.dang[ma]) return;
+  ph.dang[ma] = 1; ph.bao[ma] = ''; vePH();
+  var luc = ph;
+  goi(goiTin, 40).then(function (r) {
+    if (ph !== luc) return;                           // đã đăng xuất trong lúc chờ
+    ph.dang[ma] = 0;
+    if (r.viec) thayViecPH(r.viec);
+    if (r.ok) khiXong(r);
+    else ph.bao[ma] = '<div class="bao do">' + e(r.loi || 'Chưa làm được — thử lại sau ít giây.') + (r.ma === 'TAM' ? ' Bấm lại được, máy không ghi trùng.' : '') + '</div>';
+    vePH();
+  });
+}
+function nhanPH(nut) {
+  var ma = nut.getAttribute('data-ma');
+  ghiPH(ma, { hanh_dong: 'ph_nhan', phien: trangThai.phien, ma: ma }, function () {});
+}
+function chuyenPH(nut) {
+  var ma = nut.getAttribute('data-ma'), v = timViecPH(ma);
+  hoi('<p><b>Chuyển việc của ' + e(v.ho_ten) + ' cho kế toán kiểm?</b></p><p>Công nhân sẽ thấy "🔧 Kế toán đang xử lý". Việc này không rút lại được; anh/chị vẫn trả lời được nếu cần.</p>',
+      '↪️ Chuyển kế toán', 'Thôi', function () { ghiPH(ma, { hanh_dong: 'ph_chuyen', phien: trangThai.phien, ma: ma }, function () {}); });
+}
+function traPH(nut) {
+  var ma = nut.getAttribute('data-ma'), v = timViecPH(ma), nd = (ph.nhap[ma] || '').trim();
+  if (!nd) { ph.bao[ma] = '<div class="loi-o">⚠ Chưa gõ câu trả lời.</div>'; vePH(); return; }
+  ghiPH(ma, { hanh_dong: 'ph_tra', phien: trangThai.phien, ma: ma, so_tin: v.so_tin, noi_dung: nd }, function () {
+    ph.nhap[ma] = ''; ph.vuaXong[ma] = 1;
+    ph.bao[ma] = '<div class="bao xanh">✅ Đã gửi trả lời cho ' + e(v.ho_ten) + ' — công nhân thấy khi tra lại.</div>';
+  });
+}
+
 // ---------------- GẮN NÚT ----------------
 $('menuViec').addEventListener('click', function (ev) {
   var b = ev.target.closest('button[data-viec]');
   if (!b) return;
   var v = b.getAttribute('data-viec');
-  if (v === 'gio') moGio(); else taiLuoi();
+  if (v === 'gio') moGio(); else if (v === 'ph') moPH(); else taiLuoi();
 });
 $('nutDN').addEventListener('click', dangNhap);
 $('dnMk').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') dangNhap(); });
@@ -693,6 +881,9 @@ $('dnCccd').addEventListener('input', function () { xoaLoiO('loiCccd', 'dnCccd')
 $('dnMk').addEventListener('input', function () { xoaLoiO('loiMk', 'dnMk'); });
 $('nutThoat').addEventListener('click', dangXuat);
 $('nutLamMoi').addEventListener('click', taiLuoi);
+$('nutLamMoiPH').addEventListener('click', function () { moPH(); });
+$('timPH').addEventListener('input', function () { ph.tim = this.value; vePH(); });
+$('locHM').addEventListener('change', function () { ph.hm = this.value; vePH(); });
 $('timCT').addEventListener('input', locCT);
 $('nutQuayLai').addEventListener('click', taiLuoi);
 $('chonFile').addEventListener('change', function () { chonFile(this.files[0]); });
