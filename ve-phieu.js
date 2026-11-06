@@ -42,6 +42,7 @@
       nhom('II', 'Các khoản phụ cấp', l.tong_phu_cap, l.phu_cap, false) +
       nhom('III', 'Các khoản khấu trừ', l.tong_khau_tru, l.khau_tru, false) +
       '<tr class="tong"><td>IV</td><td>Thực lĩnh (I + II − III)</td><td></td><td class="so">' + tien(l.thuc_linh) + '</td></tr>' +
+      (l.thuc_linh < 0 ? '<tr><td colspan="4">Số âm nghĩa là anh/chị đã nhận trước nhiều hơn lương kỳ này.</td></tr>' : '') +
       '</tbody></table></div>';
   }
 

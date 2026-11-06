@@ -232,6 +232,8 @@ function xem() {
           'Đợi ít phút rồi bấm 🔍 Xem lại.');
     } else if (r.ma === 'KHONG_RO' || r.ma === 'SAI_TOKEN' || r.ma === 'SAI_DINH_DANG') {
       bao('traBao', 'do', 'Trang tra cứu chưa sẵn sàng — báo quản lý của công ty.');
+    } else if (r.ma === 'CHUA_CO') {
+      bao('traBao', 'cho', e(r.loi));
     } else {
       bao('traBao', 'do', e(r.loi || 'Chưa tra được — thử lại sau ít phút.'));
     }

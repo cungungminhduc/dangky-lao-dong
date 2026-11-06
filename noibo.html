@@ -68,6 +68,15 @@
   .ky .phan > span { display: block; margin-bottom: 6px; }
   .ky .phan .loi-o { margin-top: 6px; }
   .ky .nut-tai { margin-top: 8px; }
+  .nut-thang-cu { margin-top: 10px; }
+  .nut-qt { margin-bottom: 10px; }
+  #mQT .thanh-duoi button { flex: 1 1 140px; }
+  .nhom-qt { border-top: 1px solid var(--vien); margin-top: 16px; padding-top: 12px; }
+  .nhom-qt h3 { font-size: 1.02rem; margin: 0; }
+  #mQT select { width: 100%; min-height: 48px; padding: 8px 10px; font-size: 1rem; border: 1.5px solid var(--vien); border-radius: 8px; background: #fff; }
+  .o-qt .giai { margin: 0 0 6px; font-size: .9rem; color: #475569; }
+  .chon-ma { display: flex; align-items: center; gap: 10px; min-height: 44px; margin: 0; font-weight: 400; }
+  .chon-ma input { width: 22px; height: 22px; }
   /* 2.0 — ô tháng chia nhóm Bảng công / Lương; dòng 👉 việc kế ở đầu ô */
   .ky .nhom-ky { border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 8px; }
   .ky .nhom-ky h4 { font-size: .95rem; margin-bottom: 4px; }
@@ -218,6 +227,37 @@
     <button id="nutLamMoi">🔄 Làm mới</button>
   </section>
 
+  <!-- 📐 QUY TẮC LƯƠNG TỪNG CÔNG TY (vé 05) -->
+  <section id="mQT" class="an">
+    <div class="the">
+      <h2 id="qtTieuDe" style="font-size:1.1rem"></h2>
+      <div class="chi" id="qtChi" style="margin-top:10px"></div>
+      <div id="qtChepKhoi" class="an">
+        <label for="qtChepTu">📋 Chép số từ công ty khác</label>
+        <select id="qtChepTu"></select>
+        <button id="nutChepQT" class="rong" style="margin-top:8px">📋 Chép số vào các ô dưới</button>
+      </div>
+      <div class="nhom-qt">
+        <h3>📅 Tháng bắt đầu áp dụng</h3>
+        <label for="qtTu">Áp dụng từ tháng</label>
+        <p class="giai" style="margin:0 0 6px;font-size:.9rem;color:#475569">Tháng trước đó vẫn dùng số cũ. Sửa số sai của đúng tháng nào thì chọn lại chính tháng đó. Ví dụ chọn 09/2026.</p>
+        <input id="qtTu" type="month">
+        <div class="loi-o an" id="qtl_ap_dung_tu"></div>
+      </div>
+      <div id="qtForm"></div>
+      <div class="nhom-qt">
+        <h3>👤 Ngưỡng công người mới</h3>
+        <p class="giai" style="margin:6px 0;font-size:.9rem;color:#475569">Người vào làm trong kỳ có tổng công dưới số này thì kế toán giữ lương (KTT). Người cũ không xét.</p>
+        <div id="qtNguong"></div>
+      </div>
+      <div id="qtBao" style="margin-top:12px"></div>
+    </div>
+    <div class="thanh-duoi">
+      <button id="nutQTVe">↩ Quay lại danh sách</button>
+      <button id="nutLuuQT" class="chinh">💾 Lưu quy tắc</button>
+    </div>
+  </section>
+
   <!-- TẢI FILE + XEM TRƯỚC -->
   <section id="mTai" class="an">
     <div class="the">
@@ -229,7 +269,7 @@
       <div id="taiBao"></div>
       <div id="xemTruoc" class="an">
         <div class="tom" id="tom"></div>
-        <label for="timNguoi">Xem phiếu từng người (bấm tên)</label>
+        <label for="timNguoi" id="nhanNguoi">Xem phiếu từng người (bấm tên)</label>
         <input id="timNguoi" type="search" placeholder="Gõ tên để tìm">
         <ul class="ds-nguoi" id="dsNguoi" style="margin-top:8px"></ul>
         <div id="phieuXem"></div>
@@ -237,6 +277,7 @@
     </div>
     <div class="thanh-duoi">
       <button id="nutQuayLai">↩ Quay lại danh sách</button>
+      <button id="nutXuatMay" class="chinh an">⬇ Tải Excel</button>
       <button id="nutLuu" class="chinh an">💾 Lưu bản nháp</button>
     </div>
     <p class="ai">Lưu bản nháp chưa cho công nhân xem — lưu xong, bấm 📢 Công bố ở ô tháng đó.</p>
@@ -246,6 +287,7 @@
 <script src="cau-hinh-luong.js"></script>
 <script src="doc-file-luong.js"></script>
 <script src="doc-bang-cong.js"></script>
+<script src="doc-file-tam-ung.js"></script>
 <script src="doc-file-gio.js"></script>
 <script src="ve-phieu.js"></script>
 <script>
@@ -257,8 +299,8 @@ var trangThai = { phien: '', tk: null, luoi: null, dangTai: null, kqDoc: null };
 function nho(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (x) {} }
 function doc(k) { try { return localStorage.getItem(k); } catch (x) { return null; } }
 function hien(id) {
-  ['mDangNhap', 'mLuoi', 'mTai', 'mGio', 'mPH'].forEach(function (m) { $(m).classList.toggle('an', m !== id); });
-  var viec = { mLuoi: 'luong', mTai: 'luong', mGio: 'gio', mPH: 'ph' }[id];
+  ['mDangNhap', 'mLuoi', 'mTai', 'mQT', 'mGio', 'mPH'].forEach(function (m) { $(m).classList.toggle('an', m !== id); });
+  var viec = { mLuoi: 'luong', mTai: 'luong', mQT: 'luong', mGio: 'gio', mPH: 'ph' }[id];
   $('menuViec').classList.toggle('an', !viec || !trangThai.tk || chiXuLyPH());
   [].forEach.call(document.querySelectorAll('#menuViec button'), function (b) { b.classList.toggle('dang', b.getAttribute('data-viec') === viec); });
   window.scrollTo(0, 0);
@@ -315,7 +357,7 @@ function dangXuat() {
   gio = { tom: null, kq: null, tenFile: '' };
   nho(KHOA_PHIEN, null); nho(KHOA_TK, null);
   $('luoi').innerHTML = ''; $('dsNguoi').innerHTML = ''; $('phieuXem').innerHTML = ''; $('tom').innerHTML = '';
-  ['gioXem', 'gioBao', 'gioCacThang'].forEach(function (id) { $(id).innerHTML = ''; });
+  ['gioXem', 'gioBao', 'gioCacThang', 'qtForm', 'qtBao', 'qtNguong'].forEach(function (id) { $(id).innerHTML = ''; });
   $('nutLuuGio').classList.add('an');
   ph = phMoi();
   ['dsPH', 'phBao', 'phCanh', 'phLoc', 'locHM'].forEach(function (id) { $(id).innerHTML = ''; });
@@ -350,6 +392,7 @@ function vaoViec() {
 // ---------------- LƯỚI ----------------
 function taiLuoi() {
   hien('mLuoi');
+  $('nutXuatMay').classList.add('an');
   bao('luoiBao', 'cho', '⏳ Đang lấy danh sách công ty…');
   goi({ hanh_dong: 'kt_luoi', phien: trangThai.phien }).then(function (kq) {
     if (!kq.ok) { bao('luoiBao', 'do', e(kq.loi) + ' <button onclick="taiLuoi()">Thử lại</button>'); return; }
@@ -366,16 +409,44 @@ function taiLuoi() {
       ? 'Tài khoản có khai công ty ' + e(kq.ma_khong_co.join(', ')) + ' nhưng tab CONG_TY chưa có — báo người quản trị thêm vào.' : '';
     bao('luoiBao', canh ? 'cho' : '', canh);
     if (!kq.cong_ty.length) { $('luoi').innerHTML = '<div class="bao cho">Tài khoản chưa được giao công ty nào — báo người quản trị.</div>'; return; }
-    $('luoi').innerHTML = kq.cong_ty.map(function (c, i) {
-      return '<div class="the ct" data-ma="' + e(c.ma_ct) + '" data-tim="' + e(DocFileLuong.chuanTenTra(c.ten + ' ' + c.ma_ct)) + '">' +
-        '<button class="dau-ct" aria-expanded="false" onclick="moCT(' + i + ')"><span class="mui">▸</span><span><b>' + e(c.ten) + '</b>' +
-        '<span class="phu">Mã ' + e(c.ma_ct) + (c.dia_ban ? ' · ' + e(c.dia_ban) : '') + '</span><span class="tom-ct">' + tomCT(c) + '</span></span></button>' +
-        '<div class="than-ct an"><div class="cac-ky">' + c.ky.map(function (k, j) { return oKy(k, i, j); }).join('') + '</div></div></div>';
-    }).join('') + '<div id="khongCT" class="bao cho an">Không có công ty nào khớp.</div>';
     if (kq.cong_ty.length === 1) trangThai.moCT = kq.cong_ty[0].ma_ct;
-    locCT();
-    veMoCT();
+    veLuoi();
   });
+}
+/** Vẽ lưới từ trangThai.luoi đang có, không gọi máy chủ. */
+function veLuoi() {
+  $('luoi').innerHTML = trangThai.luoi.cong_ty.map(function (c, i) {
+    return '<div class="the ct" data-ma="' + e(c.ma_ct) + '" data-tim="' + e(DocFileLuong.chuanTenTra(c.ten + ' ' + c.ma_ct)) + '">' +
+      '<button class="dau-ct" aria-expanded="false" onclick="moCT(' + i + ')"><span class="mui">▸</span><span><b>' + e(c.ten) + '</b>' +
+      '<span class="phu">Mã ' + e(c.ma_ct) + (c.dia_ban ? ' · ' + e(c.dia_ban) : '') + '</span><span class="tom-ct">' + tomCT(c) + '</span></span></button>' +
+      '<div class="than-ct an">' + nutQT(c, i) + '<div class="cac-ky">' + c.ky.map(function (k, j) { return oKy(k, i, j); }).join('') + '</div>' + nutThangCu(c, i) + '</div></div>';
+  }).join('') + '<div id="khongCT" class="bao cho an">Không có công ty nào khớp.</div>';
+  locCT();
+  veMoCT();
+}
+/** ky '2026-01' → '2025-12'. */
+function kyLienTruoc(ky) {
+  var y = Number(ky.substring(0, 4)), m = Number(ky.substring(5, 7)) - 1;
+  if (!m) { y -= 1; m = 12; }
+  return y + '-' + ('0' + m).slice(-2);
+}
+/**
+ * Lưới chỉ có tháng này + tháng trước + tháng đã có file; muốn tải file tháng cũ hơn thì mở thêm từng tháng bằng nút này.
+ * Chỉ người tải file mới thấy; công ty đã đủ GIU_KY tháng có file thì không hiện, vì máy chủ không nhận tháng cũ hơn (KY_CU).
+ */
+function nutThangCu(c, i) {
+  if (!lamPhan('cong') && !lamPhan('luong')) return '';
+  if (c.ky.filter(function (k) { return k.co_file; }).length >= GIU_KY) return '';
+  return '<button class="rong nut-thang-cu" onclick="moThangCu(' + i + ')">📅 Tải file tháng cũ hơn: mở Tháng ' + thangNam(kyLienTruoc(c.ky[c.ky.length - 1].ky)) + '</button>';
+}
+/** Thêm một ô tháng rỗng ở cuối công ty này. Chỉ ở trên trang; lưu file xong máy chủ mới ghi tháng đó. */
+function moThangCu(i) {
+  var c = trangThai.luoi.cong_ty[i];
+  c.ky.push({ ky: kyLienTruoc(c.ky[c.ky.length - 1].ky), co_file: false });
+  trangThai.moCT = c.ma_ct;
+  veLuoi();
+  var o = document.querySelector('#luoi .ct.mo .ky:last-child');
+  if (o) o.scrollIntoView({ block: 'start' });
 }
 /** Một dòng tóm tắt các tháng, gom theo trạng thái, việc cần làm đứng trước — đủ để biết nên mở công ty nào mà chưa cần mở. */
 var TOM_KY = [['moi', '⚠ Có bản mới chưa công bố'], ['cho', '⏳ Chờ công bố'], ['chua', '📄 Chưa có file'], ['xong', '✅ Đã công bố']];
@@ -418,14 +489,22 @@ function locCT() {
   if ($('khongCT')) $('khongCT').classList.toggle('an', con.length > 0);
   if (q && con.length === 1) { trangThai.moCT = con[0].getAttribute('data-ma'); veMoCT(); }   // tìm ra đúng một công ty → mở luôn
 }
+/** Vé 11: công bố bảng công cần quy tắc + ngưỡng để ẩn người mới dưới ngưỡng. Thiếu gì thì trả câu nói đúng thứ đó; máy chủ cũng từ chối. Máy chủ cũ chưa gửi hai ô này thì không chặn. */
+function thieuCongBoCong(k, i) {
+  var c = trangThai.luoi.cong_ty[i];
+  if (k.co_quy_tac === false) return 'Chờ kế toán khai 📐 quy tắc lương áp dụng tháng này, rồi mới công bố bảng công được.';
+  if (c.nguong_ok === false) return 'Chờ kế toán điền ngưỡng công ở tab CONG_TY, cột nguong_cong_moi, rồi mới công bố bảng công được.';
+  return '';
+}
 /** Chức vụ nào làm phần nào (bảng chức vụ đặc tả mục 5) — máy chủ kiểm lại mọi cú. */
 var LAM_PHAN = { cong: ['hanh_chinh', 'quan_tri'], luong: ['ke_toan', 'quan_tri'] };
 function lamPhan(phan) { return coCV.apply(null, LAM_PHAN[phan]); }
 /** Dòng "👉" đầu ô tháng: việc kế tiếp cho đúng chức vụ đang xem (quản trị thấy cả hai). */
-function viecKe(k) {
-  var ds = [], cbC = k.cb_cong_phien || 0, cbL = k.cb_luong_phien || 0, chot = (k.cong_chot_phien || 0) > 0;
+function viecKe(k, i) {
+  var ds = [], cbC = k.cb_cong_phien || 0, cbL = k.cb_luong_phien || 0, chot = (k.cong_chot_phien || 0) > 0, thieu = thieuCongBoCong(k, i);
   if (lamPhan('cong')) {
     if (!k.co_file) ds.push('Tải bảng công tháng này — bấm <b>📥 Tải bảng công</b> ngay dưới.');
+    else if (thieu && cbC !== k.phien_ban) ds.push(thieu + ' Vẫn chốt được bảng công.');
     else if (!chot && cbC !== k.phien_ban) ds.push('Kiểm bảng công rồi bấm <b>📢 Công bố bảng công</b> — công nhân xem và báo sai sớm. Đúng hết thì bấm <b>🔒 Chốt bảng công</b>.');
     else if (!chot) ds.push('Công nhân báo sai xong, đã sửa hết thì bấm <b>🔒 Chốt bảng công</b> — kế toán chờ để tính lương.');
     else if (cbC !== k.phien_ban) ds.push('Đã chốt, nhưng công nhân chưa xem bảng công này — bấm <b>📢 Công bố bảng công</b>.');
@@ -455,7 +534,172 @@ function oKy(k, i, j) {
       : '<li class="chua">📄 Chưa có file lương</li>') + '</ul>' + (k.co_luong ? oPhan(k, i, j, 'luong') +
         '<button class="rong" onclick="moXem(' + i + ',' + j + ',this)">👁 Xem bảng lương</button><div class="loi-o an"></div>' : '') +
     nutTai('luong', k.co_luong, k.co_luong ? '⬆ Tải lại file lương' : '⬆ Tải file lương') + '</div>';
-  return '<div class="ky"><h3>Tháng ' + thangNam(k.ky) + '</h3>' + viecKe(k) + cong + luong + '</div>';
+  return '<div class="ky"><h3>Tháng ' + thangNam(k.ky) + '</h3>' + viecKe(k, i) + cong + oTamUng(k, i, j) + oMay(k, i, j) + luong +
+    (k.gio_ly_do != null && lamPhan('luong') ? '<p class="viec-ke">⚠ Giờ theo file kế toán, khác bảng công đã chốt. Lý do: ' + e(k.gio_ly_do) + '</p>' : '') + '</div>';
+}
+/** Vé 08 — nhóm 🧮 trong ô tháng. Chặng song song: số máy chỉ để xem và so, công nhân vẫn xem theo file kế toán. */
+function oMay(k, i, j) {
+  if (!coCV('xem_luong', 'ke_toan', 'quan_tri') || !k.co_file) return '';
+  var m = k.may, c = trangThai.luoi.cong_ty[i], nut = '';
+  var ds = m ? '<li class="roi">Máy tính ' + e(m.luc) + ' · ' + e(m.boi) + '<br>' + m.so_nguoi + ' người · ' + tien(m.tong_thuc_linh) + ' đ · quy tắc từ tháng ' + thangNam(m.ap_dung_tu) + '</li>' +
+      (m.cu ? '<li class="chua">⚠ ' + (m.cu === 'cong' ? 'Bảng công đã đổi' : 'Khoản trừ đã đổi') + ' — tính lại lương</li>' : '') : '<li class="chua">Máy chưa tính</li>';
+  if (lamPhan('luong')) {
+    var thieu = !((k.cong_chot_phien || 0) > 0) ? 'Chờ hành chính chốt bảng công.' : !k.co_quy_tac ? 'Bấm 📐 ở đầu công ty, khai quy tắc áp dụng cho tháng này.'
+      : !c.nguong_ok ? 'Điền ngưỡng ở tab CONG_TY, cột nguong_cong_moi, rồi bấm 🔄 Làm mới.' : '';
+    nut = thieu ? '<button class="rong" disabled>🧮 Tính lương</button><p class="viec-ke">👉 ' + thieu + '</p>'
+      : '<button class="' + (!m || m.cu ? 'chinh ' : '') + 'rong" onclick="tinhLuong(' + i + ',' + j + ',this)">' + (m ? '🧮 Tính lại lương' : '🧮 Tính lương') + '</button><div class="loi-o an"></div>';
+  }
+  if (m) nut += '<button class="rong" onclick="xemMay(' + i + ',' + j + ',this)">👁 Xem bảng máy tính</button><div class="loi-o an"></div>';
+  if (m && k.co_luong) nut += '<button class="rong" onclick="soLuong(' + i + ',' + j + ',this)">⚖ So máy với file kế toán</button><div class="loi-o an"></div>';
+  return '<div class="nhom-ky"><h4>🧮 Máy tính lương</h4><ul>' + ds + '</ul>' + nut + '</div>';
+}
+/** Vé 10 — bảng so: công cụ để khớp từng đồng rồi mới bỏ Excel. Chỉ xem, phiếu công nhân vẫn theo file. */
+function soLuong(i, j, nut) {
+  var c = trangThai.luoi.cong_ty[i], k = c.ky[j], chu = nut.textContent, loi = nut.nextElementSibling;
+  nut.disabled = true; nut.textContent = '⏳ Đang so… (vài giây)';
+  if (loi) loi.classList.add('an');
+  goi({ hanh_dong: 'kt_so_luong', phien: trangThai.phien, ma_ct: c.ma_ct, ky: k.ky }).then(function (kq) {
+    nut.disabled = false; nut.textContent = chu;
+    if (!kq.ok) { if (loi) { loi.textContent = kq.loi; loi.classList.remove('an'); } return; }
+    trangThai.moCT = c.ma_ct;
+    trangThai.dangTai = { loai: 'so_luong', ma_ct: c.ma_ct, ten: c.ten, ky: k.ky };
+    trangThai.kqDoc = kq;
+    $('taiTieuDe').textContent = '⚖ So máy với file kế toán ' + c.ten + ' — Tháng ' + thangNam(k.ky);
+    $('nhanNguoi').textContent = 'Tìm người lệch';
+    $('taiChi').classList.add('an'); $('taiNut').classList.add('an'); $('nutLuu').classList.add('an'); $('nutXuatMay').classList.remove('an');
+    var sach = !kq.lech.length && !kq.chi_may.length && !kq.chi_file.length;
+    bao('taiBao', kq.canh_bao ? 'do' : sach ? 'xanh' : 'cho', kq.canh_bao ? e(kq.canh_bao) : sach ? '✅ Máy và file kế toán khớp từng đồng.'
+      : '👉 Xem từng người lệch bên dưới. Công nhân vẫn xem theo file kế toán.' + (k.may && k.may.cu ? ' <b>⚠ Số máy đã cũ, nên tính lại trước.</b>' : ''));
+    $('tom').innerHTML = '<div>Khớp<b>' + kq.khop + ' / ' + kq.tong + ' người</b></div><div>Người lệch<b>' + kq.lech.length + '</b></div>' +
+      '<div>Chỉ máy có<b>' + kq.chi_may.length + '</b></div><div>Chỉ file có<b>' + kq.chi_file.length + '</b></div>';
+    $('phieuXem').innerHTML = ''; $('timNguoi').value = '';
+    veDanhSach('');
+    $('xemTruoc').classList.remove('an');
+    hien('mTai');
+  });
+}
+function hangExcelSo(kq) {
+  var hang = [['Họ và tên', 'CCCD (che)', 'Ô', 'Máy tính', 'File kế toán', 'Chênh']];
+  kq.lech.forEach(function (n) { n.o.forEach(function (o) { hang.push([n.ten, n.cccd, o.ten, o.may, o.file, o.chenh]); }); });
+  kq.chi_may.forEach(function (t) { hang.push([t, '', 'Chỉ máy có, file không có', '', '', '']); });
+  kq.chi_file.forEach(function (t) { hang.push([t, '', 'Chỉ file có, máy không có', '', '', '']); });
+  return hang;
+}
+function tinhLuong(i, j, nut) {
+  var c = trangThai.luoi.cong_ty[i], k = c.ky[j];
+  if (k.tu) { guiTinhLuong(c, k, nut); return; }
+  hoi('<p><b>Chưa tải file tạm ứng</b> của ' + e(c.ten) + ' tháng ' + thangNam(k.ky) + '.</p><p>Máy sẽ tính như tháng này không có tạm ứng, lưu động, giảm trừ khác. Có khoản nào thì bấm 📎 tải file trước.</p>',
+      '🧮 Vẫn tính', 'Thôi, chưa tính', function () { guiTinhLuong(c, k, nut); });
+}
+function guiTinhLuong(c, k, nut) {
+  var chu = nut.textContent, loi = nut.nextElementSibling;
+  nut.disabled = true; nut.textContent = '⏳ Đang tính… (vài giây tới nửa phút)';
+  if (loi) loi.classList.add('an');
+  goi({ hanh_dong: 'kt_tinh_luong', phien: trangThai.phien, ma_ct: c.ma_ct, ky: k.ky }, 120).then(function (r) {
+    nut.disabled = false; nut.textContent = chu;
+    if (!r.ok) { if (loi) { loi.textContent = r.loi; loi.classList.remove('an'); } return; }
+    trangThai.moCT = c.ma_ct;
+    bao('luoiBao', 'xanh', '✅ Máy đã tính ' + r.so_nguoi + ' người ' + e(c.ten) + ' tháng ' + thangNam(k.ky) + ': tổng thực lĩnh ' + tien(r.tong_thuc_linh) + ' đ. Công nhân vẫn xem theo file kế toán; số máy chỉ để so.');
+    taiLuoiGiuBao($('luoiBao').innerHTML);
+  });
+}
+function xemMay(i, j, nut) {
+  var c = trangThai.luoi.cong_ty[i], k = c.ky[j], chu = nut.textContent, loi = nut.nextElementSibling;
+  nut.disabled = true; nut.textContent = '⏳ Đang lấy bảng lương… (vài giây)';
+  if (loi) loi.classList.add('an');
+  goi({ hanh_dong: 'kt_xem_may', phien: trangThai.phien, ma_ct: c.ma_ct, ky: k.ky }).then(function (kq) {
+    nut.disabled = false; nut.textContent = chu;
+    if (!kq.ok) { if (loi) { loi.textContent = kq.loi; loi.classList.remove('an'); } return; }
+    trangThai.moCT = c.ma_ct;
+    trangThai.dangTai = { loai: 'xem_may', ma_ct: c.ma_ct, ten: c.ten, ky: k.ky };
+    trangThai.kqDoc = { nguoi: kq.nguoi };
+    $('taiTieuDe').textContent = '🧮 Máy tính lương ' + c.ten + ' — Tháng ' + thangNam(k.ky);
+    $('nhanNguoi').textContent = 'Xem từng khoản của một người (bấm tên)';
+    $('taiChi').classList.add('an'); $('taiNut').classList.add('an'); $('nutLuu').classList.add('an'); $('nutXuatMay').classList.remove('an');
+    bao('taiBao', kq.canh_bao ? 'do' : 'xanh', kq.canh_bao ? e(kq.canh_bao) : '👉 Bấm tên một người để xem từng khoản. Đủ cột thì bấm <b>⬇ Tải Excel</b>. Số máy chỉ để so, công nhân vẫn xem theo file kế toán.' + (k.may && k.may.cu ? ' <b>⚠ Số này đã cũ, nên tính lại.</b>' : ''));
+    var tong = kq.nguoi.reduce(function (t, n) { return t + n.o.thuc_linh; }, 0);
+    $('tom').innerHTML = '<div>Số người<b>' + kq.nguoi.length + '</b></div><div>Tổng thực lĩnh<b>' + tien(tong) + ' đ</b></div>';
+    $('phieuXem').innerHTML = ''; $('timNguoi').value = '';
+    veDanhSach('');
+    $('xemTruoc').classList.remove('an');
+    hien('mTai');
+  });
+}
+var COT_EXCEL_MAY = [['Tiền lương giờ', 'tien_gio'], ['Chuyên cần', 'cc'], ['Xăng xe', 'xang'], ['Nhà ở', 'nha'], ['Thâm niên', 'tham_nien'], ['Ăn ca', 'an'], ['Tổng phụ cấp', 'tong_pc'],
+                     ['Tổng lương + phụ cấp', 'tong_luong_pc'], ['Tạm ứng', 'tam_ung'], ['Lưu động', 'luu_dong'], ['Giảm trừ khác', 'giam_khac'], ['Tổng giảm trừ', 'giam_tru'], ['Thực lĩnh', 'thuc_linh']];
+/** Mảng 2 chiều của file Excel: tiêu đề, từng người, dòng Tổng cộng. Mã ca theo dạng có giờ thật, CCCD để dạng chữ. */
+function hangExcelMay(ds) {
+  var coB = ds.some(function (n) { return Object.keys(n.gio || {}).some(function (m) { return m.indexOf('CD') === 0; }); });
+  var ma = DocBangCong.MA_CA[coB ? 'B' : 'A'];
+  var dau = ['STT', 'CCCD nhà máy', 'Họ và tên', 'Ngày vào'].concat(ma, ['Công HC', 'Tổng công'], COT_EXCEL_MAY.map(function (x) { return x[0]; }), ['Ký nhận', 'Ghi chú']);
+  var tong = COT_EXCEL_MAY.map(function () { return 0; });
+  var hang = ds.map(function (n, i) {
+    var tien1 = COT_EXCEL_MAY.map(function (x, j) { var v = Math.round(n.o[x[1]]); tong[j] += v; return v; });
+    return [i + 1, n.cccd_nha_may, n.ten_hien, n.ngay_vao].concat(ma.map(function (m) { return (n.gio || {})[m] || 0; }), [n.cong_hc, n.tong_cong], tien1, [n.o.ky_nhan, n.ghi_chu || '']);
+  });
+  var cuoi = ['Tổng cộng', '', '', ''].concat(ma.map(function () { return ''; }), ['', ''], tong, ['', '']);
+  return [dau].concat(hang, [cuoi]);
+}
+function xuatExcelMay() {
+  if (typeof XLSX === 'undefined') { bao('taiBao', 'do', 'Không tải được bộ tạo Excel — kiểm mạng rồi tải lại trang (F5).'); return; }
+  var dt = trangThai.dangTai, wb = XLSX.utils.book_new(), laSo = dt.loai === 'so_luong';
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(laSo ? hangExcelSo(trangThai.kqDoc) : hangExcelMay(trangThai.kqDoc.nguoi)), laSo ? 'Cho lech' : 'Luong may tinh');
+  XLSX.writeFile(wb, (laSo ? 'So may voi file ' : 'Luong may tinh ') + dt.ma_ct + ' ' + dt.ky + '.xlsx');
+}
+/** Vé 06 — nhóm 📎 trong ô tháng (kế toán, quản trị). Bảng công chưa chốt thì chưa đối chiếu được người: nút tắt, nói đang chờ gì. */
+function oTamUng(k, i, j) {
+  if (!lamPhan('luong') || !k.co_file) return '';
+  var chot = (k.cong_chot_phien || 0) > 0, tu = k.tu;
+  return '<div class="nhom-ky"><h4>📎 Tạm ứng, khoản trừ</h4><ul>' + (tu
+      ? '<li class="roi">Đã tải ' + e(tu.luc) + ' · ' + e(tu.boi) + '<br>' + tu.so_nguoi + ' người · tạm ứng ' + tien(tu.tam_ung) + ' đ · lưu động ' + tien(Math.round(tu.luu_dong)) + ' đ · giảm trừ ' + tien(tu.giam_tru) + ' đ</li>'
+      : '<li class="chua">Chưa tải file tạm ứng</li>') + '</ul>' +
+    (chot
+      ? '<button class="rong" onclick="moTamUng(' + i + ',' + j + ',this)">' + (tu ? '📎 Tải lại file tạm ứng' : '📎 Tải file tạm ứng') + '</button><div class="loi-o an"></div>'
+      : '<button class="rong" disabled>📎 Tải file tạm ứng</button><p class="viec-ke">👉 Chờ hành chính chốt bảng công.</p>') + '</div>';
+}
+function moTamUng(i, j, nut) {
+  var c = trangThai.luoi.cong_ty[i], k = c.ky[j], chu = nut.textContent, loi = nut.nextElementSibling;
+  nut.disabled = true; nut.textContent = '⏳ Đang lấy danh sách người… (vài giây)';
+  if (loi) loi.classList.add('an');
+  goi({ hanh_dong: 'kt_ds_chot', phien: trangThai.phien, ma_ct: c.ma_ct, ky: k.ky }).then(function (kq) {
+    nut.disabled = false; nut.textContent = chu;
+    if (!kq.ok) { if (loi) { loi.textContent = kq.loi; loi.classList.remove('an'); } return; }
+    trangThai.moCT = c.ma_ct;
+    trangThai.dangTai = { loai: 'tam_ung', ma_ct: c.ma_ct, ten: c.ten, ky: k.ky, ds_chot: kq.nguoi };
+    trangThai.kqDoc = null;
+    $('taiTieuDe').textContent = '📎 Tạm ứng, khoản trừ ' + c.ten + ' — Tháng ' + thangNam(k.ky);
+    $('nhanNguoi').textContent = 'Tìm người có khoản trừ';
+    $('taiChi').innerHTML = '👉 Chọn file Excel có trang <b>TẠM ỨNG</b>, <b>TH-LƯU ĐỘNG</b> hoặc <b>GHI CHÚ</b> (file 334 có sẵn hai trang đầu). Máy chỉ đọc 3 trang đó, kiểm từng CCCD với bảng công đã chốt rồi mới cho lưu.';
+    $('nutLuu').textContent = '💾 Lưu khoản trừ';
+    $('taiChi').classList.remove('an'); $('taiNut').classList.remove('an');
+    $('chonFile').value = ''; $('xemTruoc').classList.add('an'); $('nutLuu').classList.add('an');
+    $('phieuXem').innerHTML = ''; $('taiBao').innerHTML = '';
+    if (k.tu) bao('taiBao', 'cho', 'Tháng này đã có file tải lúc ' + e(k.tu.luc) + ' (' + e(k.tu.boi) + '). Lưu file mới sẽ <b>thay toàn bộ</b> khoản trừ của tháng này.');
+    hien('mTai');
+  });
+}
+/** Vé 06 — xem trước file tạm ứng: tổng tiền để đối chiếu với Excel + số dòng đã bỏ qua. */
+function xemTruocTamUng(kq, tenFile) {
+  var tt = kq.thong_tin, canh = kq.canh_bao.map(function (c) { return '<li>' + e(c.loi) + '</li>'; }).join('');
+  bao('taiBao', canh ? 'cho' : 'xanh', '✅ File đọc được. So các tổng bên dưới với Excel rồi bấm 💾 Lưu khoản trừ.' + (canh ? '<ul class="loi-ds" style="color:#92400e">' + canh + '</ul>' : ''));
+  var dongTien = function (ten, co, so) { return '<div>' + ten + '<b>' + (co ? tien(Math.round(so)) + ' đ' : 'không có trang') + '</b></div>'; };
+  $('tom').innerHTML = '<div>Số người có khoản<b>' + tt.so_nguoi + '</b></div>' + dongTien('Tổng tạm ứng', tt.co_tam_ung, tt.tong_tam_ung) +
+    dongTien('Tổng lưu động', tt.co_luu_dong, tt.tong_luu_dong) + dongTien('Tổng giảm trừ khác', tt.co_ghi_chu, tt.tong_giam_tru) +
+    '<div>File<b style="font-size:.9rem;word-break:break-all">' + e(tenFile) + '</b></div>';
+  veDanhSach('');
+  $('xemTruoc').classList.remove('an'); $('nutLuu').classList.remove('an');
+}
+function luuTamUng() {
+  var kq = trangThai.kqDoc, dt = trangThai.dangTai, nut = $('nutLuu');
+  nut.disabled = true; nut.textContent = '⏳ Đang lưu… (5–20 giây)';
+  bao('taiBao', 'cho', '⏳ Đang gửi ' + kq.nguoi.length + ' người lên máy chủ. Đừng đóng trang.');
+  goi({ hanh_dong: 'kt_tam_ung_luu', phien: trangThai.phien, ma_ct: dt.ma_ct, ky: dt.ky, ten_file: kq.ten_file,
+        nguoi: kq.nguoi.map(function (n) { return { cccd_nha_may: n.cccd_nha_may, tam_ung: n.tam_ung, luu_dong: n.luu_dong, giam_tru_khac: n.giam_tru_khac, ghi_chu: n.ghi_chu }; }) }, 120).then(function (r) {
+    nut.disabled = false; nut.textContent = '💾 Lưu khoản trừ';
+    if (!r.ok) { bao('taiBao', 'do', '<b>Chưa lưu.</b> ' + e(r.loi)); return; }
+    bao('luoiBao', 'xanh', '✅ Đã lưu khoản trừ ' + e(dt.ten) + ' tháng ' + thangNam(dt.ky) + ' lúc ' + e(r.luu_luc) + ': ' + r.so_nguoi + ' người. Tính lương lại nếu đã tính trước đó.');
+    taiLuoiGiuBao($('luoiBao').innerHTML);
+  });
 }
 /** Vé 04 — dòng chốt của bảng công + nút 🔒 Chốt / 🔓 Mở chốt ngay dưới (hành chính, quản trị). Đã chốt thì không còn nút tải lại. */
 function oChot(k, i, j) {
@@ -517,6 +761,8 @@ function oPhan(k, i, j, phan) {
   var chu = cb ? '<span class="moi">' + t.icon + ': công nhân đang xem BẢN CŨ (công bố ' + luc + ') — bản mới chưa công bố</span>'
                : '<span class="chua">' + t.icon + ': chưa công bố — công nhân chưa xem được</span>';
   if (!lamPhan(phan)) return '<div class="phan">' + chu + '</div>';
+  var thieu = phan === 'cong' ? thieuCongBoCong(k, i) : '';
+  if (thieu) return '<div class="phan">' + chu + '<button class="rong" disabled>📢 Công bố bảng công</button><p class="viec-ke">👉 ' + thieu + '</p></div>';
   return '<div class="phan">' + chu + '<button class="chinh rong" onclick="congBo(' + i + ',' + j + ',\'' + phan + '\',this)">📢 ' +
     (cb ? 'Công bố lại ' : 'Công bố ') + t.ten + '</button><div class="loi-o an"></div></div>';
 }
@@ -567,6 +813,7 @@ function moTai(i, j, loai) {
                         ky_xoa: k.co_file ? [] : kySeXoa(c, k.ky) };
   trangThai.kqDoc = null;
   $('taiTieuDe').textContent = (loai === 'cong' ? '📥 Bảng công ' : '⬆ File lương ') + c.ten + ' — Tháng ' + thangNam(k.ky);
+  $('nhanNguoi').textContent = 'Xem phiếu từng người (bấm tên)';
   $('taiChi').innerHTML = loai === 'cong'
     ? '👉 Chọn file <b>bảng công</b> Excel của công ty này (có trang <b>Chấm công</b>). Máy đọc file ngay tại đây, kiểm từng ô rồi mới cho lưu.'
     : '👉 Chọn file Excel lương của công ty này (có trang <b>1.Chấm công</b> và <b>2.Bảng lương</b>). Máy đọc file ngay tại đây, kiểm từng ô rồi mới cho lưu.';
@@ -600,6 +847,7 @@ function moXem(i, j, nut) {
     trangThai.dangTai = { ma_ct: c.ma_ct, ten: c.ten, ky: k.ky };
     trangThai.kqDoc = { nguoi: kq.nguoi };
     $('taiTieuDe').textContent = '👁 ' + c.ten + ' — Tháng ' + thangNam(k.ky);
+    $('nhanNguoi').textContent = 'Xem phiếu từng người (bấm tên)';
     $('taiChi').classList.add('an'); $('taiNut').classList.add('an'); $('nutLuu').classList.add('an');
     bao('taiBao', kq.canh_bao ? 'do' : 'xanh', kq.canh_bao ? e(kq.canh_bao) : '👉 Bấm tên một người để xem phiếu. Màn này chỉ để xem, không sửa được gì. Bản tải lúc ' + e(kq.nhap_luc) + '.');
     var tong = kq.nguoi.reduce(function (t, n) { return t + n.luong.thuc_linh; }, 0);
@@ -640,10 +888,11 @@ function bangTuTrang(ws) {
 
 /** Workbook (đã đọc bằng thư viện) → soát → hiện xem trước. Tách riêng để thử được không cần chọn file thật. */
 function docWorkbook(wb, tenFile) {
-  var cacTrang = {}, dt = trangThai.dangTai, laCong = dt.loai === 'cong';
+  var cacTrang = {}, dt = trangThai.dangTai, laCong = dt.loai === 'cong', laTU = dt.loai === 'tam_ung';
   wb.SheetNames.forEach(function (t) { cacTrang[t] = bangTuTrang(wb.Sheets[t]); });
   // Bảng công: công ty theo ô đã chọn (không theo tên trang / cột mã công ty của file), kỳ theo ngày của kỳ công
-  var kq = laCong ? DocBangCong.docBangCong(cacTrang, { ky: dt.ky })
+  var kq = laTU ? DocTamUng.docFile(cacTrang, { nguoi: dt.ds_chot })
+         : laCong ? DocBangCong.docBangCong(cacTrang, { ky: dt.ky })
                   : DocFileLuong.docFile(cacTrang, { ma_ct: dt.ma_ct, ky: dt.ky, ten_chay_luong: dt.ten_chay_luong });
   kq.ten_file = tenFile;
   trangThai.kqDoc = kq;
@@ -656,6 +905,7 @@ function docWorkbook(wb, tenFile) {
     $('xemTruoc').classList.add('an'); $('nutLuu').classList.add('an');
     return;
   }
+  if (laTU) { xemTruocTamUng(kq, tenFile); return; }
   var canh = kq.canh_bao.map(function (c) { return '<li>' + e(c.loi) + '</li>'; }).join('');
   var oFile = '<div>File<b style="font-size:.9rem;word-break:break-all">' + e(tenFile) + '</b></div>';
   if (laCong) {
@@ -675,6 +925,35 @@ function docWorkbook(wb, tenFile) {
 }
 function veDanhSach(loc) {
   var q = DocFileLuong.chuanTenTra(loc || '');
+  if (trangThai.dangTai.loai === 'tam_ung') {                         // chỉ xem tiền từng người, không có phiếu để mở
+    $('dsNguoi').innerHTML = trangThai.kqDoc.nguoi.map(function (n) {
+      if (q && DocFileLuong.chuanTenTra(n.ten_hien).indexOf(q) < 0) return '';
+      return '<li class="bao"><span>' + e(n.ten_hien) + ' <span class="ai">· ***' + e(n.cccd_nha_may.slice(-4)) + (n.ghi_chu ? ' · ' + e(n.ghi_chu) : '') + '</span></span><br><b>' +
+             [['Tạm ứng', n.tam_ung], ['Lưu động', n.luu_dong], ['Giảm trừ', n.giam_tru_khac]].filter(function (x) { return x[1]; })
+               .map(function (x) { return x[0] + ' ' + tien(Math.round(x[1])) + ' đ'; }).join(' · ') + '</b></li>';
+    }).join('') || '<li class="bao">Không có người nào có khoản trừ.</li>';
+    return;
+  }
+  if (trangThai.dangTai.loai === 'so_luong') {                        // mỗi người lệch một khối, không kéo ngang
+    var kq = trangThai.kqDoc, khop = function (t) { return !q || DocFileLuong.chuanTenTra(t).indexOf(q) >= 0; };
+    var khoi = function (t, nd) { return '<li class="bao do"><b>' + e(t) + '</b><br>' + nd + '</li>'; };
+    $('dsNguoi').innerHTML = kq.lech.filter(function (n) { return khop(n.ten); }).map(function (n) {
+      return khoi(n.ten + ' ' + n.cccd, n.o.map(function (o) {
+        var so = function (v) { return typeof v === 'number' ? tien(v) : e(String(v)); };
+        return e(o.ten) + ': máy <b>' + so(o.may) + '</b> · file <b>' + so(o.file) + '</b>' + (o.chenh !== '' ? ' · chênh ' + tien(o.chenh) : '');
+      }).join('<br>'));
+    }).concat(kq.chi_may.filter(khop).map(function (t) { return khoi(t, 'Chỉ máy có, file không có người này.'); }),
+              kq.chi_file.filter(khop).map(function (t) { return khoi(t, 'Chỉ file có, máy không có người này.'); })).join('') || '<li class="bao">Không có ai lệch.</li>';
+    return;
+  }
+  if (trangThai.dangTai.loai === 'xem_may') {
+    $('dsNguoi').innerHTML = trangThai.kqDoc.nguoi.map(function (n, i) {
+      if (q && DocFileLuong.chuanTenTra(n.ten_hien).indexOf(q) < 0) return '';
+      return '<li><button onclick="xemNguoi(' + i + ', this)"><span>' + e(n.ten_hien) + ' <span class="ai">· ***' + e(n.cccd_nha_may.slice(-4)) + '</span></span><b>' +
+             (n.o.ky_nhan === 'KTT' ? 'KTT · ' : '') + tien(n.o.thuc_linh) + ' đ</b></button></li>';
+    }).join('') || '<li class="bao">Không có tên nào khớp.</li>';
+    return;
+  }
   $('dsNguoi').innerHTML = trangThai.kqDoc.nguoi.map(function (n, i) {
     if (q && n.ten_tra.join(' ').indexOf(q) < 0) return '';
     // bảng công chưa có tiền → hiện tổng giờ (cộng các mã ca) thay cho thực lĩnh
@@ -687,6 +966,12 @@ function veDanhSach(loc) {
 function xemNguoi(i, nut) {
   [].forEach.call(document.querySelectorAll('.ds-nguoi button'), function (b) { b.classList.toggle('chon', b === nut); });
   var n = trangThai.kqDoc.nguoi[i];
+  if (trangThai.dangTai.loai === 'xem_may') {
+    $('phieuXem').innerHTML = '<div class="ai" style="margin-top:12px">Từng khoản của ' + e(n.ten_hien) + ':</div><ul class="loi-ds" style="color:inherit">' +
+      n.chi_tiet.map(function (c) { return '<li>' + e(c) + '</li>'; }).join('') + '</ul>';
+    $('phieuXem').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    return;
+  }
   $('phieuXem').innerHTML = '<div class="ai" style="margin-top:12px">Công nhân sẽ thấy đúng như sau:</div>' +
     (n.luong ? VePhieu.phieuLuong(n, { cong_ty: trangThai.dangTai.ten, ky: trangThai.dangTai.ky }) : '') + VePhieu.bangCong(n);
   $('phieuXem').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -710,14 +995,16 @@ function chonFile(f) {
 function luuNhap(xoaKy) {
   var kq = trangThai.kqDoc, dt = trangThai.dangTai;
   if (!kq || !kq.ok) return;
+  if (dt.loai === 'tam_ung') { luuTamUng(); return; }
   if (!xoaKy && dt.ky_xoa.length) { hoiXoaKy(dt.ky_xoa); return; }
   var laCong = dt.loai === 'cong', chuNut = laCong ? '💾 Lưu bảng công' : '💾 Lưu bản nháp';
   var nut = $('nutLuu'); nut.disabled = true; nut.textContent = '⏳ Đang lưu… (5–20 giây)';
   bao('taiBao', 'cho', '⏳ Đang gửi ' + kq.nguoi.length + ' người lên máy chủ. Đừng đóng trang.');
   goi({ hanh_dong: laCong ? 'hc_luu_cong' : 'kt_luu_nhap', phien: trangThai.phien, ma_ct: dt.ma_ct, ky: dt.ky, phien_ban_ky: dt.phien_ban_ky,
-        ten_file: kq.ten_file, nguoi: kq.nguoi, xoa_ky: xoaKy || [] }, 120).then(function (r) {
+        ten_file: kq.ten_file, nguoi: kq.nguoi, xoa_ky: xoaKy || [], ly_do_gio: dt.ly_do_gio || '' }, 120).then(function (r) {
     nut.disabled = false; nut.textContent = chuNut;
     if (!r.ok && r.ma === 'SE_XOA_KY') { dt.ky_xoa = r.ky_xoa; hoiXoaKy(r.ky_xoa); return; }   // danh sách trên trang đã cũ
+    if (!r.ok && r.ma === 'GIO_KHAC') { hoiGioKhac(r, xoaKy); return; }
     if (!r.ok) {
       bao('taiBao', 'do', '<b>Chưa lưu.</b> ' + e(r.loi) + (r.ma === 'DA_DOI' ? ' <button onclick="taiLuoi()">🔄 Tải lại</button>' : ''));
       return;
@@ -737,10 +1024,193 @@ function luuNhap(xoaKy) {
     taiLuoiGiuBao(giu);
   });
 }
+/** Vé 09 — file có giờ / cột đếm khác bảng công đã chốt: chưa lưu gì; bấm "Vẫn dùng file của tôi" phải ghi lý do. Toàn bộ chỗ lệch hiện ở màn tải, hộp hỏi chỉ vài dòng đầu. */
+function hoiGioKhac(r, xoaKy) {
+  var dt = trangThai.dangTai;
+  var dong = function (x) { return '<li>' + e(x.ten) + ': ' + e(x.o) + (x.chot !== '' ? ' · bảng công ' + e(String(x.chot)) + ' · file ' + e(String(x.file)) : '') + '</li>'; };
+  bao('taiBao', 'do', '<b>Chưa lưu: file khác bảng công đã chốt ' + r.tong_khac + ' chỗ (' + r.so_nguoi_lech + ' người).</b><ul class="loi-ds">' + r.khac.map(dong).join('') +
+      (r.tong_khac > r.khac.length ? '<li>… và ' + (r.tong_khac - r.khac.length) + ' chỗ nữa</li>' : '') + '</ul>');
+  hoi('<p><b>File khác bảng công đã chốt ' + r.tong_khac + ' chỗ (' + r.so_nguoi_lech + ' người).</b></p><ul class="loi-ds">' + r.khac.slice(0, 5).map(dong).join('') +
+      (r.tong_khac > 5 ? '<li>… xem đủ ở màn tải sau khi đóng hộp này</li>' : '') + '</ul>' +
+      '<p>Bảng công sai thì bấm <b>Thôi, chưa lưu</b> và báo hành chính mở chốt. File đúng thì ghi lý do rồi bấm dùng file.</p>' +
+      '<label for="gioLyDo">Lý do dùng file (bắt buộc)</label><textarea id="gioLyDo" maxlength="300" placeholder="Ví dụ: nhà máy báo lại giờ ngày 03 của An"></textarea><div class="loi-o an" id="loiGioLyDo"></div>',
+      '📄 Vẫn dùng file của tôi', 'Thôi, chưa lưu', function () { luuNhap(xoaKy); }, null, function () {
+        var v = String($('gioLyDo').value || '').trim();
+        if (!v) { $('loiGioLyDo').textContent = 'Chưa ghi lý do — kế toán và người quản trị cần biết vì sao dùng giờ khác bảng công đã chốt.'; $('loiGioLyDo').classList.remove('an'); return false; }
+        dt.ly_do_gio = v;
+        return true;
+      });
+}
 function taiLuoiGiuBao(html) {
   taiLuoi();
   var cho = setInterval(function () { if (trangThai.luoi && $('luoiBao').textContent.indexOf('Đang lấy') < 0) { $('luoiBao').innerHTML = html; clearInterval(cho); } }, 200);
   setTimeout(function () { clearInterval(cho); }, 30000);
+}
+
+// ---------------- 📐 QUY TẮC LƯƠNG TỪNG CÔNG TY (vé 05) ----------------
+/** Các ô, theo nhóm. Máy chủ soát lại từng ô (soatQuyTac_) và không có giá trị mặc định ngầm; bộ kiểm so khoá hai bên. `chon` = ô chọn; `rieng` = ô vẽ riêng theo dạng. */
+var CHIA_QT = [['chuan', 'Ngày công chuẩn (số ngày trong kỳ công trừ Chủ nhật, tháng 9 là 27)'], ['26', '26']];
+var QT_NHOM = [
+  { ten: '💵 Lương cơ bản', o: [
+    { k: 'luong_cb', nhan: 'Lương cơ bản một tháng (đồng)', chi: 'Dùng tính đơn giá giờ: (lương cơ bản + phụ cấp trách nhiệm) ÷ 26 ÷ 8.', vd: 'Ví dụ 4.600.000 thì một giờ thường là 22.115 đồng.' },
+    { k: 'pc_trach_nhiem', nhan: 'Phụ cấp trách nhiệm cộng vào đơn giá (đồng)', chi: 'Không có thì ghi 0, đừng để trống.', vd: 'Ví dụ 0.' }] },
+  { ten: '⏱ Giờ làm và cách tính công', rieng: true, o: [
+    { k: 'dang', nhan: 'Dạng bảng công', chi: 'Dạng nào thì có mã ca của dạng đó.', vd: 'IMT là dạng B; YUWON, MT là dạng A.',
+      chon: [['A', 'A: ca đêm gộp (HCD, TCD)'], ['B', 'B: ca đêm theo khung giờ (CD20-22, CD22-5, CD5-6, CD6-8)']], doi: 'doiDangQT()' }] },
+  { ten: '🎯 Chuyên cần', o: [
+    { k: 'cc_kieu', nhan: 'Kiểu chuyên cần', chi: 'Cố định: ai cũng được theo công. Có điều kiện: phải đủ công, ít nghỉ.', vd: 'YUWON cố định; IMT, MT có điều kiện.',
+      chon: [['co_dinh', 'Cố định'], ['dieu_kien', 'Có điều kiện']], doi: 'doiKieuCC()' },
+    { k: 'cc_muc_du', nhan: 'Mức chuyên cần (đồng/tháng)', chi: 'Tiền = mức ÷ số chia × công hành chính.', vd: 'Ví dụ 500.000.' },
+    { k: 'cc_chia', nhan: 'Số chia', chi: 'Số ở bước "÷ số chia" phía trên, phải lớn hơn 0.', vd: 'Ví dụ 24 hoặc 30.' },
+    { k: 'cc_nguong_du', chiDK: true, nhan: 'Ngưỡng công để được mức đủ', chi: 'Công hành chính + ngày chờ việc từ số này trở lên, không nghỉ phép, không nghỉ không phép.', vd: 'Ví dụ 23,5.' },
+    { k: 'cc_muc_nua', chiDK: true, nhan: 'Mức nửa (đồng/tháng)', chi: 'Không đủ mức trên nhưng đạt ngưỡng dưới thì được mức này.', vd: 'Ví dụ 250.000.' },
+    { k: 'cc_nguong_nua', chiDK: true, nhan: 'Ngưỡng công để được mức nửa', chi: 'Từ số này trở lên, không nghỉ không phép, nghỉ phép tối đa 1 ngày. Thấp hơn thì không có chuyên cần.', vd: 'Ví dụ 22,5.' }] },
+  { ten: '🛵 Xăng xe và 🏠 Nhà ở', o: [
+    { k: 'xang_xe_muc', nhan: 'Xăng xe: mức tháng (đồng)', chi: 'Tiền = mức × công hành chính ÷ số chia bên dưới. Không có thì ghi 0.', vd: 'Ví dụ 300.000.' },
+    { k: 'xang_xe_chia', nhan: 'Xăng xe: chia cho', chi: 'Chọn đúng như công thức trong file lương.', vd: 'IMT chia ngày công chuẩn; YUWON chia 26.', chon: CHIA_QT },
+    { k: 'nha_o_muc', nhan: 'Nhà ở: mức tháng (đồng)', chi: 'Tiền = mức × công hành chính ÷ số chia bên dưới. Không có thì ghi 0.', vd: 'Ví dụ 400.000.' },
+    { k: 'nha_o_chia', nhan: 'Nhà ở: chia cho', chi: 'Chọn đúng như công thức trong file lương.', vd: 'IMT chia ngày công chuẩn; YUWON chia 26.', chon: CHIA_QT }] },
+  { ten: '📈 Thâm niên', o: [
+    { k: 'tn_muc_1', nhan: 'Từ 3 đến dưới 6 tháng (đồng)', chi: 'Người có tổng công từ 20 trở lên. Tiền = mức × công hành chính ÷ 26.', vd: 'Ví dụ 100.000.' },
+    { k: 'tn_muc_2', nhan: 'Từ 6 đến dưới 12 tháng (đồng)', chi: 'Cách tính như dòng trên.', vd: 'Ví dụ 200.000.' },
+    { k: 'tn_muc_3', nhan: 'Từ 12 tháng trở lên (đồng)', chi: 'Cách tính như dòng trên.', vd: 'Ví dụ 300.000.' }] },
+  { ten: '🍚 Ăn ca', o: [
+    { k: 'an_ca', nhan: 'Tiền một suất ăn (đồng)', chi: 'Tiền = số này × số suất ở cột TSA của bảng công. Không có thì ghi 0.', vd: 'Ví dụ MT là 30.000.' }] },
+  { ten: '⚠ Phạt', o: [
+    { k: 'phat_kp', nhan: 'Nghỉ không phép (KP): tiền một ngày (đồng)', chi: 'Số ngày lấy ở cột KP của bảng công. Không phạt thì ghi 0.', vd: 'Ví dụ 100.000.' },
+    { k: 'phat_nn', nhan: 'Nghỉ ngang (NN): tiền một ngày (đồng)', chi: 'Số ngày lấy ở cột NN của bảng công. Không phạt thì ghi 0.', vd: 'Ví dụ 300.000.' }] }
+];
+var TEN_MA_CA = { HCN: 'Hành chính ngày', TCN: 'Tăng ca ngày', HCD: 'Hành chính đêm', TCD: 'Tăng ca đêm', 'CD20-22': 'Đêm 20h đến 22h', 'CD22-5': 'Đêm 22h đến 5h',
+                  'CD5-6': 'Đêm 5h đến 6h', 'CD6-8': 'Sáng 6h đến 8h', TCCN: 'Chủ nhật ngày', TCDCN: 'Chủ nhật đêm', TCNL: 'Lễ ngày', TCDNL: 'Lễ đêm' };
+var QT_DS_MA = [['ma_cong_hc', 'Mã ca tính công hành chính', 'Công hành chính = tổng giờ các mã đã chọn ÷ 8.', 'YUWON, MT chọn HCN, HCD.'],
+                ['ma_tong_cong', 'Mã ca tính tổng công', 'Dùng xét ngưỡng công người mới và thâm niên.', 'YUWON, MT chọn HCN, HCD, TCCN, TCDCN.']];
+var qtDangVe = '';   // dạng bảng công đang vẽ trên form: ô hệ số chỉ có của dạng này
+
+function oQT(o) {
+  var goc = '<div class="o-qt" id="qtDong_' + o.k + '"><label for="qt_' + o.k + '">' + e(o.nhan) + '</label><p class="giai">' + e(o.chi) + ' ' + e(o.vd) + '</p>';
+  var o2 = o.chon
+    ? '<select id="qt_' + o.k + '"' + (o.doi ? ' onchange="' + o.doi + '"' : '') + '><option value="">Chọn…</option>' +
+      o.chon.map(function (x) { return '<option value="' + x[0] + '">' + e(x[1]) + '</option>'; }).join('') + '</select>'
+    : '<input id="qt_' + o.k + '" type="text" inputmode="decimal" autocomplete="off">';
+  return goc + o2 + '<div class="loi-o an" id="qtl_' + o.k + '"></div></div>';
+}
+/** Phần vẽ theo dạng bảng công: hệ số từng mã ca + hai danh sách mã. Chưa chọn dạng thì nhắc chọn. */
+function oTheoDang(dang) {
+  var ma = DocBangCong.MA_CA[dang];
+  if (!ma) return '<p class="giai" style="margin-top:8px">👉 Chọn dạng bảng công ở trên để hiện các mã ca.</p>';
+  return ma.map(function (m) {
+    return oQT({ k: 'he_so.' + m, nhan: 'Hệ số ' + m + ' (' + (TEN_MA_CA[m] || m) + ')', chi: 'Tiền giờ = đơn giá × hệ số × giờ.', vd: 'Ví dụ 1,5.' });
+  }).join('') + QT_DS_MA.map(function (x) {
+    return '<div class="o-qt"><label>' + e(x[1]) + '</label><p class="giai">' + e(x[2]) + ' ' + e(x[3]) + '</p>' + ma.map(function (m) {
+      return '<label class="chon-ma" for="qt_' + x[0] + '.' + m + '"><input id="qt_' + x[0] + '.' + m + '" type="checkbox"> ' + m + ' (' + e(TEN_MA_CA[m] || m) + ')</label>';
+    }).join('') + '<div class="loi-o an" id="qtl_' + x[0] + '"></div></div>';
+  }).join('');
+}
+function veFormQT(dang) {
+  qtDangVe = dang;
+  $('qtForm').innerHTML = QT_NHOM.map(function (n) {
+    return '<div class="nhom-qt"><h3>' + e(n.ten) + '</h3>' + n.o.map(oQT).join('') + (n.rieng ? oTheoDang(dang) : '') + '</div>';
+  }).join('');
+}
+/** Số dễ đọc trong ô: 4600000 → 4.600.000, 1.3 → 1,3. Máy chủ đọc lại được cả hai cách viết. */
+function soHienQT(v) {
+  if (v == null || typeof v !== 'number') return v == null ? '' : v;   // chữ người đang gõ (đổi dạng) giữ nguyên
+  return v >= 1000 ? tien(v) : String(v).replace('.', ',');
+}
+/** Điền một bộ vào form (mở màn, đổi dạng, chép từ công ty khác). Vẽ lại theo dạng của bộ rồi mới đặt giá trị. */
+function dienFormQT(bo) {
+  veFormQT(bo.dang);
+  QT_NHOM.forEach(function (n) { n.o.forEach(function (o) { $('qt_' + o.k).value = o.chon ? (bo[o.k] == null ? '' : String(bo[o.k])) : soHienQT(bo[o.k]); }); });
+  (DocBangCong.MA_CA[bo.dang] || []).forEach(function (m) {
+    $('qt_he_so.' + m).value = soHienQT((bo.he_so || {})[m]);
+    QT_DS_MA.forEach(function (x) { $('qt_' + x[0] + '.' + m).checked = (bo[x[0]] || []).indexOf(m) >= 0; });
+  });
+  doiKieuCC();
+}
+/** Đọc form ra một bộ, giữ nguyên chữ người gõ — soát ở máy chủ để câu báo chỉ có một nguồn. */
+function docFormQT() {
+  var bo = { he_so: {} };
+  QT_NHOM.forEach(function (n) { n.o.forEach(function (o) { bo[o.k] = $('qt_' + o.k).value; }); });
+  QT_DS_MA.forEach(function (x) { bo[x[0]] = []; });
+  (DocBangCong.MA_CA[qtDangVe] || []).forEach(function (m) {
+    bo.he_so[m] = $('qt_he_so.' + m).value;
+    QT_DS_MA.forEach(function (x) { if ($('qt_' + x[0] + '.' + m).checked) bo[x[0]].push(m); });
+  });
+  return bo;
+}
+/** Đổi dạng: đọc các ô của dạng CŨ đang vẽ, vẽ lại theo dạng mới; mã có ở cả hai dạng giữ được số đã gõ. */
+function doiDangQT() { dienFormQT(docFormQT()); }
+function doiKieuCC() {
+  var coDK = $('qt_cc_kieu').value === 'dieu_kien';
+  QT_NHOM.forEach(function (n) { n.o.forEach(function (o) { if (o.chiDK) $('qtDong_' + o.k).classList.toggle('an', !coDK); }); });
+}
+function nutQT(c, i) {
+  if (c.qt_tu == null) return '';                     // máy chủ chỉ gửi ô này cho người khai được quy tắc công ty đó
+  return '<button class="rong nut-qt" onclick="moQT(' + i + ',this)">' +
+    (c.qt_tu ? '📐 Quy tắc lương: áp dụng từ tháng ' + thangNam(c.qt_tu) : '📐 Khai quy tắc lương (chưa có)') + '</button>';
+}
+function moQT(i, nut) {
+  var c = trangThai.luoi.cong_ty[i], chu = nut.textContent;
+  nut.disabled = true; nut.textContent = '⏳ Đang lấy quy tắc… (vài giây)';
+  goi({ hanh_dong: 'kt_quy_tac_doc', phien: trangThai.phien, ma_ct: c.ma_ct }).then(function (kq) {
+    nut.disabled = false; nut.textContent = chu;
+    if (!kq.ok) { bao('luoiBao', 'do', e(kq.loi)); window.scrollTo(0, 0); return; }
+    trangThai.moCT = c.ma_ct;
+    trangThai.qt = { ma_ct: c.ma_ct, ten: c.ten };
+    $('qtTieuDe').textContent = '📐 Quy tắc lương ' + c.ten;
+    $('qtChi').innerHTML = kq.bo
+      ? '👉 Đang áp dụng từ tháng <b>' + thangNam(kq.ap_dung_tu) + '</b> (lưu ' + e(kq.luu_luc) + ' · ' + e(kq.luu_boi) + '). Đổi số nào thì sửa số đó, chọn tháng bắt đầu áp dụng, rồi bấm <b>💾 Lưu quy tắc</b>.'
+      : '👉 Công ty này chưa có quy tắc đọc được. Điền các ô dưới' + (kq.cau && kq.o_loi ? ' (' + e(kq.cau) + ')' : '') + ', chọn tháng bắt đầu áp dụng, rồi bấm <b>💾 Lưu quy tắc</b>.';
+    var ng = kq.nguong_cong_moi || {};
+    $('qtNguong').innerHTML = ng.loi ? '<div class="bao do">' + e(ng.loi) + '</div>'
+      : ng.gia_tri == null ? '<div class="bao cho">👉 Điền ngưỡng ở tab CONG_TY, cột <b>nguong_cong_moi</b>, dòng công ty này. Chưa có số thì chưa tính được lương.</div>'
+      : '<p style="margin:0"><b>' + soHienQT(ng.gia_tri) + ' công</b>. Sửa ở tab CONG_TY, cột nguong_cong_moi.</p>';
+    var nguon = trangThai.luoi.cong_ty.filter(function (x) { return x.qt_tu && x.ma_ct !== c.ma_ct; });
+    $('qtChepTu').innerHTML = nguon.map(function (x) { return '<option value="' + e(x.ma_ct) + '">' + e(x.ten) + '</option>'; }).join('');
+    $('qtChepKhoi').classList.toggle('an', !nguon.length);
+    $('qtTu').value = kq.bo ? kq.ap_dung_tu : '';
+    $('qtBao').innerHTML = '';
+    xoaLoiQT();
+    dienFormQT(kq.bo || {});
+    hien('mQT');
+  });
+}
+function chepQT() {
+  var ma = $('qtChepTu').value, nut = $('nutChepQT'), chu = nut.textContent;
+  if (!ma) return;
+  nut.disabled = true; nut.textContent = '⏳ Đang lấy số… (vài giây)';
+  goi({ hanh_dong: 'kt_quy_tac_doc', phien: trangThai.phien, ma_ct: ma }).then(function (kq) {
+    nut.disabled = false; nut.textContent = chu;
+    if (!kq.ok) { bao('qtBao', 'do', e(kq.loi)); return; }
+    if (!kq.bo) { bao('qtBao', 'do', e(kq.cau)); return; }
+    dienFormQT(kq.bo);
+    xoaLoiQT();
+    bao('qtBao', 'cho', '📋 Đã chép số của ' + e(ma) + ' vào các ô. <b>CHƯA lưu</b>: kiểm lại, chọn tháng bắt đầu áp dụng, rồi bấm 💾 Lưu quy tắc.');
+  });
+}
+function xoaLoiQT() {
+  var t = trangThai.qt;
+  (t && t.o_loi || []).forEach(function (l) { $('qtl_' + l.o).classList.add('an'); $('qtl_' + l.o).textContent = ''; });
+  if (t) t.o_loi = [];
+}
+function luuQT() {
+  var nut = $('nutLuuQT'), chu = nut.textContent, t = trangThai.qt;
+  xoaLoiQT();
+  nut.disabled = true; nut.textContent = '⏳ Đang lưu… (vài giây)';
+  bao('qtBao', 'cho', '⏳ Đang gửi quy tắc lên máy chủ. Đừng đóng trang.');
+  goi({ hanh_dong: 'kt_quy_tac_luu', phien: trangThai.phien, ma_ct: t.ma_ct, ap_dung_tu: $('qtTu').value, bo: docFormQT() }, 60).then(function (r) {
+    nut.disabled = false; nut.textContent = chu;
+    if (r.ma === 'QUY_TAC_LOI') {
+      t.o_loi = r.o_loi;
+      r.o_loi.forEach(function (l) { $('qtl_' + l.o).textContent = l.loi; $('qtl_' + l.o).classList.remove('an'); });
+      bao('qtBao', 'do', '<b>Chưa lưu: còn ' + r.o_loi.length + ' ô cần sửa.</b> Sửa các ô có chữ đỏ rồi bấm lại.<ul class="loi-ds">' +
+          r.o_loi.slice(0, 12).map(function (l) { return '<li>' + e(l.loi) + '</li>'; }).join('') + '</ul>');
+      return;
+    }
+    if (!r.ok) { bao('qtBao', 'do', '<b>Chưa lưu.</b> ' + e(r.loi)); return; }
+    bao('luoiBao', 'xanh', '✅ Đã lưu quy tắc lương ' + e(t.ten) + ', áp dụng từ tháng ' + thangNam(r.ap_dung_tu) + '. Tháng trước đó vẫn dùng số cũ.');
+    taiLuoiGiuBao($('luoiBao').innerHTML);
+  });
 }
 
 // ---------------- HỘP HỎI TRONG TRANG (không dùng confirm của trình duyệt) ----------------
@@ -1059,6 +1529,10 @@ $('timPH').addEventListener('input', function () { ph.tim = this.value; vePH(); 
 $('locHM').addEventListener('change', function () { ph.hm = this.value; vePH(); });
 $('timCT').addEventListener('input', locCT);
 $('nutQuayLai').addEventListener('click', taiLuoi);
+$('nutXuatMay').addEventListener('click', function () { xuatExcelMay(); });
+$('nutQTVe').addEventListener('click', taiLuoi);
+$('nutLuuQT').addEventListener('click', function () { luuQT(); });
+$('nutChepQT').addEventListener('click', function () { chepQT(); });
 $('chonFile').addEventListener('change', function () { chonFile(this.files[0]); });
 $('timNguoi').addEventListener('input', function () { veDanhSach(this.value); });
 $('nutLuu').addEventListener('click', function () { luuNhap(); });   // không truyền sự kiện vào tham số xoaKy

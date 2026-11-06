@@ -105,6 +105,16 @@
   var COT_NGHI = [['np', 'nghi phep'], ['kp', 'khong phep'], ['ld', 'luu dong'], ['nv', 'nghi viec'],
                   ['nn', 'nghi ngang'], ['cv', 'cho viec'], ['cg', 'cat giam'], ['tsa', 'tong suat an']];
 
+  /** Ngày vào: ô ngày tháng thật (số ngày Excel), hoặc chữ "05/09/2026" / "2026-09-05". Không đọc được → ''. */
+  function docNgay(v) {
+    if (typeof v === 'number') return laNgay(v) ? ngayExcel(v) : '';
+    var s = String(v == null ? '' : v).trim(), m;
+    if ((m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/.exec(s))) s = m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+    else if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
+    var d = new Date(s + 'T00:00:00Z');
+    return !isNaN(d.getTime()) && d.toISOString().substring(0, 10) === s && s > '1950' ? s : '';
+  }
+
   function timTrang(cacTrang, dau) {
     var ten = Object.keys(cacTrang).filter(function (t) { return chuanChu(t).indexOf(dau) === 0; });
     return ten.length ? ten[0] : '';
@@ -254,6 +264,8 @@
 
     // --- chấm công: gom theo CCCD nhà máy ---
     var theoCCCD = {}, thuTu = [], maCTFile = {};
+    // Vé 08: máy tính lương cần ngày vào. Trang chấm công file 334 có cột này; thiếu thì lúc tính mới chặn, đọc file lương vẫn được
+    var cVao = timCot(cc, [bCC.dong_ngay - 1, bCC.dong_ngay], baoGom('ngay vao'));
     for (var r = bCC.dau; r <= cc.length; r++) {
       var cRaw = o(cc, r, bCC.cccd);
       if (trong(cRaw) || cRaw === 0 || cRaw === '0') continue;           // dòng khuôn trống
@@ -270,7 +282,7 @@
         ng = theoCCCD[cNM] = {
           dong: r, stt: o(cc, r, 1), cccd_nha_may: cNM, ten_nha_may: tenNM,
           cccd_tra: cThuc || cNM, ten_hien: tenThuc || tenNM,
-          nguoi_tuyen: String(o(cc, r, bCC.tuyen) || '').trim(), ca: [], nghi: {}
+          nguoi_tuyen: String(o(cc, r, bCC.tuyen) || '').trim(), ngay_vao: cVao ? docNgay(o(cc, r, cVao)) : '', ca: [], nghi: {}
         };
         bCC.nghi.forEach(function (x) { var v = so(o(cc, r, x[1])); if (v) ng.nghi[x[0]] = v; });
         thuTu.push(cNM);
@@ -369,7 +381,7 @@
       var coNgay = n.ca.some(function (x) { return x.co_ngay; });
       return {
         cccd_tra: n.cccd_tra, ten_tra: bienTheTen(n.ten_hien), ten_hien: n.ten_hien,
-        cccd_nha_may: n.cccd_nha_may, ten_nha_may: n.ten_nha_may, nguoi_tuyen: n.nguoi_tuyen,
+        cccd_nha_may: n.cccd_nha_may, ten_nha_may: n.ten_nha_may, nguoi_tuyen: n.nguoi_tuyen, ngay_vao: n.ngay_vao,
         cong: { ngay: ngay, co_chi_tiet: coNgay,
                 ca: n.ca.map(function (x) { return { ma: x.ma, ten: x.ten, gio: x.gio, tong: x.tong }; }), nghi: n.nghi },
         luong: n.luong, ky_nhan: n.ky_nhan, ghi_chu: n.ghi_chu
@@ -391,6 +403,6 @@
   goc.DocFileLuong = { docFile: docFile, chuanSoGiayTo: chuanSoGiayTo, chuanTenTra: chuanTenTra, bienTheTen: bienTheTen,
                        ngayExcel: ngayExcel, tenO: tenO,
                        // doc-bang-cong.js đọc cùng bố cục trang Chấm công — dùng chung, không chép bản thứ hai
-                       coBan: { o: o, so: so, tron: tron, trong: trong, chuanChu: chuanChu, laNgay: laNgay, laChuKhongSo: laChuKhongSo,
+                       coBan: { o: o, so: so, tron: tron, trong: trong, chuanChu: chuanChu, laNgay: laNgay, docNgay: docNgay, laChuKhongSo: laChuKhongSo,
                                 timCot: timCot, baoGom: baoGom, dungChu: dungChu, boCucChamCong: boCucChamCong, thangDep: thangDep, TEN_CA: TEN_CA } };
 })(typeof window !== 'undefined' ? window : globalThis);

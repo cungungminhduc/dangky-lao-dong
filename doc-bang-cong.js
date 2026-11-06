@@ -42,15 +42,7 @@
     return ten.length === 1 ? ten[0] : '';
   }
 
-  /** Ngày vào: ô ngày tháng thật (số ngày Excel), hoặc chữ "05/09/2026" / "2026-09-05". Không đọc được → ''. */
-  function docNgay(v) {
-    if (typeof v === 'number') return K.laNgay(v) ? F.ngayExcel(v) : '';
-    var s = String(v == null ? '' : v).trim(), m;
-    if ((m = /^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/.exec(s))) s = m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
-    else if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return '';
-    var d = new Date(s + 'T00:00:00Z');
-    return !isNaN(d.getTime()) && d.toISOString().substring(0, 10) === s && s > '1950' ? s : '';
-  }
+  var docNgay = K.docNgay;
 
   function docBangCong(cacTrang, tuyChon) {
     tuyChon = tuyChon || {};
