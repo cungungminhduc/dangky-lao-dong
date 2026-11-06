@@ -13,6 +13,8 @@
   Tệp cấu hình tên cau-hinh-luong.js — đừng đổi lại cau-hinh.js, tải lên là đè tệp hệ tuyển dụng.
   1.2.1 (Dương chốt 04/11): lưới công ty THU GỌN — mỗi công ty một dòng + tóm tắt, bấm mới mở các ô tháng, mỗi lúc một công ty, giữ ô tìm.
   1.4 (vé 13): mục 💬 Phản hồi công nhân — quản lý + trưởng nhóm vào thẳng mục này, kế toán + quản trị có thêm nút trên menu. Phiếu nào ai thấy kiểm ở máy chủ (thayPH_).
+  2.0 (vé 03 luồng lương từ bảng công): hành chính 📥 tải bảng công (doc-bang-cong.js) + 📢 công bố bảng công; kế toán tải file lương + công bố phiếu lương.
+  Mỗi ô tháng hai nhóm "🗓 Bảng công" / "💵 Lương", nút nằm ngay trong nhóm nó tác động, dòng "👉" nói việc kế cho đúng chức vụ.
 -->
 <style>
   :root { --nen:#f1f4f8; --the:#fff; --chu:#1a202c; --mo:#4a5568; --vien:#cbd5e0; --chinh:#1d4ed8; --xanh:#15803d;
@@ -66,6 +68,11 @@
   .ky .phan > span { display: block; margin-bottom: 6px; }
   .ky .phan .loi-o { margin-top: 6px; }
   .ky .nut-tai { margin-top: 8px; }
+  /* 2.0 — ô tháng chia nhóm Bảng công / Lương; dòng 👉 việc kế ở đầu ô */
+  .ky .nhom-ky { border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 8px; }
+  .ky .nhom-ky h4 { font-size: .95rem; margin-bottom: 4px; }
+  .ky .nhom-ky ul { margin-bottom: 6px; }
+  .ky .viec-ke { background: #eff6ff; border-radius: 8px; padding: 8px 10px; font-size: .93rem; margin-bottom: 4px; }
   .hop-hoi textarea { width: 100%; min-height: 72px; padding: 10px 12px; font-size: 1rem; font-family: inherit;
          border: 1.5px solid var(--vien); border-radius: 8px; }
   .hop-hoi textarea.sai { border-color: var(--do); }
@@ -203,8 +210,8 @@
 
   <!-- LƯỚI CÔNG TY × THÁNG -->
   <section id="mLuoi" class="an">
-    <div class="chi">👉 Bấm vào <b>tên công ty</b> để mở, chọn đúng tháng, bấm <b>⬆ Tải file lương</b> ngay trong ô tháng đó. Tải xong, bấm
-      <b>📢 Công bố</b> ngay dưới dòng Bảng công / Phiếu lương — công nhân chỉ xem được phần đã công bố.</div>
+    <div class="chi" id="chiLuoi">👉 Bấm vào <b>tên công ty</b> để mở, chọn đúng tháng, bấm <b>⬆ Tải file lương</b> ngay trong ô tháng đó. Tải xong, bấm
+      <b>📢 Công bố phiếu lương</b> ngay dưới — công nhân chỉ xem được phần đã công bố. Bảng công do hành chính tải và công bố.</div>
     <div id="luoiBao"></div>
     <input id="timCT" type="search" placeholder="🔍 Gõ tên hoặc mã công ty để tìm" style="margin-bottom:12px">
     <div id="luoi"></div>
@@ -215,9 +222,9 @@
   <section id="mTai" class="an">
     <div class="the">
       <h2 id="taiTieuDe" style="font-size:1.1rem"></h2>
-      <div class="chi" style="margin-top:10px">👉 Chọn file Excel lương của công ty này (có trang <b>1.Chấm công</b> và <b>2.Bảng lương</b>).
+      <div class="chi" id="taiChi" style="margin-top:10px">👉 Chọn file Excel lương của công ty này (có trang <b>1.Chấm công</b> và <b>2.Bảng lương</b>).
         Máy đọc file ngay tại đây, kiểm từng ô rồi mới cho lưu.</div>
-      <label class="nut chinh" for="chonFile" style="width:100%">📂 Chọn file Excel</label>
+      <label class="nut chinh" id="taiNut" for="chonFile" style="width:100%">📂 Chọn file Excel</label>
       <input id="chonFile" type="file" accept=".xlsx,.xls" class="an">
       <div id="taiBao"></div>
       <div id="xemTruoc" class="an">
@@ -238,6 +245,7 @@
 
 <script src="cau-hinh-luong.js"></script>
 <script src="doc-file-luong.js"></script>
+<script src="doc-bang-cong.js"></script>
 <script src="doc-file-gio.js"></script>
 <script src="ve-phieu.js"></script>
 <script>
@@ -296,7 +304,7 @@ function dangNhap() {
     nut.disabled = false; nut.textContent = 'Đăng nhập';
     if (!kq.ok) { $('dnBao').textContent = kq.loi; $('dnBao').classList.remove('an'); return; }
     trangThai.phien = kq.phien;
-    trangThai.tk = { ho_ten: kq.ho_ten, ten_vai_tro: kq.ten_vai_tro, vai_tro: kq.vai_tro };
+    trangThai.tk = { ho_ten: kq.ho_ten, ten_vai_tro: kq.ten_vai_tro, vai_tro: kq.vai_tro, chuc_vu: kq.chuc_vu };
     nho(KHOA_PHIEN, kq.phien); nho(KHOA_TK, JSON.stringify(trangThai.tk));
     $('dnMk').value = '';
     vaoViec();
@@ -316,10 +324,26 @@ function dangXuat() {
   $('thanhTK').classList.add('an');
   hien('mDangNhap');
 }
+var chiLuoiGoc = null;
+/** Có một trong các chức vụ này không. Máy còn nhớ đăng nhập từ bản cũ (chưa có chuc_vu) thì coi như chỉ có vai_tro. Máy chủ vẫn kiểm lại mọi cú. */
+function coCV() {
+  var tk = trangThai.tk || {}, ds = tk.chuc_vu || [tk.vai_tro], can = arguments;
+  return ds.some(function (v) { return [].indexOf.call(can, v) >= 0; });
+}
 function vaoViec() {
   $('ai').textContent = trangThai.tk.ho_ten + ' · ' + trangThai.tk.ten_vai_tro;
   $('thanhTK').classList.remove('an');
-  if (chiXuLyPH()) { moPH(); return; }                // quản lý, trưởng nhóm chỉ có việc này
+  var coViec = { luong: coCV('hanh_chinh', 'xem_luong', 'ke_toan', 'quan_tri'), gio: coCV('ke_toan', 'quan_tri'),
+                 ph: coCV('quan_ly', 'truong_nhom', 'ke_toan', 'quan_tri') };
+  [].forEach.call(document.querySelectorAll('#menuViec button'), function (b) { b.classList.toggle('an', !coViec[b.getAttribute('data-viec')]); });
+  if (chiLuoiGoc === null) chiLuoiGoc = $('chiLuoi').innerHTML;
+  $('chiLuoi').innerHTML = coCV('ke_toan', 'quan_tri') ? chiLuoiGoc
+    : coCV('hanh_chinh') ? '👉 Bấm vào <b>tên công ty</b>, chọn tháng, bấm <b>📥 Tải bảng công</b> ngay trong ô tháng đó. Kiểm xong bấm ' +
+      '<b>📢 Công bố bảng công</b> để công nhân xem và báo sai sớm; đúng hết thì bấm <b>🔒 Chốt bảng công</b> để kế toán tính lương.' +
+      (coCV('xem_luong') ? ' Có phiếu lương thì bấm <b>👁 Xem bảng lương</b> (chỉ xem).' : '')
+    : coCV('xem_luong') ? '👉 Bấm vào <b>tên công ty</b>, chọn tháng, bấm <b>👁 Xem bảng lương</b>. Anh/chị chỉ xem được, không sửa được gì.'
+    : '👉 Bấm vào <b>tên công ty</b> để xem tình trạng từng tháng.';
+  if (chiXuLyPH()) { moPH(); return; }                // chỉ có quản lý, trưởng nhóm thì chỉ có việc này
   taiLuoi();
 }
 
@@ -329,6 +353,13 @@ function taiLuoi() {
   bao('luoiBao', 'cho', '⏳ Đang lấy danh sách công ty…');
   goi({ hanh_dong: 'kt_luoi', phien: trangThai.phien }).then(function (kq) {
     if (!kq.ok) { bao('luoiBao', 'do', e(kq.loi) + ' <button onclick="taiLuoi()">Thử lại</button>'); return; }
+    // Máy chủ trước 2.0 chưa gửi co_luong / cong_…: khi đó bản nháp nào cũng có cả bảng công lẫn phiếu lương (từ file lương)
+    kq.cong_ty.forEach(function (c) {
+      c.ky.forEach(function (k) {
+        if (!k.co_file || k.co_luong != null) return;
+        k.co_luong = true; k.cong_luc = k.nhap_luc; k.cong_boi = k.nhap_boi; k.cong_ten_file = k.ten_file; k.cong_so_nguoi = k.so_nguoi;
+      });
+    });
     trangThai.luoi = kq;
     demMenuPH(kq.ph_can_lam);
     var canh = kq.ma_khong_co && kq.ma_khong_co.length
@@ -349,11 +380,14 @@ function taiLuoi() {
 /** Một dòng tóm tắt các tháng, gom theo trạng thái, việc cần làm đứng trước — đủ để biết nên mở công ty nào mà chưa cần mở. */
 var TOM_KY = [['moi', '⚠ Có bản mới chưa công bố'], ['cho', '⏳ Chờ công bố'], ['chua', '📄 Chưa có file'], ['xong', '✅ Đã công bố']];
 function tomCT(c) {
-  var nhom = {};
+  // 2.0: mỗi chức vụ chỉ tính phần mình làm (hành chính: bảng công · kế toán: phiếu lương); ai không làm phần nào thì tính cả hai
+  var nhom = {}, cacPhan = ['cong', 'luong'].filter(lamPhan);
+  if (!cacPhan.length) cacPhan = ['cong', 'luong'];
   c.ky.forEach(function (k) {
-    var c1 = k.cb_cong_phien || 0, c2 = k.cb_luong_phien || 0;
-    var tt = !k.co_file ? 'chua' : (c1 === k.phien_ban && c2 === k.phien_ban) ? 'xong'
-           : ((c1 && c1 < k.phien_ban) || (c2 && c2 < k.phien_ban)) ? 'moi' : 'cho';
+    var co = { cong: k.co_file, luong: k.co_luong }, cb = function (p) { return k['cb_' + p + '_phien'] || 0; };
+    var ds = cacPhan.filter(function (p) { return co[p]; });
+    var tt = !ds.length ? 'chua' : ds.some(function (p) { return cb(p) && cb(p) < k.phien_ban; }) ? 'moi'
+           : ds.length === cacPhan.length && ds.every(function (p) { return cb(p) === k.phien_ban; }) ? 'xong' : 'cho';
     (nhom[tt] = nhom[tt] || []).push('T' + k.ky.substring(5));
   });
   return TOM_KY.filter(function (x) { return nhom[x[0]]; }).map(function (x) { return x[1] + ': ' + nhom[x[0]].join(', '); }).join(' · ');
@@ -384,16 +418,94 @@ function locCT() {
   if ($('khongCT')) $('khongCT').classList.toggle('an', con.length > 0);
   if (q && con.length === 1) { trangThai.moCT = con[0].getAttribute('data-ma'); veMoCT(); }   // tìm ra đúng một công ty → mở luôn
 }
-function oKy(k, i, j) {
-  var file = k.co_file
-    ? '<li class="roi">📄 Đã tải ' + e(k.nhap_luc) + ' · ' + e(k.nhap_boi) + '<br>' + k.so_nguoi + ' người · ' + tien(k.tong_thuc_linh) + ' đ</li>'
-    : '<li class="chua">📄 Chưa có file</li>';
-  if (!k.co_file) {
-    return '<div class="ky"><h3>Tháng ' + thangNam(k.ky) + '</h3><ul>' + file + '</ul>' +
-      '<button class="chinh rong" onclick="moTai(' + i + ',' + j + ')">⬆ Tải file lương</button></div>';
+/** Chức vụ nào làm phần nào (bảng chức vụ đặc tả mục 5) — máy chủ kiểm lại mọi cú. */
+var LAM_PHAN = { cong: ['hanh_chinh', 'quan_tri'], luong: ['ke_toan', 'quan_tri'] };
+function lamPhan(phan) { return coCV.apply(null, LAM_PHAN[phan]); }
+/** Dòng "👉" đầu ô tháng: việc kế tiếp cho đúng chức vụ đang xem (quản trị thấy cả hai). */
+function viecKe(k) {
+  var ds = [], cbC = k.cb_cong_phien || 0, cbL = k.cb_luong_phien || 0, chot = (k.cong_chot_phien || 0) > 0;
+  if (lamPhan('cong')) {
+    if (!k.co_file) ds.push('Tải bảng công tháng này — bấm <b>📥 Tải bảng công</b> ngay dưới.');
+    else if (!chot && cbC !== k.phien_ban) ds.push('Kiểm bảng công rồi bấm <b>📢 Công bố bảng công</b> — công nhân xem và báo sai sớm. Đúng hết thì bấm <b>🔒 Chốt bảng công</b>.');
+    else if (!chot) ds.push('Công nhân báo sai xong, đã sửa hết thì bấm <b>🔒 Chốt bảng công</b> — kế toán chờ để tính lương.');
+    else if (cbC !== k.phien_ban) ds.push('Đã chốt, nhưng công nhân chưa xem bảng công này — bấm <b>📢 Công bố bảng công</b>.');
   }
-  return '<div class="ky"><h3>Tháng ' + thangNam(k.ky) + '</h3><ul>' + file + '</ul>' + oPhan(k, i, j, 'cong') + oPhan(k, i, j, 'luong') +
-    '<button class="rong nut-tai" onclick="moTai(' + i + ',' + j + ')">⬆ Tải lại file lương</button></div>';
+  if (lamPhan('luong')) {
+    if (!k.co_luong) ds.push(!k.co_file ? 'Tải file lương tháng này, hoặc chờ hành chính tải bảng công.'
+      : chot ? 'Bảng công đã chốt — tải file lương tháng này.' : 'Chờ hành chính chốt bảng công (vẫn tải được file lương).');
+    else if (cbL !== k.phien_ban) ds.push('Kiểm rồi bấm <b>📢 Công bố phiếu lương</b>.');
+  }
+  if (!ds.length && !lamPhan('cong') && !lamPhan('luong') && coCV('xem_luong')) {
+    ds.push(k.co_luong ? 'Bấm <b>👁 Xem bảng lương</b> để xem (chỉ xem).' : 'Tháng này chưa có bảng lương.');
+  }
+  return ds.length ? '<p class="viec-ke">👉 ' + ds.join('<br>👉 ') + '</p>' : '';
+}
+function oKy(k, i, j) {
+  var nutTai = function (phan, co, chu) {
+    return lamPhan(phan) ? '<button class="' + (co ? '' : 'chinh ') + 'rong nut-tai" onclick="moTai(' + i + ',' + j + ',\'' + phan + '\')">' + chu + '</button>' : '';
+  };
+  var cong = '<div class="nhom-ky"><h4>🗓 Bảng công</h4><ul>' + (k.co_file
+      ? '<li class="roi">Đã tải ' + e(k.cong_luc) + ' · ' + e(k.cong_boi) + '<br>' + k.cong_so_nguoi + ' người' + (k.cong_ten_file ? ' · ' + e(k.cong_ten_file) : '') + '</li>'
+      : '<li class="chua">Chưa có bảng công</li>') + '</ul>' + (k.co_file ? oPhan(k, i, j, 'cong') + oChot(k, i, j) : '') +
+    ((k.cong_chot_phien || 0) > 0 ? '' : nutTai('cong', k.co_file, k.co_file ? '📥 Tải lại bảng công' : '📥 Tải bảng công')) + '</div>';
+  // Hành chính không thấy tiền, không làm lương → không cần nhóm này (máy chủ cũng không gửi số tiền)
+  var luong = !coCV('xem_luong', 'ke_toan', 'quan_tri') ? '' : '<div class="nhom-ky"><h4>💵 Lương</h4><ul>' + (k.co_luong
+      ? '<li class="roi">📄 File lương tải ' + e(k.nhap_luc) + ' · ' + e(k.nhap_boi) + '<br>' + k.so_nguoi + ' người' +
+        (k.tong_thuc_linh == null ? '' : ' · ' + tien(k.tong_thuc_linh) + ' đ') + '</li>'
+      : '<li class="chua">📄 Chưa có file lương</li>') + '</ul>' + (k.co_luong ? oPhan(k, i, j, 'luong') +
+        '<button class="rong" onclick="moXem(' + i + ',' + j + ',this)">👁 Xem bảng lương</button><div class="loi-o an"></div>' : '') +
+    nutTai('luong', k.co_luong, k.co_luong ? '⬆ Tải lại file lương' : '⬆ Tải file lương') + '</div>';
+  return '<div class="ky"><h3>Tháng ' + thangNam(k.ky) + '</h3>' + viecKe(k) + cong + luong + '</div>';
+}
+/** Vé 04 — dòng chốt của bảng công + nút 🔒 Chốt / 🔓 Mở chốt ngay dưới (hành chính, quản trị). Đã chốt thì không còn nút tải lại. */
+function oChot(k, i, j) {
+  var chot = (k.cong_chot_phien || 0) > 0, nut = '';
+  if (lamPhan('cong')) {
+    // nút đậm = việc kế: chưa công bố thì 📢 Công bố là việc kế (đậm), 🔒 Chốt nhạt — đúng thứ tự dòng 👉
+    nut = '<button class="' + (!chot && k.cb_cong_phien === k.phien_ban ? 'chinh ' : '') + 'rong" onclick="' + (chot ? 'moChot' : 'chotCong') + '(' + i + ',' + j + ',this)">' +
+          (chot ? '🔓 Mở chốt (sửa bảng công)' : '🔒 Chốt bảng công') + '</button><div class="loi-o an"></div>';
+  }
+  return '<div class="phan">' + (chot ? '<span class="roi">🔒 Đã chốt ' + e(k.cong_chot_luc) + ' · ' + e(k.cong_chot_boi) + ' — kế toán tính lương theo bảng công này</span>'
+                                     : '<span class="chua">🔓 Chưa chốt — kế toán chưa tính lương được</span>') + nut + '</div>';
+}
+function chotCong(i, j, nut) {
+  var c = trangThai.luoi.cong_ty[i], k = c.ky[j];
+  hoi('<p><b>Chốt BẢNG CÔNG</b> tháng ' + thangNam(k.ky) + ' — ' + e(c.ten) + '?</p>' +
+      '<p>' + k.cong_so_nguoi + ' người. Chốt rồi kế toán dùng bảng công này để tính lương, và anh/chị <b>không tải lại được</b> — muốn sửa phải 🔓 Mở chốt, ghi lý do.</p>' +
+      (k.cb_cong_phien === k.phien_ban ? '' : '<p class="ai">Công nhân chưa xem bản này (chưa 📢 Công bố) — vẫn chốt được.</p>'),
+      '🔒 Chốt bảng công', 'Thôi, chưa chốt', function () { guiChot(c, k, true, '', nut); });
+}
+function moChot(i, j, nut) {
+  var c = trangThai.luoi.cong_ty[i], k = c.ky[j], lyDo = '';
+  hoi('<p><b>Mở chốt BẢNG CÔNG</b> tháng ' + thangNam(k.ky) + ' — ' + e(c.ten) + '?</p>' +
+      '<p>Mở rồi mới tải lại được bảng công. Kế toán thấy "chưa chốt" cho tới khi anh/chị 🔒 Chốt lại.</p>' +
+      '<label for="chotLyDo">Lý do mở chốt (bắt buộc)</label><textarea id="chotLyDo" maxlength="300" placeholder="Ví dụ: công nhân An báo thiếu giờ ngày 03/09"></textarea>' +
+      '<div class="loi-o an" id="loiChot"></div>',
+      '🔓 Mở chốt', 'Thôi, giữ chốt', function () { guiChot(c, k, false, lyDo, nut); }, null, function () {
+        lyDo = $('chotLyDo').value.trim();
+        if (lyDo) return true;
+        $('loiChot').textContent = 'Chưa ghi lý do — kế toán và người quản trị cần biết vì sao bảng công đã chốt lại đổi.';
+        $('loiChot').classList.remove('an'); $('chotLyDo').classList.add('sai'); $('chotLyDo').focus();
+        return false;
+      });
+}
+function guiChot(c, k, chot, lyDo, nut) {
+  var loi = nut.nextElementSibling, chu = nut.textContent;
+  nut.disabled = true; nut.textContent = chot ? '⏳ Đang chốt… (vài giây)' : '⏳ Đang mở chốt… (vài giây)'; loi.classList.add('an');
+  goi({ hanh_dong: chot ? 'hc_chot_cong' : 'hc_mo_chot_cong', phien: trangThai.phien, ma_ct: c.ma_ct, ky: k.ky, phien_ban_ky: k.phien_ban, ly_do: lyDo })
+    .then(function (r) {
+      if (!r.ok) {
+        nut.disabled = false; nut.textContent = chu;
+        loi.innerHTML = '<b>' + (chot ? 'Chưa chốt.' : 'Chưa mở chốt.') + '</b> ' + e(r.loi) + (r.ma === 'DA_DOI' ? ' <button onclick="taiLuoi()">🔄 Tải lại</button>' : '');
+        loi.classList.remove('an');
+        return;
+      }
+      var ten = e(c.ten) + ' tháng ' + thangNam(k.ky);
+      bao('luoiBao', 'xanh', r.da_co ? '🔒 Bảng công ' + ten + ' đã chốt từ trước (' + e(r.luc) + ' · ' + e(r.boi) + ').'
+        : chot ? '🔒 Đã chốt bảng công ' + ten + ' lúc ' + e(r.luc) + '. Kế toán dùng bảng công này để tính lương.'
+        : '🔓 Đã mở chốt bảng công ' + ten + '. Sửa xong thì 📥 tải lại, rồi bấm 🔒 Chốt lần nữa.');
+      taiLuoiGiuBao($('luoiBao').innerHTML);
+    });
 }
 /** Vé 05 — một phần (bảng công / phiếu lương): trạng thái cho công nhân + nút công bố ngay dưới. */
 var TEN_PHAN = { cong: { icon: '🗓 Bảng công', ten: 'bảng công', HOA: 'BẢNG CÔNG' }, luong: { icon: '💵 Phiếu lương', ten: 'phiếu lương', HOA: 'PHIẾU LƯƠNG' } };
@@ -404,6 +516,7 @@ function oPhan(k, i, j, phan) {
   }
   var chu = cb ? '<span class="moi">' + t.icon + ': công nhân đang xem BẢN CŨ (công bố ' + luc + ') — bản mới chưa công bố</span>'
                : '<span class="chua">' + t.icon + ': chưa công bố — công nhân chưa xem được</span>';
+  if (!lamPhan(phan)) return '<div class="phan">' + chu + '</div>';
   return '<div class="phan">' + chu + '<button class="chinh rong" onclick="congBo(' + i + ',' + j + ',\'' + phan + '\',this)">📢 ' +
     (cb ? 'Công bố lại ' : 'Công bố ') + t.ten + '</button><div class="loi-o an"></div></div>';
 }
@@ -411,7 +524,8 @@ function congBo(i, j, phan, nut) {
   var c = trangThai.luoi.cong_ty[i], k = c.ky[j], t = TEN_PHAN[phan], cb = k['cb_' + phan + '_phien'] || 0;
   var kia = phan === 'cong' ? 'luong' : 'cong', cbKia = k['cb_' + kia + '_phien'] || 0;
   var html = '<p><b>Công bố ' + t.HOA + '</b> tháng ' + thangNam(k.ky) + ' — ' + e(c.ten) + '?</p>' +
-    '<p>' + k.so_nguoi + ' người sẽ xem được ' + t.ten + ' của mình bằng số CCCD + họ tên (file tải ' + e(k.nhap_luc) + ').</p>' +
+    '<p>' + (phan === 'cong' ? k.cong_so_nguoi : k.so_nguoi) + ' người sẽ xem được ' + t.ten + ' của mình bằng số CCCD + họ tên (file tải ' +
+    e(phan === 'cong' ? k.cong_luc : k.nhap_luc) + ').</p>' +
     '<p class="ai">' + TEN_PHAN[kia].icon + ' ' + (cbKia ? 'giữ nguyên như đang công bố.' : 'chưa công bố thì vẫn chưa hiện.') + '</p>' +
     (cb ? '<p>Công nhân đang xem bản công bố lúc ' + e(k['cb_' + phan + '_luc']) + '. Bản mới sẽ <b>thay</b> bản đó.</p>' +
           '<label for="cbLyDo">Lý do công bố lại (bắt buộc)</label><textarea id="cbLyDo" maxlength="300" placeholder="Ví dụ: sửa giờ ngày 3 của An"></textarea>' +
@@ -444,21 +558,57 @@ function guiCongBo(c, k, phan, lyDo, nut) {
 }
 
 // ---------------- TẢI FILE ----------------
-function moTai(i, j) {
+/** `loai` = 'luong' (kế toán tải file lương) | 'cong' (hành chính tải bảng công) — cùng một màn chọn file + xem trước + lưu. */
+function moTai(i, j, loai) {
   var c = trangThai.luoi.cong_ty[i], k = c.ky[j];
+  loai = loai === 'cong' ? 'cong' : 'luong';
   trangThai.moCT = c.ma_ct;   // lưu xong quay về lưới, công ty này vẫn mở
-  trangThai.dangTai = { ma_ct: c.ma_ct, ten: c.ten, ky: k.ky, phien_ban_ky: k.phien_ban || 0, ky_xoa: k.co_file ? [] : kySeXoa(c, k.ky) };
+  trangThai.dangTai = { loai: loai, ma_ct: c.ma_ct, ten: c.ten, ten_chay_luong: c.ten_chay_luong, ky: k.ky, phien_ban_ky: k.phien_ban || 0,
+                        ky_xoa: k.co_file ? [] : kySeXoa(c, k.ky) };
   trangThai.kqDoc = null;
-  $('taiTieuDe').textContent = '⬆ ' + c.ten + ' — Tháng ' + thangNam(k.ky);
+  $('taiTieuDe').textContent = (loai === 'cong' ? '📥 Bảng công ' : '⬆ File lương ') + c.ten + ' — Tháng ' + thangNam(k.ky);
+  $('taiChi').innerHTML = loai === 'cong'
+    ? '👉 Chọn file <b>bảng công</b> Excel của công ty này (có trang <b>Chấm công</b>). Máy đọc file ngay tại đây, kiểm từng ô rồi mới cho lưu.'
+    : '👉 Chọn file Excel lương của công ty này (có trang <b>1.Chấm công</b> và <b>2.Bảng lương</b>). Máy đọc file ngay tại đây, kiểm từng ô rồi mới cho lưu.';
+  $('nutLuu').textContent = loai === 'cong' ? '💾 Lưu bảng công' : '💾 Lưu bản nháp';
+  $('taiChi').classList.remove('an'); $('taiNut').classList.remove('an');
   $('chonFile').value = ''; $('taiBao').innerHTML = ''; $('xemTruoc').classList.add('an'); $('nutLuu').classList.add('an');
   $('phieuXem').innerHTML = '';
-  if (k.co_file) bao('taiBao', 'cho', 'Tháng này đã có file tải lúc ' + e(k.nhap_luc) + '. Lưu file mới sẽ <b>thay</b> bản nháp đó' +
-    (k.cb_cong_phien || k.cb_luong_phien ? ' — phần đã công bố vẫn hiện bản cũ cho tới khi anh/chị bấm 📢 Công bố lại.' : '.'));
-  else if (trangThai.dangTai.ky_xoa.length) {
+  if (k.co_file && loai === 'cong') {
+    bao('taiBao', 'cho', 'Tháng này đã có bảng công tải lúc ' + e(k.cong_luc) + ' (' + e(k.cong_boi) + '). Lưu file mới sẽ <b>thay</b> bảng công trong bản nháp' +
+      (k.co_luong ? '; phiếu lương kế toán đã tải <b>giữ nguyên</b>' : '') +
+      (k.cb_cong_phien ? ' — công nhân vẫn xem bảng công cũ cho tới khi anh/chị bấm 📢 Công bố lại.' : '.'));
+  } else if (k.co_file) {
+    bao('taiBao', 'cho', 'Tháng này đã có ' + (k.co_luong ? 'file lương tải lúc ' + e(k.nhap_luc) : 'bảng công') + '. Lưu file mới sẽ <b>thay</b> bản nháp đó' +
+      (k.cong_luc && k.cong_luc !== k.nhap_luc ? ' — bảng công (' + e(k.cong_boi) + ' tải ' + e(k.cong_luc) + ') sẽ lấy theo trang Chấm công của file này' : '') +
+      (k.cb_cong_phien || k.cb_luong_phien ? '; phần đã công bố vẫn hiện bản cũ cho tới khi bấm 📢 Công bố lại.' : '.'));
+  } else if (trangThai.dangTai.ky_xoa.length) {
     bao('taiBao', 'cho', 'Công ty này đã có ' + GIU_KY + ' tháng. Lưu tháng ' + thangNam(k.ky) + ' sẽ <b>xoá tháng ' +
       trangThai.dangTai.ky_xoa.map(thangNam).join(', ') + '</b> khỏi trang công nhân — máy hỏi lại trước khi lưu.');
   }
   hien('mTai');
+}
+/** Xem bảng lương đã lưu — chỉ xem: dùng lại màn tải file, giấu phần chọn file + nút lưu. */
+function moXem(i, j, nut) {
+  var c = trangThai.luoi.cong_ty[i], k = c.ky[j], chu = nut.textContent, loi = nut.nextElementSibling;
+  nut.disabled = true; nut.textContent = '⏳ Đang lấy bảng lương… (vài giây)';
+  loi.classList.add('an');
+  goi({ hanh_dong: 'kt_xem_luong', phien: trangThai.phien, ma_ct: c.ma_ct, ky: k.ky }).then(function (kq) {
+    nut.disabled = false; nut.textContent = chu;
+    if (!kq.ok) { loi.textContent = kq.loi; loi.classList.remove('an'); return; }
+    trangThai.moCT = c.ma_ct;                                 // quay lại lưới, công ty này vẫn mở
+    trangThai.dangTai = { ma_ct: c.ma_ct, ten: c.ten, ky: k.ky };
+    trangThai.kqDoc = { nguoi: kq.nguoi };
+    $('taiTieuDe').textContent = '👁 ' + c.ten + ' — Tháng ' + thangNam(k.ky);
+    $('taiChi').classList.add('an'); $('taiNut').classList.add('an'); $('nutLuu').classList.add('an');
+    bao('taiBao', kq.canh_bao ? 'do' : 'xanh', kq.canh_bao ? e(kq.canh_bao) : '👉 Bấm tên một người để xem phiếu. Màn này chỉ để xem, không sửa được gì. Bản tải lúc ' + e(kq.nhap_luc) + '.');
+    var tong = kq.nguoi.reduce(function (t, n) { return t + n.luong.thuc_linh; }, 0);
+    $('tom').innerHTML = '<div>Số người<b>' + kq.nguoi.length + '</b></div><div>Tổng thực lĩnh<b>' + tien(tong) + ' đ</b></div>';
+    $('phieuXem').innerHTML = ''; $('timNguoi').value = '';
+    veDanhSach('');
+    $('xemTruoc').classList.remove('an');
+    hien('mTai');
+  });
 }
 /** Giống GIU_KY ở Code.gs. Lệch thì máy chủ vẫn hỏi lại (SE_XOA_KY), không xoá gì khi chưa ai đồng ý. */
 var GIU_KY = 2;
@@ -490,9 +640,11 @@ function bangTuTrang(ws) {
 
 /** Workbook (đã đọc bằng thư viện) → soát → hiện xem trước. Tách riêng để thử được không cần chọn file thật. */
 function docWorkbook(wb, tenFile) {
-  var cacTrang = {};
+  var cacTrang = {}, dt = trangThai.dangTai, laCong = dt.loai === 'cong';
   wb.SheetNames.forEach(function (t) { cacTrang[t] = bangTuTrang(wb.Sheets[t]); });
-  var kq = DocFileLuong.docFile(cacTrang, { ma_ct: trangThai.dangTai.ma_ct, ky: trangThai.dangTai.ky });
+  // Bảng công: công ty theo ô đã chọn (không theo tên trang / cột mã công ty của file), kỳ theo ngày của kỳ công
+  var kq = laCong ? DocBangCong.docBangCong(cacTrang, { ky: dt.ky })
+                  : DocFileLuong.docFile(cacTrang, { ma_ct: dt.ma_ct, ky: dt.ky, ten_chay_luong: dt.ten_chay_luong });
   kq.ten_file = tenFile;
   trangThai.kqDoc = kq;
   if (!kq.ok) {
@@ -505,10 +657,19 @@ function docWorkbook(wb, tenFile) {
     return;
   }
   var canh = kq.canh_bao.map(function (c) { return '<li>' + e(c.loi) + '</li>'; }).join('');
-  bao('taiBao', 'xanh', '✅ File đọc được, không có lỗi. Kiểm lại tổng bên dưới với ô <b>Tổng cộng</b> trong Excel rồi bấm 💾 Lưu bản nháp.' +
-      (canh ? '<ul class="loi-ds" style="color:#92400e">' + canh + '</ul>' : ''));
-  $('tom').innerHTML = '<div>Số người<b>' + kq.tong.so_nguoi + '</b></div><div>Tổng thực lĩnh<b>' + tien(kq.tong.tong_thuc_linh) + ' đ</b></div>' +
-    '<div>Kỳ trong file<b>' + thangNam(kq.thong_tin.ky) + '</b></div><div>File<b style="font-size:.9rem;word-break:break-all">' + e(tenFile) + '</b></div>';
+  var oFile = '<div>File<b style="font-size:.9rem;word-break:break-all">' + e(tenFile) + '</b></div>';
+  if (laCong) {
+    bao('taiBao', 'xanh', '✅ Bảng công đọc được, không có lỗi. Bấm tên vài người để kiểm giờ, đúng rồi thì bấm 💾 Lưu bảng công.' +
+        (canh ? '<ul class="loi-ds" style="color:#92400e">' + canh + '</ul>' : ''));
+    $('tom').innerHTML = '<div>Số người<b>' + kq.thong_tin.so_nguoi + '</b></div><div>Kỳ trong file<b>' + thangNam(kq.thong_tin.ky) + '</b></div>' +
+      '<div>Dạng<b>' + (kq.thong_tin.dang === 'B' ? 'B — nhiều khung giờ' : 'A') + '</b></div>' +
+      '<div>Lưu vào<b style="font-size:.95rem">' + e(dt.ten) + '</b>' + (kq.thong_tin.ma_ct_file ? '<span class="ai">File ghi mã: ' + e(kq.thong_tin.ma_ct_file) + '</span>' : '') + '</div>' + oFile;
+  } else {
+    bao('taiBao', 'xanh', '✅ File đọc được, không có lỗi. Kiểm lại tổng bên dưới với ô <b>Tổng cộng</b> trong Excel rồi bấm 💾 Lưu bản nháp.' +
+        (canh ? '<ul class="loi-ds" style="color:#92400e">' + canh + '</ul>' : ''));
+    $('tom').innerHTML = '<div>Số người<b>' + kq.tong.so_nguoi + '</b></div><div>Tổng thực lĩnh<b>' + tien(kq.tong.tong_thuc_linh) + ' đ</b></div>' +
+      '<div>Kỳ trong file<b>' + thangNam(kq.thong_tin.ky) + '</b></div>' + oFile;
+  }
   veDanhSach('');
   $('xemTruoc').classList.remove('an'); $('nutLuu').classList.remove('an');
 }
@@ -516,15 +677,18 @@ function veDanhSach(loc) {
   var q = DocFileLuong.chuanTenTra(loc || '');
   $('dsNguoi').innerHTML = trangThai.kqDoc.nguoi.map(function (n, i) {
     if (q && n.ten_tra.join(' ').indexOf(q) < 0) return '';
+    // bảng công chưa có tiền → hiện tổng giờ (cộng các mã ca) thay cho thực lĩnh
+    var phai = n.luong ? tien(n.luong.thuc_linh) + ' đ'
+      : String(Math.round(n.cong.ca.reduce(function (t, x) { return t + (x.tong || 0); }, 0) * 100) / 100).replace('.', ',') + ' giờ';
     return '<li><button onclick="xemNguoi(' + i + ', this)"><span>' + e(n.ten_hien) + ' <span class="ai">· ***' + e(n.cccd_tra.slice(-4)) +
-           '</span></span><b>' + tien(n.luong.thuc_linh) + ' đ</b></button></li>';
+           '</span></span><b>' + phai + '</b></button></li>';
   }).join('') || '<li class="bao">Không có tên nào khớp.</li>';
 }
 function xemNguoi(i, nut) {
   [].forEach.call(document.querySelectorAll('.ds-nguoi button'), function (b) { b.classList.toggle('chon', b === nut); });
   var n = trangThai.kqDoc.nguoi[i];
   $('phieuXem').innerHTML = '<div class="ai" style="margin-top:12px">Công nhân sẽ thấy đúng như sau:</div>' +
-    VePhieu.phieuLuong(n, { cong_ty: trangThai.dangTai.ten, ky: trangThai.dangTai.ky }) + VePhieu.bangCong(n);
+    (n.luong ? VePhieu.phieuLuong(n, { cong_ty: trangThai.dangTai.ten, ky: trangThai.dangTai.ky }) : '') + VePhieu.bangCong(n);
   $('phieuXem').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 function chonFile(f) {
@@ -547,19 +711,28 @@ function luuNhap(xoaKy) {
   var kq = trangThai.kqDoc, dt = trangThai.dangTai;
   if (!kq || !kq.ok) return;
   if (!xoaKy && dt.ky_xoa.length) { hoiXoaKy(dt.ky_xoa); return; }
+  var laCong = dt.loai === 'cong', chuNut = laCong ? '💾 Lưu bảng công' : '💾 Lưu bản nháp';
   var nut = $('nutLuu'); nut.disabled = true; nut.textContent = '⏳ Đang lưu… (5–20 giây)';
-  bao('taiBao', 'cho', '⏳ Đang gửi ' + kq.tong.so_nguoi + ' người lên máy chủ. Đừng đóng trang.');
-  goi({ hanh_dong: 'kt_luu_nhap', phien: trangThai.phien, ma_ct: dt.ma_ct, ky: dt.ky, phien_ban_ky: dt.phien_ban_ky,
+  bao('taiBao', 'cho', '⏳ Đang gửi ' + kq.nguoi.length + ' người lên máy chủ. Đừng đóng trang.');
+  goi({ hanh_dong: laCong ? 'hc_luu_cong' : 'kt_luu_nhap', phien: trangThai.phien, ma_ct: dt.ma_ct, ky: dt.ky, phien_ban_ky: dt.phien_ban_ky,
         ten_file: kq.ten_file, nguoi: kq.nguoi, xoa_ky: xoaKy || [] }, 120).then(function (r) {
-    nut.disabled = false; nut.textContent = '💾 Lưu bản nháp';
+    nut.disabled = false; nut.textContent = chuNut;
     if (!r.ok && r.ma === 'SE_XOA_KY') { dt.ky_xoa = r.ky_xoa; hoiXoaKy(r.ky_xoa); return; }   // danh sách trên trang đã cũ
     if (!r.ok) {
       bao('taiBao', 'do', '<b>Chưa lưu.</b> ' + e(r.loi) + (r.ma === 'DA_DOI' ? ' <button onclick="taiLuoi()">🔄 Tải lại</button>' : ''));
       return;
     }
+    var xoa = r.da_xoa_ky && r.da_xoa_ky.length ? ' Đã xoá tháng ' + r.da_xoa_ky.map(thangNam).join(', ') + ' (giữ ' + GIU_KY + ' tháng).' : '';
+    if (laCong) {
+      bao('luoiBao', r.bo_luong ? 'cho' : 'xanh', '✅ Đã lưu bảng công ' + e(dt.ten) + ' tháng ' + thangNam(dt.ky) + ' lúc ' + e(r.nhap_luc) + ': ' + r.so_nguoi + ' người.' +
+          (r.giu_luong ? ' Phiếu lương kế toán đã tải giữ nguyên cho ' + r.giu_luong + ' người.' : '') +
+          (r.bo_luong ? ' <b>⚠ ' + r.bo_luong + ' người có phiếu lương nhưng không còn trong bảng công mới</b> — phiếu của họ không còn trong bản nháp (bản đang công bố chưa đổi); báo kế toán.' : '') +
+          ' Công nhân CHƯA xem được cho tới khi bấm 📢 Công bố bảng công.' + xoa);
+      taiLuoiGiuBao($('luoiBao').innerHTML);
+      return;
+    }
     bao('luoiBao', 'xanh', '✅ Đã lưu bản nháp ' + e(dt.ten) + ' tháng ' + thangNam(dt.ky) + ' lúc ' + e(r.nhap_luc) + ': ' + r.so_nguoi +
-        ' người, ' + tien(r.tong_thuc_linh) + ' đ. Công nhân CHƯA xem được cho tới khi bấm 📢 Công bố.' +
-        (r.da_xoa_ky && r.da_xoa_ky.length ? ' Đã xoá tháng ' + r.da_xoa_ky.map(thangNam).join(', ') + ' (giữ ' + GIU_KY + ' tháng).' : ''));
+        ' người, ' + tien(r.tong_thuc_linh) + ' đ. Công nhân CHƯA xem được cho tới khi bấm 📢 Công bố.' + xoa);
     var giu = $('luoiBao').innerHTML;
     taiLuoiGiuBao(giu);
   });
@@ -720,7 +893,7 @@ $('nutLuuGio').addEventListener('click', luuGio);
 var HM = VePhieu.HANG_MUC;
 var ph = { ds: null, loc: 'can', hm: '', tim: '', mo: '', nhap: {}, bao: {}, dang: {}, vuaXong: {} };   // nhap / bao / dang / vuaXong theo mã việc
 function phMoi() { return { ds: null, loc: 'can', hm: '', tim: '', mo: '', nhap: {}, bao: {}, dang: {}, vuaXong: {} }; }
-function chiXuLyPH() { var v = trangThai.tk && trangThai.tk.vai_tro; return v === 'quan_ly' || v === 'truong_nhom'; }
+function chiXuLyPH() { return coCV('quan_ly', 'truong_nhom') && !coCV('hanh_chinh', 'xem_luong', 'ke_toan', 'quan_tri'); }
 function demMenuPH(n) { $('nutMenuPH').textContent = '💬 Phản hồi công nhân' + (n == null ? '' : ' (' + n + ' cần làm)'); }
 function ngayNgan(s) { return s ? s.substring(8, 10) + '/' + s.substring(5, 7) : ''; }
 function lucNgan(s) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(s || ''); return m ? m[4] + ' ngày ' + m[3] + '/' + m[2] : String(s || ''); }

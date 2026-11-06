@@ -454,7 +454,16 @@ function guiPH() {
   f.dang = 1; ve();
   var giu = kq, goiTin = { hanh_dong: 'ph_gui', ve: kq.ve, ma_ct: m.ma_ct, ky: m.ky, hs: m.hs, hang_muc: hm, noi_dung: nd };
   if (f.chon.length) goiTin.chon = f.chon;
-  goi(goiTin).then(function (r) {
+  // "Máy chủ đang bận" (BAN) = máy chủ CHƯA ghi gì → tự gửi lại không trùng tin. Trang lỗi / hết giờ có thể đã ghi → không tự gửi lại.
+  function guiCoThuLai(lan) {
+    return goi(goiTin).then(function (r) {
+      if (r.ma !== 'BAN' || lan >= THU_LAI || kq !== giu || ph.form !== f) return r;
+      f.bao = '<div class="bao cho">⏳ Máy chủ đang bận, máy tự gửi lại… (lần ' + (lan + 2) + ' / ' + (THU_LAI + 1) + ') — đừng đóng trang.</div>';
+      ve();
+      return cho(2 + Math.random() * 6).then(function () { return guiCoThuLai(lan + 1); });
+    });
+  }
+  guiCoThuLai(0).then(function (r) {
     if (kq !== giu) return;                           // đã tra người khác / rời trang trong lúc chờ
     f.dang = 0;
     if (r.ok || r.ph) {                               // r.ph: hết hạn / đủ tin — vẽ lại đúng trạng thái máy chủ
