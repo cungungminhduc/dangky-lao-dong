@@ -262,6 +262,7 @@
   .thanh .ng-hom button{flex:none;width:auto;margin:0;min-height:44px;padding:6px 12px;font-size:14px}
 </style>
 <!-- 3.32: mở trong Zalo thì nhắc mở bằng Chrome (thiếu tệp thì trang vẫn chạy như cũ) -->
+<link rel="stylesheet" href="vanphong.css">
 <script src="ngoai-zalo.js" defer></script>
 </head>
 <body>
@@ -421,6 +422,8 @@
 <script src="goi-may-chu.js"></script>
 <!-- 3.36: gói đầu của trang chủ + bản nhớ danh sách đơn vị. Thiếu tệp thì trang chạy y như 3.35. -->
 <script src="goi-dau.js"></script>
+<!-- 3.64.1: thanh menu trên cùng như trang chủ (thanh-menu.js tự chèn; thiếu tệp thì trang như cũ) -->
+<script src="thanh-menu.js"></script>
 <script>
 // ====== CẤU HÌNH: URL_API + TOKEN_API nằm ở tệp cau-hinh.js, dùng chung cho mọi trang ======
 if (typeof URL_API === 'undefined' || typeof TOKEN_API === 'undefined' || !URL_API) {

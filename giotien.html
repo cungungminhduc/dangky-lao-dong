@@ -109,6 +109,7 @@
   .lop .hoi .hoi-dong{background:var(--xanh);border:0;color:#fff;font-weight:700}
   .lop .hoi .hoi-thoi{background:#fff;border:1px solid #c9d0d8;color:var(--chu)}
 </style>
+<link rel="stylesheet" href="vanphong.css">
 <script src="ngoai-zalo.js" defer></script>
 </head>
 <body>
@@ -182,6 +183,8 @@
 
 <script src="cau-hinh.js"></script>
 <script src="goi-may-chu.js"></script>
+<!-- 3.64.1: thanh menu trên cùng như trang chủ (thanh-menu.js tự chèn; thiếu tệp thì trang như cũ) -->
+<script src="thanh-menu.js"></script>
 <script>
 if (typeof URL_API === 'undefined' || typeof TOKEN_API === 'undefined' || !URL_API) {
   window.URL_API = window.URL_API || ''; window.TOKEN_API = window.TOKEN_API || '';

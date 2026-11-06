@@ -119,6 +119,7 @@
   .trong{padding:26px 16px;text-align:center;color:var(--mo);font-size:14.5px}
   #anhtam{display:none}
 </style>
+<link rel="stylesheet" href="vanphong.css">
 <script src="ngoai-zalo.js" defer></script>
 </head>
 <body>
@@ -223,6 +224,8 @@
 <!-- Hai thư viện quét QR (jsQR + ZXing bản WASM) nạp NỀN trong khối bộ đọc bên dưới (tìm QR_NGUON), như trang đăng ký. -->
 <script src="cau-hinh.js"></script>
 <script src="goi-may-chu.js"></script>
+<!-- 3.64.1: thanh menu trên cùng như trang chủ (thanh-menu.js tự chèn; thiếu tệp thì trang như cũ) -->
+<script src="thanh-menu.js"></script>
 <script>
 if (typeof URL_API === 'undefined' || typeof TOKEN_API === 'undefined' || !URL_API) {
   window.URL_API = window.URL_API || ''; window.TOKEN_API = window.TOKEN_API || '';

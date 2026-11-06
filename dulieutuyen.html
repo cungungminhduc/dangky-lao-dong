@@ -238,6 +238,7 @@
   .nut-nhap-bu{display:flex;align-items:center;justify-content:center;min-height:44px;margin:6px 14px 0;padding:8px 12px;border:1px dashed #9fbbe6;
     border-radius:11px;background:#fff;color:var(--lam);font-size:15px;font-weight:700;text-decoration:none;text-align:center}
 </style>
+<link rel="stylesheet" href="vanphong.css">
 <script src="ngoai-zalo.js" defer></script>
 </head>
 <body>
@@ -430,6 +431,8 @@
 
 <script src="cau-hinh.js"></script>
 <script src="goi-may-chu.js"></script>
+<!-- 3.64.1: thanh menu trên cùng như trang chủ (thanh-menu.js tự chèn; thiếu tệp thì trang như cũ) -->
+<script src="thanh-menu.js"></script>
 <script>
 if (typeof URL_API === 'undefined' || typeof TOKEN_API === 'undefined' || !URL_API) {
   window.URL_API = window.URL_API || ''; window.TOKEN_API = window.TOKEN_API || '';

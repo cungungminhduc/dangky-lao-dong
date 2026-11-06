@@ -313,6 +313,7 @@
   #lop_ct .loi{margin:10px 0 0}
 </style>
 <!-- mở trong Zalo thì nhắc mở bằng trình duyệt (thiếu tệp thì trang vẫn chạy như cũ) -->
+<link rel="stylesheet" href="vanphong.css">
 <script src="ngoai-zalo.js" defer></script>
 </head>
 <body>
@@ -396,6 +397,8 @@
 <script src="cau-hinh.js"></script>
 <script src="goi-may-chu.js"></script>
 <script src="goi-dau.js"></script>
+<!-- 3.64.1: thanh menu trên cùng như trang chủ (thanh-menu.js tự chèn; thiếu tệp thì trang như cũ) -->
+<script src="thanh-menu.js"></script>
 <script>
 // ====== CẤU HÌNH: URL_API + TOKEN_API nằm ở tệp cau-hinh.js, dùng chung cho mọi trang ======
 if (typeof URL_API === 'undefined' || typeof TOKEN_API === 'undefined' || !URL_API) {

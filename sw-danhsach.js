@@ -19,9 +19,10 @@
  * HAI (lần đầu vẫn là bản trong máy, bản mới được cất ngầm). Đổi BAN dưới đây khi muốn xoá sạch bản cũ.
  */
 // 3.64: thêm vanphong.js + vanphong.css (khung Văn phòng ở trang chủ) — đổi BAN để máy đã cài bỏ bản trang chủ cũ.
-var BAN = 'ds-3.64.0';
+// 3.64.1: thêm thanh-menu.js (thanh menu dùng chung trang chủ + các trang riêng).
+var BAN = 'ds-3.64.1';
 var TEP = ['danhsach.html', 'trangchu.html', 'phancong.html', 'quanso.html',
-           'cau-hinh.js', 'goi-may-chu.js', 'goi-dau.js', 'ngoai-zalo.js', 'vanphong.js', 'vanphong.css',
+           'cau-hinh.js', 'goi-may-chu.js', 'goi-dau.js', 'ngoai-zalo.js', 'vanphong.js', 'vanphong.css', 'thanh-menu.js',
            'app-danhsach.webmanifest', 'icon-ds-192.png', 'icon-ds-512.png',
            'app-trangchu.webmanifest', 'icon-tc-192.png', 'icon-tc-512.png'];
 // Trang được giữ sẵn — tệp dùng chung chỉ đưa bản trong máy khi chính các trang này xin.

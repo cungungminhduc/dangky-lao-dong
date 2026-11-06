@@ -68,6 +68,7 @@
   .khong-ho-tro{margin:30px 16px;padding:18px;border-radius:12px;background:var(--vang-nhat);border:1px solid var(--vang-vien);
     font-size:16px;line-height:1.6}
 </style>
+<link rel="stylesheet" href="vanphong.css">
 <script src="ngoai-zalo.js" defer></script>
 </head>
 <body>
@@ -142,6 +143,8 @@
 
 <script src="cau-hinh.js"></script>
 <script src="goi-may-chu.js"></script>
+<!-- 3.64.1: thanh menu trên cùng như trang chủ (thanh-menu.js tự chèn; thiếu tệp thì trang như cũ) -->
+<script src="thanh-menu.js"></script>
 <script>
 if (typeof URL_API === 'undefined' || typeof TOKEN_API === 'undefined' || !URL_API) {
   window.URL_API = window.URL_API || ''; window.TOKEN_API = window.TOKEN_API || '';
