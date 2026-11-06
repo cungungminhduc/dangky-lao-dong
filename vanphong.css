@@ -80,6 +80,67 @@ body.vp-co-thanh a.nut-nho.phai[href="trangchu.html"]{display:none}
 /* Nhà máy đang tuyển */
 .vp-nm-ds{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0 16px}
 .vp-nm-ds li{padding:9px 0;border-bottom:1px solid var(--vien)}
+/* 🔑 Đổi mật khẩu (3.65, vé 03) — ô gõ chữ 16 px để điện thoại không tự phóng to */
+.vp-dmk>.vp-nut{margin:8px 0 0}
+.vp-nhan{display:block;font-weight:600;margin:12px 0 4px}
+.vp-o-go{display:block;width:100%;max-width:420px;min-height:48px;padding:10px 12px;border:1px solid #c9d0d8;border-radius:10px;
+  font:inherit;font-size:16px;background:#fff;color:var(--chu,#1f2933);box-sizing:border-box}
+.vp-o-go.sai{border-color:#c0392b;background:#fff5f4}
+.vp-loi-o{color:#8a1c13;font-size:15px;line-height:1.45;padding:4px 2px 0}
+.vp-xong{padding:10px 12px;margin:8px 0;border-radius:10px;background:var(--xanh-nhat,#f2f9f4);border:1px solid #bfe0c9;color:#155d33;
+  line-height:1.5}
+.vp-dmk #vp_dmk_hien{margin:12px 0 0}
+.vp-dmk .vp-loi{margin:12px 0 0}
+.vp-hang-nut{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
+.vp-hang-nut .vp-nut{margin:0}
+button.vp-nut-chinh{border:0;font:inherit;font-weight:700;cursor:pointer;flex:1 1 240px;margin:0}
+button.vp-nut-chinh:disabled{opacity:.7;cursor:wait}
+
+/* ⚙ Tài khoản & quyền (3.65, vé 05) — chữ tình trạng */
+.vp-tot{color:#157a41;font-weight:600}
+.vp-xau{color:#a5281b;font-weight:600}
+
+/* ---- Khuôn bảng chung (3.65, vé 04 — bang-chung.js) ---- */
+.bc-cong-cu{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 10px}
+.bc-loc{display:flex;flex-direction:column;gap:4px;min-width:180px}
+.bc-loc label{font-weight:600;font-size:15px}
+.bc-loc select,.bc-loc input{min-height:44px;padding:8px 10px;border:1px solid #c9d0d8;border-radius:10px;font:inherit;font-size:16px;
+  background:#fff;color:var(--chu,#1f2933);box-sizing:border-box}
+.bc-tim{flex:1 1 260px;max-width:420px}
+.bc-tong{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;margin:0 0 8px;
+  background:var(--xanh-nhat,#f2f9f4);border:1px solid #d6eadc;border-radius:10px}
+.bc-tong-so{font-size:16px}
+.bc-mo{color:var(--mo,#5f6b76);font-size:15px}
+.bc-nut-bang{display:flex;flex-wrap:wrap;gap:6px}
+.bc-nut{min-height:44px;padding:8px 12px;border:1px solid #c9d0d8;border-radius:10px;background:#fff;color:var(--chu,#1f2933);
+  font:inherit;font-weight:600;cursor:pointer}
+.bc-nut.bc-chinh{background:var(--xanh,#1f9d55);border-color:var(--xanh,#1f9d55);color:#fff}
+.bc-chon-cot{padding:10px 12px;margin:0 0 8px;border:1px solid var(--vien,#e6e9ed);border-radius:10px;background:var(--the,#fff)}
+.bc-ghi{font-size:15px;color:var(--mo,#5f6b76);margin:0 0 6px}
+.bc-ds-cot{display:flex;flex-wrap:wrap;gap:2px 14px}
+.bc-ds-cot label{display:flex;align-items:center;gap:6px;min-height:44px;cursor:pointer}
+.bc-ds-cot input{width:20px;height:20px}
+.bc-bao{padding:9px 12px;margin:0 0 8px;border-radius:10px;background:#fff8e6;border:1px solid #f0dda0;color:#4a3600;line-height:1.5}
+.bc-chep-tay{display:block;width:100%;margin-top:8px;font:inherit;font-size:15px;box-sizing:border-box}
+.bc-rong{padding:12px;color:var(--mo,#5f6b76);line-height:1.5}
+.bc-khung{max-height:70vh;overflow:auto;border:1px solid var(--vien,#e6e9ed);border-radius:10px;background:var(--the,#fff)}
+.bc-bang{width:100%;border-collapse:collapse}
+/* Ô KHÔNG xuống dòng (số căn cước, SĐT, ngày bẻ đôi là dễ đọc nhầm) — bảng rộng thì cuộn ngang TRONG khung; chỉ ô chữ dài
+   (bang-chung.js gắn lớp bc-dai, trên 40 ký tự: địa chỉ, ghi chú) mới xuống dòng */
+.bc-bang th,.bc-bang td{padding:8px 10px;border-bottom:1px solid var(--vien,#e6e9ed);text-align:left;vertical-align:top;white-space:nowrap}
+.bc-bang td.bc-dai{white-space:normal;min-width:260px;word-break:break-word}
+.bc-bang thead th{position:sticky;top:0;z-index:1;background:var(--xam-nut,#eef1f4);padding:0}
+.bc-xep{display:flex;align-items:center;gap:4px;width:100%;min-height:44px;padding:8px 10px;border:0;background:none;font:inherit;
+  font-weight:700;color:var(--chu,#1f2933);cursor:pointer;text-align:left}
+.bc-stt{width:44px;color:var(--mo,#5f6b76);text-align:right}
+.bc-bang thead th.bc-stt{padding:8px 10px}
+.bc-so{text-align:right}
+.bc-ds-the{display:flex;flex-direction:column;gap:8px}
+.bc-the{padding:10px 12px;border:1px solid var(--vien,#e6e9ed);border-radius:12px;background:var(--the,#fff)}
+.bc-the-dau{display:flex;justify-content:space-between;gap:8px;margin:0 0 4px;font-size:16px}
+.bc-the dl{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;margin:0}
+.bc-the dt{color:var(--mo,#5f6b76)}
+.bc-the dd{margin:0;word-break:break-word}
 
 @media (max-width: 860px){
   .vp-menu{display:none}

@@ -13,7 +13,8 @@
 
 // MỘT bảng dựng cả thanh menu lẫn ô việc ở trang chủ của khách. `ghi` là HTML viết sẵn ở đây, không có dữ liệu người dùng.
 // `can`: '' = ai cũng thấy · 'van_hanh' = phòng Vận hành (+ quản trị) · 'phan_cong' = trưởng nhóm / quản trị phòng Vận hành ·
-//        'du_lieu_tuyen' = Vận hành đã được khai tên tuyển (cờ xem_du_lieu_tuyen). Đầu mục không còn việc nào thì không hiện.
+//        'du_lieu_tuyen' = Vận hành đã được khai tên tuyển (cờ xem_du_lieu_tuyen) · 'quan_tri' = chỉ quản trị (3.65).
+//        Đầu mục không còn việc nào thì không hiện.
 // `cu`: việc có trang riêng (mở trang đó); không có `cu` = mục nằm trong khung trang chủ.
 var VP_MENU = [
   { id: 'cong_ty', ten: 'Công ty', bt: '🏢', ghi: 'Ai cũng xem được, không cần đăng nhập.', viec: [
@@ -35,7 +36,10 @@ var VP_MENU = [
     + 'công–lương, không dùng mật khẩu tuyển dụng.', viec: [
     { id: 'cong_luong', ten: 'Hệ công–lương', bt: '📒', mt: 'Bảng giá · file giờ — đăng nhập riêng', cu: 'noibo.html' }] },
   { id: 'bao_cao', ten: 'Báo cáo', bt: '📈', ghi: 'Số liệu tuyển dụng — trưởng nhóm và quản trị.', viec: [
-    { id: 'bieu_do', ten: 'Biểu đồ tuyển dụng', bt: '📈', mt: 'Biến động tuyển dụng · quân số · nhân viên', cu: 'bieudo.html', can: 'phan_cong' }] }
+    { id: 'bieu_do', ten: 'Biểu đồ tuyển dụng', bt: '📈', mt: 'Biến động tuyển dụng · quân số · nhân viên', cu: 'bieudo.html', can: 'phan_cong' }] },
+  // 3.65 (vé 05): chỉ quản trị. Mục nằm trong khung trang chủ (không có `cu`).
+  { id: 'quan_tri', ten: 'Quản trị', bt: '⚙️', ghi: 'Chỉ quản trị. Xem để soát — sửa vẫn ở Sheet.', viec: [
+    { id: 'tai_khoan_quyen', ten: 'Tài khoản & quyền', bt: '🛡️', mt: 'Ai đăng nhập được · phòng · chức vụ — chỉ xem', can: 'quan_tri' }] }
 ];
 var VP_KHOA_VE = 'phien_ds_v3';   // CHUNG vé với trang chủ + các trang có đăng nhập
 
@@ -70,6 +74,7 @@ function vpThayViec_(v, coVe, q) {
   if (!v.can) return true;
   if (!coVe) return false;
   var tk = q.tk;
+  if (v.can === 'quan_tri') return !!(tk && tk.la_quan_tri);   // 3.65 — chưa rõ quyền thì CHƯA hiện (như ô Kế toán của trang chủ)
   if (!tk) return true;
   var vanHanh = !!tk.la_quan_tri || tk.phong === undefined || tk.phong === 'van_hanh';
   if (!vanHanh) return false;

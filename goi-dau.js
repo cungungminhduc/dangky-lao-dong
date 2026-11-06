@@ -68,6 +68,13 @@ function layMucGoi_(phien, muc, ngay) {
   return { luc: v.luc, kq: kq, tai_khoan: v.goi.tai_khoan };
 }
 
+/** 3.65 — tự đổi mật khẩu: máy chủ trả vé MỚI cho CÙNG người → gói của vé cũ chuyển sang vé mới (không phải người khác, nên
+ *  không trái luật "gói chỉ của đúng vé"). Gói không phải của vé cũ thì để nguyên. */
+function doiVeGoi_(cu, moi) {
+  var v = docKhoa_(KHOA_GOI);
+  if (v && cu && moi && v.phien === cu) { v.phien = moi; ghiKhoa_(KHOA_GOI, v); }
+}
+
 /** Ghi xong ở mục nào → bỏ mục đó khỏi gói. Mục khác giữ nguyên. */
 function boMucGoi_(muc) {
   var v = docKhoa_(KHOA_GOI);
