@@ -219,7 +219,7 @@
 
   <!-- LƯỚI CÔNG TY × THÁNG -->
   <section id="mLuoi" class="an">
-    <div class="chi" id="chiLuoi">👉 Bấm vào <b>tên công ty</b> để mở, chọn đúng tháng, bấm <b>⬆ Tải file lương</b> ngay trong ô tháng đó. Tải xong, bấm
+    <div class="chi" id="chiLuoi">👉 Bấm vào <b>tên công ty</b> để mở, chọn đúng tháng, bấm <b>🧮 Tính lương</b> hoặc <b>⬆ Tải file lương</b> ngay trong ô tháng đó. Có file thì số trong file được dùng. Xong bấm
       <b>📢 Công bố phiếu lương</b> ngay dưới — công nhân chỉ xem được phần đã công bố. Bảng công do hành chính tải và công bố.</div>
     <div id="luoiBao"></div>
     <input id="timCT" type="search" placeholder="🔍 Gõ tên hoặc mã công ty để tìm" style="margin-bottom:12px">
@@ -457,8 +457,8 @@ function tomCT(c) {
   c.ky.forEach(function (k) {
     var co = { cong: k.co_file, luong: k.co_luong }, cb = function (p) { return k['cb_' + p + '_phien'] || 0; };
     var ds = cacPhan.filter(function (p) { return co[p]; });
-    var tt = !ds.length ? 'chua' : ds.some(function (p) { return cb(p) && cb(p) < k.phien_ban; }) ? 'moi'
-           : ds.length === cacPhan.length && ds.every(function (p) { return cb(p) === k.phien_ban; }) ? 'xong' : 'cho';
+    var tt = !ds.length ? 'chua' : ds.some(function (p) { return cb(p) && !daCB(k, p); }) ? 'moi'
+           : ds.length === cacPhan.length && ds.every(function (p) { return daCB(k, p); }) ? 'xong' : 'cho';
     (nhom[tt] = nhom[tt] || []).push('T' + k.ky.substring(5));
   });
   return TOM_KY.filter(function (x) { return nhom[x[0]]; }).map(function (x) { return x[1] + ': ' + nhom[x[0]].join(', '); }).join(' · ');
@@ -499,20 +499,29 @@ function thieuCongBoCong(k, i) {
 /** Chức vụ nào làm phần nào (bảng chức vụ đặc tả mục 5) — máy chủ kiểm lại mọi cú. */
 var LAM_PHAN = { cong: ['hanh_chinh', 'quan_tri'], luong: ['ke_toan', 'quan_tri'] };
 function lamPhan(phan) { return coCV.apply(null, LAM_PHAN[phan]); }
+/** Công nhân đã xem bản mới nhất của phần này chưa. Bảng công có bản riêng: lương đổi làm phiên bản kỳ tăng mà bảng công không đổi. Máy chủ cũ chưa gửi cong_phien thì so phiên bản kỳ. */
+function daCB(k, phan) {
+  var cb = k['cb_' + phan + '_phien'] || 0;
+  return cb > 0 && cb >= (phan === 'cong' && k.cong_phien ? k.cong_phien : k.phien_ban);
+}
+var CAU_MAY_CU = { cong: 'Bảng công đã đổi', tam_ung: 'Khoản trừ đã đổi', quy_tac: 'Quy tắc đã đổi' };
+/** Phiếu trong bản nháp là số máy mà số đó đã cũ: không được công bố (máy chủ cũng từ chối). Nguồn file thì số máy chỉ để so, không chặn. */
+function soMayCu(k) { return k.nguon_luong === 'may' && k.may && k.may.cu; }
 /** Dòng "👉" đầu ô tháng: việc kế tiếp cho đúng chức vụ đang xem (quản trị thấy cả hai). */
 function viecKe(k, i) {
-  var ds = [], cbC = k.cb_cong_phien || 0, cbL = k.cb_luong_phien || 0, chot = (k.cong_chot_phien || 0) > 0, thieu = thieuCongBoCong(k, i);
+  var ds = [], chot = (k.cong_chot_phien || 0) > 0, thieu = thieuCongBoCong(k, i), xongCong = daCB(k, 'cong');
   if (lamPhan('cong')) {
     if (!k.co_file) ds.push('Tải bảng công tháng này — bấm <b>📥 Tải bảng công</b> ngay dưới.');
-    else if (thieu && cbC !== k.phien_ban) ds.push(thieu + ' Vẫn chốt được bảng công.');
-    else if (!chot && cbC !== k.phien_ban) ds.push('Kiểm bảng công rồi bấm <b>📢 Công bố bảng công</b> — công nhân xem và báo sai sớm. Đúng hết thì bấm <b>🔒 Chốt bảng công</b>.');
+    else if (thieu && !xongCong) ds.push(thieu + ' Vẫn chốt được bảng công.');
+    else if (!chot && !xongCong) ds.push('Kiểm bảng công rồi bấm <b>📢 Công bố bảng công</b> — công nhân xem và báo sai sớm. Đúng hết thì bấm <b>🔒 Chốt bảng công</b>.');
     else if (!chot) ds.push('Công nhân báo sai xong, đã sửa hết thì bấm <b>🔒 Chốt bảng công</b> — kế toán chờ để tính lương.');
-    else if (cbC !== k.phien_ban) ds.push('Đã chốt, nhưng công nhân chưa xem bảng công này — bấm <b>📢 Công bố bảng công</b>.');
+    else if (!xongCong) ds.push('Đã chốt, nhưng công nhân chưa xem bảng công này — bấm <b>📢 Công bố bảng công</b>.');
   }
   if (lamPhan('luong')) {
     if (!k.co_luong) ds.push(!k.co_file ? 'Tải file lương tháng này, hoặc chờ hành chính tải bảng công.'
-      : chot ? 'Bảng công đã chốt — tải file lương tháng này.' : 'Chờ hành chính chốt bảng công (vẫn tải được file lương).');
-    else if (cbL !== k.phien_ban) ds.push('Kiểm rồi bấm <b>📢 Công bố phiếu lương</b>.');
+      : chot ? 'Bảng công đã chốt — bấm <b>🧮 Tính lương</b>, hoặc tải file lương của mình.' : 'Chờ hành chính chốt bảng công (vẫn tải được file lương).');
+    else if (soMayCu(k)) ds.push('Số máy đã cũ — bấm <b>🧮 Tính lại lương</b> rồi mới công bố.');
+    else if (!daCB(k, 'luong')) ds.push('Kiểm rồi bấm <b>📢 Công bố phiếu lương</b>.');
   }
   if (!ds.length && !lamPhan('cong') && !lamPhan('luong') && coCV('xem_luong')) {
     ds.push(k.co_luong ? 'Bấm <b>👁 Xem bảng lương</b> để xem (chỉ xem).' : 'Tháng này chưa có bảng lương.');
@@ -528,21 +537,22 @@ function oKy(k, i, j) {
       : '<li class="chua">Chưa có bảng công</li>') + '</ul>' + (k.co_file ? oPhan(k, i, j, 'cong') + oChot(k, i, j) : '') +
     ((k.cong_chot_phien || 0) > 0 ? '' : nutTai('cong', k.co_file, k.co_file ? '📥 Tải lại bảng công' : '📥 Tải bảng công')) + '</div>';
   // Hành chính không thấy tiền, không làm lương → không cần nhóm này (máy chủ cũng không gửi số tiền)
+  var laMay = k.nguon_luong === 'may';
   var luong = !coCV('xem_luong', 'ke_toan', 'quan_tri') ? '' : '<div class="nhom-ky"><h4>💵 Lương</h4><ul>' + (k.co_luong
-      ? '<li class="roi">📄 File lương tải ' + e(k.nhap_luc) + ' · ' + e(k.nhap_boi) + '<br>' + k.so_nguoi + ' người' +
+      ? '<li class="roi">' + (laMay ? '🧮 Số máy tính ' : '📄 File lương tải ') + e(k.nhap_luc) + ' · ' + e(k.nhap_boi) + '<br>' + k.so_nguoi + ' người' +
         (k.tong_thuc_linh == null ? '' : ' · ' + tien(k.tong_thuc_linh) + ' đ') + '</li>'
-      : '<li class="chua">📄 Chưa có file lương</li>') + '</ul>' + (k.co_luong ? oPhan(k, i, j, 'luong') +
+      : '<li class="chua">📄 Chưa có phiếu lương</li>') + '</ul>' + (k.co_luong ? oPhan(k, i, j, 'luong') +
         '<button class="rong" onclick="moXem(' + i + ',' + j + ',this)">👁 Xem bảng lương</button><div class="loi-o an"></div>' : '') +
-    nutTai('luong', k.co_luong, k.co_luong ? '⬆ Tải lại file lương' : '⬆ Tải file lương') + '</div>';
+    nutTai('luong', k.co_luong, laMay ? '⬆ Tải file lương của tôi (thay số máy)' : k.co_luong ? '⬆ Tải lại file lương' : '⬆ Tải file lương') + '</div>';
   return '<div class="ky"><h3>Tháng ' + thangNam(k.ky) + '</h3>' + viecKe(k, i) + cong + oTamUng(k, i, j) + oMay(k, i, j) + luong +
     (k.gio_ly_do != null && lamPhan('luong') ? '<p class="viec-ke">⚠ Giờ theo file kế toán, khác bảng công đã chốt. Lý do: ' + e(k.gio_ly_do) + '</p>' : '') + '</div>';
 }
-/** Vé 08 — nhóm 🧮 trong ô tháng. Chặng song song: số máy chỉ để xem và so, công nhân vẫn xem theo file kế toán. */
+/** Vé 08, 12 — nhóm 🧮 trong ô tháng. Chưa có file kế toán: số máy vào bản nháp, kế toán công bố ở nhóm 💵. Có file: số máy chỉ để xem và so. */
 function oMay(k, i, j) {
   if (!coCV('xem_luong', 'ke_toan', 'quan_tri') || !k.co_file) return '';
   var m = k.may, c = trangThai.luoi.cong_ty[i], nut = '';
   var ds = m ? '<li class="roi">Máy tính ' + e(m.luc) + ' · ' + e(m.boi) + '<br>' + m.so_nguoi + ' người · ' + tien(m.tong_thuc_linh) + ' đ · quy tắc từ tháng ' + thangNam(m.ap_dung_tu) + '</li>' +
-      (m.cu ? '<li class="chua">⚠ ' + (m.cu === 'cong' ? 'Bảng công đã đổi' : 'Khoản trừ đã đổi') + ' — tính lại lương</li>' : '') : '<li class="chua">Máy chưa tính</li>';
+      (m.cu ? '<li class="chua">⚠ ' + CAU_MAY_CU[m.cu] + ' — tính lại lương</li>' : '') : '<li class="chua">Máy chưa tính</li>';
   if (lamPhan('luong')) {
     var thieu = !((k.cong_chot_phien || 0) > 0) ? 'Chờ hành chính chốt bảng công.' : !k.co_quy_tac ? 'Bấm 📐 ở đầu công ty, khai quy tắc áp dụng cho tháng này.'
       : !c.nguong_ok ? 'Điền ngưỡng ở tab CONG_TY, cột nguong_cong_moi, rồi bấm 🔄 Làm mới.' : '';
@@ -550,7 +560,7 @@ function oMay(k, i, j) {
       : '<button class="' + (!m || m.cu ? 'chinh ' : '') + 'rong" onclick="tinhLuong(' + i + ',' + j + ',this)">' + (m ? '🧮 Tính lại lương' : '🧮 Tính lương') + '</button><div class="loi-o an"></div>';
   }
   if (m) nut += '<button class="rong" onclick="xemMay(' + i + ',' + j + ',this)">👁 Xem bảng máy tính</button><div class="loi-o an"></div>';
-  if (m && k.co_luong) nut += '<button class="rong" onclick="soLuong(' + i + ',' + j + ',this)">⚖ So máy với file kế toán</button><div class="loi-o an"></div>';
+  if (m && k.nguon_luong === 'file') nut += '<button class="rong" onclick="soLuong(' + i + ',' + j + ',this)">⚖ So máy với file kế toán</button><div class="loi-o an"></div>';
   return '<div class="nhom-ky"><h4>🧮 Máy tính lương</h4><ul>' + ds + '</ul>' + nut + '</div>';
 }
 /** Vé 10 — bảng so: công cụ để khớp từng đồng rồi mới bỏ Excel. Chỉ xem, phiếu công nhân vẫn theo file. */
@@ -595,11 +605,19 @@ function guiTinhLuong(c, k, nut) {
   var chu = nut.textContent, loi = nut.nextElementSibling;
   nut.disabled = true; nut.textContent = '⏳ Đang tính… (vài giây tới nửa phút)';
   if (loi) loi.classList.add('an');
-  goi({ hanh_dong: 'kt_tinh_luong', phien: trangThai.phien, ma_ct: c.ma_ct, ky: k.ky }, 120).then(function (r) {
+  goi({ hanh_dong: 'kt_tinh_luong', phien: trangThai.phien, ma_ct: c.ma_ct, ky: k.ky, phien_ban_ky: k.phien_ban }, 120).then(function (r) {
     nut.disabled = false; nut.textContent = chu;
-    if (!r.ok) { if (loi) { loi.textContent = r.loi; loi.classList.remove('an'); } return; }
+    if (!r.ok) {
+      if (loi) {
+        if (r.ma === 'DA_DOI') loi.innerHTML = e(r.loi) + ' <button onclick="taiLuoi()">🔄 Tải lại</button>'; else loi.textContent = r.loi;
+        loi.classList.remove('an');
+      }
+      return;
+    }
     trangThai.moCT = c.ma_ct;
-    bao('luoiBao', 'xanh', '✅ Máy đã tính ' + r.so_nguoi + ' người ' + e(c.ten) + ' tháng ' + thangNam(k.ky) + ': tổng thực lĩnh ' + tien(r.tong_thuc_linh) + ' đ. Công nhân vẫn xem theo file kế toán; số máy chỉ để so.');
+    bao('luoiBao', 'xanh', '✅ Máy đã tính ' + r.so_nguoi + ' người ' + e(c.ten) + ' tháng ' + thangNam(k.ky) + ': tổng thực lĩnh ' + tien(r.tong_thuc_linh) + ' đ. ' +
+      (r.nguon_luong === 'file' ? 'Công nhân vẫn xem theo file kế toán; số máy chỉ để so.'
+       : r.khong_doi ? 'Số không đổi so với bản đang có.' : 'Công nhân chưa thấy số này: kiểm rồi bấm <b>📢 Công bố phiếu lương</b>.'));
     taiLuoiGiuBao($('luoiBao').innerHTML);
   });
 }
@@ -616,7 +634,8 @@ function xemMay(i, j, nut) {
     $('taiTieuDe').textContent = '🧮 Máy tính lương ' + c.ten + ' — Tháng ' + thangNam(k.ky);
     $('nhanNguoi').textContent = 'Xem từng khoản của một người (bấm tên)';
     $('taiChi').classList.add('an'); $('taiNut').classList.add('an'); $('nutLuu').classList.add('an'); $('nutXuatMay').classList.remove('an');
-    bao('taiBao', kq.canh_bao ? 'do' : 'xanh', kq.canh_bao ? e(kq.canh_bao) : '👉 Bấm tên một người để xem từng khoản. Đủ cột thì bấm <b>⬇ Tải Excel</b>. Số máy chỉ để so, công nhân vẫn xem theo file kế toán.' + (k.may && k.may.cu ? ' <b>⚠ Số này đã cũ, nên tính lại.</b>' : ''));
+    bao('taiBao', kq.canh_bao ? 'do' : 'xanh', kq.canh_bao ? e(kq.canh_bao) : '👉 Bấm tên một người để xem từng khoản. Đủ cột thì bấm <b>⬇ Tải Excel</b>. ' +
+      (k.nguon_luong === 'file' ? 'Số máy chỉ để so, công nhân vẫn xem theo file kế toán.' : 'Đúng hết thì quay lại, bấm <b>📢 Công bố phiếu lương</b>.') + (k.may && k.may.cu ? ' <b>⚠ Số này đã cũ, nên tính lại.</b>' : ''));
     var tong = kq.nguoi.reduce(function (t, n) { return t + n.o.thuc_linh; }, 0);
     $('tom').innerHTML = '<div>Số người<b>' + kq.nguoi.length + '</b></div><div>Tổng thực lĩnh<b>' + tien(tong) + ' đ</b></div>';
     $('phieuXem').innerHTML = ''; $('timNguoi').value = '';
@@ -706,7 +725,7 @@ function oChot(k, i, j) {
   var chot = (k.cong_chot_phien || 0) > 0, nut = '';
   if (lamPhan('cong')) {
     // nút đậm = việc kế: chưa công bố thì 📢 Công bố là việc kế (đậm), 🔒 Chốt nhạt — đúng thứ tự dòng 👉
-    nut = '<button class="' + (!chot && k.cb_cong_phien === k.phien_ban ? 'chinh ' : '') + 'rong" onclick="' + (chot ? 'moChot' : 'chotCong') + '(' + i + ',' + j + ',this)">' +
+    nut = '<button class="' + (!chot && daCB(k, 'cong') ? 'chinh ' : '') + 'rong" onclick="' + (chot ? 'moChot' : 'chotCong') + '(' + i + ',' + j + ',this)">' +
           (chot ? '🔓 Mở chốt (sửa bảng công)' : '🔒 Chốt bảng công') + '</button><div class="loi-o an"></div>';
   }
   return '<div class="phan">' + (chot ? '<span class="roi">🔒 Đã chốt ' + e(k.cong_chot_luc) + ' · ' + e(k.cong_chot_boi) + ' — kế toán tính lương theo bảng công này</span>'
@@ -716,7 +735,7 @@ function chotCong(i, j, nut) {
   var c = trangThai.luoi.cong_ty[i], k = c.ky[j];
   hoi('<p><b>Chốt BẢNG CÔNG</b> tháng ' + thangNam(k.ky) + ' — ' + e(c.ten) + '?</p>' +
       '<p>' + k.cong_so_nguoi + ' người. Chốt rồi kế toán dùng bảng công này để tính lương, và anh/chị <b>không tải lại được</b> — muốn sửa phải 🔓 Mở chốt, ghi lý do.</p>' +
-      (k.cb_cong_phien === k.phien_ban ? '' : '<p class="ai">Công nhân chưa xem bản này (chưa 📢 Công bố) — vẫn chốt được.</p>'),
+      (daCB(k, 'cong') ? '' : '<p class="ai">Công nhân chưa xem bản này (chưa 📢 Công bố) — vẫn chốt được.</p>'),
       '🔒 Chốt bảng công', 'Thôi, chưa chốt', function () { guiChot(c, k, true, '', nut); });
 }
 function moChot(i, j, nut) {
@@ -755,23 +774,24 @@ function guiChot(c, k, chot, lyDo, nut) {
 var TEN_PHAN = { cong: { icon: '🗓 Bảng công', ten: 'bảng công', HOA: 'BẢNG CÔNG' }, luong: { icon: '💵 Phiếu lương', ten: 'phiếu lương', HOA: 'PHIẾU LƯƠNG' } };
 function oPhan(k, i, j, phan) {
   var t = TEN_PHAN[phan], cb = k['cb_' + phan + '_phien'] || 0, luc = e(k['cb_' + phan + '_luc'] || '');
-  if (cb && cb === k.phien_ban) {
+  if (daCB(k, phan)) {
     return '<div class="phan"><span class="roi">' + t.icon + ': ✅ đã công bố ' + luc + ' · ' + e(k['cb_' + phan + '_boi'] || '') + '</span></div>';
   }
   var chu = cb ? '<span class="moi">' + t.icon + ': công nhân đang xem BẢN CŨ (công bố ' + luc + ') — bản mới chưa công bố</span>'
                : '<span class="chua">' + t.icon + ': chưa công bố — công nhân chưa xem được</span>';
   if (!lamPhan(phan)) return '<div class="phan">' + chu + '</div>';
-  var thieu = phan === 'cong' ? thieuCongBoCong(k, i) : '';
-  if (thieu) return '<div class="phan">' + chu + '<button class="rong" disabled>📢 Công bố bảng công</button><p class="viec-ke">👉 ' + thieu + '</p></div>';
+  var thieu = phan === 'cong' ? thieuCongBoCong(k, i) : soMayCu(k) ? CAU_MAY_CU[k.may.cu] + ' — bấm 🧮 Tính lại lương ở nhóm trên, rồi mới công bố được.' : '';
+  if (thieu) return '<div class="phan">' + chu + '<button class="rong" disabled>📢 Công bố ' + t.ten + '</button><p class="viec-ke">👉 ' + thieu + '</p></div>';
   return '<div class="phan">' + chu + '<button class="chinh rong" onclick="congBo(' + i + ',' + j + ',\'' + phan + '\',this)">📢 ' +
     (cb ? 'Công bố lại ' : 'Công bố ') + t.ten + '</button><div class="loi-o an"></div></div>';
 }
 function congBo(i, j, phan, nut) {
   var c = trangThai.luoi.cong_ty[i], k = c.ky[j], t = TEN_PHAN[phan], cb = k['cb_' + phan + '_phien'] || 0;
-  var kia = phan === 'cong' ? 'luong' : 'cong', cbKia = k['cb_' + kia + '_phien'] || 0;
+  var kia = phan === 'cong' ? 'luong' : 'cong', cbKia = k['cb_' + kia + '_phien'] || 0, soMay = phan === 'luong' && k.nguon_luong === 'may';
   var html = '<p><b>Công bố ' + t.HOA + '</b> tháng ' + thangNam(k.ky) + ' — ' + e(c.ten) + '?</p>' +
-    '<p>' + (phan === 'cong' ? k.cong_so_nguoi : k.so_nguoi) + ' người sẽ xem được ' + t.ten + ' của mình bằng số CCCD + họ tên (file tải ' +
+    '<p>' + (phan === 'cong' ? k.cong_so_nguoi : k.so_nguoi) + ' người sẽ xem được ' + t.ten + ' của mình bằng số CCCD + họ tên (' + (soMay ? 'máy tính lúc ' : 'file tải ') +
     e(phan === 'cong' ? k.cong_luc : k.nhap_luc) + ').</p>' +
+    (soMay ? '<p class="ai"><b>Số này do máy tính</b>, chưa có file kế toán để so. Tổng thực lĩnh ' + tien(k.tong_thuc_linh) + ' đ. Công nhân sẽ thấy đúng số máy.</p>' : '') +
     '<p class="ai">' + TEN_PHAN[kia].icon + ' ' + (cbKia ? 'giữ nguyên như đang công bố.' : 'chưa công bố thì vẫn chưa hiện.') + '</p>' +
     (cb ? '<p>Công nhân đang xem bản công bố lúc ' + e(k['cb_' + phan + '_luc']) + '. Bản mới sẽ <b>thay</b> bản đó.</p>' +
           '<label for="cbLyDo">Lý do công bố lại (bắt buộc)</label><textarea id="cbLyDo" maxlength="300" placeholder="Ví dụ: sửa giờ ngày 3 của An"></textarea>' +
@@ -823,8 +843,11 @@ function moTai(i, j, loai) {
   $('phieuXem').innerHTML = '';
   if (k.co_file && loai === 'cong') {
     bao('taiBao', 'cho', 'Tháng này đã có bảng công tải lúc ' + e(k.cong_luc) + ' (' + e(k.cong_boi) + '). Lưu file mới sẽ <b>thay</b> bảng công trong bản nháp' +
-      (k.co_luong ? '; phiếu lương kế toán đã tải <b>giữ nguyên</b>' : '') +
+      (k.nguon_luong === 'may' ? '; phiếu máy đã tính bị bỏ, kế toán phải tính lại' : k.co_luong ? '; phiếu lương kế toán đã tải <b>giữ nguyên</b>' : '') +
       (k.cb_cong_phien ? ' — công nhân vẫn xem bảng công cũ cho tới khi anh/chị bấm 📢 Công bố lại.' : '.'));
+  } else if (k.nguon_luong === 'may') {
+    bao('taiBao', 'cho', 'Tháng này đang dùng số máy tính lúc ' + e(k.nhap_luc) + '. Lưu file của anh/chị sẽ <b>thay số máy</b>: từ đó file làm chủ, máy chỉ để so' +
+      (k.cb_luong_phien ? '; công nhân vẫn xem bản đã công bố cho tới khi bấm 📢 Công bố lại.' : '.'));
   } else if (k.co_file) {
     bao('taiBao', 'cho', 'Tháng này đã có ' + (k.co_luong ? 'file lương tải lúc ' + e(k.nhap_luc) : 'bảng công') + '. Lưu file mới sẽ <b>thay</b> bản nháp đó' +
       (k.cong_luc && k.cong_luc !== k.nhap_luc ? ' — bảng công (' + e(k.cong_boi) + ' tải ' + e(k.cong_luc) + ') sẽ lấy theo trang Chấm công của file này' : '') +
@@ -849,7 +872,7 @@ function moXem(i, j, nut) {
     $('taiTieuDe').textContent = '👁 ' + c.ten + ' — Tháng ' + thangNam(k.ky);
     $('nhanNguoi').textContent = 'Xem phiếu từng người (bấm tên)';
     $('taiChi').classList.add('an'); $('taiNut').classList.add('an'); $('nutLuu').classList.add('an');
-    bao('taiBao', kq.canh_bao ? 'do' : 'xanh', kq.canh_bao ? e(kq.canh_bao) : '👉 Bấm tên một người để xem phiếu. Màn này chỉ để xem, không sửa được gì. Bản tải lúc ' + e(kq.nhap_luc) + '.');
+    bao('taiBao', kq.canh_bao ? 'do' : 'xanh', kq.canh_bao ? e(kq.canh_bao) : '👉 Bấm tên một người để xem phiếu. Màn này chỉ để xem, không sửa được gì. ' + (kq.nguon_luong === 'may' ? 'Số máy tính lúc ' : 'Bản tải lúc ') + e(kq.nhap_luc) + '.');
     var tong = kq.nguoi.reduce(function (t, n) { return t + n.luong.thuc_linh; }, 0);
     $('tom').innerHTML = '<div>Số người<b>' + kq.nguoi.length + '</b></div><div>Tổng thực lĩnh<b>' + tien(tong) + ' đ</b></div>';
     $('phieuXem').innerHTML = ''; $('timNguoi').value = '';
@@ -1014,6 +1037,7 @@ function luuNhap(xoaKy) {
       bao('luoiBao', r.bo_luong ? 'cho' : 'xanh', '✅ Đã lưu bảng công ' + e(dt.ten) + ' tháng ' + thangNam(dt.ky) + ' lúc ' + e(r.nhap_luc) + ': ' + r.so_nguoi + ' người.' +
           (r.giu_luong ? ' Phiếu lương kế toán đã tải giữ nguyên cho ' + r.giu_luong + ' người.' : '') +
           (r.bo_luong ? ' <b>⚠ ' + r.bo_luong + ' người có phiếu lương nhưng không còn trong bảng công mới</b> — phiếu của họ không còn trong bản nháp (bản đang công bố chưa đổi); báo kế toán.' : '') +
+          (r.bo_may ? ' Phiếu máy đã tính bị bỏ vì bảng công đổi: chốt xong báo kế toán tính lại.' : '') +
           ' Công nhân CHƯA xem được cho tới khi bấm 📢 Công bố bảng công.' + xoa);
       taiLuoiGiuBao($('luoiBao').innerHTML);
       return;
