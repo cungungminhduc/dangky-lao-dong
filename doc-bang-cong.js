@@ -125,7 +125,7 @@
                'Gõ ngày vào làm (vd 05/09/2026) — máy cần ngày này để biết người mới hay cũ, tính thâm niên.');
         }
         ng = theoCCCD[cNM] = { dong: r, cccd_nha_may: cNM, ten_nha_may: tenNM, cccd_tra: cThuc || cNM, ten_hien: tenThuc || tenNM,
-                               nguoi_tuyen: String(o(cc, r, bc.tuyen) || '').trim(), ngay_vao: vao, ca: [], nghi: {} };
+                               nguoi_tuyen: String(o(cc, r, bc.tuyen) || '').trim(), ngay_vao: vao, tt: K.thongTinNguoi(cc, r, bc), ca: [], nghi: {} };
         dem.forEach(function (x) {                            // cột đếm ở dòng đầu mỗi người là chuẩn — đọc số, không đếm lại
           var v = o(cc, r, x.cot), n = so(v);
           if (n !== null && isNaN(n)) chan(t, tenO(r, x.cot), 'Ô đếm ' + x.viet + ' ghi "' + String(v).trim() + '", cần số.', 'Gõ số (vd 2); không có thì để trống.');
@@ -164,6 +164,7 @@
       return {
         cccd_tra: n.cccd_tra, ten_tra: F.bienTheTen(n.ten_hien), ten_hien: n.ten_hien,
         cccd_nha_may: n.cccd_nha_may, ten_nha_may: n.ten_nha_may, nguoi_tuyen: n.nguoi_tuyen, ngay_vao: n.ngay_vao,
+        so_code: n.tt.so_code, ngay_sinh: n.tt.ngay_sinh, ngay_nghi: n.tt.ngay_nghi,
         cong: { ngay: ngay, co_chi_tiet: n.ca.some(function (x) { return x.co_ngay; }),
                 ca: n.ca.map(function (x) { return { ma: x.ma, ten: x.ten, gio: x.gio, tong: x.tong }; }), nghi: n.nghi }
       };
@@ -173,6 +174,7 @@
       if (cacTra[n.cccd_tra]) bao(t, '', 'Hai hồ sơ nhà máy cùng một CCCD thực (' + n.ten_hien + ') — người đó tra sẽ thấy cả hai bảng công.');
       cacTra[n.cccd_tra] = true;
     });
+    K.nhacThieuSinh(dsNguoi, t, bao);
     if (!dsNguoi.length && !loi.length) chan(t, '', 'Bảng công không có người nào.', 'Kiểm file đã điền CCCD nhà máy chưa.');
     kq.nguoi = dsNguoi;
     kq.thong_tin.so_nguoi = dsNguoi.length;

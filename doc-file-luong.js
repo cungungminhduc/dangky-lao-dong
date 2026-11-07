@@ -164,7 +164,17 @@
     while (bc.dau <= cc.length && !laChuKhongSo(o(cc, bc.dau, bc.ca))) bc.dau++;
     bc.nghi = COT_NGHI.map(function (x) { return [x[0], timCot(cc, hai, baoGom(x[1]), bc.tong + 1)]; })
                       .filter(function (x) { return x[1]; });
+    // Vé 16: cho sổ lưu trữ + file giờ Tháng N. Chỉ tìm trước cột Ca; thiếu cột hay ô trống đều không chặn tải
+    bc.so_code = timCot(cc, hai, baoGom('so code'), 1, bc.ca - 1);
+    bc.sinh = timCot(cc, hai, function (s) { return s.indexOf('nam sinh') >= 0 || s.indexOf('ngay sinh') >= 0; }, 1, bc.ca - 1);
+    bc.ngay_nghi = timCot(cc, hai, baoGom('ngay nghi'), 1, bc.ca - 1);
     return bc;
+  }
+
+  /** Vé 16 — số code, ngày sinh, ngày nghỉ của một người, đọc ở dòng đầu của người đó. Ô sai dạng coi như trống. */
+  function thongTinNguoi(cc, r, bc) {
+    var doc = function (cot) { return cot ? docNgay(o(cc, r, cot)) : ''; }, ma = bc.so_code ? o(cc, r, bc.so_code) : '';
+    return { so_code: trong(ma) || ma === 0 ? '' : String(ma).trim(), ngay_sinh: doc(bc.sinh), ngay_nghi: doc(bc.ngay_nghi) };
   }
 
   function boCucBangLuong(bl, tBL, chan) {
@@ -208,6 +218,12 @@
       if (!bc.khau_tru.length) chan(tBL, '', 'Không thấy cột khấu trừ nào (Tạm ứng, Lưu động, Giảm trừ khác).', 'Giữ nguyên chữ tiêu đề ở dòng ' + dongNhom + '.');
     }
     return bc;
+  }
+
+  /** Thiếu ngày sinh không chặn, nhưng file giờ Tháng N sẽ không xét được tuổi: nói một câu gộp. */
+  function nhacThieuSinh(ds, trang, bao) {
+    var so = ds.filter(function (n) { return !n.ngay_sinh; }).length;
+    if (so) bao(trang, '', so + ' người thiếu hoặc sai ngày sinh: vẫn lưu được, nhưng file giờ Tháng N không xét được tuổi của họ. Điền cột "Ngày tháng năm sinh" rồi tải lại nếu cần.');
   }
 
   function laDongTong(bl, b) {
@@ -282,7 +298,7 @@
         ng = theoCCCD[cNM] = {
           dong: r, stt: o(cc, r, 1), cccd_nha_may: cNM, ten_nha_may: tenNM,
           cccd_tra: cThuc || cNM, ten_hien: tenThuc || tenNM,
-          nguoi_tuyen: String(o(cc, r, bCC.tuyen) || '').trim(), ngay_vao: cVao ? docNgay(o(cc, r, cVao)) : '', ca: [], nghi: {}
+          nguoi_tuyen: String(o(cc, r, bCC.tuyen) || '').trim(), ngay_vao: cVao ? docNgay(o(cc, r, cVao)) : '', tt: thongTinNguoi(cc, r, bCC), ca: [], nghi: {}
         };
         bCC.nghi.forEach(function (x) { var v = so(o(cc, r, x[1])); if (v) ng.nghi[x[0]] = v; });
         thuTu.push(cNM);
@@ -382,6 +398,7 @@
       return {
         cccd_tra: n.cccd_tra, ten_tra: bienTheTen(n.ten_hien), ten_hien: n.ten_hien,
         cccd_nha_may: n.cccd_nha_may, ten_nha_may: n.ten_nha_may, nguoi_tuyen: n.nguoi_tuyen, ngay_vao: n.ngay_vao,
+        so_code: n.tt.so_code, ngay_sinh: n.tt.ngay_sinh, ngay_nghi: n.tt.ngay_nghi,
         cong: { ngay: ngay, co_chi_tiet: coNgay,
                 ca: n.ca.map(function (x) { return { ma: x.ma, ten: x.ten, gio: x.gio, tong: x.tong }; }), nghi: n.nghi },
         luong: n.luong, ky_nhan: n.ky_nhan, ghi_chu: n.ghi_chu
@@ -392,6 +409,7 @@
       if (cacTra[n.cccd_tra]) bao(tCC, '', 'Hai hồ sơ nhà máy cùng một CCCD thực (' + n.ten_hien + ') — người đó tra sẽ thấy cả hai phiếu.');
       cacTra[n.cccd_tra] = true;
     });
+    nhacThieuSinh(dsNguoi, tCC, bao);
 
     kq.nguoi = dsNguoi;
     kq.tong = { so_nguoi: dsNguoi.length, tong_thuc_linh: tongThucLinh };
@@ -404,5 +422,6 @@
                        ngayExcel: ngayExcel, tenO: tenO,
                        // doc-bang-cong.js đọc cùng bố cục trang Chấm công — dùng chung, không chép bản thứ hai
                        coBan: { o: o, so: so, tron: tron, trong: trong, chuanChu: chuanChu, laNgay: laNgay, docNgay: docNgay, laChuKhongSo: laChuKhongSo,
-                                timCot: timCot, baoGom: baoGom, dungChu: dungChu, boCucChamCong: boCucChamCong, thangDep: thangDep, TEN_CA: TEN_CA } };
+                                timCot: timCot, baoGom: baoGom, dungChu: dungChu, boCucChamCong: boCucChamCong, thangDep: thangDep, TEN_CA: TEN_CA,
+                                thongTinNguoi: thongTinNguoi, nhacThieuSinh: nhacThieuSinh } };
 })(typeof window !== 'undefined' ? window : globalThis);
