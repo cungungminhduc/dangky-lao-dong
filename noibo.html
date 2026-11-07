@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex, nofollow">
 <title>Công–lương nội bộ</title>
+<link rel="stylesheet" href="kieu-luoi.css">
 <!--
   TRANG NỘI BỘ CÔNG–LƯƠNG — kế toán tải file lương từng công ty × tháng (vé 02–04), công bố bảng công / phiếu lương (vé 05).
   Đọc Excel NGAY TRÊN MÁY (thư viện xlsx), soát bằng doc-file-luong.js, chỉ gửi số đã đọc lên máy chủ.
@@ -15,6 +16,7 @@
   1.4 (vé 13): mục 💬 Phản hồi công nhân — quản lý + trưởng nhóm vào thẳng mục này, kế toán + quản trị có thêm nút trên menu. Phiếu nào ai thấy kiểm ở máy chủ (thayPH_).
   2.0 (vé 03 luồng lương từ bảng công): hành chính 📥 tải bảng công (doc-bang-cong.js) + 📢 công bố bảng công; kế toán tải file lương + công bố phiếu lương.
   Mỗi ô tháng hai nhóm "🗓 Bảng công" / "💵 Lương", nút nằm ngay trong nhóm nó tác động, dòng "👉" nói việc kế cho đúng chức vụ.
+  2.3 (đặc tả .scratch/ke-toan-excel/DAC-TA.md): máy tính bày KIỂU LƯỚI (kieu-luoi.js, luoi-o.js), điện thoại giữ kiểu thẻ. Luật vẫn ở khối script này; chỉ rẽ nhánh ở vài chỗ gọi kieuLuoi().
 -->
 <style>
   :root { --nen:#f1f4f8; --the:#fff; --chu:#1a202c; --mo:#4a5568; --vien:#cbd5e0; --chinh:#1d4ed8; --xanh:#15803d;
@@ -193,6 +195,9 @@
     <button id="nutDN" class="chinh rong" style="margin-top:16px">Đăng nhập</button>
   </section>
 
+  <!-- KIỂU LƯỚI (máy tính): kieu-luoi.js vẽ vào đây, tab trang ở cuối khung -->
+  <section id="mKL" class="an"></section>
+
   <!-- MENU VIỆC (kế toán, quản trị) -->
   <nav id="menuViec" class="menu-viec an">
     <button data-viec="luong">📄 Lương công nhân</button>
@@ -252,7 +257,7 @@
         Máy đọc ngay tại đây, cho xem lại rồi mới lưu. Chỉ lưu <b>giờ làm + Đạt / Không đạt</b> — không tính tiền.</div>
       <label for="gioThang">Tháng của file</label>
       <input id="gioThang" type="month">
-      <label class="nut chinh" for="chonFileGio" style="width:100%;margin-top:12px">📂 Chọn file giờ</label>
+      <label class="nut chinh" id="nutChonGio" for="chonFileGio" style="width:100%;margin-top:12px">📂 Chọn file giờ</label>
       <input id="chonFileGio" type="file" accept=".xlsx,.xls" class="an">
       <div id="gioBao"></div>
       <div id="gioXem" class="an"></div>
@@ -342,6 +347,7 @@
     </div>
     <p class="ai">Lưu bản nháp chưa cho công nhân xem — lưu xong, bấm 📢 Công bố ở ô tháng đó.</p>
   </section>
+  <nav id="klTabs" class="kl-tabs an" aria-label="Các trang"></nav>
 </div>
 
 <script src="cau-hinh-luong.js"></script>
@@ -350,6 +356,8 @@
 <script src="doc-file-tam-ung.js"></script>
 <script src="doc-file-gio.js"></script>
 <script src="ve-phieu.js"></script>
+<script src="luoi-o.js"></script>
+<script src="kieu-luoi.js"></script>
 <script>
 var $ = function (id) { return document.getElementById(id); };
 var e = VePhieu.e, tien = VePhieu.tien;
@@ -358,11 +366,16 @@ var trangThai = { phien: '', tk: null, luoi: null, dangTai: null, kqDoc: null };
 
 function nho(k, v) { try { if (v == null) localStorage.removeItem(k); else localStorage.setItem(k, v); } catch (x) {} }
 function doc(k) { try { return localStorage.getItem(k); } catch (x) { return null; } }
+/** Máy tính bày kiểu lưới, điện thoại kiểu thẻ. Thiếu tệp lưới thì kiểu thẻ. Luật giữ một chỗ: chỉ vài hàm dưới đây rẽ nhánh theo cái này. */
+function kieuLuoi() { return typeof KieuLuoi !== 'undefined' && KieuLuoi.dangBat(); }
 function hien(id) {
-  ['mDangNhap', 'mLuoi', 'mTai', 'mQT', 'mGio', 'mPH', 'mThangN', 'mSo'].forEach(function (m) { $(m).classList.toggle('an', m !== id); });
+  var kl = kieuLuoi();
+  if (kl && id === 'mLuoi') id = 'mKL';              // màn thẻ công ty × tháng → trang Việc tháng
+  ['mDangNhap', 'mLuoi', 'mTai', 'mQT', 'mGio', 'mPH', 'mThangN', 'mSo', 'mKL'].forEach(function (m) { $(m).classList.toggle('an', m !== id); });
   var viec = { mLuoi: 'luong', mTai: 'luong', mQT: 'luong', mGio: 'gio', mPH: 'ph', mThangN: 'thangn', mSo: 'so' }[id];
-  $('menuViec').classList.toggle('an', !viec || !trangThai.tk || chiXuLyPH());
+  $('menuViec').classList.toggle('an', !viec || !trangThai.tk || chiXuLyPH() || kl);
   [].forEach.call(document.querySelectorAll('#menuViec button'), function (b) { b.classList.toggle('dang', b.getAttribute('data-viec') === viec); });
+  if (kl) KieuLuoi.sauHien(id);
   window.scrollTo(0, 0);
 }
 function bao(id, loai, html) { $(id).innerHTML = html ? '<div class="bao ' + loai + '">' + html + '</div>' : ''; }
@@ -415,6 +428,7 @@ function dangNhap() {
 function dangXuat() {
   trangThai = { phien: '', tk: null, luoi: null, dangTai: null, kqDoc: null };
   gio = { tom: null, kq: null, tenFile: '' };
+  thn = { kq: null };
   nho(KHOA_PHIEN, null); nho(KHOA_TK, null);
   $('luoi').innerHTML = ''; $('dsNguoi').innerHTML = ''; $('phieuXem').innerHTML = ''; $('tom').innerHTML = '';
   ['gioXem', 'gioBao', 'gioCacThang', 'qtForm', 'qtBao', 'qtNguong'].forEach(function (id) { $(id).innerHTML = ''; });
@@ -424,6 +438,7 @@ function dangXuat() {
   $('timPH').value = '';
   demMenuPH(null);
   $('thanhTK').classList.add('an');
+  if (kieuLuoi()) KieuLuoi.dangXuat();
   hien('mDangNhap');
 }
 var chiLuoiGoc = null;
@@ -445,6 +460,8 @@ function vaoViec() {
       (coCV('xem_luong') ? ' Có phiếu lương thì bấm <b>👁 Xem bảng lương</b> (chỉ xem).' : '')
     : coCV('xem_luong') ? '👉 Bấm vào <b>tên công ty</b>, chọn tháng, bấm <b>👁 Xem bảng lương</b>. Anh/chị chỉ xem được, không sửa được gì.'
     : '👉 Bấm vào <b>tên công ty</b> để xem tình trạng từng tháng.';
+  if (typeof KieuLuoi !== 'undefined') KieuLuoi.ganNutKieu();
+  if (kieuLuoi()) { KieuLuoi.vao(); return; }
   if (chiXuLyPH()) { moPH(); return; }                // chỉ có quản lý, trưởng nhóm thì chỉ có việc này
   taiLuoi();
 }
@@ -466,8 +483,9 @@ function taiLuoi() {
     trangThai.luoi = kq;
     demMenuPH(kq.ph_can_lam);
     var canh = kq.ma_khong_co && kq.ma_khong_co.length
-      ? 'Tài khoản có khai công ty ' + e(kq.ma_khong_co.join(', ')) + ' nhưng tab CONG_TY chưa có — báo người quản trị thêm vào.' : '';
+      ? 'Tài khoản có khai công ty ' + e(kq.ma_khong_co.join(', ')) + ' nhưng tab CÔNG TY chưa có — báo người quản trị thêm vào.' : '';
     bao('luoiBao', canh ? 'cho' : '', canh);
+    if (kieuLuoi()) { KieuLuoi.luoiMoi(); return; }
     if (!kq.cong_ty.length) { $('luoi').innerHTML = '<div class="bao cho">Tài khoản chưa được giao công ty nào — báo người quản trị.</div>'; return; }
     if (kq.cong_ty.length === 1) trangThai.moCT = kq.cong_ty[0].ma_ct;
     veLuoi();
@@ -553,7 +571,7 @@ function locCT() {
 function thieuCongBoCong(k, i) {
   var c = trangThai.luoi.cong_ty[i];
   if (k.co_quy_tac === false) return 'Chờ kế toán khai 📐 quy tắc lương áp dụng tháng này, rồi mới công bố bảng công được.';
-  if (c.nguong_ok === false) return 'Chờ kế toán điền ngưỡng công ở tab CONG_TY, cột nguong_cong_moi, rồi mới công bố bảng công được.';
+  if (c.nguong_ok === false) return 'Chờ kế toán điền ngưỡng công ở trang ⚙ Công ty (hoặc tab CÔNG TY của Google Sheet), rồi mới công bố bảng công được.';
   return '';
 }
 /** Chức vụ nào làm phần nào (bảng chức vụ đặc tả mục 5) — máy chủ kiểm lại mọi cú. */
@@ -678,7 +696,7 @@ function oMay(k, i, j) {
       (m.cu ? '<li class="chua">⚠ ' + CAU_MAY_CU[m.cu] + ' — tính lại lương</li>' : '') : '<li class="chua">Máy chưa tính</li>';
   if (lamPhan('luong') && !k.thang_chot_luc) {
     var thieu = !((k.cong_chot_phien || 0) > 0) ? 'Chờ hành chính chốt bảng công.' : !k.co_quy_tac ? 'Bấm 📐 ở đầu công ty, khai quy tắc áp dụng cho tháng này.'
-      : !c.nguong_ok ? 'Điền ngưỡng ở tab CONG_TY, cột nguong_cong_moi, rồi bấm 🔄 Làm mới.' : '';
+      : !c.nguong_ok ? 'Điền ngưỡng ở trang ⚙ Công ty (hoặc tab CÔNG TY của Google Sheet), rồi bấm 🔄 Làm mới.' : '';
     nut = thieu ? '<button class="rong" disabled>🧮 Tính lương</button><p class="viec-ke">👉 ' + thieu + '</p>'
       : '<button class="' + (!m || m.cu ? 'chinh ' : '') + 'rong" onclick="tinhLuong(' + i + ',' + j + ',this)">' + (m ? '🧮 Tính lại lương' : '🧮 Tính lương') + '</button><div class="loi-o an"></div>';
   }
@@ -689,6 +707,7 @@ function oMay(k, i, j) {
 /** Vé 10 — bảng so: công cụ để khớp từng đồng rồi mới bỏ Excel. Chỉ xem, phiếu công nhân vẫn theo file. */
 function soLuong(i, j, nut) {
   var c = trangThai.luoi.cong_ty[i], k = c.ky[j], chu = nut.textContent, loi = nut.nextElementSibling;
+  if (kieuLuoi()) { KieuLuoi.soMay(c.ma_ct, k.ky); return; }
   nut.disabled = true; nut.textContent = '⏳ Đang so… (vài giây)';
   if (loi) loi.classList.add('an');
   goi({ hanh_dong: 'kt_so_luong', phien: trangThai.phien, ma_ct: c.ma_ct, ky: k.ky }).then(function (kq) {
@@ -765,6 +784,7 @@ function xemMay(i, j, nut) {
     veDanhSach('');
     $('xemTruoc').classList.remove('an');
     hien('mTai');
+    if (kieuLuoi()) KieuLuoi.xemBangMay(kq.nguoi);
   });
 }
 var COT_EXCEL_MAY = [['Tiền lương giờ', 'tien_gio'], ['Chuyên cần', 'cc'], ['Xăng xe', 'xang'], ['Nhà ở', 'nha'], ['Thâm niên', 'tham_nien'], ['Ăn ca', 'an'], ['Tổng phụ cấp', 'tong_pc'],
@@ -816,6 +836,7 @@ function moTamUng(i, j, nut) {
     $('taiChi').classList.remove('an'); $('taiNut').classList.remove('an');
     $('chonFile').value = ''; $('xemTruoc').classList.add('an'); $('nutLuu').classList.add('an');
     $('phieuXem').innerHTML = ''; $('taiBao').innerHTML = '';
+    if (kieuLuoi()) KieuLuoi.xoaTai();
     if (k.tu) bao('taiBao', 'cho', 'Tháng này đã có file tải lúc ' + e(k.tu.luc) + ' (' + e(k.tu.boi) + '). Lưu file mới sẽ <b>thay toàn bộ</b> khoản trừ của tháng này.');
     hien('mTai');
   });
@@ -830,6 +851,7 @@ function xemTruocTamUng(kq, tenFile) {
     '<div>File<b style="font-size:.9rem;word-break:break-all">' + e(tenFile) + '</b></div>';
   veDanhSach('');
   $('xemTruoc').classList.remove('an'); $('nutLuu').classList.remove('an');
+  if (kieuLuoi()) KieuLuoi.xemTruocFile(kq);
 }
 function luuTamUng() {
   var kq = trangThai.kqDoc, dt = trangThai.dangTai, nut = $('nutLuu');
@@ -965,6 +987,7 @@ function moTai(i, j, loai) {
   $('taiChi').classList.remove('an'); $('taiNut').classList.remove('an');
   $('chonFile').value = ''; $('taiBao').innerHTML = ''; $('xemTruoc').classList.add('an'); $('nutLuu').classList.add('an');
   $('phieuXem').innerHTML = '';
+  if (kieuLuoi()) KieuLuoi.xoaTai();
   if (k.co_file && loai === 'cong') {
     bao('taiBao', 'cho', 'Tháng này đã có bảng công tải lúc ' + e(k.cong_luc) + ' (' + e(k.cong_boi) + '). Lưu file mới sẽ <b>thay</b> bảng công trong bản nháp' +
       (k.nguon_luong === 'may' ? '; phiếu máy đã tính bị bỏ, kế toán phải tính lại' : k.co_luong ? '; phiếu lương kế toán đã tải <b>giữ nguyên</b>' : '') +
@@ -985,6 +1008,7 @@ function moTai(i, j, loai) {
 /** Xem bảng lương đã lưu — chỉ xem: dùng lại màn tải file, giấu phần chọn file + nút lưu. */
 function moXem(i, j, nut) {
   var c = trangThai.luoi.cong_ty[i], k = c.ky[j], chu = nut.textContent, loi = nut.nextElementSibling;
+  if (kieuLuoi()) { KieuLuoi.xemLuong(c.ma_ct, k.ky); return; }
   nut.disabled = true; nut.textContent = '⏳ Đang lấy bảng lương… (vài giây)';
   loi.classList.add('an');
   goi({ hanh_dong: 'kt_xem_luong', phien: trangThai.phien, ma_ct: c.ma_ct, ky: k.ky }).then(function (kq) {
@@ -1050,6 +1074,7 @@ function docWorkbook(wb, tenFile) {
                (l.cach_sua ? ' <span class="sua">→ ' + e(l.cach_sua) + '</span>' : '') + '</li>';
       }).join('') + (kq.loi.length > 30 ? '<li>… và ' + (kq.loi.length - 30) + ' lỗi nữa</li>' : '') + '</ul>');
     $('xemTruoc').classList.add('an'); $('nutLuu').classList.add('an');
+    if (kieuLuoi()) KieuLuoi.xemLoiFile(wb, kq);
     return;
   }
   if (laTU) { xemTruocTamUng(kq, tenFile); return; }
@@ -1069,6 +1094,7 @@ function docWorkbook(wb, tenFile) {
   }
   veDanhSach('');
   $('xemTruoc').classList.remove('an'); $('nutLuu').classList.remove('an');
+  if (kieuLuoi()) KieuLuoi.xemTruocFile(kq);
 }
 function veDanhSach(loc) {
   var q = DocFileLuong.chuanTenTra(loc || '');
@@ -1129,6 +1155,7 @@ function chonFile(f) {
     bao('taiBao', 'do', 'Không tải được bộ đọc Excel — kiểm mạng rồi tải lại trang (F5).'); return;
   }
   $('xemTruoc').classList.add('an'); $('nutLuu').classList.add('an');
+  if (kieuLuoi()) KieuLuoi.xoaTai();
   bao('taiBao', 'cho', '⏳ Đang đọc file ' + e(f.name) + '… (vài giây)');
   var r = new FileReader();
   r.onload = function () {
@@ -1299,6 +1326,7 @@ function nutQT(c, i) {
 }
 function moQT(i, nut) {
   var c = trangThai.luoi.cong_ty[i], chu = nut.textContent;
+  if (kieuLuoi()) { KieuLuoi.moQuyTac(c.ma_ct); return; }
   nut.disabled = true; nut.textContent = '⏳ Đang lấy quy tắc… (vài giây)';
   goi({ hanh_dong: 'kt_quy_tac_doc', phien: trangThai.phien, ma_ct: c.ma_ct }).then(function (kq) {
     nut.disabled = false; nut.textContent = chu;
@@ -1311,8 +1339,8 @@ function moQT(i, nut) {
       : '👉 Công ty này chưa có quy tắc đọc được. Điền các ô dưới' + (kq.cau && kq.o_loi ? ' (' + e(kq.cau) + ')' : '') + ', chọn tháng bắt đầu áp dụng, rồi bấm <b>💾 Lưu quy tắc</b>.';
     var ng = kq.nguong_cong_moi || {};
     $('qtNguong').innerHTML = ng.loi ? '<div class="bao do">' + e(ng.loi) + '</div>'
-      : ng.gia_tri == null ? '<div class="bao cho">👉 Điền ngưỡng ở tab CONG_TY, cột <b>nguong_cong_moi</b>, dòng công ty này. Chưa có số thì chưa tính được lương.</div>'
-      : '<p style="margin:0"><b>' + soHienQT(ng.gia_tri) + ' công</b>. Sửa ở tab CONG_TY, cột nguong_cong_moi.</p>';
+      : ng.gia_tri == null ? '<div class="bao cho">👉 Điền ngưỡng ở tab CÔNG TY của Google Sheet, cột <b>Ngưỡng công người mới</b>, dòng công ty này. Chưa có số thì chưa tính được lương.</div>'
+      : '<p style="margin:0"><b>' + soHienQT(ng.gia_tri) + ' công</b>. Sửa ở tab CÔNG TY của Google Sheet, cột Ngưỡng công người mới.</p>';
     var nguon = trangThai.luoi.cong_ty.filter(function (x) { return x.qt_tu && x.ma_ct !== c.ma_ct; });
     $('qtChepTu').innerHTML = nguon.map(function (x) { return '<option value="' + e(x.ma_ct) + '">' + e(x.ten) + '</option>'; }).join('');
     $('qtChepKhoi').classList.toggle('an', !nguon.length);
@@ -1449,12 +1477,13 @@ function ngayDep(iso) { return iso ? iso.substring(8, 10) + '/' + iso.substring(
 function xemThangN() {
   var nut = $('nutXemThangN');
   nut.disabled = true; nut.textContent = '⏳ Đang gộp các công ty… (vài giây tới một phút)';
-  bao('thnBao', '', ''); thn.kq = null;
+  if (kieuLuoi()) bao('thnBao', 'cho', '⏳ Đang gộp các công ty đã chốt tháng ' + thangNam($('thnThang').value) + '… (vài giây tới một phút)'); else bao('thnBao', '', '');
+  thn.kq = null;
   ['thnKhoi', 'thnThanh', 'thnTom'].forEach(function (id) { $(id).classList.add('an'); });
   $('thnChua').innerHTML = ''; $('thnCanh').innerHTML = '';
   goi({ hanh_dong: 'kt_thang_n', phien: trangThai.phien, thang: $('thnThang').value }, 180).then(function (r) {
     nut.disabled = false; nut.textContent = '📊 Xem tháng này';
-    if (!r.ok) { bao('thnBao', 'do', e(r.loi)); return; }
+    if (!r.ok) { bao('thnBao', 'do', e(r.loi)); if (kieuLuoi()) KieuLuoi.thangNMoi(); return; }
     thn.kq = r;
     veThangN();
   });
@@ -1465,16 +1494,17 @@ function veThangN() {
   $('thnChua').innerHTML = r.chua_chot.length ? '<details class="bao cho"' + (r.chua_chot.length <= 5 ? ' open' : '') + '><summary style="min-height:44px;cursor:pointer"><b>⏳ ' + r.chua_chot.length + ' công ty chưa chốt, chưa có trong file này</b></summary><ul class="loi-ds">' +
     r.chua_chot.map(function (c) { return '<li>' + e(c.ten) + ': ' + e(c.buoc) + '</li>'; }).join('') + '</ul></details>' : '';
   var canh = r.canh_bao.slice();
-  r.thieu_o.forEach(function (x) { canh.push('Công ty ' + x.ma_ct + ' chưa điền tab CONG_TY, cột ' + x.thieu.join(', ') + ': cột tên nhà máy, khu vực, trang theo địa bàn sẽ trống.'); });
+  r.thieu_o.forEach(function (x) { canh.push('Công ty ' + x.ma_ct + ' chưa điền ô ' + x.thieu.map(function (o) { return { ma_file_gio: 'Mã trong file giờ', khu_vuc: 'Khu vực', dia_ban: 'Địa bàn' }[o] || o; }).join(', ') + ' (trang ⚙ Công ty, hoặc tab CÔNG TY của Google Sheet): cột tên nhà máy, khu vực, trang theo địa bàn sẽ trống.'); });
   if (!r.du_cong_ty) canh.push('Tài khoản không phụ trách mọi công ty: chỉ thấy công ty của mình, không lưu làm giờ tuyển dụng được.');
   $('thnCanh').innerHTML = canh.length ? '<div class="bao cho"><ul class="loi-ds">' + canh.map(function (c) { return '<li>' + e(c) + '</li>'; }).join('') + '</ul></div>' : '';
-  if (!t.so_dong) { bao('thnBao', 'cho', 'Tháng ' + thangNam(r.thang) + ' chưa có công ty nào chốt tháng, chưa có gì để gộp.'); return; }
+  $('nutLuuThangN').disabled = !r.du_cong_ty || !t.so_dong;
+  if (!t.so_dong) { bao('thnBao', 'cho', 'Tháng ' + thangNam(r.thang) + ' chưa có công ty nào chốt tháng, chưa có gì để gộp.'); if (kieuLuoi()) KieuLuoi.thangNMoi(); return; }
   bao('thnBao', 'xanh', '👉 Kiểm rồi bấm <b>⬇ Tải Excel</b> để lấy file, hoặc <b>💾 Lưu làm giờ tuyển dụng</b> để người tuyển xem giờ.' +
     (r.gio_luu ? ' Tháng này đã lưu lúc ' + e(r.gio_luu.luu_luc) + ' (' + e(r.gio_luu.luu_boi) + '): lưu nữa sẽ thay.' : ''));
+  if (kieuLuoi()) { KieuLuoi.thangNMoi(); return; }
   $('thnTom').innerHTML = '<div>Số dòng<b>' + t.so_dong + '</b></div><div>Tổng giờ<b>' + tien(t.tong_gio) + '</b></div><div>✅ Đạt<b>' + t.so_dat + '</b></div><div>⏸ Không đạt<b>' + t.so_khong_dat + '</b></div>' +
     (t.so_sua ? '<div>✏️ Sửa tay<b>' + t.so_sua + '</b></div>' : '') + '<div>Tiền phải trả CN<b>' + tien(Math.round(t.tien)) + ' đ</b></div>';
   $('thnTom').classList.remove('an'); $('thnKhoi').classList.remove('an'); $('thnThanh').classList.remove('an');
-  $('nutLuuThangN').disabled = !r.du_cong_ty;
   veDsThangN();
 }
 function khopTimN(d, q) { return !q || DocFileLuong.chuanTenTra(d.F + ' ' + d.D + ' ' + d.J).replace(/ /g, '').indexOf(q) >= 0; }
@@ -1511,13 +1541,20 @@ function luuSuaDat(it, id, nut) {
   loi.classList.add('an');
   if (dat && !ly) { loi.textContent = 'Chưa ghi lý do — sửa tay ô Đạt thì phải biết vì sao.'; loi.classList.remove('an'); return; }
   nut.disabled = true; nut.textContent = '⏳ Đang lưu… (vài giây)';
-  goi({ hanh_dong: 'kt_sua_dat', phien: trangThai.phien, thang: thn.kq.thang, ma_ct: d.ma_ct, cccd_nha_may: d.nm, dat: dat, ly_do: ly }, 60).then(function (r) {
+  guiSuaDat(d, dat, ly, function (cau) {
     nut.disabled = false; nut.textContent = '💾 Lưu ô Đạt';
-    if (!r.ok) { loi.textContent = r.loi; loi.classList.remove('an'); return; }
+    if (cau) { loi.textContent = cau; loi.classList.remove('an'); }
+  });
+}
+/** Gửi sửa ô Đạt, cập nhật tổng + vẽ lại. Xong gọi khiXong(câu lỗi hoặc ''). Kiểu thẻ và kiểu lưới dùng chung. */
+function guiSuaDat(d, dat, ly, khiXong) {
+  goi({ hanh_dong: 'kt_sua_dat', phien: trangThai.phien, thang: thn.kq.thang, ma_ct: d.ma_ct, cccd_nha_may: d.nm, dat: dat, ly_do: ly }, 60).then(function (r) {
+    if (!r.ok) { khiXong(r.loi); return; }
     var cu = d.AB, moi = dat || d.AB_may, tg = thn.kq.tong;
     if (d.ly_do_sua && !dat) tg.so_sua--; else if (!d.ly_do_sua && dat) tg.so_sua++;
     if (cu !== moi) { tg.so_dat += moi === 'DAT' ? 1 : -1; tg.so_khong_dat += moi === 'DAT' ? -1 : 1; }
     d.AB = moi; d.ly_do_sua = dat ? ly : '';
+    khiXong('');
     veThangN();
     bao('thnBao', 'xanh', '✅ Đã lưu ô Đạt của ' + e(d.F) + ': ' + datTen(moi) + '. Số trong file Excel và giờ tuyển dụng chỉ đổi khi tải lại, lưu lại.');
   });
@@ -1585,14 +1622,19 @@ function thangTruoc() {
   return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2);
 }
 function moGio() {
-  hien('mGio');
+  if (kieuLuoi()) gio.kq = null; else hien('mGio');
   if (!$('gioThang').value) $('gioThang').value = thangTruoc();
   $('gioXem').classList.add('an'); $('nutLuuGio').classList.add('an');
-  bao('gioBao', '', '');
+  if (kieuLuoi()) bao('gioBao', 'cho', '⏳ Đang lấy các tháng đã lưu…'); else bao('gioBao', '', '');
   $('gioCacThang').innerHTML = '<div class="bao cho">⏳ Đang lấy các tháng đã lưu…</div>';
   goi({ hanh_dong: 'kt_gio_tom', phien: trangThai.phien }).then(function (kq) {
-    if (!kq.ok) { $('gioCacThang').innerHTML = '<div class="bao do">' + e(kq.loi) + ' <button onclick="moGio()">Thử lại</button></div>'; return; }
+    if (!kq.ok) {
+      $('gioCacThang').innerHTML = '<div class="bao do">' + e(kq.loi) + ' <button onclick="moGio()">Thử lại</button></div>';
+      if (kieuLuoi()) bao('gioBao', 'do', e(kq.loi) + ' <button onclick="moGio()">Thử lại</button>');
+      return;
+    }
     gio.tom = kq;
+    if (kieuLuoi()) { bao('gioBao', '', ''); KieuLuoi.gioMoi(); return; }
     $('gioCacThang').innerHTML = kq.thang.length ? kq.thang.map(function (t) {
       return '<div class="dong-gia"><span class="ten">Tháng ' + thangNam(t.thang) + '</span><span class="gia">' + tien(t.tong_gio) + ' giờ</span>' +
         '<span class="phu">' + t.so_dong + ' người · ' + t.so_dat + ' Đạt · lưu ' + e(t.luu_luc) + ' · ' + e(t.luu_boi) +
@@ -1612,6 +1654,7 @@ $('chonFileGio').addEventListener('change', function () {
     gio.kq = kq; gio.tenFile = tenFile; gio.thang = thang;
     if (!kq.ok) {
       bao('gioBao', 'do', '<b>Chưa lưu được — file còn ' + kq.loi.length + ' lỗi.</b> Sửa trong Excel, lưu lại, rồi bấm 📂 Chọn file giờ lần nữa.' + dsLoi(kq.loi));
+      if (kieuLuoi()) KieuLuoi.gioMoi();
       return;
     }
     var t = kq.tong, truoc = lanTruoc(thang), nmTruoc = {};
@@ -1652,6 +1695,7 @@ $('chonFileGio').addEventListener('change', function () {
     $('gioXem').classList.remove('an');
     $('nutLuuGio').textContent = '💾 Lưu tháng ' + thangNam(thang);
     $('nutLuuGio').classList.remove('an');
+    if (kieuLuoi()) KieuLuoi.gioMoi();
   }, 'gioBao');
 });
 function luuGio(dongY) {
@@ -1700,7 +1744,7 @@ function thayViecPH(moi) {
 }
 
 function moPH() {
-  hien('mPH');
+  if (!kieuLuoi()) hien('mPH');
   $('phChi').innerHTML = (trangThai.tk.vai_tro === 'truong_nhom' ? '👉 Đây là phiếu công nhân phản ánh về quản lý công ty — quản lý đó không thấy. ' : '👉 ') +
     'Bấm <b>tên công ty</b> để mở. Bấm <b>🙋 Tôi nhận việc này</b> để người khác biết đã có người lo; gõ câu trả lời rồi bấm <b>📤 Gửi trả lời</b> — ' +
     'công nhân thấy ngay dưới phiếu của họ khi tra lại, chỉ thấy vai chứ không thấy tên anh/chị.';
@@ -1723,6 +1767,7 @@ function vePH() {
   if (!ph.ds) return;
   var tat = tatCaViec(), can = tat.filter(function (v) { return v.tt !== 'xong'; }).length;
   demMenuPH(can);
+  if (kieuLuoi()) { KieuLuoi.vePH(); return; }
   $('phLoc').innerHTML = [['can', '🔧 Cần làm', can], ['xong', '✅ Đã xong', tat.length - can]].map(function (x) {
     return '<button class="' + (ph.loc === x[0] ? 'dang' : '') + '" aria-pressed="' + (ph.loc === x[0]) + '" onclick="datLocPH(\'' + x[0] + '\')">' + x[1] + ' (' + x[2] + ')</button>';
   }).join('');
@@ -1853,7 +1898,7 @@ $('nutDN').addEventListener('click', dangNhap);
 $('dnMk').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') dangNhap(); });
 $('dnCccd').addEventListener('input', function () { xoaLoiO('loiCccd', 'dnCccd'); });
 $('dnMk').addEventListener('input', function () { xoaLoiO('loiMk', 'dnMk'); });
-$('nutThoat').addEventListener('click', dangXuat);
+$('nutThoat').addEventListener('click', function () { if (kieuLuoi()) KieuLuoi.hoiRoi(dangXuat); else dangXuat(); });
 $('nutLamMoi').addEventListener('click', taiLuoi);
 $('nutLamMoiPH').addEventListener('click', function () { moPH(); });
 $('timPH').addEventListener('input', function () { ph.tim = this.value; vePH(); });

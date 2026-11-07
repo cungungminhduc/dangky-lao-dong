@@ -101,6 +101,10 @@
   var TEN_CA = { HCN: 'HC ngày', TCN: 'Tăng ca ngày', HCD: 'HC đêm', TCD: 'Tăng ca đêm', TCCN: 'Tăng ca chủ nhật',
                  TCDCN: 'Tăng ca đêm chủ nhật', TCNL: 'Tăng ca ngày lễ', TCDNL: 'Tăng ca đêm ngày lễ',
                  'CD20-22': 'Ca đêm 20h–22h', 'CD22-5': 'Ca đêm 22h–5h', 'CD5-6': 'Tăng ca đêm 5h–6h', 'CD6-8': 'Tăng ca ngày 6h–8h' };
+  /** Cột tổng hợp của bảng lương (khoá `them`, kiểu lưới bày lại): [khoá, chữ phải có trong tiêu đề]. Chỉ để xem, không vào phép tính nào; thiếu cột thì trống, không chặn file. */
+  var COT_THEM = [['quy_doi', 'quy doi'], ['cong_ngay', 'thuc te lam trong thang ca ngay'], ['cong_dem', 'thuc te lam trong thang ca dem'], ['cong_cc', 'cong xet chuyen can'],
+                  ['cong_hc', 'cong hanh chinh'], ['le_phep', 'le + phep'], ['luong_cb', 'luong cb theo thang'], ['pc_tn', 'phu cap trach nhiem'], ['don_gia', 'don gia luong cb'],
+                  ['luong_gio', 'luong cb tinh theo gio'], ['gio_le', 'ngay le nghi']];
   /** Cột đếm nghỉ / suất ăn ở dòng đầu mỗi người. */
   var COT_NGHI = [['np', 'nghi phep'], ['kp', 'khong phep'], ['ld', 'luu dong'], ['nv', 'nghi viec'],
                   ['nn', 'nghi ngang'], ['cv', 'cho viec'], ['cg', 'cat giam'], ['tsa', 'tong suat an']];
@@ -203,6 +207,14 @@
     bc.thuc_linh = can('Thực lĩnh', baoGom('thuc linh'), bc.tong_luong + 1);
     bc.ky_nhan = can('Ký nhận', baoGom('ky nhan'), bc.tong_luong + 1);
     bc.ghi_chu = timCot(bl, dongs, dungChu('ghi chu'), bc.tong_luong + 1);
+    // Cột tổng hợp nằm TRƯỚC các cột giờ. "TỔNG CÔNG" (số công) bỏ dấu trùng "Tổng cộng" (tiền) nên tìm trong vùng này; "ngày lễ nghỉ" có hai cột: giờ trước, tiền sau
+    var dauCa = bc.ca.length ? bc.ca[0].cot_gio - 1 : cuoiMa;
+    bc.them = {};
+    COT_THEM.forEach(function (x) { var cot1 = timCot(bl, dongs, baoGom(x[1]), 1, dauCa); if (cot1) bc.them[x[0]] = cot1; });
+    var cotCong = timCot(bl, dongs, dungChu('tong cong'), 1, dauCa);
+    if (cotCong) bc.them.tong_cong = cotCong;
+    var cotTienLe = bc.tong_luong ? timCot(bl, dongs, baoGom('ngay le nghi'), cuoiMa + 1, bc.tong_luong - 1) : 0;
+    if (cotTienLe) bc.them.tien_le = cotTienLe;
     bc.ca.forEach(function (x) {                                     // cột tiền của một ca = cột cùng chữ tiêu đề với cột giờ của ca đó
       var chu = chuanChu(o(bl, dongTen, x.cot_gio));
       x.cot_tien = chu && bc.tong_luong ? timCot(bl, [dongTen], dungChu(chu), cuoiMa + 1, bc.tong_luong - 1) : 0;
@@ -323,7 +335,7 @@
     if (tuyChon.ma_ct && dsMa.length && (dsMa.length > 1 || maNhan.indexOf(dsMa[0]) < 0)) {
       chan(tCC, tenO(bCC.dau, bCC.ma_ct), 'File ghi mã công ty ' + dsMa.join(', ') + ', ô anh/chị chọn là ' + chuanMaCT(tuyChon.ma_ct) + '.',
            'Chọn đúng công ty trên lưới, hoặc chọn đúng file.' + (dsMa.length > 1 ? '' :
-           ' Đúng công ty này rồi thì điền "' + dsMa[0] + '" vào cột ten_chay_luong (tên công ty chạy lương) ở tab CONG_TY, rồi tải lại trang.'));
+           ' Đúng công ty này rồi thì điền "' + dsMa[0] + '" vào ô Tên chạy lương ở trang ⚙ Công ty (hoặc tab CÔNG TY của Google Sheet), rồi tải lại trang.'));
     }
 
     // --- bảng lương ---
@@ -372,6 +384,8 @@
       var kyO = o(bl, b, bBL.ky_nhan), kySo = so(kyO);
       nCC.ky_nhan = trong(kyO) ? '' : (kySo !== null && !isNaN(kySo) ? Math.round(kySo) : String(kyO).trim());
       nCC.ghi_chu = bBL.ghi_chu && !trong(o(bl, b, bBL.ghi_chu)) ? String(o(bl, b, bBL.ghi_chu)).trim() : '';
+      nCC.them = {};
+      Object.keys(bBL.them).forEach(function (k) { var x = so(o(bl, b, bBL.them[k])); if (x !== null && !isNaN(x)) nCC.them[k] = tron(x, 2); });
     }
     if (!dongTong) bao(tBL, '', 'Không thấy dòng "Tổng cộng" — không đối chiếu được tổng thực lĩnh.');
     else {
@@ -401,7 +415,7 @@
         so_code: n.tt.so_code, ngay_sinh: n.tt.ngay_sinh, ngay_nghi: n.tt.ngay_nghi,
         cong: { ngay: ngay, co_chi_tiet: coNgay,
                 ca: n.ca.map(function (x) { return { ma: x.ma, ten: x.ten, gio: x.gio, tong: x.tong }; }), nghi: n.nghi },
-        luong: n.luong, ky_nhan: n.ky_nhan, ghi_chu: n.ghi_chu
+        luong: n.luong, ky_nhan: n.ky_nhan, ghi_chu: n.ghi_chu, them: n.them
       };
     });
     var cacTra = {};
@@ -419,7 +433,7 @@
   }
 
   goc.DocFileLuong = { docFile: docFile, chuanSoGiayTo: chuanSoGiayTo, chuanTenTra: chuanTenTra, bienTheTen: bienTheTen,
-                       ngayExcel: ngayExcel, tenO: tenO,
+                       ngayExcel: ngayExcel, tenO: tenO, TEN_PHIEU_CA: TEN_PHIEU_CA,
                        // doc-bang-cong.js đọc cùng bố cục trang Chấm công — dùng chung, không chép bản thứ hai
                        coBan: { o: o, so: so, tron: tron, trong: trong, chuanChu: chuanChu, laNgay: laNgay, docNgay: docNgay, laChuKhongSo: laChuKhongSo,
                                 timCot: timCot, baoGom: baoGom, dungChu: dungChu, boCucChamCong: boCucChamCong, thangDep: thangDep, TEN_CA: TEN_CA,
