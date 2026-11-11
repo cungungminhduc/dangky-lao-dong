@@ -1,0 +1,635 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Thông báo</title>
+<style>
+:root{--nen:#f4f6f9;--the:#fff;--chu:#1b2430;--phu:#5a6675;--vien:#d5dbe3;--chinh:#1f5fbf;--chinh-dam:#174a96;
+  --do:#b42318;--do-nen:#fde8e6;--cam:#b54708;--cam-nen:#fff1e0;--xanh:#127a3c;--xanh-nen:#e3f5ea;--vang-nen:#fff8db}
+*{box-sizing:border-box}
+body{margin:0;background:var(--nen);color:var(--chu);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
+.khung{max-width:680px;margin:0 auto;padding:12px 16px 80px}
+h1{font-size:21px;margin:4px 0 2px}
+h2{font-size:18px;margin:20px 0 6px}
+.phu{color:var(--phu);font-size:15px}
+a{color:var(--chinh)}
+.dau{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap}
+.chi{background:var(--vang-nen);border-left:4px solid #e0b100;padding:8px 12px;border-radius:8px;margin:10px 0;font-size:16px}
+.capnhat{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;color:var(--phu);font-size:15px;margin-top:8px}
+.ba-so{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.o-so{background:var(--the);border:1px solid var(--vien);border-radius:12px;padding:8px 4px;text-align:center;font-size:15px}
+.o-so b{display:block;font-size:26px;line-height:1.2}
+.o-so.do b{color:var(--do)} .o-so.cam b{color:var(--cam)} .o-so.lam b{color:var(--chinh-dam)}
+.nhom-chu{font-weight:700;margin:16px 0 6px}
+.the{background:var(--the);border:1px solid var(--vien);border-radius:12px;padding:12px;margin:10px 0}
+.the.qua{border-left:5px solid var(--do)}
+.nhan{display:inline-block;font-size:15px;font-weight:700;padding:1px 8px;border-radius:6px;margin:0 6px 4px 0;background:#eef1f5;color:var(--phu)}
+.nhan.do{background:var(--do-nen);color:var(--do)} .nhan.cam{background:var(--cam-nen);color:var(--cam)}
+.nhan.xanh{background:var(--xanh-nen);color:var(--xanh)} .nhan.lam{background:#e8f0fc;color:var(--chinh-dam)}
+.tieu{font-size:17px;font-weight:700;margin:2px 0 4px;word-break:break-word}
+.dong{margin:2px 0;word-break:break-word}
+.dong b{color:var(--phu);font-weight:600}
+.noi{border-top:1px dashed var(--vien);margin-top:10px;padding-top:8px}
+.nut-hang{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+button.nut,a.nut{min-height:48px;padding:8px 14px;font-size:16px;font-weight:600;border-radius:10px;border:2px solid var(--chinh);
+  background:var(--chinh);color:#fff;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+button.nut.phu2,a.nut.phu2{background:#fff;color:var(--chinh-dam)}
+button.nut.nguy{background:#fff;color:var(--do);border-color:var(--do)}
+button.nut:disabled{opacity:.5;cursor:not-allowed}
+button.nut.nho{min-height:44px;padding:4px 12px;font-size:15px}
+.nhom-dau{width:100%;display:flex;flex-direction:column;align-items:flex-start;gap:2px;min-height:56px;padding:8px 12px;
+  border:1px solid var(--vien);border-radius:12px;background:var(--the);font-size:17px;font-weight:700;color:var(--chu);cursor:pointer;text-align:left;margin-top:10px}
+.nhom-dau .tt{font-size:15px;font-weight:400;color:var(--phu)}
+label.o{display:block;font-weight:600;margin:12px 0 4px}
+input[type=text],input[type=date],input[type=time],input[type=search],textarea,select{width:100%;font-size:16px;padding:10px;border:1px solid #9aa6b5;border-radius:10px;background:#fff;color:var(--chu);font-family:inherit;min-height:48px}
+textarea{min-height:120px;resize:vertical}
+.hai{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chon-hang{display:flex;flex-wrap:wrap;gap:8px}
+.chon-hang button{min-height:48px;padding:6px 14px;font-size:16px;border:2px solid var(--vien);border-radius:10px;background:#fff;color:var(--chu);cursor:pointer}
+.chon-hang button.dang{border-color:var(--chinh);background:#e8f0fc;color:var(--chinh-dam);font-weight:700}
+.bao{padding:10px 12px;border-radius:10px;margin:10px 0}
+.bao.do{background:var(--do-nen);color:#7a1610} .bao.xanh{background:var(--xanh-nen);color:#0b4f27} .bao.cam{background:var(--cam-nen);color:#7a3306}
+details{margin:8px 0} summary{cursor:pointer;min-height:44px;display:flex;align-items:center;font-weight:600;color:var(--chinh-dam)}
+.goc{white-space:pre-wrap;background:#f7f8fa;border:1px dashed var(--vien);border-radius:8px;padding:8px;font-size:15px;max-height:260px;overflow:auto}
+.cho{padding:24px 12px;text-align:center;color:var(--phu)}
+.lop{position:fixed;inset:0;background:rgba(15,23,35,.45);display:flex;align-items:flex-end;justify-content:center;z-index:20}
+.hop{background:#fff;width:100%;max-width:680px;max-height:90vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#1b2430;color:#fff;padding:10px 16px;border-radius:10px;
+  z-index:30;max-width:calc(100% - 32px);font-size:15px}
+.an{display:none!important}
+</style>
+</head>
+<body>
+<div class="khung">
+  <div class="dau">
+    <div><h1>🔔 Thông báo</h1><div class="phu" id="xinChao">Đang mở…</div></div>
+    <a class="nut phu2" href="trangchu.html">🏠 Trang chủ</a>
+  </div>
+  <div id="manChinh"><div class="cho">⏳ Đang tải… máy chủ có thể mất 5–10 giây, đừng tải lại trang.</div></div>
+</div>
+<div id="lop"></div>
+<div id="toast" class="toast an"></div>
+<script src="trungtam-cau-hinh.js"></script>
+<script>
+/* Trang HỘP THÔNG BÁO (đợt 3, vé 03). Hộp chỉ có thông báo: tin của công ty thì ĐỌC + ✅ Đã hiểu tại chỗ;
+ * việc của hệ khác thì bấm "Mở ›" sang trang hệ đó — không nhận việc, trả lời, duyệt ở đây.
+ * Mọi luật (ai thấy gì, mức nào, quyền đăng) ở MÁY CHỦ; trang chỉ bày, lọc bằng cờ có sẵn trên từng dòng, và gửi. */
+var KHOA_PHIEN = 'phien_ds_v3';          // CHUNG vé đăng nhập với Trang chủ hệ tuyển dụng
+var KHOA_NHO = 'tb_hop_v1';              // bản nhớ trong máy: CHỈ đầu mục của chính người đang đăng nhập, không có nội dung tin
+var CHI_DOC = ['tb_mo', 'tt_dang_mo', 'tt_theo_doi'];
+var LAM_MOI_MS = 5 * 60000;              // quay lại trang sau ≥ 5 phút mới tự hỏi máy chủ; bấm 🔄 thì hỏi ngay
+var st = { mo: null, luc: 0, tu_nho: false, dang_tai: null, loi_tai: '', man: 'hop', loc: 'tat_ca', muc: '', tim: '',
+           doc: {}, gui: {}, loi_dong: {}, dg: null, dm: null, theo: null, chuaDoc: {}, ban: false };
+
+var $ = function (id) { return document.getElementById(id); };
+function e(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function layPhien() { try { return localStorage.getItem(KHOA_PHIEN) || ''; } catch (x) { return ''; } }
+function p2(n) { return ('0' + n).slice(-2); }
+function ngayMay(d) { return d.getFullYear() + '-' + p2(d.getMonth() + 1) + '-' + p2(d.getDate()); }
+function homNay() { return ngayMay(new Date()); }
+function maYc() { return 'yc-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8); }
+function baoNhanh(s) { var t = $('toast'); t.textContent = s; t.classList.remove('an'); clearTimeout(baoNhanh.h); baoNhanh.h = setTimeout(function () { t.classList.add('an'); }, 3000); }
+/** Mốc ms → '07:10', khác ngày thì '07:10 ngày 09/11'. */
+function gioPhut(ms) {
+  var d = new Date(ms), g = p2(d.getHours()) + ':' + p2(d.getMinutes());
+  return ngayMay(d) === homNay() ? g : g + ' ngày ' + p2(d.getDate()) + '/' + p2(d.getMonth() + 1);
+}
+/** '2026-11-10 07:10:00' (giờ máy chủ ghi) → '07:10', khác ngày thì '07:10 ngày 09/11'. */
+function gioTu(s) {
+  s = String(s || '');
+  var g = s.slice(11, 16);
+  return s.slice(0, 10) === homNay() ? g : g + ' ngày ' + s.slice(8, 10) + '/' + s.slice(5, 7);
+}
+
+/* ---------- gọi máy chủ: có hết giờ; chỉ cú CHỈ ĐỌC tự thử lại một lần ---------- */
+function goi(hd, them) {
+  var body = { hanh_dong: hd, phien: layPhien() };
+  for (var k in (them || {})) body[k] = them[k];
+  var doc = CHI_DOC.indexOf(hd) >= 0;
+  function motLan(han) {
+    return new Promise(function (ok) {
+      var xong = false, h = setTimeout(function () { xong = true; ok({ ok: false, ma: 'MANG', loi: 'Chờ quá lâu — sóng yếu hoặc máy chủ chậm. Thử lại.' }); }, han);
+      fetch(URL_TRUNG_TAM, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(body) })
+        .then(function (r) { return r.text(); })
+        .then(function (t) { if (xong) return; clearTimeout(h); try { ok(JSON.parse(t)); } catch (x) { ok({ ok: false, ma: 'MANG', loi: 'Máy chủ thông báo đang trục trặc. Thử lại sau ít phút.' }); } })
+        .catch(function () { if (xong) return; clearTimeout(h); ok({ ok: false, ma: 'MANG', loi: 'Không nối được máy chủ — kiểm sóng điện thoại rồi thử lại.' }); });
+    });
+  }
+  return motLan(doc ? 30000 : 90000).then(function (kq) {
+    if (doc && kq.ma === 'MANG') return new Promise(function (ok) { setTimeout(ok, 1500); }).then(function () { return motLan(30000); });
+    return kq;
+  });
+}
+
+/* ---------- bản nhớ trong máy: mở trang là thấy ngay danh sách lần trước, rồi mới cập nhật ---------- */
+/** Dấu của vé đang dùng (không đảo ngược ra vé được) — để bản nhớ của người trước không hiện cho người sau. */
+function dauVe() { var s = layPhien(), h = 5381; for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h.toString(36) + '.' + s.length; }
+function xoaNho() { try { localStorage.removeItem(KHOA_NHO); } catch (x) {} }
+function docNho() {
+  try {
+    var o = JSON.parse(localStorage.getItem(KHOA_NHO) || 'null');
+    if (o && o.chu === dauVe() && o.kq && o.kq.ds && o.kq.tk) return o;
+  } catch (x) {}
+  xoaNho();
+  return null;
+}
+function catNho() {
+  if (!st.mo || st.tu_nho) return;
+  try {
+    var kq = JSON.parse(JSON.stringify(st.mo));
+    kq.ds.forEach(function (x) { delete x.tin; });           // nội dung 4 dòng không nằm lại trong máy
+    localStorage.setItem(KHOA_NHO, JSON.stringify({ chu: dauVe(), luc: st.luc, kq: kq }));
+  } catch (x) {}
+}
+
+/* ---------- mở trang ---------- */
+function manLoi(tieu, cau, coLink) {
+  $('manChinh').innerHTML = '<div class="the"><div class="tieu">' + e(tieu) + '</div><div class="dong">' + e(cau) + '</div>'
+    + (coLink ? '<div class="nut-hang"><a class="nut" href="trangchu.html">🏠 Mở Trang chủ để đăng nhập</a></div>' : '')
+    + '<div class="nut-hang"><button class="nut phu2" data-lam="tai_lai">🔄 Thử lại</button></div></div>';
+}
+function tai() {
+  if (!URL_TRUNG_TAM) { manLoi('⚠️ Trang chưa khai địa chỉ máy chủ', 'Quản trị cần dán địa chỉ /exec của máy chủ thông báo vào tệp trungtam-cau-hinh.js.', false); return Promise.resolve(); }
+  if (!layPhien()) {
+    xoaNho(); st.mo = null;
+    $('xinChao').textContent = 'Chưa đăng nhập';
+    manLoi('🔐 Bạn chưa đăng nhập', 'Mở Trang chủ, đăng nhập một lần, rồi bấm lại ô Thông báo.', true);
+    return Promise.resolve();
+  }
+  if (st.dang_tai) return st.dang_tai;
+  if (!st.mo) { var n = docNho(); if (n) { st.mo = n.kq; st.luc = n.luc; st.tu_nho = true; } }
+  st.dang_tai = goi('tb_mo').then(function (kq) {
+    st.dang_tai = null;
+    if (!kq.ok) {
+      if (kq.ma === 'HET_PHIEN') { xoaNho(); st.mo = null; manLoi('🔐 Phiên đăng nhập đã hết', kq.loi, true); return; }
+      if (!st.mo) { manLoi('⚠️ Chưa mở được', kq.loi, false); return; }
+      st.loi_tai = kq.loi;
+      if (st.man === 'hop') ve();
+      return;
+    }
+    st.mo = kq; st.luc = Date.now(); st.tu_nho = false; st.loi_tai = ''; st.loi_dong = {};
+    kq.ds.forEach(function (x) { if (st.gui[khoaDong(x)]) danhDauDaHieu(x); });     // cú Đã hiểu còn đang bay: giữ dấu trên màn
+    catNho();
+    if (!kq.tk.quyen.dang_tin) st.man = 'hop';
+    if (st.man === 'hop') ve(); else veDau();                  // đang gõ ở màn Đăng tin thì không vẽ lại, khỏi mất con trỏ
+  });
+  if (st.mo && st.man === 'hop') ve();
+  return st.dang_tai;
+}
+/** Quay lại trang (đổi tab, bấm lùi từ trang hệ khác): chỉ hỏi máy chủ khi bản đang xem đã cũ hơn 5 phút. */
+function quayLai() { if (!document.hidden && st.mo && Date.now() - st.luc >= LAM_MOI_MS) tai(); }
+document.addEventListener('visibilitychange', quayLai);
+window.addEventListener('pageshow', function (ev) { if (ev.persisted) quayLai(); });
+
+/* ---------- vẽ ---------- */
+function veDau() {
+  var tk = st.mo.tk;
+  $('xinChao').textContent = 'Xin chào ' + tk.ten + ' · ' + tk.chuc_ten.join(', ') + (tk.phong ? ' · phòng ' + tk.phong : '');
+}
+function ve() {
+  veDau();
+  $('manChinh').innerHTML = { hop: veHop, dang: veManDang, theo: veManTheo }[st.man]();
+}
+
+/* ---------- màn hộp ---------- */
+var LOC = [['tat_ca', 'Tất cả'], ['cua_toi', 'Của tôi'], ['phong_toi', 'Phòng tôi'], ['toi_gui', 'Tôi gửi']];
+var MUC_CHU = { gap: ['🔴 Gấp', 'do'], can_lam: ['📌 Hôm nay', 'cam'], de_biet: ['⚪ Để biết', ''] };
+function khoaDong(x) { return x.nguon + '|' + x.ma; }
+function timDong(k) { return st.mo ? st.mo.ds.filter(function (x) { return khoaDong(x) === k; })[0] : null; }
+function demDs(ds) {
+  var d = { gap: 0, hom_nay: 0, chua_doc: 0 };
+  ds.forEach(function (x) { if (x.muc === 'gap') d.gap++; if (x.muc === 'can_lam') d.hom_nay++; if (!x.da_doc) d.chua_doc++; });
+  return d;
+}
+function locDs(ds, loc) { return loc === 'tat_ca' ? ds : ds.filter(function (x) { return x[loc]; }); }
+function tenHangMuc(ma) {
+  var h = st.mo.hang_muc.filter(function (x) { return x.ma === ma; })[0];
+  return h ? (h.bieu_tuong ? h.bieu_tuong + ' ' : '') + h.ten : ma;
+}
+function danhDauDaHieu(x) { x.da_doc = true; if (x.muc_da_doc) x.muc = x.muc_da_doc; if (x.tin) x.tin.da_hieu = true; }
+
+function veHop() {
+  var m = st.mo, tat = m.ds, dem = demDs(tat), n = dem.gap + dem.hom_nay, ds = locDs(tat, st.loc), h = '';
+  h += '<div class="capnhat">' + (st.dang_tai
+    ? '<span>⏳ Đang cập nhật… máy chủ có thể mất 5–10 giây, đừng tải lại trang.</span>'
+    : '<span>' + (st.tu_nho ? 'Bản lưu trong máy lúc ' : 'Cập nhật lúc ') + e(gioPhut(st.luc)) + '</span>'
+      + '<button class="nut phu2 nho" data-lam="lam_moi">🔄 Làm mới</button>') + '</div>';
+  if (st.loi_tai && !st.dang_tai) {
+    h += '<div class="bao cam">⚠️ Chưa cập nhật được: ' + e(st.loi_tai) + ' Bạn đang xem bản lúc ' + e(gioPhut(st.luc))
+      + ' — có thể thiếu tin mới. Bấm 🔄 Làm mới để thử lại.</div>';
+  }
+  h += '<div class="chi">👉 ' + (n ? 'Hôm nay bạn có <b>' + n + ' việc cần làm</b>. Làm từ trên xuống: mục 🔴 trước, mục 📌 sau.'
+                                   : 'Hôm nay bạn không có việc nào cần làm. 👍') + '</div>';
+  h += '<div class="ba-so"><div class="o-so do"><b>' + dem.gap + '</b>🔴 Gấp</div><div class="o-so cam"><b>' + dem.hom_nay + '</b>📌 Hôm nay</div>'
+    + '<div class="o-so lam"><b>' + dem.chua_doc + '</b>📬 Chưa đọc</div></div>';
+  if (m.tk.quyen.dang_tin) {
+    h += '<div class="nut-hang"><button class="nut phu2" data-lam="man" data-ma="dang">✍️ Đăng tin</button>'
+      + '<button class="nut phu2" data-lam="man" data-ma="theo">👀 Theo dõi ai chưa đọc</button></div>';
+  }
+  h += '<div class="nhom-chu">Xem thông báo của ai?</div><div class="chon-hang">' + LOC.map(function (l) {
+    return '<button data-lam="loc" data-ma="' + l[0] + '" class="' + (st.loc === l[0] ? 'dang' : '') + '">' + l[1] + ' (' + locDs(tat, l[0]).length + ')</button>';
+  }).join('') + '</div>';
+
+  [['gap', '🔴 Cần làm ngay', 'Không có việc gấp.'], ['can_lam', '📌 Hôm nay', 'Không có việc nào cho hôm nay.']].forEach(function (k) {
+    var trong = ds.filter(function (x) { return x.muc === k[0]; });
+    h += '<h2>' + k[1] + ' (' + trong.length + ')</h2>' + (trong.length ? trong.map(function (x) { return theDong(x, false); }).join('')
+                                                                         : '<div class="phu">' + k[2] + '</div>');
+  });
+
+  h += '<h2>📂 Xem theo hạng mục</h2><div class="phu">Mọi thông báo, xếp theo loại. Bấm một mục để mở; mở mục khác thì mục cũ tự đóng.</div>'
+    + '<input type="search" id="hmTim" style="margin-top:8px" placeholder="🔎 Tìm theo tiêu đề hoặc người gửi" value="' + e(st.tim) + '" aria-label="Tìm thông báo">'
+    + veHangMuc(ds);
+  return h;
+}
+
+function dongVang(g) {
+  return '<div class="bao cam">⚠️ Chưa lấy được việc từ <b>' + e(g.ten) + '</b>' + (g.tu_luc ? ' từ ' + e(gioTu(g.tu_luc)) : '')
+    + '. Việc bên dưới có thể đã cũ — mở thẳng trang đó để xem.</div>';
+}
+function veHangMuc(ds) {
+  var m = st.mo, tim = boDauTrang(st.tim), h = '';
+  var loc = tim ? ds.filter(function (x) { return boDauTrang(x.tieu_de + ' ' + x.tu).indexOf(tim) >= 0; }) : ds;
+  // Nguồn đang hỏng → dòng vàng ở đúng hạng mục đang có việc của nguồn đó; chưa biết hạng mục nào thì báo chung ở đầu.
+  var loiMuc = {}, loiChung = [];
+  (m.nguon_loi || []).forEach(function (g) {
+    var muc = {};
+    m.ds.forEach(function (x) { if (x.nguon === g.ten) muc[x.hang_muc] = 1; });
+    if (Object.keys(muc).length) Object.keys(muc).forEach(function (ma) { (loiMuc[ma] = loiMuc[ma] || []).push(g); });
+    else loiChung.push(g);
+  });
+  h += loiChung.map(dongVang).join('');
+  var co = m.hang_muc.filter(function (hm) {
+    return loc.some(function (x) { return x.hang_muc === hm.ma; }) || (!tim && loiMuc[hm.ma]);
+  });
+  if (!co.length) {
+    h += '<div class="the cho">' + (tim ? 'Không thấy thông báo nào có chữ "' + e(st.tim) + '". Thử chữ khác, hoặc xoá ô tìm.'
+                                        : st.loc !== 'tat_ca' ? 'Không có thông báo nào ở lựa chọn này. Bấm "Tất cả" để xem hết.'
+                                                              : 'Chưa có thông báo nào gửi cho bạn.') + '</div>';
+  }
+  var dangMo = co.length === 1 ? co[0].ma : st.muc;
+  co.forEach(function (hm) {
+    var trong = loc.filter(function (x) { return x.hang_muc === hm.ma; }), mo = dangMo === hm.ma, d = demDs(trong);
+    var tom = [d.gap ? '🔴 ' + d.gap + ' gấp' : '', d.hom_nay ? '📌 ' + d.hom_nay + ' hôm nay' : '', d.chua_doc ? '📬 ' + d.chua_doc + ' chưa đọc' : '']
+      .filter(Boolean).join(' · ') || (trong.length ? 'đã đọc hết' : 'chưa có gì');
+    h += '<button class="nhom-dau" data-lam="mo_muc" data-ma="' + e(hm.ma) + '"><span>' + (mo ? '▾ ' : '▸ ') + e((hm.bieu_tuong ? hm.bieu_tuong + ' ' : '') + hm.ten)
+      + ' (' + trong.length + ')</span><span class="tt">' + (mo ? 'bấm để đóng' : tom) + '</span></button>'
+      + (loiMuc[hm.ma] || []).map(dongVang).join('');
+    if (mo) h += trong.length ? trong.map(function (x) { return theDong(x, true); }).join('') : '<div class="phu">Mục này đang trống.</div>';
+  });
+  if (m.nguon_chua_noi) h += '<div class="phu" style="margin-top:12px">ℹ️ Hộp chưa nối với hệ nào khác (tuyển dụng, giao việc…). Hiện chỉ có tin thông báo của công ty.</div>';
+  return h;
+}
+
+/** Một dòng thông báo: nhãn · tiêu đề · từ ai · hạn · MỘT nút (Đọc với tin của hộp, Mở › với việc ở hệ khác). */
+function theDong(x, hienMuc) {
+  var k = khoaDong(x), mo = !!st.doc[k], loi = st.loi_dong[k], mauHan = x.muc === 'gap' ? 'do' : x.muc === 'can_lam' ? 'cam' : '';
+  var h = '<div class="the' + (x.muc === 'gap' ? ' qua' : '') + '">'
+    + '<span class="nhan">' + e(tenHangMuc(x.hang_muc)) + '</span>'
+    + (x.khan ? '<span class="nhan do">🔴 Khẩn</span>' : '')
+    + (hienMuc ? '<span class="nhan ' + MUC_CHU[x.muc][1] + '">' + MUC_CHU[x.muc][0] + '</span>' : '')
+    + (x.han_chu ? '<span class="nhan ' + mauHan + '">' + e(x.han_chu) + '</span>' : '')
+    + (x.da_doc ? '<span class="nhan xanh">✔ Đã đọc</span>' : '<span class="nhan lam">● Chưa đọc</span>')
+    + '<div class="tieu">' + e(x.tieu_de) + '</div>';
+  if (x.nut === 'mo') {
+    h += '<div class="dong phu">' + (x.tu ? 'Từ: ' + e(x.tu) + ' · ' : '') + 'Làm ở: ' + e(x.nguon) + '</div>'
+      + '<div class="nut-hang"><a class="nut" href="' + e(x.link) + '" data-lam="mo_tb" data-ma="' + e(k) + '">Mở ›</a></div>';
+  } else {
+    h += (x.tu ? '<div class="dong phu">Từ: ' + e(x.tu) + '</div>' : '')
+      + '<div class="nut-hang"><button class="nut' + (mo ? ' phu2' : '') + '" data-lam="doc" data-ma="' + e(k) + '">' + (mo ? '▴ Thu gọn' : '📖 Đọc') + '</button></div>';
+    if (mo) {
+      h += '<div class="noi">' + (x.tin
+        ? bonDong(x.tin) + (x.da_doc ? '' : '<div class="phu" style="margin-top:8px">Đọc xong, hiểu rồi thì bấm nút dưới — người đăng biết bạn đã đọc.</div>'
+            + '<div class="nut-hang"><button class="nut" data-lam="da_hieu" data-ma="' + e(k) + '">✅ Đã hiểu</button></div>')
+        : '<div class="bao cam">Chưa tải được nội dung tin này. Bấm 🔄 Làm mới ở đầu trang khi có mạng.</div>') + '</div>';
+    }
+  }
+  if (loi) {
+    h += '<div class="bao do">⚠️ ' + e(loi) + '<div class="nut-hang"><button class="nut phu2" data-lam="da_hieu" data-ma="' + e(k) + '">🔁 Thử ghi lại</button></div></div>';
+  }
+  return h + '</div>';
+}
+function bonDong(t) {
+  var h = '';
+  if (t.khan) h += '<div class="bao do">🔴 <b>Tin Khẩn</b> — đọc và làm ngay.</div>';
+  if (t.loai === 'hop' && t.gio_hop_chu) h += '<div class="bao cam">📅 <b>' + e(t.gio_hop_chu) + '</b>' + (t.dia_diem ? ' · tại ' + e(t.dia_diem) : '') + '</div>';
+  if (t.loai === 'ke_hoach_tuan' && t.tuan_chu) h += '<div class="bao cam">🗓️ <b>Kế hoạch ' + e(t.tuan_chu) + '</b></div>';
+  [['Việc gì', t.viec_gi], ['Ai liên quan', t.ai_lien_quan], ['Khi nào', t.khi_nao], ['Cần làm', t.can_lam]].forEach(function (x) {
+    h += '<div class="dong"><b>' + x[0] + ':</b> ' + e(x[1]) + '</div>';
+  });
+  if (t.dinh_chinh && t.ly_do_dinh_chinh) h += '<div class="dong phu">⚠️ Đính chính vì: ' + e(t.ly_do_dinh_chinh) + '</div>';
+  return h + '<div class="dong phu">Đăng: ' + e(t.ten_nguoi_dang) + ' · ' + e(String(t.luc_dang).slice(0, 16)) + ' · Gửi: ' + e(t.nguoi_nhan) + '</div>';
+}
+function nhanTin(t) {
+  return (t.khan ? '<span class="nhan do">🔴 KHẨN</span>' : '') + (t.loai === 'hop' ? '<span class="nhan lam">📅 HỌP</span>' : '')
+    + (t.loai === 'ke_hoach_tuan' ? '<span class="nhan lam">🗓️ KẾ HOẠCH TUẦN</span>' : '') + (t.dinh_chinh ? '<span class="nhan do">⚠️ ĐÍNH CHÍNH</span>' : '');
+}
+/** Tin gửi riêng một phòng / một người: máy chủ không báo vào nhóm Zalo chung. */
+function rieng(t) { return t.zalo === 'khong_gui_nhom'; }
+
+/* ---------- hai màn của người có quyền đăng (giữ như đợt 1): ✍️ Đăng tin · 👀 Theo dõi ---------- */
+function nutLui() { return '<div class="nut-hang"><button class="nut phu2" data-lam="man" data-ma="hop">◀ Về hộp thông báo</button></div>'; }
+function moMan(ma) {
+  st.man = ma;
+  if (ma === 'dang' && (!st.dm || !st.dm.ok)) {
+    st.dm = null;
+    goi('tt_dang_mo').then(function (kq) { st.dm = kq; if (st.man === 'dang') ve(); });
+  }
+  if (ma === 'theo') taiTheoDoi();
+  ve(); window.scrollTo(0, 0);
+}
+function veManDang() {
+  var h = nutLui() + '<h2>✍️ Đăng tin</h2>';
+  if (!st.dm) return h + '<div class="cho">⏳ Đang mở màn đăng tin… có thể mất 5–10 giây, đừng tải lại trang.</div>';
+  if (!st.dm.ok) return h + '<div class="bao do">⚠️ ' + e(st.dm.loi) + '<div class="nut-hang"><button class="nut phu2" data-lam="man" data-ma="dang">🔄 Thử lại</button></div></div>';
+  return h + veDang();
+}
+function veManTheo() {
+  return nutLui() + '<h2>👀 Tin đã đăng — ai đã đọc</h2>'
+    + '<div class="chi">👉 Mỗi tin cho biết bao nhiêu người đã bấm Đã hiểu. Bấm "Ai chưa đọc" để xem tên.</div>' + veTheoDoi(st.mo.tk.quyen);
+}
+
+/* ---------- đăng tin ---------- */
+function dgMoi(buoc) {
+  // Kiểu người nhận mặc định = kiểu đầu tiên máy chủ cho phép; trưởng phòng (chỉ có phòng mình) thì chọn sẵn phòng đó.
+  var dm = st.dm && st.dm.ok ? st.dm : null, kieu = dm && dm.kieu_nhan ? dm.kieu_nhan : ['tat_ca'];
+  var motPhong = dm && kieu.indexOf('tat_ca') < 0 && (dm.ds_phong || []).length === 1;
+  return { buoc: buoc || 'nhap', nguon: '', bo_sung: '', ma_luot: '', ban: null, goc: null, con_thieu: [], so_la: [], loi: null,
+    nn: { kieu: kieu[0], nhom: [], phong: motPhong ? dm.ds_phong.slice() : [], ma: [] }, khan: false, tim_nguoi: '',
+    duyet: '', ngay_duyet: homNay(), ma_yc: maYc(), ket: null, dinh_chinh: null, ly_do: '' };
+}
+/** Thứ Hai của tuần này (lech = 0) hoặc tuần sau (lech = 1), theo ngày trên máy. */
+function thuHai(lech) {
+  var d = new Date(), thu = d.getDay() || 7;
+  d.setDate(d.getDate() - thu + 1 + 7 * lech);
+  return ngayMay(d);
+}
+function tuanChu(tuan) {
+  var d = new Date(tuan + 'T12:00:00'), c = new Date(d.getTime() + 6 * 86400000);
+  return p2(d.getDate()) + '/' + p2(d.getMonth() + 1) + ' – ' + p2(c.getDate()) + '/' + p2(c.getMonth() + 1);
+}
+var KIEU_NN = { tat_ca: '🏢 Toàn công ty', phong: '🚪 Theo phòng', nhom: '👥 Theo nhóm', truong_nhom: '⭐ Chỉ trưởng nhóm', nguoi: '👤 Từng người' };
+var TRUONG = [['tieu_de', 'Tiêu đề'], ['viec_gi', 'Việc gì'], ['ai_lien_quan', 'Ai liên quan'], ['khi_nao', 'Khi nào'], ['can_lam', 'Cần làm']];
+
+function veDang() {
+  var q = st.mo.tk.quyen, oc = st.dm.o_cam, d = st.dg = st.dg || dgMoi();
+  var h = '<div class="chi">👉 Dán tin Zalo vào ô, bấm 🤖 Nhờ trợ lý đọc, soát bản 4 dòng rồi bấm ✅ Đăng.</div>';
+  var tuViet = !!st.dm.tu_viet;
+  if (!oc.tro_ly) h += '<div class="bao cam">⚠️ Trợ lý chưa nối (chưa có khoá). 👉 Bấm <b>✍️ Tự viết 4 dòng</b> ở dưới để đăng.</div>';
+  if (!oc.zalo) h += '<div class="bao cam">⚠️ Zalo chưa nối — tin vẫn đăng lên trang, chỉ chưa báo vào nhóm.</div>';
+  if (d.buoc === 'xong') {
+    var z = d.ket.zalo;
+    h += '<div class="bao xanh">✅ Đã đăng: <b>' + e(d.ket.tin.tieu_de) + '</b></div>'
+      + (z.rieng ? '<div class="phu">Tin gửi riêng nên không báo vào nhóm Zalo chung. Người nhận thấy tin trong hộp thông báo.</div>'
+         : z.ok ? '<div class="phu">Đã báo một dòng vào nhóm Zalo.</div>' : '<div class="bao cam">⚠️ Chưa báo được vào Zalo: ' + e(z.loi) + '<div class="nut-hang"><button class="nut phu2" data-lam="gui_lai" data-ma="' + e(d.ket.tin.ma_tin) + '">📤 Gửi lại Zalo</button></div></div>')
+      + '<div class="nut-hang"><button class="nut" data-lam="dg_moi">✍️ Đăng tin khác</button>'
+      + '<button class="nut phu2" data-lam="man" data-ma="theo">👀 Xem ai đã đọc</button></div>';
+  } else if (d.buoc === 'nhap' || d.buoc === 'hoi') {
+    h += '<label class="o" for="dgNguon">Nội dung tin (dán nguyên tin Zalo)</label><textarea id="dgNguon" ' + (d.buoc === 'hoi' ? 'readonly' : '') + ' placeholder="Dán tin vào đây…">' + e(d.nguon) + '</textarea>';
+    if (d.buoc === 'hoi') {
+      h += '<div class="bao cam">❓ <b>Trợ lý cần thêm thông tin:</b><br>' + d.con_thieu.map(e).join('<br>') + '</div>'
+        + '<label class="o" for="dgBoSung">Trả lời / ghi thêm cho trợ lý</label><textarea id="dgBoSung" placeholder="Vd: Họp lúc 8h30 sáng thứ bảy">' + e(d.bo_sung) + '</textarea>';
+    }
+    if (d.loi) h += hopLoi(d.loi);
+    h += '<div class="phu">Bấm xong phải chờ 5–20 giây, đừng tải lại trang.</div><div class="nut-hang">'
+      + '<button class="nut" data-lam="dg_doc" ' + (oc.tro_ly ? '' : 'disabled') + '>' + (d.buoc === 'hoi' ? '🔁 Đọc lại với câu trả lời' : '🤖 Nhờ trợ lý đọc') + '</button>'
+      + (d.buoc === 'hoi' ? '<button class="nut phu2" data-lam="dg_moi">Thôi, dán tin khác</button>' : '')
+      + (tuViet ? '<button class="nut phu2" data-lam="dg_tu_viet">✍️ Tự viết 4 dòng</button>' : '') + '</div>';
+  } else h += veXacNhan(d, q);
+  return h;
+}
+function hopLoi(l) {
+  return '<div class="bao do">⛔ ' + e(l.ly_do || l.loi) + (l.cach ? '<br>👉 ' + e(l.cach) : '') + '</div>';
+}
+function veXacNhan(d, q) {
+  var tuViet = d.buoc === 'tu_viet' || d.buoc === 'dinh_chinh', suaChu = tuViet || q.sua_tin, b = d.ban, h = '';
+  if (d.buoc === 'dinh_chinh') h += '<div class="bao cam">✏️ Đính chính tin "' + e(d.dinh_chinh.tieu_de) + '". Tin cũ thôi dùng, mọi người phải đọc lại tin mới.</div>';
+  if (d.goc) h += '<details><summary>📄 Xem bản gốc (người khác không thấy bản này)</summary><div class="goc">' + e(d.goc) + '</div></details>';
+  h += '<div class="the"><div class="tieu">Bản nhân viên sẽ thấy</div>'
+    + '<label class="o">Loại tin</label><div class="chon-hang">'
+    + [['thong_bao', '📢 Thông báo'], ['hop', '📅 Họp'], ['ke_hoach_tuan', '🗓️ Kế hoạch tuần']].map(function (x) {
+      return '<button data-lam="dg_loai" data-ma="' + x[0] + '" class="' + ((b.loai || 'thong_bao') === x[0] ? 'dang' : '') + '">' + x[1] + '</button>'; }).join('') + '</div>';
+  if (b.loai === 'ke_hoach_tuan') {
+    h += '<label class="o">Kế hoạch của tuần nào (bắt buộc)</label><div class="chon-hang">' + [[0, 'Tuần này'], [1, 'Tuần sau']].map(function (x) {
+      var t = thuHai(x[0]);
+      return '<button data-lam="dg_tuan" data-ma="' + t + '" class="' + (b.tuan === t ? 'dang' : '') + '">' + (b.tuan === t ? '✓ ' : '') + x[1] + ' (' + tuanChu(t) + ')</button>'; }).join('')
+      + '</div><div class="phu">Kế hoạch hiện trong hộp tới hết Chủ nhật tuần đó. Đăng lại cho cùng người nhận, cùng tuần thì bản mới thay bản cũ.</div>';
+  }
+  if (b.loai === 'hop') {
+    h += '<label class="o">Ngày giờ họp (bắt buộc)</label><div class="hai"><input type="date" id="dgNgayHop" value="' + e(b._ngay) + '" aria-label="Ngày họp">'
+      + '<input type="time" id="dgGioHop" value="' + e(b._gio) + '" aria-label="Giờ họp"></div>';
+  }
+  TRUONG.concat(b.loai === 'hop' ? [['dia_diem', 'Nơi họp']] : []).forEach(function (t) {
+    h += '<label class="o" for="dg_' + t[0] + '">' + t[1] + '</label>' + (suaChu ? '<input type="text" id="dg_' + t[0] + '" value="' + e(b[t[0]]) + '">' : '<div class="dong">' + (e(b[t[0]]) || '<span class="phu">—</span>') + '</div>');
+  });
+  if (!suaChu) h += '<div class="phu">Thấy trợ lý viết sai? Bấm "🔁 Đọc sai, đọc lại" và ghi thêm thông tin. Chỉ trưởng phòng hành chính sửa chữ được.</div>';
+  h += '<label class="o" for="dgHan">Hạn cần làm (nếu tin yêu cầu làm gì trước một ngày)</label><input type="date" id="dgHan" value="' + e(b.han_can_lam) + '"></div>';
+  if (!tuViet) h += d.so_la.length ? '<div class="bao do">⛔ Có số không thấy trong tin gốc: <b>' + e(d.so_la.join(', ')) + '</b>. Đăng sẽ bị chặn. 👉 Bấm "Đọc sai, đọc lại" và ghi rõ con số.</div>'
+                                   : '<div class="bao xanh">✅ Máy đã kiểm: mọi con số trong bản 4 dòng đều có trong tin gốc.</div>';
+  if (d.buoc !== 'dinh_chinh') {
+    var nh = st.dm.ds_nhom || [], ph = st.dm.ds_phong || [], ng = st.dm.ds_nguoi || [], kieu = st.dm.kieu_nhan || ['tat_ca', 'nhom', 'truong_nhom'];
+    var chuaDoc = '<span class="phu">Chưa đọc được danh sách' + (st.dm.loi_danh_ba ? ' (' + e(st.dm.loi_danh_ba) + ')' : '') + '. Bấm ◀ Về hộp thông báo rồi mở lại.</span>';
+    var nutChon = function (lam, ma, chu, co) { return '<button data-lam="' + lam + '" data-ma="' + e(ma) + '" class="' + (co ? 'dang' : '') + '">' + (co ? '✓ ' : '') + e(chu) + '</button>'; };
+    h += '<label class="o">Gửi cho ai</label><div class="chon-hang">' + kieu.map(function (k) {
+      return '<button data-lam="dg_nn" data-ma="' + k + '" class="' + (d.nn.kieu === k ? 'dang' : '') + '">' + KIEU_NN[k] + '</button>'; }).join('') + '</div>';
+    if (kieu.indexOf('tat_ca') < 0) h += '<div class="phu" style="margin-top:8px">Trưởng phòng đăng cho phòng mình. Tin cho nơi khác thì nhờ phòng hành chính đăng.</div>';
+    if (d.nn.kieu === 'nhom') h += '<div class="phu" style="margin-top:8px">Chọn một hoặc nhiều nhóm:</div><div class="chon-hang">' + (nh.length ? nh.map(function (g) {
+      return nutChon('dg_nhom', g, 'Nhóm ' + g, d.nn.nhom.indexOf(g) >= 0); }).join('') : chuaDoc) + '</div>';
+    if (d.nn.kieu === 'phong') h += '<div class="phu" style="margin-top:8px">Chọn một hoặc nhiều phòng:</div><div class="chon-hang">' + (ph.length ? ph.map(function (g) {
+      return nutChon('dg_phong', g, 'Phòng ' + g, d.nn.phong.indexOf(g) >= 0); }).join('') : chuaDoc) + '</div>';
+    if (d.nn.kieu === 'nguoi') {
+      // Danh sách có thể tới 60 người: người đã chọn luôn hiện; còn lại gõ tên để tìm (quá 12 người mà chưa gõ thì chưa bày).
+      var tim = boDauTrang(d.tim_nguoi), daChon = ng.filter(function (x) { return d.nn.ma.indexOf(x.ma) >= 0; });
+      var conLai = ng.filter(function (x) { return d.nn.ma.indexOf(x.ma) < 0 && (!tim || boDauTrang(x.ten + ' ' + x.phong).indexOf(tim) >= 0); });
+      var tenNg = function (x) { return x.ten + (x.phong ? ' · ' + x.phong : ''); };
+      h += '<div class="phu" style="margin-top:8px">Đã chọn ' + daChon.length + ' người' + (daChon.length ? ' — bấm tên để bỏ:' : '.') + '</div>'
+        + (daChon.length ? '<div class="chon-hang">' + daChon.map(function (x) { return nutChon('dg_nguoi', x.ma, tenNg(x), true); }).join('') + '</div>' : '');
+      if (!ng.length) h += '<div>' + chuaDoc + '</div>';
+      else {
+        h += '<input type="search" id="dgTimNguoi" value="' + e(d.tim_nguoi) + '" placeholder="🔎 Gõ tên hoặc phòng để tìm người" aria-label="Tìm người nhận" style="margin-top:8px">';
+        if (!tim && conLai.length > 12) h += '<div class="phu">Có ' + conLai.length + ' người. Gõ vài chữ trong tên để tìm.</div>';
+        else h += conLai.length ? '<div class="chon-hang">' + conLai.slice(0, 30).map(function (x) { return nutChon('dg_nguoi', x.ma, tenNg(x), false); }).join('') + '</div>'
+          + (conLai.length > 30 ? '<div class="phu">Còn ' + (conLai.length - 30) + ' người nữa — gõ thêm chữ để thu hẹp.</div>' : '')
+          : '<div class="phu">' + (tim ? 'Không thấy ai tên như vậy.' : 'Đã chọn hết mọi người.') + '</div>';
+      }
+    }
+    if (d.nn.kieu === 'phong' || d.nn.kieu === 'nguoi') h += '<div class="phu" style="margin-top:8px">Tin gửi riêng chỉ hiện trong hộp thông báo, không báo vào nhóm Zalo chung.</div>';
+    if (st.dm.khan) {
+      h += '<label class="o">Mức gấp</label><div class="chon-hang"><button data-lam="dg_khan" class="' + (d.khan ? 'dang' : '') + '">' + (d.khan ? '✓ ' : '') + '🔴 Tin Khẩn</button></div>'
+        + '<div class="phu">' + (d.khan ? 'Tin sẽ nằm ở mục 🔴 Cần làm ngay của người nhận tới khi họ bấm Đã hiểu. Bấm lần nữa để bỏ.' : 'Chỉ bật khi mọi người phải đọc ngay. Tin thường thì để nguyên.') + '</div>';
+    }
+    h += '<div class="hai"><div><label class="o" for="dgDuyet">Ai đã duyệt tin này</label><input type="text" id="dgDuyet" value="' + e(d.duyet) + '" placeholder="Vd: Giám đốc"></div>'
+      + '<div><label class="o" for="dgNgayDuyet">Ngày duyệt</label><input type="date" id="dgNgayDuyet" value="' + e(d.ngay_duyet) + '"></div></div>';
+  } else {
+    h += '<label class="o" for="dgLyDo">Lý do đính chính (bắt buộc)</label><input type="text" id="dgLyDo" value="' + e(d.ly_do) + '" placeholder="Vd: Dời giờ họp">';
+  }
+  if (d.loi) h += hopLoi(d.loi);
+  h += '<div class="nut-hang"><button class="nut" data-lam="dg_dang" ' + (!tuViet && d.so_la.length && !q.sua_tin ? 'disabled' : '') + '>✅ Đúng, đăng</button>'
+    + (d.ma_luot ? '<button class="nut phu2" data-lam="dg_doc_lai">🔁 Đọc sai, đọc lại</button>' : '')
+    + '<button class="nut phu2" data-lam="dg_moi">Thôi</button></div>';
+  return h;
+}
+function veTheoDoi(q) {
+  if (!st.theo) return '<div class="phu">Đang tải…</div>';
+  if (!st.theo.ok) return '<div class="bao do">⚠️ ' + e(st.theo.loi) + '</div>';
+  if (!st.theo.tin.length) return '<div class="phu">Chưa có tin nào ' + (q.sua_tin ? '' : 'của bạn ') + 'đang dùng.</div>';
+  return st.theo.tin.map(function (t) {
+    var cd = st.chuaDoc[t.ma_tin];
+    return '<div class="the">' + nhanTin(t) + '<div class="tieu">' + e(t.tieu_de) + '</div><div class="dong"><b>' + t.so_da_hieu + '/' + t.so_nhan + '</b> người đã hiểu · gửi ' + e(t.nguoi_nhan) + '</div>'
+      + (rieng(t) ? '<div class="phu">Tin gửi riêng — không báo vào nhóm Zalo chung.</div>' : t.zalo && t.zalo !== 'da_gui' ? '<div class="bao cam">⚠️ Zalo chưa báo được.</div>' : '')
+      + (cd ? (cd.length ? cd.map(function (g) { return '<div class="dong"><b>Nhóm ' + e(g.nhom) + ':</b> ' + e(g.ten.join(', ')) + '</div>'; }).join('') : '<div class="phu">Mọi người đã đọc.</div>') : '')
+      + '<div class="nut-hang"><button class="nut phu2" data-lam="ai_chua" data-ma="' + e(t.ma_tin) + '">👀 Ai chưa đọc</button>'
+      + (t.so_da_hieu < t.so_nhan && !rieng(t) ? '<button class="nut phu2" data-lam="nhac_tin" data-ma="' + e(t.ma_tin) + '">🔔 Nhắc vào nhóm</button>' : '')
+      + (t.zalo && t.zalo !== 'da_gui' && !rieng(t) ? '<button class="nut phu2" data-lam="gui_lai" data-ma="' + e(t.ma_tin) + '">📤 Gửi lại Zalo</button>' : '')
+      + (q.sua_tin ? '<button class="nut phu2" data-lam="dinh_chinh" data-ma="' + e(t.ma_tin) + '">✏️ Đính chính</button><button class="nut nguy" data-lam="thu_hoi" data-ma="' + e(t.ma_tin) + '">🗑️ Thu hồi</button>' : '')
+      + '</div></div>';
+  }).join('');
+}
+function taiTheoDoi() { goi('tt_theo_doi').then(function (kq) { st.theo = kq; if (st.man === 'theo') ve(); }); }
+
+/** Ô nhập → trạng thái, NGAY lúc gõ. Trang hay vẽ lại (số mới về, tin vừa đăng), giữ chữ ở trạng thái thì vẽ lại không mất chữ đang gõ. */
+function dongBo(o) {
+  var id = o.id, v = o.value, d = st.dg;
+  if (d) {
+    if (id === 'dgNguon') d.nguon = v;
+    else if (id === 'dgBoSung') d.bo_sung = v;
+    else if (id === 'dgDuyet') d.duyet = v;
+    else if (id === 'dgNgayDuyet') d.ngay_duyet = v;
+    else if (id === 'dgLyDo') d.ly_do = v;
+    else if (d.ban && id === 'dgNgayHop') d.ban._ngay = v;
+    else if (d.ban && id === 'dgGioHop') d.ban._gio = v;
+    else if (d.ban && id === 'dgHan') d.ban.han_can_lam = v;
+    else if (d.ban && id.indexOf('dg_') === 0) d.ban[id.slice(3)] = v;
+  }
+}
+/** Bản gửi máy chủ: ghép ngày + giờ họp từ hai ô. */
+function banGui(b) {
+  var o = {};
+  for (var k in b) if (k.charAt(0) !== '_') o[k] = b[k];
+  if (b.loai === 'hop') o.ngay_gio_hop = b._ngay && b._gio ? b._ngay + ' ' + b._gio : '';
+  return o;
+}
+function nhanBan(b) { b._ngay = String(b.ngay_gio_hop || '').slice(0, 10); b._gio = String(b.ngay_gio_hop || '').slice(11); return b; }
+function banTrong() { return { tieu_de: '', loai: 'thong_bao', viec_gi: '', ai_lien_quan: '', khi_nao: '', can_lam: '', ngay_gio_hop: '', dia_diem: '', han_can_lam: '', tuan: '', _ngay: '', _gio: '' }; }
+
+function boDauTrang(s) { return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().trim(); }
+
+/* ---------- hộp hỏi (lý do, ghi chú, đổi hạn) ---------- */
+function hopHoi(o) {
+  $('lop').innerHTML = '<div class="lop"><div class="hop"><div class="tieu">' + e(o.tieu) + '</div>' + (o.mo_ta ? '<div class="dong phu">' + e(o.mo_ta) + '</div>' : '')
+    + (o.kieu === 'han' ? '<div class="hai" style="margin-top:8px"><input type="date" id="hopNgay"><input type="time" id="hopGio" aria-label="Giờ (không bắt buộc)"></div>'
+                        : '<textarea id="hopChu" style="min-height:90px;margin-top:8px" placeholder="' + e(o.goi_y || '') + '"></textarea>')
+    + '<div class="bao do an" id="hopLoi"></div><div class="nut-hang"><button class="nut" id="hopOk">' + e(o.nut) + '</button><button class="nut phu2" id="hopThoi">Thôi</button></div></div></div>';
+  $('hopThoi').onclick = function () { $('lop').innerHTML = ''; };
+  $('hopOk').onclick = function () {
+    var v = o.kieu === 'han' ? ($('hopNgay').value ? $('hopNgay').value + ($('hopGio').value ? ' ' + $('hopGio').value : '') : '') : $('hopChu').value.trim();
+    if (o.bat_buoc && !v) { $('hopLoi').textContent = o.bat_buoc; $('hopLoi').classList.remove('an'); return; }
+    $('hopOk').disabled = true; $('hopOk').textContent = 'Đang gửi…';
+    o.xong(v).then(function (kq) {
+      if (kq && !kq.ok) { $('hopOk').disabled = false; $('hopOk').textContent = o.nut; $('hopLoi').textContent = kq.loi; $('hopLoi').classList.remove('an'); return; }
+      $('lop').innerHTML = '';
+    });
+  };
+}
+
+/* ---------- bấm ---------- */
+document.addEventListener('click', function (ev) {
+  var n = ev.target.closest('[data-lam]'); if (!n || st.ban) return;
+  var lam = n.getAttribute('data-lam'), ma = n.getAttribute('data-ma');
+  var D = {
+    tai_lai: function () { $('manChinh').innerHTML = '<div class="cho">⏳ Đang tải… máy chủ có thể mất 5–10 giây, đừng tải lại trang.</div>'; tai(); },
+    lam_moi: function () { tai(); },
+    man: function () { moMan(ma); },
+    loc: function () { st.loc = ma; ve(); },
+    mo_muc: function () {
+      st.muc = st.muc === ma ? '' : ma; ve();
+      if (st.muc) Array.prototype.forEach.call(document.querySelectorAll('[data-lam="mo_muc"]'), function (b) {
+        if (b.getAttribute('data-ma') === ma) b.scrollIntoView({ block: 'start', behavior: 'smooth' });
+      });
+    },
+    doc: function () { if (st.doc[ma]) delete st.doc[ma]; else st.doc[ma] = 1; ve(); },
+    // ✅ Đã hiểu: đổi NGAY trên màn rồi gửi ngầm; hỏng thì trả dòng về như cũ + nói rõ + nút thử lại. Bấm nhiều lần chỉ một cú.
+    da_hieu: function () {
+      var x = timDong(ma); if (!x || st.gui[ma]) return;
+      var cu = { muc: x.muc, da_doc: x.da_doc };
+      st.gui[ma] = 1; delete st.loi_dong[ma];
+      danhDauDaHieu(x); ve(); baoNhanh('✅ Đã ghi: bạn đã hiểu tin này');
+      goi('tt_da_hieu', { ma_tin: x.ma }).then(function (kq) {
+        delete st.gui[ma];
+        var y = timDong(ma);
+        if (kq.ok) { catNho(); return; }
+        if (y) { y.muc = cu.muc; y.da_doc = cu.da_doc; if (y.tin) y.tin.da_hieu = false; }
+        st.loi_dong[ma] = 'Chưa ghi được "Đã hiểu" cho tin này: ' + kq.loi;
+        baoNhanh('⚠️ Chưa ghi được "Đã hiểu" — xem dòng báo đỏ ở tin đó');
+        if (st.man === 'hop') ve();
+      });
+    },
+    // Mở ›: đi tới trang của hệ kia (thẻ <a> tự chuyển trang), đồng thời ghi "đã đọc" — gửi kiểu keepalive để chuyển trang không cắt mất.
+    mo_tb: function () {
+      var x = timDong(ma); if (!x || x.da_doc) return;
+      x.da_doc = true; catNho();
+      try {
+        fetch(URL_TRUNG_TAM, { method: 'POST', keepalive: true, headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ hanh_dong: 'tb_da_doc', phien: layPhien(), nguon: x.nguon, ma: x.ma }) }).catch(function () {});
+      } catch (z) {}
+    },
+    // đăng tin
+    dg_moi: function () { st.dg = dgMoi(); ve(); },
+    dg_tu_viet: function () { st.dg = dgMoi('tu_viet'); st.dg.ban = banTrong(); ve(); },
+    dg_loai: function () { var b = st.dg.ban; b.loai = ma; if (ma === 'ke_hoach_tuan' && !b.tuan) b.tuan = thuHai(0); ve(); },
+    dg_tuan: function () { st.dg.ban.tuan = ma; ve(); },
+    dg_nn: function () { st.dg.nn.kieu = ma; ve(); },
+    dg_nhom: function () { var a = st.dg.nn.nhom, i = a.indexOf(ma); if (i >= 0) a.splice(i, 1); else a.push(ma); ve(); },
+    dg_phong: function () { var a = st.dg.nn.phong, i = a.indexOf(ma); if (i >= 0) a.splice(i, 1); else a.push(ma); ve(); },
+    dg_nguoi: function () { var a = st.dg.nn.ma, i = a.indexOf(ma); if (i >= 0) a.splice(i, 1); else a.push(ma); ve(); },
+    dg_khan: function () { st.dg.khan = !st.dg.khan; ve(); },
+    dg_doc: function () {
+      var d = st.dg;
+      if (d.buoc === 'nhap') d.nguon = $('dgNguon').value;
+      if (d.buoc === 'hoi') d.bo_sung = $('dgBoSung').value;
+      if (!d.nguon.trim()) { d.loi = { loi: 'Dán nội dung tin vào ô trước đã.' }; ve(); return; }
+      if (d.buoc === 'hoi' && !d.bo_sung.trim()) { d.loi = { loi: 'Ghi câu trả lời cho trợ lý trước đã.' }; ve(); return; }
+      cho(n, '⏳ Trợ lý đang đọc…');
+      goi('tt_doc', { nguon: d.nguon, ma_luot: d.ma_luot, bo_sung: d.buoc === 'hoi' ? d.bo_sung : '' }).then(function (kq) {
+        if (!kq.ok) { d.loi = kq; ve(); return; }
+        d.loi = null; d.ma_luot = kq.ma_luot; d.goc = d.nguon; d.ban = nhanBan(kq.ban); d.con_thieu = kq.con_thieu; d.so_la = kq.so_la; d.bo_sung = '';
+        d.buoc = kq.trang_thai === 'hoi_them' ? 'hoi' : 'xac_nhan'; ve();
+      });
+    },
+    dg_doc_lai: function () { var d = st.dg; d.buoc = 'hoi'; d.con_thieu = ['Trợ lý đọc sai chỗ nào? Ghi lại cho đúng (vd: "lương là 7tr5, không phải 7tr8").']; d.loi = null; ve(); },
+    dg_dang: function () {
+      var d = st.dg; cho(n, 'Đang đăng…');
+      var p = d.buoc === 'dinh_chinh' ? goi('tt_dinh_chinh', { ma_tin: d.dinh_chinh.ma_tin, ban: banGui(d.ban), ly_do: d.ly_do, ma_yc: d.ma_yc })
+        : goi('tt_dang', { ma_luot: d.ma_luot, ban: banGui(d.ban), nguoi_nhan: d.nn, nguoi_duyet: d.duyet, ngay_duyet: d.ngay_duyet, ma_yc: d.ma_yc, khan: d.khan === true });
+      p.then(function (kq) {
+        if (!kq.ok) { d.loi = kq; ve(); return; }
+        d.buoc = 'xong'; d.ket = kq; d.loi = null; st.theo = null; ve(); tai();
+      });
+    },
+    gui_lai: function () { cho(n, 'Đang gửi…'); goi('tt_gui_lai', { ma_tin: ma }).then(function (kq) {
+      baoNhanh(kq.ok ? '📤 Đã báo vào nhóm Zalo' : '⚠️ ' + kq.loi); if (kq.ok && st.dg && st.dg.ket) st.dg.ket.zalo = { ok: true }; if (st.man === 'theo') taiTheoDoi(); ve(); }); },
+    ai_chua: function () { cho(n, 'Đang xem…'); goi('tt_theo_doi', { ma_tin: ma }).then(function (kq) { if (!kq.ok) { baoNhanh('⚠️ ' + kq.loi); ve(); return; } st.chuaDoc[ma] = kq.chua_doc; ve(); }); },
+    nhac_tin: function () { cho(n, 'Đang gửi…'); goi('tt_nhac', { ma_tin: ma }).then(function (kq) { baoNhanh(kq.ok ? '🔔 Đã nhắc vào nhóm: còn ' + kq.so_chua_doc + ' người chưa đọc' : '⚠️ ' + kq.loi); ve(); }); },
+    dinh_chinh: function () {
+      var t = st.theo.tin.filter(function (x) { return x.ma_tin === ma; })[0]; if (!t) return;
+      st.dg = dgMoi('dinh_chinh'); st.dg.dinh_chinh = t; st.dg.ban = {}; Object.keys(banTrong()).forEach(function (k) { st.dg.ban[k] = t[k] || ''; }); nhanBan(st.dg.ban);
+      moMan('dang');
+    },
+    thu_hoi: function () { hopHoi({ tieu: '🗑️ Thu hồi tin này?', mo_ta: 'Tin biến khỏi trang của mọi người (vẫn lưu trong Sheet). Tin sai một phần thì dùng Đính chính.', goi_y: 'Lý do thu hồi', nut: '🗑️ Thu hồi', bat_buoc: 'Ghi lý do thu hồi.',
+      xong: function (v) { return goi('tt_thu_hoi', { ma_tin: ma, ly_do: v }).then(function (kq) { if (kq.ok) { baoNhanh('🗑️ Đã thu hồi'); taiTheoDoi(); tai(); } return kq; }); } }); }
+  };
+  if (D[lam]) D[lam]();
+});
+document.addEventListener('change', function (ev) { if (ev.target.id) dongBo(ev.target); });
+document.addEventListener('input', function (ev) {
+  if (ev.target.id === 'dgTimNguoi' && st.dg) { st.dg.tim_nguoi = ev.target.value; var vn = ev.target.selectionStart; ve(); var on = $('dgTimNguoi'); if (on) { on.focus(); on.setSelectionRange(vn, vn); } return; }
+  if (ev.target.id === 'hmTim') { st.tim = ev.target.value; var vt = ev.target.selectionStart; ve(); var o = $('hmTim'); if (o) { o.focus(); o.setSelectionRange(vt, vt); } return; }
+  if (ev.target.id) dongBo(ev.target);
+});
+/** Khoá nút vừa bấm + đổi chữ, để người dùng biết đang chạy và không bấm hai lần. */
+function cho(n, chu) { n.disabled = true; n.textContent = chu; }
+
+Promise.resolve().then(tai);
+</script>
+</body>
+</html>

@@ -21,7 +21,9 @@
 // 3.64: thêm vanphong.js + vanphong.css (khung Văn phòng ở trang chủ) — đổi BAN để máy đã cài bỏ bản trang chủ cũ.
 // 3.64.1: thêm thanh-menu.js (thanh menu dùng chung trang chủ + các trang riêng).
 // 3.65: thêm bang-chung.js (khuôn bảng chung + Chép / Tải Excel); vanphong.js có 🔑 Đổi mật khẩu.
-var BAN = 'ds-3.65.0';
+// 3.66: trang chủ + thanh-menu.js + vanphong.js có ô 🔔 Thông báo của tôi. KHÔNG cất trungtam.html / trungtam-cau-hinh.js: đó là tệp của
+//       hệ thông báo, để chúng luôn đi thẳng ra mạng (đổi địa chỉ hộp là có hiệu lực ngay).
+var BAN = 'ds-3.66.0';
 var TEP = ['danhsach.html', 'trangchu.html', 'phancong.html', 'quanso.html',
            'cau-hinh.js', 'goi-may-chu.js', 'goi-dau.js', 'ngoai-zalo.js', 'vanphong.js', 'vanphong.css', 'thanh-menu.js',
            'bang-chung.js',

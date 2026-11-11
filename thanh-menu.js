@@ -21,6 +21,10 @@ var VP_MENU = [
     { id: 'thong_tin_cong_ty', ten: 'Thông tin công ty', bt: '🏷️', mt: 'Tên, mã số thuế, địa chỉ, điện thoại' },
     { id: 'nha_may_dang_tuyen', ten: 'Nhà máy đang tuyển', bt: '🏭', mt: 'Nơi đang nhận người' },
     { id: 'thong_bao', ten: 'Thông báo chung', bt: '📢', mt: 'Tin mới cho mọi người' }] },
+  // 3.66: hộp thông báo là HỆ RIÊNG (trang trungtam.html, máy chủ riêng) — ở đây chỉ có đường sang + con số. `can: 'dang_nhap'` = ai đã
+  // đăng nhập cũng thấy, không kể phòng.
+  { id: 'hop_tb', ten: 'Thông báo', bt: '🔔', ghi: 'Tin của công ty, của phòng và việc đang chờ bạn. Cần đăng nhập.', viec: [
+    { id: 'hop_thong_bao', ten: 'Thông báo của tôi', bt: '🔔', mt: 'Tin gửi cho bạn · việc cần làm hôm nay', cu: 'trungtam.html', can: 'dang_nhap' }] },
   { id: 'van_hanh', ten: 'Vận hành', bt: '🛠️', ghi: 'Không cần đăng nhập. Đăng ký = ghi người <b>sẽ</b> đến nhà máy (chụp thẻ là '
     + 'tự điền). Quét thẻ đón = ở cổng nhà máy, đánh dấu người <b>đã</b> đến.', viec: [
     { id: 'dang_ky', ten: 'Đăng ký lao động', bt: '📝', mt: 'Ghi người sẽ đến nhà máy', cu: 'index.html' },
@@ -74,6 +78,9 @@ function vpThayViec_(v, coVe, q) {
   if (!v.can) return true;
   if (!coVe) return false;
   var tk = q.tk;
+  // 3.66 — hộp thông báo: mọi phòng của công ty. KHÔNG hiện cho đối tác (hộp chưa nhận tài khoản không có CCCD) và phòng gõ lạ
+  // (chỉ thấy mục công khai, như luật 3.64). Chưa biết quyền → hiện, trang hộp tự kiểm.
+  if (v.can === 'dang_nhap') return !tk || (tk.phong !== 'doi_tac' && tk.phong !== '');
   if (v.can === 'quan_tri') return !!(tk && tk.la_quan_tri);   // 3.65 — chưa rõ quyền thì CHƯA hiện (như ô Kế toán của trang chủ)
   if (!tk) return true;
   var vanHanh = !!tk.la_quan_tri || tk.phong === undefined || tk.phong === 'van_hanh';
@@ -82,6 +89,42 @@ function vpThayViec_(v, coVe, q) {
   if (v.can === 'du_lieu_tuyen') return q.xemDlt !== false;
   return v.can === 'van_hanh';
 }
+/* ---------- 3.66 — con số của ô 🔔 Thông báo của tôi: hỏi THẲNG máy chủ hộp thông báo (cú tb_dem), không qua máy chủ tuyển dụng ----------
+ * Địa chỉ ở tệp trungtam-cau-hinh.js (biến URL_TRUNG_TAM, của hệ thông báo). Thiếu tệp / chưa khai / hộp lỗi / hết phiên → ô vẫn bấm
+ * được, chỉ KHÔNG có số (trang hộp sẽ nói rõ khi mở). Số nhớ 2 phút trong máy theo vé, để mở lại trang chủ không hỏi lại. */
+var VP_NHO_DEM_TB = 'vp_dem_tb_v1', VP_TUOI_DEM_TB = 2 * 60000;
+var vpDemTB = null;               // { gap, hom_nay, chua_doc } của vé đang dùng; null = chưa có số
+var vpDangDemTB = false;
+function vpDauVe_() { var s = '', h = 5381; try { s = localStorage.getItem(VP_KHOA_VE) || ''; } catch (e) {} for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h.toString(36) + '.' + s.length; }
+/** Chữ dưới ô: '' khi chưa có số. */
+function vpChuDemTB_() {
+  var d = vpDemTB;
+  if (!d) return '';
+  if (!d.gap && !d.hom_nay) return d.chua_doc ? d.chua_doc + ' tin chưa đọc' : 'Không có việc cần làm';
+  return (d.gap ? '🔴 ' + d.gap + ' gấp' : '') + (d.gap && d.hom_nay ? ' · ' : '') + (d.hom_nay ? '📌 ' + d.hom_nay + ' hôm nay' : '');
+}
+/** Lấy số (nhiều nhất 2 phút một lần cho mỗi vé). `xong` gọi khi có số mới để nơi gọi vẽ lại. */
+function vpLayDemTB_(xong) {
+  if (vpDangDemTB || !vpCoVe_() || typeof URL_TRUNG_TAM === 'undefined' || !URL_TRUNG_TAM || typeof fetch !== 'function') return;
+  var dau = vpDauVe_();
+  try {
+    var nho = JSON.parse(localStorage.getItem(VP_NHO_DEM_TB) || 'null');
+    if (nho && nho.chu === dau && Date.now() - nho.luc < VP_TUOI_DEM_TB) { if (!vpDemTB) { vpDemTB = nho.dem; if (xong) xong(); } return; }
+  } catch (e) {}
+  vpDangDemTB = true;
+  var phien = ''; try { phien = localStorage.getItem(VP_KHOA_VE) || ''; } catch (e) {}
+  fetch(URL_TRUNG_TAM, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ hanh_dong: 'tb_dem', phien: phien }) })
+    .then(function (r) { return r.json(); })
+    .then(function (kq) {
+      vpDangDemTB = false;
+      if (!kq || !kq.ok || !kq.dem || dau !== vpDauVe_()) return;          // lỗi, hoặc đã đổi người trong lúc chờ → bỏ
+      vpDemTB = { gap: +kq.dem.gap || 0, hom_nay: +kq.dem.hom_nay || 0, chua_doc: +kq.dem.chua_doc || 0 };
+      try { localStorage.setItem(VP_NHO_DEM_TB, JSON.stringify({ chu: dau, luc: Date.now(), dem: vpDemTB })); } catch (e) {}
+      if (xong) xong();
+    })
+    .catch(function () { vpDangDemTB = false; });
+}
+
 /** Các đầu mục kèm đúng những việc người này thấy; đầu mục rỗng bỏ đi. */
 function vpMenuCuaToi_() {
   var coVe = vpCoVe_(), q = vpTK_();

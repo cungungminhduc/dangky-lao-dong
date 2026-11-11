@@ -83,15 +83,19 @@ function vpVeThemCu_() {
   var o = vpEl_('vp_them');
   if (!o) return;
   // 3.65: + nhóm ⚙ Quản trị cho quản trị (điện thoại không có thanh menu — đây là đường tới mục trong khung)
-  var html = vpMenuCuaToi_().filter(function (x) { return x.d.id === 'cong_ty' || x.d.id === 'quan_tri'; }).map(function (x) {
+  // 3.66: + nhóm 🔔 Thông báo (hộp thông báo là trang riêng → mở thẳng trang đó, kèm con số nếu hộp trả lời)
+  var html = vpMenuCuaToi_().filter(function (x) { return x.d.id === 'cong_ty' || x.d.id === 'quan_tri' || x.d.id === 'hop_tb'; }).map(function (x) {
     var d = x.d;
     return '<div class="ke">' + d.bt + ' ' + vpThoat_(d.ten) + '</div><div class="ke-ghi">' + d.ghi + '</div><div class="luoi">' +
       x.viec.map(function (v) {
-        return '<a class="o-viec mo-cong" href="#' + v.id.replace(/_/g, '-') + '"><span class="bt" aria-hidden="true">' + v.bt +
-          '</span><b>' + vpThoat_(v.ten) + '</b><span class="mt">' + vpThoat_(v.mt) + '</span></a>';
+        var so = v.id === 'hop_thong_bao' ? vpChuDemTB_() : '';
+        return '<a class="o-viec mo-cong" href="' + (v.cu || '#' + v.id.replace(/_/g, '-')) + '"><span class="bt" aria-hidden="true">' + v.bt +
+          '</span><b>' + vpThoat_(v.ten) + '</b><span class="mt">' + vpThoat_(v.mt) + '</span>' +
+          (so ? '<span class="tt">' + vpThoat_(so) + '</span>' : '') + '</a>';
       }).join('') + '</div>';
   }).join('');
   if (o.innerHTML !== html) o.innerHTML = html;
+  if (html.indexOf('href="trungtam.html"') >= 0) vpLayDemTB_(vpVeThemCu_);   // chỉ hỏi khi người này CÓ ô đó; có số mới thì vẽ lại đúng khối này; đã có số / chưa nối hộp thì không làm gì
 }
 
 /** Trang chặn "Mở bằng trình duyệt" chỉ ở màn đăng nhập / phần cần đăng nhập (DAC-TA mục 4) — mục công khai xem được trong Zalo. */
