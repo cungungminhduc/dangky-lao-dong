@@ -9,6 +9,7 @@
  *   - Thiếu tệp này → trang riêng y như cũ (nút "🏠 Về Trang chủ" của trang còn nguyên, chỉ bị ẩn khi có thanh).
  * Nạp SAU goi-may-chu.js (và goi-dau.js nếu trang có — để biết quyền), TRƯỚC khối mã của trang. Kiểu ở vanphong.css.
  * KHÔNG gắn ở trang cổng nhà máy (index.html, doncong.html) và trang hệ công–lương.
+ * 3.66.1: chuông 🔔 có số đỏ (tin chưa đọc) ở góc phải, ngay trước nút 👤 — vpVeChuong_().
  */
 
 // MỘT bảng dựng cả thanh menu lẫn ô việc ở trang chủ của khách. `ghi` là HTML viết sẵn ở đây, không có dữ liệu người dùng.
@@ -93,36 +94,79 @@ function vpThayViec_(v, coVe, q) {
  * Địa chỉ ở tệp trungtam-cau-hinh.js (biến URL_TRUNG_TAM, của hệ thông báo). Thiếu tệp / chưa khai / hộp lỗi / hết phiên → ô vẫn bấm
  * được, chỉ KHÔNG có số (trang hộp sẽ nói rõ khi mở). Số nhớ 2 phút trong máy theo vé, để mở lại trang chủ không hỏi lại. */
 var VP_NHO_DEM_TB = 'vp_dem_tb_v1', VP_TUOI_DEM_TB = 2 * 60000;
-var vpDemTB = null;               // { gap, hom_nay, chua_doc } của vé đang dùng; null = chưa có số
+var VP_CHO_LOI_TB = 60000;        // 3.66.1: hỏi hỏng thì 1 phút sau mới hỏi lại — thanh vẽ lại sau mỗi lần đổi mục / mỗi cú bấm
+var vpDemTB = null;               // { gap, hom_nay, chua_doc }; null = chưa có số
+var vpDemTBVe = '';               // dấu của vé mà vpDemTB thuộc về — đổi người ngay trên trang thì số cũ không còn dùng
 var vpDangDemTB = false;
+var vpChoDemTB = [];              // 3.66.1: các nơi chờ số của CÙNG một lượt hỏi (ô 🔔 trang chủ + chuông góc phải)
+var vpLoiDemTBLuc = 0;            // lúc hỏi hỏng gần nhất
 function vpDauVe_() { var s = '', h = 5381; try { s = localStorage.getItem(VP_KHOA_VE) || ''; } catch (e) {} for (var i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) >>> 0; return h.toString(36) + '.' + s.length; }
+/** Số của ĐÚNG người đang đăng nhập; null khi chưa có. */
+function vpDemCuaVe_() { return vpDemTB && vpDemTBVe === vpDauVe_() ? vpDemTB : null; }
 /** Chữ dưới ô: '' khi chưa có số. */
 function vpChuDemTB_() {
-  var d = vpDemTB;
+  var d = vpDemCuaVe_();
   if (!d) return '';
   if (!d.gap && !d.hom_nay) return d.chua_doc ? d.chua_doc + ' tin chưa đọc' : 'Không có việc cần làm';
   return (d.gap ? '🔴 ' + d.gap + ' gấp' : '') + (d.gap && d.hom_nay ? ' · ' : '') + (d.hom_nay ? '📌 ' + d.hom_nay + ' hôm nay' : '');
 }
-/** Lấy số (nhiều nhất 2 phút một lần cho mỗi vé). `xong` gọi khi có số mới để nơi gọi vẽ lại. */
+/** Lấy số (nhiều nhất 2 phút một lần cho mỗi vé). `xong` gọi khi có số mới để nơi gọi vẽ lại. Đang hỏi dở thì `xong` chờ chung lượt đó. */
 function vpLayDemTB_(xong) {
-  if (vpDangDemTB || !vpCoVe_() || typeof URL_TRUNG_TAM === 'undefined' || !URL_TRUNG_TAM || typeof fetch !== 'function') return;
+  if (!vpCoVe_() || typeof URL_TRUNG_TAM === 'undefined' || !URL_TRUNG_TAM || typeof fetch !== 'function') return;
+  if (vpDangDemTB) { if (xong && vpChoDemTB.indexOf(xong) < 0) vpChoDemTB.push(xong); return; }
   var dau = vpDauVe_();
   try {
     var nho = JSON.parse(localStorage.getItem(VP_NHO_DEM_TB) || 'null');
-    if (nho && nho.chu === dau && Date.now() - nho.luc < VP_TUOI_DEM_TB) { if (!vpDemTB) { vpDemTB = nho.dem; if (xong) xong(); } return; }
+    if (nho && nho.chu === dau && Date.now() - nho.luc < VP_TUOI_DEM_TB) {
+      if (!vpDemCuaVe_()) { vpDemTB = nho.dem; vpDemTBVe = dau; if (xong) xong(); }
+      return;
+    }
   } catch (e) {}
+  if (Date.now() - vpLoiDemTBLuc < VP_CHO_LOI_TB) return;
   vpDangDemTB = true;
+  vpChoDemTB = xong ? [xong] : [];
   var phien = ''; try { phien = localStorage.getItem(VP_KHOA_VE) || ''; } catch (e) {}
   fetch(URL_TRUNG_TAM, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ hanh_dong: 'tb_dem', phien: phien }) })
     .then(function (r) { return r.json(); })
     .then(function (kq) {
-      vpDangDemTB = false;
-      if (!kq || !kq.ok || !kq.dem || dau !== vpDauVe_()) return;          // lỗi, hoặc đã đổi người trong lúc chờ → bỏ
+      var cho = vpChoDemTB;
+      vpDangDemTB = false; vpChoDemTB = [];
+      if (dau !== vpDauVe_()) return;                                      // đã đổi người trong lúc chờ → bỏ
+      if (!kq || !kq.ok || !kq.dem) { vpLoiDemTBLuc = Date.now(); return; }
       vpDemTB = { gap: +kq.dem.gap || 0, hom_nay: +kq.dem.hom_nay || 0, chua_doc: +kq.dem.chua_doc || 0 };
+      vpDemTBVe = dau;
       try { localStorage.setItem(VP_NHO_DEM_TB, JSON.stringify({ chu: dau, luc: Date.now(), dem: vpDemTB })); } catch (e) {}
-      if (xong) xong();
+      cho.forEach(function (f) { f(); });
     })
-    .catch(function () { vpDangDemTB = false; });
+    .catch(function () { vpDangDemTB = false; vpChoDemTB = []; vpLoiDemTBLuc = Date.now(); });
+}
+/** Sang hộp (bấm chuông / ô 🔔): quên số cũ, để lúc quay lại trang hỏi số mới — đọc tin xong thì số giảm ngay, không chờ 2 phút. */
+function vpQuenDemTB_() {
+  vpDemTB = null; vpLoiDemTBLuc = 0;
+  try { localStorage.removeItem(VP_NHO_DEM_TB); } catch (e) {}
+}
+
+/* ---------- 3.66.1 — CHUÔNG 🔔 Ở GÓC PHẢI THANH (Dương 11/11/2026: "hiện số thông báo lên con số màu đỏ để người dùng biết vào xem,
+ * chứ không phải chọn mới thấy") ----------
+ * Số đỏ = số tin CHƯA ĐỌC (chua_doc của tb_dem); 0 thì không có số; quá 99 ghi "99+". Bấm = mở thẳng trungtam.html.
+ * Chỉ hiện khi đã đăng nhập, người này được dùng hộp (cùng luật ô "Thông báo của tôi") VÀ trang biết địa chỉ hộp
+ * (trungtam-cau-hinh.js — hiện chỉ trang chủ nạp). Không hỏi được hộp thì không bày chuông: chuông không số dễ bị hiểu là "không có tin".
+ * Hộp lỗi / hết phiên → chuông vẫn hiện, không số (như ô ở trang chủ). */
+function vpVeChuong_() {
+  var ch = vpEl_('vp_chuong');
+  if (!ch) return;                                                       // trang cũ chưa có chỗ cho chuông
+  var co = vpCoVe_() && typeof URL_TRUNG_TAM !== 'undefined' && !!URL_TRUNG_TAM &&
+           vpThayViec_(vpTimViec_('hop_thong_bao').v, true, vpTK_());
+  ch.hidden = !co;
+  if (!co) return;
+  var d = vpDemCuaVe_(), n = d ? d.chua_doc : 0;
+  var html = '<span aria-hidden="true">🔔</span><span class="vp-chuong-chu">Thông báo</span>' +
+             (n > 0 ? '<span class="vp-so">' + (n > 99 ? '99+' : n) + '</span>' : '');
+  if (ch.innerHTML !== html) ch.innerHTML = html;
+  var nhan = n > 0 ? 'Thông báo: ' + n + ' tin chưa đọc' : 'Thông báo';
+  ch.setAttribute('aria-label', nhan);
+  ch.setAttribute('title', nhan);
+  vpLayDemTB_(vpVeChuong_);
 }
 
 /** Các đầu mục kèm đúng những việc người này thấy; đầu mục rỗng bỏ đi. */
@@ -169,6 +213,7 @@ function vpVeThanh_() {
   if (tk.textContent !== chu) tk.textContent = chu;
   tk.setAttribute('href', vpVeChu_() + (q ? '#tai-khoan' : '#dang-nhap'));
   vpLop_(tk, 'vp-dang', vpMuc === 'tai_khoan');
+  vpVeChuong_();
 }
 
 /** Trang riêng: chèn thanh lên đầu <body> (cùng khuôn với trangchu.html). Trả true nếu vừa chèn (= đang ở trang riêng). */
@@ -179,6 +224,7 @@ function vpGanThanh_() {
     '<a class="vp-logo" href="trangchu.html" title="Về trang chủ"><span class="vp-cham" aria-hidden="true">MĐ</span>' +
     '<span>VĂN PHÒNG<small>Cung ứng lao động Minh Đức</small></span></a>' +
     '<nav class="vp-menu" id="vp_menu" aria-label="Các phòng"></nav>' +
+    '<a class="vp-chuong" id="vp_chuong" href="trungtam.html" hidden aria-label="Thông báo"><span aria-hidden="true">🔔</span></a>' +
     '<a class="vp-tk" id="vp_tk" href="trangchu.html#dang-nhap">🔐 Đăng nhập</a></div></header>');
   // vp-trong-viec: điện thoại hiện "◀ Trang chủ" thay logo · vp-trang-cu: thanh không dính đỉnh · vp-co-thanh: ẩn nút về trang chủ cũ
   ['vp-co-thanh', 'vp-trong-viec', 'vp-trang-cu'].forEach(function (c) { document.body.classList.add(c); });
@@ -204,7 +250,8 @@ vpEl_('vp_menu').addEventListener('click', function (e) {
   vpVeThanh_();
 });
 document.addEventListener('click', function (e) {
-  if (vpMoDm && !(e.target && e.target.closest && e.target.closest('#vp_menu'))) { vpMoDm = ''; vpVeThanh_(); }
+  if (e.target && e.target.closest && e.target.closest('a[href="trungtam.html"]')) vpQuenDemTB_();   // 3.66.1: sang hộp
+  if (vpMoDm &&!(e.target && e.target.closest && e.target.closest('#vp_menu'))) { vpMoDm = ''; vpVeThanh_(); }
   // Trang riêng tự đăng nhập / đăng xuất (mã của trang) → nút góc phải + menu đổi theo sau cú bấm đó
   else if (vpTrangRieng) setTimeout(vpVeThanh_, 0);
 });
