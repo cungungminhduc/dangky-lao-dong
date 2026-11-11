@@ -10,6 +10,7 @@
  * Nạp SAU goi-may-chu.js (và goi-dau.js nếu trang có — để biết quyền), TRƯỚC khối mã của trang. Kiểu ở vanphong.css.
  * KHÔNG gắn ở trang cổng nhà máy (index.html, doncong.html) và trang hệ công–lương.
  * 3.66.1: chuông 🔔 có số đỏ (tin chưa đọc) ở góc phải, ngay trước nút 👤 — vpVeChuong_().
+ * 3.66.2: thanh menu bỏ nhóm 🔔 Thông báo (vào hộp bằng chuông) — cờ `thanh: false` trong VP_MENU.
  */
 
 // MỘT bảng dựng cả thanh menu lẫn ô việc ở trang chủ của khách. `ghi` là HTML viết sẵn ở đây, không có dữ liệu người dùng.
@@ -24,7 +25,9 @@ var VP_MENU = [
     { id: 'thong_bao', ten: 'Thông báo chung', bt: '📢', mt: 'Tin mới cho mọi người' }] },
   // 3.66: hộp thông báo là HỆ RIÊNG (trang trungtam.html, máy chủ riêng) — ở đây chỉ có đường sang + con số. `can: 'dang_nhap'` = ai đã
   // đăng nhập cũng thấy, không kể phòng.
-  { id: 'hop_tb', ten: 'Thông báo', bt: '🔔', ghi: 'Tin của công ty, của phòng và việc đang chờ bạn. Cần đăng nhập.', viec: [
+  // 3.66.2: `thanh: false` = KHÔNG vẽ lên thanh menu (Dương 11/11/2026: "đã có thông báo ở góc vào trực tiếp thì bỏ luôn trên thanh chung").
+  // Vẫn giữ ở đây vì chuông 🔔 góc phải (vpVeChuong_) và ô ở trang chủ (vanphong.js) dùng chung luật ai thấy của mục này.
+  { id: 'hop_tb', ten: 'Thông báo', bt: '🔔', thanh: false, ghi: 'Tin của công ty, của phòng và việc đang chờ bạn. Cần đăng nhập.', viec: [
     { id: 'hop_thong_bao', ten: 'Thông báo của tôi', bt: '🔔', mt: 'Tin gửi cho bạn · việc cần làm hôm nay', cu: 'trungtam.html', can: 'dang_nhap' }] },
   { id: 'van_hanh', ten: 'Vận hành', bt: '🛠️', ghi: 'Không cần đăng nhập. Đăng ký = ghi người <b>sẽ</b> đến nhà máy (chụp thẻ là '
     + 'tự điền). Quét thẻ đón = ở cổng nhà máy, đánh dấu người <b>đã</b> đến.', viec: [
@@ -197,7 +200,7 @@ function vpHtmlViec_(v) {
     '<span class="vp-mt">' + vpThoat_(v.mt) + '</span></span></a>';
 }
 function vpVeThanh_() {
-  var html = vpMenuCuaToi_().map(function (x) {
+  var html = vpMenuCuaToi_().filter(function (x) { return x.d.thanh !== false; }).map(function (x) {
     var d = x.d;
     var dang = x.viec.some(function (v) { return v.id === vpMuc; });
     var mo = vpMoDm === d.id;
