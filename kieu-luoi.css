@@ -167,6 +167,14 @@ table.xl { border-collapse: separate; border-spacing: 0; table-layout: fixed; fo
 .xl .khoa-o { color: #555; background: #eeeeee; }
 .xl .lien { display: inline; min-height: 0; border: 0; background: none; padding: 0; font: inherit; color: #0b4bb3; text-decoration: underline; cursor: pointer; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
 .xl .mo-viec { display: block; min-height: 0; border: 1px solid var(--chinh); background: #fff; color: var(--chinh); border-radius: 4px; font: 600 13px "Segoe UI", Arial, sans-serif; padding: 0 4px; height: calc(100% - 3px); cursor: pointer; width: 100%; }
+/* 2.4.0 vé 05 — cột "✅ Việc của bạn": nút việc kế ngay trên dòng */
+.xl .viec-ban { display: flex; gap: 4px; align-items: center; height: 100%; font: 13px "Segoe UI", Arial, sans-serif; white-space: nowrap; overflow: hidden; }
+.xl .viec-ban button { min-height: 0; height: calc(100% - 3px); border-radius: 4px; font: 600 13px "Segoe UI", Arial, sans-serif; padding: 0 6px; cursor: pointer; }
+.xl .viec-ban .nut-chot { flex: 1; border: 1px solid #15803d; background: #15803d; color: #fff; }
+.xl .viec-ban .nut-tai { flex: 1; border: 1px solid var(--chinh); background: #fff; color: var(--chinh); }
+.xl .viec-ban .nut-mo { border: 1px solid var(--vien); background: #fff; color: var(--mo); }
+.xl .viec-ban .da-chot { color: #15803d; font-weight: 600; }
+.xl .viec-ban .thieu { color: var(--mo); overflow: hidden; text-overflow: ellipsis; }
 .xl input.o-go, .xl select.o-go { width: 100%; height: 100%; min-height: 0; border: 0; border-radius: 0; outline: 2px solid #1a5fb4; outline-offset: -2px; padding: 0 3px; font: inherit; background: #fff; }
 .xl .nhan-th { display: block; cursor: pointer; }
 .xl .loc-nut { position: absolute; right: 1px; bottom: 1px; display: block; width: 17px; height: 17px; min-height: 0; padding: 0; border: 1px solid #7f7f7f; background: #fff; border-radius: 2px; font: 400 11px/1 "Segoe UI", Arial, sans-serif; color: #333; }

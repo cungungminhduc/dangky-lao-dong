@@ -62,6 +62,26 @@
     return v === undefined ? null : v;
   }
   function trong(v) { return v == null || (typeof v === 'string' && v.trim() === ''); }
+  /** "C91" → { dong: 91, cot: 3 }; không phải địa chỉ đúng một ô → null. */
+  function diaChiO(oTen) {
+    var m = /^([A-Z]{1,3})(\d+)$/.exec(String(oTen || '').trim());
+    if (!m) return null;
+    var c = 0;
+    m[1].split('').forEach(function (x) { c = c * 26 + x.charCodeAt(0) - 64; });
+    return { dong: Number(m[2]), cot: c };
+  }
+  /**
+   * 2.4.0 vé 03 — hàm ghi LỖI CHẶN dùng chung hai bộ đọc. Lỗi nằm ở đúng một ô thì kèm `dang_ghi` (chữ đang có trong ô) để trang hiện ô sửa ngay;
+   * `them` = trường riêng của loại lỗi (loai: 'thang' + ky_file · 'cong_ty' + ma_file · 'tong' + tong_may, tong_file).
+   */
+  function taoChan(loi, cacTrang) {
+    return function (trang, oTen, cau, cachSua, them) {
+      var x = { trang: trang, o: oTen, loi: cau, cach_sua: cachSua || '' }, dc = trang ? diaChiO(oTen) : null;
+      if (dc && cacTrang[trang]) { var v = o(cacTrang[trang], dc.dong, dc.cot); x.dang_ghi = v == null ? '' : String(v); }
+      if (them) Object.keys(them).forEach(function (k) { x[k] = them[k]; });
+      loi.push(x);
+    };
+  }
   /** Số từ ô: số thật, hoặc chữ dạng "1.234.567" / "1,234.5". Trống → null; chữ khác → NaN. */
   function so(v) {
     if (trong(v)) return null;
@@ -244,12 +264,27 @@
   }
   function thangDep(ky) { return ky.substring(5) + '/' + ky.substring(0, 4); }
 
+  /**
+   * 2.4.0 vé 04 — tên công ty ghi trong file (cột MÃ CÔNG TY) có phải công ty đã chọn: khớp Tên công ty (tên chuẩn theo hợp đồng, Dương chốt 11/11),
+   * hoặc Mã, hoặc ô "Tên chạy lương" cũ đã điền (để file đang dùng không bị chặn). So không dấu, không khoảng trắng, không phân biệt hoa thường.
+   */
+  function khopCongTy(tenFile, tuyChon) {
+    var x = chuanMaCT(tenFile);
+    return !!x && [tuyChon.ten_ct, tuyChon.ma_ct, tuyChon.ten_chay_luong].some(function (v) { return chuanMaCT(v) === x; });
+  }
+  /** Câu báo + cách sửa khi file ghi công ty khác: một tên thì "Lấy tên này" (vé 04) sửa được ngay. */
+  function cauSaiCongTy(dsTen, tuyChon) {
+    var ma = chuanMaCT(tuyChon.ma_ct);
+    return ['File ghi tên công ty "' + dsTen.join('", "') + '", không khớp công ty đã chọn: ' + (tuyChon.ten_ct || ma) + ' (mã ' + ma + ').',
+            dsTen.length > 1 ? 'File có nhiều công ty — chọn đúng file của một công ty.'
+              : 'Đúng công ty này thì kế toán bấm "Lấy tên này" ngay dưới (Tên công ty theo hợp đồng), hoặc chọn đúng công ty, đúng file.'];
+  }
+
   // ---------- đọc ----------
 
   function docFile(cacTrang, tuyChon) {
     tuyChon = tuyChon || {};
-    var loi = [], canhBao = [];
-    function chan(trang, oTen, cau, cachSua) { loi.push({ trang: trang, o: oTen, loi: cau, cach_sua: cachSua || '' }); }
+    var loi = [], canhBao = [], chan = taoChan(loi, cacTrang);
     function bao(trang, oTen, cau) { canhBao.push({ trang: trang, o: oTen, loi: cau }); }
     var kq = { ok: false, loi: loi, canh_bao: canhBao, nguoi: [], tong: null, thong_tin: {} };
 
@@ -270,7 +305,7 @@
     kq.thong_tin.ky = kyFile;
     if (tuyChon.ky && kyFile !== tuyChon.ky) {
       chan(tCC, tenO(bCC.dong_ngay, bCC.cot_ngay + bCC.so_ngay - 1), 'File là lương kỳ ' + thangDep(kyFile) + ', ô anh/chị chọn là kỳ ' +
-           thangDep(tuyChon.ky) + '.', 'Chọn đúng ô kỳ trên lưới, hoặc chọn đúng file.');
+           thangDep(tuyChon.ky) + '.', 'Chọn đúng ô kỳ trên lưới, hoặc chọn đúng file.', { loai: 'thang', ky_file: kyFile });
     }
     var cuoiDep = ngayCuoi.substring(8) + '/' + ngayCuoi.substring(5, 7) + '/' + ngayCuoi.substring(0, 4);
     /** Chữ "tháng" ghi trên file lệch ngày thật → chỉ nhắc: ngày của kỳ công mới là chuẩn. */
@@ -330,16 +365,14 @@
     }
     var dsMa = Object.keys(maCTFile);
     kq.thong_tin.ma_ct = dsMa.join(', ');
-    // Tên trên file có thể khác mã trong hệ (MAGTRON ↔ MT): ô "tên công ty chạy lương" ở tab CONG_TY cho biết tên đó (Dương chốt 06/11/2026)
-    var maNhan = [chuanMaCT(tuyChon.ma_ct), chuanMaCT(tuyChon.ten_chay_luong)];
-    if (tuyChon.ma_ct && dsMa.length && (dsMa.length > 1 || maNhan.indexOf(dsMa[0]) < 0)) {
-      chan(tCC, tenO(bCC.dau, bCC.ma_ct), 'File ghi mã công ty ' + dsMa.join(', ') + ', ô anh/chị chọn là ' + chuanMaCT(tuyChon.ma_ct) + '.',
-           'Chọn đúng công ty trên lưới, hoặc chọn đúng file.' + (dsMa.length > 1 ? '' :
-           ' Đúng công ty này rồi thì điền "' + dsMa[0] + '" vào ô Tên chạy lương ở trang ⚙ Công ty (hoặc tab CÔNG TY của Google Sheet), rồi tải lại trang.'));
+    // Tên trên file có thể khác mã trong hệ (MAGTRON ↔ MT). 2.4.0 vé 04: khớp theo Tên công ty (tên hợp đồng), Mã, hoặc ô Tên chạy lương cũ
+    if (tuyChon.ma_ct && dsMa.length && (dsMa.length > 1 || !khopCongTy(dsMa[0], tuyChon))) {
+      var sct = cauSaiCongTy(dsMa, tuyChon);
+      chan(tCC, tenO(bCC.dau, bCC.ma_ct), sct[0], sct[1], { loai: 'cong_ty', ma_file: dsMa.length === 1 ? String(o(cc, bCC.dau, bCC.ma_ct) || dsMa[0]).trim() : '' });
     }
 
     // --- bảng lương ---
-    var daThay = {}, dongTong = null, tongThucLinh = 0;
+    var daThay = {}, dongTong = null, tongThucLinh = 0, ngoaiCC = [];
     for (var b = bBL.dau; b <= bl.length; b++) {
       if (laDongTong(bl, b)) { dongTong = b; break; }
       var raw = o(bl, b, bBL.cccd);
@@ -349,7 +382,13 @@
       if (daThay[c]) { chan(tBL, tenO(b, bBL.cccd), 'Số CCCD này đã có ở dòng ' + daThay[c] + '.', 'Mỗi người một dòng — xoá dòng lặp.'); continue; }
       daThay[c] = b;
       var nCC = theoCCCD[c];
-      if (!nCC) { chan(tBL, tenO(b, bBL.cccd), 'Người ở dòng này không có trong trang chấm công.', 'Kiểm số CCCD ở hai trang có khớp nhau.'); continue; }
+      if (!nCC) {
+        // 2.4.0 vé 03: báo vàng, không chặn — người này không có bảng công để ghép nên không có phiếu; thực lĩnh vẫn tính khi so dòng Tổng cộng
+        var tlNgoai = so(o(bl, b, bBL.thuc_linh));
+        ngoaiCC.push(tlNgoai === null || isNaN(tlNgoai) ? 0 : Math.round(tlNgoai));
+        bao(tBL, tenO(b, bBL.cccd), 'Người ở dòng ' + b + ' bảng lương (CCCD …' + c.slice(-4) + ') không có trong trang chấm công — vẫn nhận file, nhưng người này không có phiếu. Đúng thì kiểm số CCCD ở hai trang.');
+        continue;
+      }
       var tl = so(o(bl, b, bBL.thuc_linh));
       if (tl === null || isNaN(tl)) {
         chan(tBL, tenO(b, bBL.thuc_linh), 'Ô thực lĩnh trống hoặc không phải số.', 'Mở file bằng Excel, để công thức tính xong rồi Lưu lại, sau đó chọn file lần nữa.');
@@ -389,20 +428,21 @@
     }
     if (!dongTong) bao(tBL, '', 'Không thấy dòng "Tổng cộng" — không đối chiếu được tổng thực lĩnh.');
     else {
-      var tongFile = so(o(bl, dongTong, bBL.thuc_linh));
+      var tongFile = so(o(bl, dongTong, bBL.thuc_linh)), tongMay = tongThucLinh + ngoaiCC.reduce(function (t, x) { return t + x; }, 0);
       kq.thong_tin.tong_dong_tong_cong = tongFile;
-      if (tongFile !== null && !isNaN(tongFile) && Math.round(tongFile) !== tongThucLinh && !loi.length) {
-        chan(tBL, tenO(dongTong, bBL.thuc_linh), 'Tổng thực lĩnh từng người cộng lại là ' + tongThucLinh.toLocaleString('vi-VN') +
-             ' đ, dòng Tổng cộng ghi ' + Math.round(tongFile).toLocaleString('vi-VN') + ' đ.', 'Kiểm công thức dòng Tổng cộng có tính đủ mọi dòng.');
+      if (tongFile !== null && !isNaN(tongFile) && Math.round(tongFile) !== tongMay && !loi.length) {
+        chan(tBL, tenO(dongTong, bBL.thuc_linh), 'Tổng thực lĩnh từng người cộng lại là ' + tongMay.toLocaleString('vi-VN') +
+             ' đ, dòng Tổng cộng ghi ' + Math.round(tongFile).toLocaleString('vi-VN') + ' đ.', 'Kiểm công thức dòng Tổng cộng có tính đủ mọi dòng.',
+             { loai: 'tong', tong_may: tongMay, tong_file: Math.round(tongFile) });
       }
     }
 
-    // --- ghép: người có công mà không có lương (bảng lương thiếu dòng) ---
+    // --- ghép: người có công mà không có lương (bảng lương thiếu dòng) — 2.4.0 vé 03: báo vàng, người đó không có phiếu trong file này ---
     thuTu.forEach(function (c) {
       var n = theoCCCD[c];
       if (!n.luong && !daThay[c]) {
-        chan(tBL, '', 'Người ở dòng ' + n.dong + ' trang chấm công (' + n.ten_hien + ') không có trong bảng lương.',
-             'Bảng lương có thể thiếu dòng công thức — kéo thêm dòng cho đủ người.');
+        bao(tBL, '', 'Người ở dòng ' + n.dong + ' trang chấm công (' + n.ten_hien + ') không có trong bảng lương — vẫn nhận file, nhưng người này không có phiếu. ' +
+            'Bảng lương có thể thiếu dòng công thức: kéo thêm dòng rồi tải lại nếu cần.');
       }
     });
 
@@ -437,5 +477,6 @@
                        // doc-bang-cong.js đọc cùng bố cục trang Chấm công — dùng chung, không chép bản thứ hai
                        coBan: { o: o, so: so, tron: tron, trong: trong, chuanChu: chuanChu, laNgay: laNgay, docNgay: docNgay, laChuKhongSo: laChuKhongSo,
                                 timCot: timCot, baoGom: baoGom, dungChu: dungChu, boCucChamCong: boCucChamCong, thangDep: thangDep, TEN_CA: TEN_CA,
-                                thongTinNguoi: thongTinNguoi, nhacThieuSinh: nhacThieuSinh } };
+                                thongTinNguoi: thongTinNguoi, nhacThieuSinh: nhacThieuSinh, taoChan: taoChan, diaChiO: diaChiO,
+                                khopCongTy: khopCongTy, cauSaiCongTy: cauSaiCongTy } };
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -46,8 +46,7 @@
 
   function docBangCong(cacTrang, tuyChon) {
     tuyChon = tuyChon || {};
-    var loi = [], canhBao = [];
-    function chan(trang, oTen, cau, cachSua) { loi.push({ trang: trang, o: oTen, loi: cau, cach_sua: cachSua || '' }); }
+    var loi = [], canhBao = [], chan = K.taoChan(loi, cacTrang);   // 2.4.0 vé 03: lỗi ở một ô kèm chữ đang ghi để sửa ngay trên trang
     function bao(trang, oTen, cau) { canhBao.push({ trang: trang, o: oTen, loi: cau }); }
     var kq = { ok: false, loi: loi, canh_bao: canhBao, nguoi: [], thong_tin: {} };
 
@@ -78,7 +77,7 @@
     kq.thong_tin.ky = kyFile;
     if (tuyChon.ky && kyFile !== tuyChon.ky) {
       chan(t, tenO(bc.dong_ngay, bc.cot_ngay + bc.so_ngay - 1), 'Bảng công là kỳ ' + K.thangDep(kyFile) + ', ô anh/chị chọn là kỳ ' +
-           K.thangDep(tuyChon.ky) + '.', 'Chọn đúng ô tháng trên lưới, hoặc chọn đúng file.');
+           K.thangDep(tuyChon.ky) + '.', 'Chọn đúng ô tháng trên lưới, hoặc chọn đúng file.', { loai: 'thang', ky_file: kyFile });
     }
     (cc[dongTD - 1] || []).forEach(function (v, i) {        // "NGÀY TRONG THÁNG 8/2026" mà ngày cuối là 26/09 → chỉ nhắc
       var m = /ngay trong thang\s*(\d{1,2})\s*\/\s*(\d{4})/.exec(chuanChu(v));
@@ -111,7 +110,7 @@
       }
       var cNM = F.chuanSoGiayTo(cRaw);
       if (!cNM) { chan(t, tenO(r, bc.cccd), 'Số CCCD nhà máy không hợp lệ.', 'Cần 12 số CCCD (hoặc 9 số CMND).'); continue; }
-      if (bc.ma_ct && !trong(o(cc, r, bc.ma_ct))) maCTFile[String(o(cc, r, bc.ma_ct)).trim()] = true;
+      if (bc.ma_ct && !trong(o(cc, r, bc.ma_ct))) { var tenMa = String(o(cc, r, bc.ma_ct)).trim(); if (!maCTFile[tenMa]) maCTFile[tenMa] = tenO(r, bc.ma_ct); }
       var ng = theoCCCD[cNM];
       if (!ng) {
         var fRaw = o(cc, r, bc.cccd_thuc), cThuc = trong(fRaw) || fRaw === 0 ? '' : F.chuanSoGiayTo(fRaw);
@@ -176,6 +175,12 @@
     });
     K.nhacThieuSinh(dsNguoi, t, bao);
     if (!dsNguoi.length && !loi.length) chan(t, '', 'Bảng công không có người nào.', 'Kiểm file đã điền CCCD nhà máy chưa.');
+    // 2.4.0 vé 04: bảng công nay cũng xét công ty (trước chỉ theo ô đã chọn) — khớp Tên công ty / Mã / Tên chạy lương cũ. File không có cột công ty thì không xét
+    var dsTen = Object.keys(maCTFile);
+    if (tuyChon.ma_ct && dsTen.length && (dsTen.length > 1 || !K.khopCongTy(dsTen[0], tuyChon))) {
+      var sct = K.cauSaiCongTy(dsTen, tuyChon);
+      chan(t, maCTFile[dsTen[0]], sct[0], sct[1], { loai: 'cong_ty', ma_file: dsTen.length === 1 ? dsTen[0] : '' });
+    }
     kq.nguoi = dsNguoi;
     kq.thong_tin.so_nguoi = dsNguoi.length;
     kq.thong_tin.ma_ct_file = Object.keys(maCTFile).join(', ');

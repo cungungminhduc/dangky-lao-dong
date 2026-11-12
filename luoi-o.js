@@ -470,6 +470,8 @@
       else td.innerHTML = '<input class="o-go" autocomplete="off" aria-label="' + e(c.tieu[c.tieu.length - 1]) + '" value="' + e(chuDau != null ? chuDau : (c.sua.kieu === 'so' && cu !== '' ? cu.replace('.', ',') : cu)) + '">';
       var o = td.querySelector('.o-go'), xong = false;
       o.focus(); if (chuDau == null && o.select) o.select();
+      // Bắt đầu gõ bằng một phím: con trỏ phải ở CUỐI chữ đó, không thì phím sau chen lên trước (gõ 2 rồi 5 ra 52) — 12/11/2026
+      else if (chuDau != null && o.setSelectionRange) o.setSelectionRange(o.value.length, o.value.length);
       function ket(ghi, buoc) {
         if (xong) return; xong = true;
         if (ghi) ghiO(r, c, o.value);
