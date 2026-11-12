@@ -45,6 +45,7 @@
   .bao { padding: 10px 12px; border-radius: 8px; margin: 12px 0 0; }
   .bao.do { background: #fef2f2; border: 1px solid #fecaca; color: var(--do); }
   .bao.cho { background: var(--vang); border: 1px solid #fde68a; }
+  .cap-nhat { color: var(--mo); font-size: .85rem; margin: -6px 4px 12px; }
   .dai-do { background: var(--do); color: #fff; padding: 10px 12px; border-radius: 8px; margin: 10px 0; }
   #nutXem { margin-top: 16px; }
   /* kết quả */
@@ -141,6 +142,7 @@
       <div class="ten">Của: <b id="kqTen"></b></div>
       <button id="nutKhac" class="rong">🔄 Tra người khác</button>
     </div>
+    <p id="kqCapNhat" class="cap-nhat an"></p>
     <div class="the khong-in">
       <div class="chi" style="margin-bottom:14px">👉 Chọn tháng và công ty — phiếu lương và bảng công hiện ngay bên dưới.
         Thấy sai thì bấm <b>💬 Báo sai / thắc mắc</b> ngay dưới phần đó.</div>
@@ -200,6 +202,38 @@ function goi(goiTin) {
       return { ok: false, ma: 'TAM' };
     });
 }
+// ---- Máy chủ xem (URL_XEM): có thì tra / gửi qua đó, hỏng thì quay về URL_API. URL_XEM trống = y hệt trước. ----
+var HET_GIO_XEM = 5000, NGHI_XEM = 5 * 60000;
+var XEM_HONG = { ok: false, ma: 'XEM_HONG' };        // dấu hiệu nội bộ, không bao giờ hiện ra
+var xemHongLuc = 0;                                  // lúc hỏng gần nhất (trong trang, không lưu máy)
+function coXem() { return typeof URL_XEM !== 'undefined' && !!URL_XEM; }
+/** Một lần gọi máy chủ xem, hết giờ 5 giây. Hỏng (ném / hết giờ / status >= 500 / không phải JSON) → XEM_HONG; JSON khác là câu trả lời thật. */
+function goiXem(goiTin) {
+  var dk = typeof AbortController === 'function' ? new AbortController() : null, hen;
+  goiTin.token = TOKEN_API;
+  var treo = new Promise(function (_, tu) { hen = setTimeout(function () { if (dk) dk.abort(); tu(new Error('het gio')); }, HET_GIO_XEM); });
+  var yc = fetch(URL_XEM, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(goiTin),
+                            signal: dk ? dk.signal : undefined })
+    .then(function (r) { return r.text().then(function (t) { return { s: r.status, t: t }; }); });
+  return Promise.race([yc, treo]).then(function (x) {
+    clearTimeout(hen);
+    if (x.s >= 500) return XEM_HONG;
+    try { var j = JSON.parse(x.t); return j && typeof j === 'object' ? j : XEM_HONG; } catch (er) { return XEM_HONG; }
+  }, function () { clearTimeout(hen); return XEM_HONG; });
+}
+/** Tra: máy chủ xem trước (nếu có), hỏng một lần thì gọi lại URL_API và 5 phút sau đi thẳng URL_API. */
+function traQuaMay(goiTin) {
+  if (!coXem()) return goiCoThuLai(goiTin, 0);
+  if (navigator.onLine === false) return Promise.resolve({ ok: false, ma: 'MAT_MANG', loi: 'Điện thoại đang mất mạng — bật 4G hoặc Wi-Fi rồi bấm 🔍 Xem lại.' });
+  function duPhong() { return goiCoThuLai(goiTin, 0).then(function (r) { if (r.ok) r.nguon = 'cu'; return r; }); }
+  if (xemHongLuc && Date.now() - xemHongLuc < NGHI_XEM) return duPhong();
+  return goiXem(goiTin).then(function (r) {
+    if (r === XEM_HONG) { xemHongLuc = Date.now(); return duPhong(); }
+    xemHongLuc = 0;
+    if (r.ok) r.nguon = 'xem';
+    return r;
+  });
+}
 function cho(giay) { return new Promise(function (xong) { setTimeout(xong, giay * 1000); }); }
 /** Đông người → tự thử lại, cách nhau ngẫu nhiên 2–8 giây để mọi người không cùng bấm lại một lúc. */
 function goiCoThuLai(goiTin, lan) {
@@ -224,7 +258,7 @@ function xem() {
   var nut = $('nutXem');
   nut.disabled = true; nut.textContent = '⏳ Đang tìm…';
   bao('traBao', 'cho', '⏳ Đang tìm phiếu của anh/chị… (vài giây)');
-  goiCoThuLai({ hanh_dong: 'tra_luong', so_cccd: so, ho_ten: ten }, 0).then(function (r) {
+  traQuaMay({ hanh_dong: 'tra_luong', so_cccd: so, ho_ten: ten }).then(function (r) {
     nut.disabled = false; nut.textContent = '🔍 Xem';
     if (r.ok) { bao('traBao'); $('soCccd').value = ''; $('hoTen').value = ''; hienKetQua(r); return; }
     if (CO_THE_THU_LAI[r.ma]) {
@@ -278,6 +312,9 @@ function ve() {
 
   var m = kq.muc[chon.i];
   $('kqTen').textContent = m.ten_hien;
+  var cn = /^\d{4}-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(kq.cap_nhat || '');
+  $('kqCapNhat').textContent = cn ? '🕒 Số cập nhật lúc ' + cn[3] + ' ngày ' + cn[2] + '/' + cn[1] : '';
+  $('kqCapNhat').classList.toggle('an', !cn);
   var chua = '<p class="chua">⏳ <b>Chưa công bố.</b> Kế toán công bố xong mới xem được — quay lại sau.</p>';
   $('khungLuong').innerHTML = !m.luong ? chua :
     CHUP + '<p class="phu khong-in">Cập nhật lúc ' + e(lucDep(m.luong_luc)) + '</p>' +
@@ -318,14 +355,14 @@ function hopPH(i, noi) {
   var moTai = ph.form && !ph.form.them && ph.form.i === i && ph.form.noi === noi;
   var mo = 'moForm(' + i + ',\'' + noi + '\')', h = '<div class="ph khong-in">';
   if (noi === 'khac') {
-    HM_KHAC.forEach(function (hm) { if (m.ph[hm].tt) h += viecPH(i, hm); });
+    HM_KHAC.forEach(function (hm) { var q = m.ph[hm]; if (q.tt) h += viecPH(i, hm); else h += khoiTuChoi(q); });
     return h + (moTai ? veForm(m) : '<button class="rong" onclick="' + mo + '">💬 Gửi thắc mắc khác</button>') + '</div>';
   }
   var p = m.ph[noi], k = i + '|' + noi;
   if (p.tt) h += viecPH(i, noi);
   else {
     h += '<div id="viec' + k + '">' + (p.mo ? '' : '<div class="het">⌛ Đã hết hạn báo sai ' + TEN_PH[noi] + ' (hạn ' + ngayDep(p.han) + '). Cần hỏi thêm thì gặp quản lý công ty.</div>') +
-         (ph.bao[k] || '') + '</div>';
+         khoiTuChoi(p) + (ph.bao[k] || '') + '</div>';
   }
   if (moTai) h += veForm(m);
   else if (!p.tt && p.mo) {
@@ -334,15 +371,25 @@ function hopPH(i, noi) {
   }
   return h + '</div>';
 }
+/** Tin bị từ chối khi chuyển (máy chủ xem trả p.tu_choi): mỗi tin một khối đỏ + trích tối đa 80 chữ. */
+function khoiTuChoi(p) {
+  if (!p || !p.tu_choi || !p.tu_choi.length) return '';
+  return p.tu_choi.map(function (t) {
+    var nd = String(t.nd == null ? '' : t.nd);
+    if (nd.length > 80) nd = nd.substring(0, 80) + '…';
+    return '<div class="bao do">❌ Tin lúc ' + e(lucNgan(t.luc)) + ' chưa gửi được: ' + e(t.loi) + '<div class="ghi">«' + e(nd) + '»</div></div>';
+  }).join('');
+}
 /** Một việc đã gửi: trạng thái, các tin, gửi thêm. */
 function viecPH(i, hm) {
   var m = kq.muc[i], p = m.ph[hm], k = i + '|' + hm, vai = HM[hm].vai, f = ph.form;
   var h = '<div class="viec" id="viec' + k + '"><h3>' + HM[hm].ten + '</h3><div class="tt ' + p.tt + '">' + ttPH(p.tt, p.giu === 'ke_toan' ? 'kế toán' : vai) + '</div>';
   p.tin.forEach(function (t) {
     h += '<div class="tin' + (t.ai === 'ql' ? ' ql' : '') + '"><div class="ai-gui">' + (t.ai === 'ql' ? '💼 ' + (t.vai === 'ke_toan' ? 'Kế toán' : hoaDau(vai)) : '👷 Anh/chị') +
-         ' · ' + e(lucNgan(t.luc)) + '</div>' + (t.chon ? '<div class="da-chon">Đã chọn: <b>' + t.chon.map(function (x) { return e(x); }).join(' · ') + '</b></div>' : '') +
+         ' · ' + e(lucNgan(t.luc)) + (t.cho === true ? ' · ⏳ Đang chuyển tới ' + vai : '') + '</div>' + (t.chon ? '<div class="da-chon">Đã chọn: <b>' + t.chon.map(function (x) { return e(x); }).join(' · ') + '</b></div>' : '') +
          '<p>' + e(t.nd) + '</p></div>';
   });
+  h += khoiTuChoi(p);
   if (!p.mo) {
     h += '<div class="het">' + (p.het === 'DU_TIN' ? 'Đã gửi đủ 10 tin — chờ ' + vai + ' trả lời.'
          : '⌛ Đã hết hạn gửi thêm (hạn ' + ngayDep(p.han_them) + '). Cần hỏi thêm thì gặp ' + vai + '.') + '</div>';
@@ -465,12 +512,22 @@ function guiPH() {
       return cho(2 + Math.random() * 6).then(function () { return guiCoThuLai(lan + 1); });
     });
   }
-  guiCoThuLai(0).then(function (r) {
+  // Vé nào cấp thì gửi về đúng máy chủ đó. Máy chủ xem hỏng → KHÔNG sang Apps Script (có thể đã ghi → gửi trùng).
+  var qua = kq.nguon === 'xem' && coXem();
+  if (qua) goiTin.ve = kq.ve;
+  (qua ? goiXem(goiTin) : guiCoThuLai(0)).then(function (r) {
     if (kq !== giu) return;                           // đã tra người khác / rời trang trong lúc chờ
     f.dang = 0;
+    if (r === XEM_HONG) {
+      f.bao = '<div class="bao do">Chưa chắc tin đã tới — mạng tới máy chủ chập chờn. Bấm 🔄 Tra lại, xem tin đã có trong khung chưa rồi mới gửi lại ' +
+              '(chữ anh/chị gõ vẫn giữ).<div class="hai-nut"><button onclick="traLaiGiuChu()">🔄 Tra lại</button></div></div>';
+      ve();
+      return;
+    }
     if (r.ok || r.ph) {                               // r.ph: hết hạn / đủ tin — vẽ lại đúng trạng thái máy chủ
       m.ph[hm] = r.ph; ph.form = null;
-      ph.bao[k] = r.ok ? '<div class="bao xanh">✅ Đã gửi. ' + hoaDau(HM[hm].vai) + ' sẽ trả lời ngay tại đây — lần sau tra lại để xem.</div>'
+      ph.bao[k] = r.ok ? (qua ? '<div class="bao xanh">✅ Đã gửi — ' + HM[hm].vai + ' sẽ thấy trong vài phút và trả lời ngay tại đây. Lần sau tra lại để xem.</div>'
+                              : '<div class="bao xanh">✅ Đã gửi. ' + hoaDau(HM[hm].vai) + ' sẽ trả lời ngay tại đây — lần sau tra lại để xem.</div>')
                        : '<div class="bao do">' + e(r.loi) + '</div>';
       ve();
       var o = $('viec' + k); if (o) o.scrollIntoView();
@@ -480,7 +537,7 @@ function guiPH() {
       f.bao = '<div class="bao do">' + e(r.loi) + ' Chữ anh/chị vừa gõ được giữ lại.' +
               '<div class="hai-nut"><button onclick="traLaiGiuChu()">🔄 Tra lại</button></div></div>';
     } else if (r.ma === 'THIEU_CHON' || r.ma === 'SAI_CHON') f.loi.chon = r.loi;
-    else if (CO_THE_THU_LAI[r.ma] || r.ma === 'MAT_MANG') {
+    else if (CO_THE_THU_LAI[r.ma] || r.ma === 'MAT_MANG' || (qua && r.ma === 'BAN')) {
       f.bao = '<div class="bao do">Chưa chắc đã gửi được vì mạng chập chờn hoặc máy chủ đang đông (chữ vẫn còn trong ô). ' +
               'Đợi ít phút rồi bấm Gửi lại.</div>';
     } else f.bao = '<div class="bao do">' + e(r.loi || 'Chưa gửi được — thử lại sau ít phút.') + '</div>';
@@ -522,6 +579,7 @@ function xoaHet() {
   ph = { form: null, bao: {} }; nhapCho = null;
   ['kqTen', 'dsKy', 'dsCT', 'khungLuong', 'khungCong', 'khungKhac', 'traBao'].forEach(function (id) { $(id).innerHTML = ''; });
   $('theKhac').classList.add('an');
+  $('kqCapNhat').textContent = ''; $('kqCapNhat').classList.add('an');
   $('soCccd').value = ''; $('hoTen').value = '';
   xoaLoiO('loiCccd', 'soCccd'); xoaLoiO('loiTen', 'hoTen');
   $('mKetQua').classList.add('an'); $('mTra').classList.remove('an');

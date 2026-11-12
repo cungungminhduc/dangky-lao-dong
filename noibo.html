@@ -296,7 +296,9 @@
   <section id="mLuoi" class="an">
     <div class="chi" id="chiLuoi">👉 Bấm vào <b>tên công ty</b> để mở, chọn đúng tháng, bấm <b>⬆ Tải file lương</b> (hoặc <b>🧮 Tính lương</b>) ngay trong ô tháng đó. Kiểm xong bấm
       <b>📤 Gửi lên</b> — công nhân xem được ngay. Bảng công do hành chính tải và gửi lên.</div>
+    <div id="xemTre"></div>
     <div id="luoiBao"></div>
+    <div id="xemBao"></div>
     <input id="timCT" type="search" placeholder="🔍 Gõ tên hoặc mã công ty để tìm" style="margin-bottom:12px">
     <div id="luoi"></div>
     <button id="nutLamMoi">🔄 Làm mới</button>
@@ -491,6 +493,7 @@ function taiLuoi() {
       });
     });
     trangThai.luoi = kq;
+    daiXemTre(kq);                                                      // máy chủ xem vé 05: dải đỏ khi nhịp đồng bộ trễ
     demMenuPH(kq.ph_can_lam);
     var canh = kq.ma_khong_co && kq.ma_khong_co.length
       ? 'Tài khoản có khai công ty ' + e(kq.ma_khong_co.join(', ')) + ' nhưng tab CÔNG TY chưa có — báo người quản trị thêm vào.' : '';
@@ -1082,6 +1085,7 @@ function guiBanDi(c, k, phan, nut, ng) {
       ? '✅ ' + t.icon + ' ' + e(c.ten) + ' tháng ' + thangNam(k.ky) + ' đã gửi lên từ trước (' + e(r.luc) + ' · ' + e(r.boi) + ').'
       : '✅ Đã gửi lên ' + t.ten + ' ' + e(c.ten) + ' tháng ' + thangNam(k.ky) + ' lúc ' + e(r.luc) + '. Công nhân tra CCCD + họ tên là xem được ngay.' + cauAn(r));
     taiLuoiGiuBao($('luoiBao').innerHTML);
+    if (!r.da_co) lenTrangCongNhan();                                   // đã gửi từ trước thì thôi
   });
 }
 /**
@@ -1094,6 +1098,60 @@ function congBoGuiLen(ma, ky, phan, pb, ng) {
     if (!r.ok || r.gui_len || phan !== 'cong') return r;
     return goi({ hanh_dong: 'hc_chot_cong', phien: trangThai.phien, ma_ct: ma, ky: ky, phien_ban_ky: pb }).then(function (x) { return x.ok ? r : x; });
   });
+}
+
+// ---------------- MÁY CHỦ XEM (vé 05): Gửi lên xong → đưa lên trang công nhân ----------------
+/** URL_XEM (cau-hinh-luong.js, vé 04) trống / không có → trang chạy y hệt 2.4.0: không gọi gì, không dòng báo, không dải đỏ. */
+function coXem() { return typeof URL_XEM !== 'undefined' && !!URL_XEM; }
+/** Hai hàm mỏng để bài kiểm giả đồng hồ: mili giây hiện tại · đợi ms rồi chạy tiếp. */
+function dongHoXem() { return new Date().getTime(); }
+function doiXem(ms) { return new Promise(function (xong) { setTimeout(xong, ms); }); }
+var luotXem = 0;                                                       // mỗi lần Gửi lên tăng 1; vòng cũ thấy số đổi thì dừng, không ghi #xemBao
+/** Một cú dong_bo_ngay (hết giờ 10 giây). Ném khi mất mạng / hết giờ / status ≥ 500 / không phải JSON / ok:false. */
+function goiXem() {
+  var dk = typeof AbortController === 'function' ? new AbortController() : null;
+  var hen = setTimeout(function () { if (dk) dk.abort(); }, 10000);
+  return fetch(URL_XEM, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ hanh_dong: 'dong_bo_ngay' }),
+                          signal: dk ? dk.signal : undefined })
+    .then(function (r) { if (r.status >= 500) throw new Error('xem ' + r.status); return r.text(); })
+    .then(function (t) { var j = JSON.parse(t); if (!j || j.ok !== true) throw new Error('xem ok:false'); return j; })
+    .then(function (j) { clearTimeout(hen); return j; }, function (er) { clearTimeout(hen); throw er; });
+}
+/** Hạn tổng 20 giây, tối đa 8 cú. Câu ✅ chỉ khi chính cú này báo da_chay && !con (cú bị chặn 15 giây có thể là lượt TRƯỚC lúc Gửi lên). */
+function lenTrangCongNhan() {
+  if (!coXem()) return;
+  var luot = ++luotXem, dau = dongHoXem(), so = 0;
+  var ghi = function (loai, html) { if (luot === luotXem) bao('xemBao', loai, html); };
+  ghi('cho', '⏳ Đang đưa lên trang công nhân…');
+  var vong = function () {
+    if (luot !== luotXem) return;
+    if (so >= 8 || dongHoXem() - dau >= 20000) { ghi('cho', '⏳ Sẽ lên trang công nhân trong 1–2 phút.'); return; }
+    so++;
+    goiXem().then(function (r) {
+      if (luot !== luotXem) return null;
+      if (r.da_chay && !r.con) { ghi('xanh', '✅ Công nhân đã xem được từ ' + e(String(r.luc || '').substring(11, 16)) + ' — không cần gửi riêng cho ai.'); return null; }
+      if (r.da_chay) return vong();                                    // còn gói: gọi tiếp ngay
+      return doiXem(r.dang_chay ? 3000 : 5000).then(vong);
+    }, function () {
+      ghi('do', '⚠️ Chưa lên được trang công nhân — công nhân vẫn xem được qua đường cũ. Báo Dương.');
+    });
+  };
+  vong();
+}
+function phutXem(s) {
+  var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})$/.exec(String(s));
+  return m ? Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) / 60000 : null;
+}
+/** Dải đỏ riêng (#xemTre, trên #luoiBao nên câu báo khác và taiLuoiGiuBao không đè). Tính theo hai chuỗi giờ của MÁY CHỦ; thiếu bay_gio (máy chủ cũ) → không dải. */
+function daiXemTre(kq) {
+  var h = '', bg = coXem() && kq.bay_gio ? phutXem(kq.bay_gio) : null;
+  if (bg != null) {
+    var nl = kq.ngoai_luc ? phutXem(kq.ngoai_luc) : null;
+    if (!kq.ngoai_luc) h = 'Trang công nhân chưa cập nhật trong 6 giờ qua — công nhân đang xem số cũ. Báo Dương.';
+    else if (nl != null && bg - nl > 10) h = 'Trang công nhân chưa cập nhật từ ' + kq.ngoai_luc.substring(11, 16) + ' ngày ' + kq.ngoai_luc.substring(8, 10) + '/' + kq.ngoai_luc.substring(5, 7) +
+      ' — công nhân đang xem số cũ. Báo Dương.';
+  }
+  $('xemTre').innerHTML = h ? '<div class="dai-do">' + h + '</div>' : '';
 }
 
 // ---------------- TẢI FILE ----------------
@@ -1488,6 +1546,7 @@ function guiLenFile(xoaKy, dongYGio) {
           tien(r.tong_thuc_linh) + ' đ — công nhân xem được ngay.' + (r.gio_theo_file ? ' Giờ theo file (khác bảng công hành chính đã gửi).' : '') + xoa);
     }
     taiLuoiGiuBao($('luoiBao').innerHTML);
+    lenTrangCongNhan();
   });
 }
 /**
