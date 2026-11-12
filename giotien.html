@@ -74,6 +74,24 @@
   .bao-lai b.dau{display:block;margin-bottom:4px}
   .bao-lai ul{margin:4px 0 0;padding-left:20px}
 
+  /* 3.67 — khung 🔍 đối chiếu */
+  .doi-chieu{margin:10px 14px 0;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #c9d0d8}
+  .doi-chieu b.dau{display:block;font-size:16px}
+  .dc-chi{font-size:15px;color:var(--mo);margin:2px 0 8px}
+  .dc-bao{margin:0 0 8px;padding:8px 10px;border-radius:9px;background:var(--vang-nhat);border:1px solid var(--vang-vien);color:#6b4e00;font-size:15px;white-space:pre-line}
+  #dc_tim{width:100%;min-height:46px;padding:9px 10px;font-size:16px;border:1px solid #d9dde2;border-radius:9px;margin-bottom:6px}
+  .dc-nhom{border-top:1px solid #e1e5ea}
+  .dc-nhom > button{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:8px 2px;border:0;background:none;font:inherit;font-size:15px;font-weight:700;color:var(--chu);text-align:left;cursor:pointer}
+  .dc-nhom > button .ten{flex:1}
+  .dc-so{min-width:32px;padding:1px 9px;border-radius:20px;text-align:center;font-weight:800}
+  .dc-so.xanh{background:#d4f0dd;color:#0f5a2e}
+  .dc-so.vang{background:#fdf0cc;color:#6b4e00}
+  .dc-so.xam{background:var(--xam-nut);color:#3c4753}
+  .dc-mui{color:var(--lam);font-weight:600;white-space:nowrap}
+  .dc-than ul{margin:0 0 8px;padding-left:20px;font-size:15px}
+  .dc-than li{margin:4px 0}
+  .dc-than .trong{padding:6px 0 10px;text-align:left}
+
   .loc{margin:10px 14px 0;display:flex;gap:6px;flex-wrap:wrap}
   .loc > *{flex:1 1 150px;min-width:0;min-height:46px;padding:9px 10px;font-size:16px;border:1px solid #d9dde2;border-radius:9px;background:#fff}
 
@@ -159,6 +177,14 @@
   <div id="khoi_so" class="an">
     <div class="tong" id="tong"></div>
     <div class="bao-lai an" id="bao_lai"></div>
+    <!-- 3.67: 🔍 đối chiếu giờ với danh sách tuyển — máy chủ khớp theo CCCD. Nhóm thu gọn, bấm nhóm nào mở nhóm đó, giữ ô tìm -->
+    <div class="doi-chieu an" id="doi_chieu">
+      <b class="dau" id="dc_tieu">🔍 Đối chiếu với danh sách tuyển</b>
+      <div class="dc-chi">👉 Bấm nhóm nào mở nhóm đó. Gõ tên để tìm trong mọi nhóm.</div>
+      <div class="dc-bao an" id="dc_bao"></div>
+      <input id="dc_tim" type="search" placeholder="🔍 Tìm tên trong đối chiếu" autocomplete="off" aria-label="Tìm tên trong đối chiếu">
+      <div id="dc_nhom"></div>
+    </div>
     <div class="loc">
       <input id="loc_ten" type="search" placeholder="🔍 Tìm tên" autocomplete="off" aria-label="Tìm tên">
       <select id="loc_nm" aria-label="Lọc nhà máy"><option value="">Mọi nhà máy</option></select>
@@ -355,7 +381,9 @@ function veSo() {
   $('tong').innerHTML = 'Tháng ' + thangNam(kq.thang) + ' — tổng giờ làm<span class="lon">' + so(lamTron(tongGio)) + ' giờ</span>' +
     '<div class="ba"><span>👥 ' + ds.length + ' người</span><span>✅ ' + dem.dat + ' Đạt</span><span>⏸ ' + dem.khong_dat + ' Không đạt</span>' +
     (dem[''] ? '<span>❔ ' + dem[''] + ' chưa rõ Đạt</span>' : '') + '</div>' +
-    '<div style="margin-top:4px">Kế toán cập nhật lúc ' + thoat(kq.cap_nhat_luc || '—') + (kq.loi_doi_chieu ? '<br>' + thoat(kq.loi_doi_chieu) : '') + '</div>';
+    '<div style="margin-top:4px">Kế toán cập nhật lúc ' + thoat(kq.cap_nhat_luc || '—') + gioLay(kq.lay_luc) +
+    (kq.loi_doi_chieu ? '<br>' + thoat(kq.loi_doi_chieu) : '') + '</div>';
+  veDoiChieu();
   // Quản trị: mục Cần báo lại
   if (kq.xem === 'tat_ca') {
     var lech = {}, he = 0, thieu = 0, chuaRo = dem[''];
@@ -384,6 +412,66 @@ function veSo() {
   }).join('');
   veDs();
 }
+// ============================================================
+// 3.67 — 🔍 ĐỐI CHIẾU VỚI DANH SÁCH TUYỂN (doi_chieu trong gt_lay). Đặc tả: hệ công–lương .scratch/gon-quy-trinh/DAC-TA.md mục H
+// ============================================================
+/** " · số lấy lúc 14:20 (10 phút lấy lại một lần)" — máy chủ giữ giờ của hệ lương 10 phút. */
+function gioLay(ms) {
+  if (!ms) return '';
+  var d = new Date(ms), p = function (n) { return ('0' + n).slice(-2); };
+  return ' · số lấy lúc ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ' (10 phút lấy lại một lần)';
+}
+var dcMo = {};
+// [nhóm, tên khi xem người mình tuyển, tên khi quản trị xem tất cả]; nhóm 'sai' chỉ quản trị có
+var NHOM_DC = [
+  ['khop', '✅ Khớp', '✅ Khớp'],
+  ['thieu', '⚠ Đã tuyển, đang làm mà không có giờ', '⚠ Đã tuyển, đang làm mà không có giờ'],
+  ['thua', '⚠ Có giờ ghi tên bạn mà không có trong danh sách tuyển của bạn', '⚠ Có giờ mà CCCD không có trong hệ tuyển dụng'],
+  ['sai', '', '⚠ Giờ ghi sai người tuyển (chỉ quản trị thấy)']
+];
+function boDauTim(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd'); }
+/** Một dòng trong nhóm: tên · công ty · CCCD 4 số — số giờ / việc cần làm. */
+function chuDongDC(k, r, tatCa, th) {
+  var dau = '<b>' + thoat(r.ho_ten) + '</b>' + (r.cong_ty ? ' · ' + thoat(r.cong_ty) : '') + ' · ' + thoat(r.cccd4 || 'thiếu CCCD');
+  if (k === 'khop') return dau + ' — ' + so(r.gio) + ' giờ ' + NHAN_DAT[khoaDat(r)];
+  if (k === 'thieu') return dau + ' — 👉 Hỏi lại nhà máy hoặc kế toán: người này có đi làm tháng ' + th + ' không.';
+  if (k === 'thua') return dau + ' — ' + so(r.gio) + ' giờ — 👉 ' + (!r.cccd4 ? 'file kế toán thiếu CCCD: báo kế toán điền số CCCD.'
+    : tatCa ? 'nhập bù vào tool, hoặc báo kế toán sửa CCCD.' : 'bạn tuyển mà chưa nhập vào tool, hoặc kế toán ghi nhầm người tuyển.');
+  return dau + ' — ' + so(r.gio) + ' giờ — giờ ghi "' + thoat(r.ghi_gio) + '", tool ghi "' + thoat(r.ghi_tool) + '".';
+}
+function veDoiChieu() {
+  var kq = duLieu, dc = kq.doi_chieu;
+  if (!dc) { $('doi_chieu').classList.add('an'); return; }        // máy chủ bản cũ: không có khung
+  $('doi_chieu').classList.remove('an');
+  var tatCa = kq.xem === 'tat_ca', th = Number(kq.thang.substring(5, 7)), bao = [];
+  $('dc_tieu').textContent = '🔍 Đối chiếu với danh sách tuyển · Tháng ' + thangNam(kq.thang);
+  if (dc.loi) bao.push('⚠ ' + dc.loi);
+  if (dc.nhom && !dc.co_ma_ct) bao.push('⚠ Hệ lương chưa lên bản mới: chưa biết được ai đang làm mà không có giờ.');
+  if (dc.ct_lech && dc.ct_lech.length) bao.push('⚠ Mã công ty bên hệ lương không khớp công ty nào bên tuyển dụng: ' + dc.ct_lech.join(', ') +
+    '. Đặt Mã giống nhau ở hai hệ thì mới báo được ai thiếu giờ ở công ty đó.');
+  $('dc_bao').textContent = bao.join('\n');
+  $('dc_bao').classList.toggle('an', !bao.length);
+  $('dc_tim').classList.toggle('an', !dc.nhom);
+  if (!dc.nhom) { $('dc_nhom').innerHTML = ''; return; }
+  var q = boDauTim($('dc_tim').value.trim());
+  $('dc_nhom').innerHTML = NHOM_DC.filter(function (n) { return dc.nhom[n[0]] && (tatCa ? n[2] : n[1]); }).map(function (n) {
+    var k = n[0], ds = dc.nhom[k].filter(function (r) { return !q || boDauTim(r.ho_ten).indexOf(q) >= 0; });
+    var mo = !!dcMo[k] || (!!q && ds.length > 0), lop = k === 'khop' ? 'xanh' : ds.length ? 'vang' : 'xam';
+    return '<div class="dc-nhom"><button type="button" data-dc="' + k + '" aria-expanded="' + mo + '"><span class="ten">' + (tatCa ? n[2] : n[1]) + '</span>' +
+      '<span class="dc-so ' + lop + '">' + ds.length + '</span><span class="dc-mui">' + (mo ? '▲ Thu gọn' : '▼ Mở') + '</span></button>' +
+      (mo ? '<div class="dc-than">' + (ds.length ? '<ul>' + ds.map(function (r) { return '<li>' + chuDongDC(k, r, tatCa, th) + '</li>'; }).join('') + '</ul>'
+        : '<div class="trong">Không có ai.</div>') + '</div>' : '') + '</div>';
+  }).join('');
+}
+$('dc_nhom').addEventListener('click', function (e) {
+  var b = e.target.closest('button[data-dc]');
+  if (!b) return;
+  var k = b.getAttribute('data-dc');
+  dcMo[k] = !dcMo[k];
+  veDoiChieu();
+});
+$('dc_tim').addEventListener('input', veDoiChieu);
+
 function dangHien() {
   if (!duLieu || !duLieu.ds) return [];
   var q = $('loc_ten').value.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');

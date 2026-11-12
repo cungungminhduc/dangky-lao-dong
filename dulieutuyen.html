@@ -86,6 +86,15 @@
   .hang input,.hang select{width:100%;min-height:46px;padding:9px 10px;font-size:16px;border:1px solid #d9dde2;border-radius:9px;background:#fff}
   .hang button{flex:0 0 auto;min-height:46px;padding:9px 16px;border:0;border-radius:9px;background:var(--lam);color:#fff;font-weight:700;font-size:15px;cursor:pointer}
   .loc-ghi{font-size:15px;color:var(--mo);margin-top:6px}
+  /* 3.67 — cột ⏱ Giờ: số giờ + Đạt; "⚠ Không có giờ" vàng; công ty chưa có giờ xám (không báo nhầm) */
+  .gio-ghi{white-space:pre-line}
+  .hang button.nut-thieu{background:#fff;color:#6b4e00;border:1px solid var(--vang-vien)}
+  .hang button.nut-thieu.dang{background:#fdf0cc;border-color:#d9b44a}
+  .hang button.nut-thieu.dang::before{content:'✓ '}
+  .gio-dat{color:#17663a;font-weight:600}
+  .gio-khong{color:#8a1c13;font-weight:600}
+  .gio-ro,.gio-ct{color:var(--mo)}
+  .gio-thieu{display:inline-block;padding:1px 9px;border-radius:20px;background:#fdf0cc;color:#6b4e00;font-weight:600}
 
   /* Tổng kiểu SUBTOTAL — luôn ở TRÊN danh sách */
   .tong{margin:8px 14px 0;padding:10px 12px;border-radius:12px;background:var(--lam-nhat);border:1px solid #c9dbf5;color:#163f7a;font-size:15px}
@@ -313,6 +322,12 @@
       </select>
     </div>
     <div class="loc-ghi" id="loc_ghi">Tính theo ngày đăng ký gần nhất.</div>
+    <!-- 3.67: cột ⏱ Giờ — giờ kế toán đã chốt tháng nào + lọc người đang làm mà không có giờ -->
+    <div class="hang an" id="hang_gio">
+      <select id="loc_gio" aria-label="Xem giờ làm tháng nào"></select>
+      <button type="button" id="nut_thieu_gio" class="nut-thieu an" aria-pressed="false">⚠ Thiếu giờ (0)</button>
+    </div>
+    <div class="loc-ghi gio-ghi an" id="gio_ghi"></div>
   </div>
   <div id="ds_loi" class="loi an"></div>
 
@@ -629,8 +644,71 @@ function taiDanhSach() {
     if (ctCo[cu]) $('loc_ct').value = cu;
     $('loc_ghi').textContent = 'Tính theo ngày đăng ký gần nhất' + (kq.khoang === 'tu_den' ? ' · ' + ngayVN(kq.tu) + ' → ' + ngayVN(kq.den) : '') + '.';
     ve();
+    taiGio(thangGio);     // 3.67: cột ⏱ Giờ tải SAU danh sách, không phủ màn — danh sách không phải chờ hệ lương
   }, function (e) { hien('man_ds'); hienLoiDS(cauLoi(e) + ' Bấm lại nút khoảng ngày để thử lại.'); });
 }
+
+// ============================================================
+// 3.67 — CỘT ⏱ GIỜ (cú dlt_gio). Đặc tả: hệ công–lương .scratch/gon-quy-trinh/DAC-TA.md mục H
+// ============================================================
+// Giờ kế toán đã chốt tháng ở hệ công–lương, máy chủ khớp theo số CCCD; trang chỉ nhận ô của từng phiếu (theo_ma) / lượt (theo_lam):
+// { gio, dat } · { thieu } (đang làm ở công ty đã có giờ mà không có dòng) · { ct_chua } (công ty chưa có giờ). Không cất gì vào máy.
+var gioDL = null, thangGio = '', locThieu = false;
+var NHAN_DAT_GIO = { dat: '<span class="gio-dat">✅ Đạt</span>', khong_dat: '<span class="gio-khong">❌ Không đạt</span>', '': '<span class="gio-ro">chưa rõ Đạt</span>' };
+function taiGio(thang) {
+  ghiGio('⏳ Đang lấy giờ làm từ hệ lương…');
+  return goiAPI({ token: TOKEN_API, hanh_dong: 'dlt_gio', thang: thang || '' }, '', false).then(function (kq) {
+    if (!kq || kq.ma === 'HET_PHIEN') return;
+    if (!kq.ok) { gioDL = null; locThieu = false; ghiGio('⚠ Chưa lấy được giờ làm: ' + (kq.loi || 'máy chủ không trả số.')); ve(); return; }
+    thangGio = kq.thang || '';
+    gioDL = kq.co_thang ? kq : null;
+    if (!gioDL || !gioDL.co_ma_ct) locThieu = false;
+    var ds = kq.cac_thang || [];
+    $('loc_gio').innerHTML = ds.map(function (t) {
+      return '<option value="' + thoat(t.thang) + '"' + (t.thang === kq.thang ? ' selected' : '') + '>⏱ Giờ tháng ' + thangNam(t.thang) + '</option>';
+    }).join('');
+    $('hang_gio').classList.toggle('an', !ds.length);
+    ghiGio(chuGhiGio(kq));
+    ve();
+  }, function (e) { gioDL = null; locThieu = false; ghiGio('⚠ Chưa lấy được giờ làm: ' + cauLoi(e) + ' Bấm lại nút khoảng ngày để thử lại.'); ve(); });
+}
+function ghiGio(chu) { $('gio_ghi').textContent = chu; $('gio_ghi').classList.toggle('an', !chu); }
+function thangNam(t) { return t ? Number(t.slice(5, 7)) + '/' + t.slice(0, 4) : ''; }
+/** Dòng chữ dưới ô chọn tháng: số này là gì, lấy lúc nào, "⚠ Không có giờ" nghĩa là gì, hệ lương cũ thì nói thẳng. */
+function chuGhiGio(kq) {
+  if (!kq.co_thang) return (kq.cac_thang || []).length ? '⏱ Tháng ' + thangNam(kq.thang) + ' kế toán chưa có giờ.' : '⏱ Kế toán chưa có giờ tháng nào.';
+  var luc = kq.lay_luc ? new Date(kq.lay_luc) : null;
+  return '⏱ Giờ T' + Number(kq.thang.slice(5, 7)) + ' = giờ kế toán đã chốt, khớp theo số CCCD' +
+    (luc ? ' · số lúc ' + hai(luc.getHours()) + ':' + hai(luc.getMinutes()) + ' (10 phút lấy lại một lần)' : '') + '.\n' +
+    (kq.co_ma_ct ? '⚠ Không có giờ = người đang làm ở công ty đã có giờ tháng này mà kế toán không có dòng của người đó — hỏi lại nhà máy hoặc kế toán.'
+      : '⚠ Hệ lương chưa lên bản mới: chỉ hiện số giờ, chưa báo được ai thiếu giờ.') +
+    (kq.loi ? '\n⚠ ' + kq.loi : '');
+}
+/** Cột đang hiện của một chế độ: bỏ cột ⏱ Giờ khi chưa có số giờ (hệ chưa nối, tháng chưa có giờ). */
+function cotHien(cd) { return COT_THEO_CHE_DO[cd].filter(function (c) { return c !== '⏱ Giờ' || !!gioDL; }); }
+function tenCot(c) { return c === '⏱ Giờ' && gioDL ? '⏱ Giờ T' + Number(gioDL.thang.slice(5, 7)) : c; }
+function oGioCua(r) {
+  if (!gioDL) return null;
+  return (cheDo === 'tuyen' ? gioDL.theo_ma[r.ma] : r.lam && gioDL.theo_lam[r.lam.ma_lam]) || null;
+}
+function soGio(g) { return String(Math.round(g * 100) / 100).replace('.', ','); }
+function chuGio(o) {
+  if (!o) return '';
+  if (o.gio !== undefined) return '<b>' + soGio(o.gio) + '</b> giờ ' + (NHAN_DAT_GIO[o.dat] || NHAN_DAT_GIO['']);
+  if (o.thieu) return '<span class="gio-thieu">⚠ Không có giờ</span>';
+  return '<span class="gio-ct">Công ty chưa có giờ</span>';
+}
+function oGio(r) { return gioDL ? '<td>' + chuGio(oGioCua(r)) + '</td>' : ''; }
+/** Nút lọc "⚠ Thiếu giờ (N)": N đếm trong chế độ đang xem, chưa tính các ô lọc khác. Hệ lương cũ (không biết ai thiếu) → ẩn. */
+function capNhatNutThieu() {
+  var co = !!(gioDL && gioDL.co_ma_ct && duLieu), n = co ? nguonCheDo().filter(function (r) { return (oGioCua(r) || {}).thieu; }).length : 0;
+  $('nut_thieu_gio').classList.toggle('an', !co);
+  $('nut_thieu_gio').classList.toggle('dang', locThieu);
+  $('nut_thieu_gio').setAttribute('aria-pressed', locThieu);
+  $('nut_thieu_gio').textContent = '⚠ Thiếu giờ (' + n + ')';
+}
+$('loc_gio').addEventListener('change', function () { taiGio(this.value); });
+$('nut_thieu_gio').addEventListener('click', function () { locThieu = !locThieu; ve(); });
 function hienLoiDS(t) { $('ds_loi').textContent = t; $('ds_loi').classList.remove('an'); }
 
 /** Một lượt làm của sổ → dòng bảng. `ma` = mã kho của phiếu gốc, nên chọn → Đăng ký lại / Sao chép Excel dùng y như cũ. */
@@ -640,15 +718,17 @@ function dongLam(l) {
            tt_nhan: l.trang_thai === 'da_nghi' ? 'Đã nghỉ ' + ngayVN(l.ngay_nghi) : 'Đang làm từ ' + ngayVN(l.ngay_vao_lam),
            lam: l };
 }
+function nguonCheDo() {
+  return cheDo === 'tuyen' ? (duLieu.ds || []) : (duLieu.lam || []).filter(function (l) { return l.trang_thai === cheDo; }).map(dongLam);
+}
 function locDong() {
   if (!duLieu) return [];
   var ten = khoaTim($('loc_ten').value), ct = $('loc_ct').value, tt = cheDo === 'tuyen' ? $('loc_tt').value : '';
-  var nguon = cheDo === 'tuyen' ? (duLieu.ds || [])
-    : (duLieu.lam || []).filter(function (l) { return l.trang_thai === cheDo; }).map(dongLam);
-  return nguon.filter(function (r) {
+  return nguonCheDo().filter(function (r) {
     if (ct && r.ma_ct !== ct) return false;
     if (tt && r.tt !== tt) return false;
     if (ten && khoaTim(r.ho_ten).indexOf(ten) < 0) return false;
+    if (locThieu && !(oGioCua(r) || {}).thieu) return false;     // 3.67: chỉ người ⚠ Không có giờ
     return true;
   });
 }
@@ -705,10 +785,12 @@ $('tong').addEventListener('click', function (e) {
 });
 
 // Cột nút "Việc" đứng NGAY SAU Họ tên (Dương 25/10/2026): trước đây nằm cuối bảng, phải kéo ngang mới bấm được.
+// 3.67: cột ⏱ Giờ ngay sau Tình trạng (Đã tuyển) / ngay sau Việc (Đang làm, Đã nghỉ — hai chế độ này không có cột Tình trạng).
+// Chưa có số giờ thì cột ẩn (cotHien).
 var COT_THEO_CHE_DO = {
-  tuyen:    ['Việc', 'Tình trạng', 'Năm sinh', 'SĐT', 'CCCD', 'Công ty', 'Ngày hẹn', 'Người tuyển'],
-  dang_lam: ['Việc', 'Năm sinh', 'SĐT', 'Công ty', 'Ngày vào', 'Số ngày', 'Ghi chú'],
-  da_nghi:  ['Việc', 'Năm sinh', 'SĐT', 'Công ty', 'Ngày vào', 'Ngày nghỉ', 'Lý do', 'Ghi chú']
+  tuyen:    ['Việc', 'Tình trạng', '⏱ Giờ', 'Năm sinh', 'SĐT', 'CCCD', 'Công ty', 'Ngày hẹn', 'Người tuyển'],
+  dang_lam: ['Việc', '⏱ Giờ', 'Năm sinh', 'SĐT', 'Công ty', 'Ngày vào', 'Số ngày', 'Ghi chú'],
+  da_nghi:  ['Việc', '⏱ Giờ', 'Năm sinh', 'SĐT', 'Công ty', 'Ngày vào', 'Ngày nghỉ', 'Lý do', 'Ghi chú']
 };
 // Dòng "👉" ngay trên danh sách: nói thẳng việc cần làm ở từng chế độ xem — người mới mở không cần ai chỉ.
 var GOI_Y = {
@@ -770,14 +852,14 @@ function oTheoCheDo(r, i) {
   var dauO = '<td>' + nutViec(r, i) + canhBaoCua(r) + dongChoCua(r) + '</td>';
   if (cheDo === 'tuyen') {
     return dauO +
-      '<td><span class="nhan-tt tt-' + thoat(r.tt) + '">' + thoat(r.tt_nhan) + '</span></td>' +
+      '<td><span class="nhan-tt tt-' + thoat(r.tt) + '">' + thoat(r.tt_nhan) + '</span></td>' + oGio(r) +
       '<td>' + thoat(r.nam_sinh) + '</td>' + oSdt(r) + '<td>' + thoat(r.cccd4) + '</td>' +
       '<td>' + thoat(r.ten_cong_ty) + (r.ca ? ' · ' + thoat(r.ca) : '') + '</td>' +
       '<td>' + thoat(r.ngay_hen) + '</td>' +
       '<td>' + thoat(r.nguoi_tuyen) + '</td>';
   }
   var l = r.lam, ghi = thoat(l.ghi_chu || '');
-  var dau = '<td>' + thoat(l.nam_sinh) + '</td>' + oSdt(l) + '<td>' + thoat(l.ten_cong_ty) + '</td><td>' + ngayVN(l.ngay_vao_lam) + '</td>';
+  var dau = oGio(r) + '<td>' + thoat(l.nam_sinh) + '</td>' + oSdt(l) + '<td>' + thoat(l.ten_cong_ty) + '</td><td>' + ngayVN(l.ngay_vao_lam) + '</td>';
   if (cheDo === 'dang_lam') return dauO + dau + '<td>' + thoat(l.so_ngay) + '</td><td style="white-space:normal">' + ghi + '</td>';
   return dauO + dau + '<td>' + ngayVN(l.ngay_nghi) + '</td>' +
     '<td style="white-space:normal">' + thoat(l.ly_do_nghi) + '</td><td style="white-space:normal">' + ghi + '</td>';
@@ -804,6 +886,8 @@ function veThe(r, i) {
   var dong3 = [r.sdt ? '<a href="tel:' + thoat(r.sdt) + '">📞 ' + thoat(r.sdt) + '</a>' : 'chưa có SĐT',
                r.nam_sinh ? 'sinh ' + thoat(r.nam_sinh) : '', cheDo === 'tuyen' && r.cccd4 ? 'CC ' + thoat(r.cccd4) : '']
     .filter(function (x) { return x; });
+  var g = oGioCua(r);      // 3.67: dòng ⏱ giờ ngay dưới SĐT (thẻ không có cột)
+  if (g) them = '<div class="the-dong">⏱ Giờ T' + Number(gioDL.thang.slice(5, 7)) + ': ' + chuGio(g) + '</div>' + them;
   return '<div class="the' + (chon[r.ma] ? ' chon' : '') + (viecCua(r) ? ' co-viec' : '') + '">' +
     '<div class="the-dau"><label class="o-tich"><input type="checkbox" data-ma="' + thoat(r.ma) + '"' + (chon[r.ma] ? ' checked' : '') +
       ' aria-label="Chọn ' + thoat(r.ho_ten) + '"></label><b class="the-ten">' + thoat(r.ho_ten) + '</b>' + nhan + '</div>' +
@@ -817,9 +901,10 @@ function ve() {
   var thay = {};
   dangHien.forEach(function (r) { thay[r.ma] = true; });
   Object.keys(chon).forEach(function (m) { if (!thay[m]) delete chon[m]; });   // ẩn khỏi lọc = bỏ chọn, tránh đăng ký người không nhìn thấy
-  var tr = $('ds_tieu_de'), cot = COT_THEO_CHE_DO[cheDo];
+  var tr = $('ds_tieu_de'), cot = cotHien(cheDo);
   while (tr.children.length > 1) tr.removeChild(tr.lastChild);          // giữ ô "chọn tất cả" cùng sự kiện của nó
-  tr.insertAdjacentHTML('beforeend', '<th class="c1">Họ tên</th>' + cot.map(function (c) { return '<th>' + c + '</th>'; }).join(''));
+  tr.insertAdjacentHTML('beforeend', '<th class="c1">Họ tên</th>' + cot.map(function (c) { return '<th>' + tenCot(c) + '</th>'; }).join(''));
+  capNhatNutThieu();
   $('tong').innerHTML = duLieu ? dungTong(dangHien) : '—';
   $('goi_y').innerHTML = GOI_Y[cheDo];
   if (!dangHien.length) {
