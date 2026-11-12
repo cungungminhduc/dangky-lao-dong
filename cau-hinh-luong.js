@@ -10,3 +10,5 @@
  */
 var URL_API   = 'https://script.google.com/macros/s/AKfycbya01P7jN99F9P9aEplMYp1iVUcOxlcwHelKD_QAR0dy_mhoRfINXnWB_jkiRG8usBikg/exec';
 var TOKEN_API = 'b51278eeb23144dca2ece165';
+// URL_XEM = link máy chủ xem trên Cloudflare. Xoá link (để '') là lùi ngay về gọi thẳng Apps Script.
+var URL_XEM = 'https://cong-luong-may-chu-xem.video-qr.workers.dev';
