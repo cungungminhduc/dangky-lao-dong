@@ -35,10 +35,14 @@ var VP_MENU = [
     { id: 'quet_the_don', ten: 'Quét thẻ đón', bt: '📷', mt: 'Đánh dấu người đã đến', cu: 'doncong.html' },
     { id: 'danh_sach_goi', ten: 'Danh sách gọi', bt: '📞', mt: 'Gọi lao động · báo vào làm · lấy dữ liệu', cu: 'danhsach.html', can: 'van_hanh' },
     { id: 'phan_cong_don', ten: 'Phân công đón', bt: '👥', mt: 'Ai phụ trách nhà máy nào', cu: 'phancong.html', can: 'phan_cong' },
+    // 3.68 — thêm / khoá người ngay trên trang: trưởng nhóm với đội mình, nhân viên với cộng tác viên của mình (mục trong khung)
+    { id: 'doi_cua_toi', ten: 'Đội của tôi', bt: '📇', mt: 'Thêm người vào đội · đặt lại mật khẩu · khoá', can: 'truong_nhom' },
+    { id: 'ctv_cua_toi', ten: 'Cộng tác viên của tôi', bt: '🤝', mt: 'Thêm CTV · đặt lại mật khẩu · khoá', can: 'nv_van_hanh' },
     { id: 'bao_quan_so', ten: 'Báo quân số', bt: '📊', mt: 'Số người đi làm từng công ty', cu: 'quanso.html', can: 'van_hanh' },
-    { id: 'du_lieu_tuyen', ten: 'Dữ liệu tuyển', bt: '📁', mt: 'Người mình đã tuyển · đăng ký lại', cu: 'dulieutuyen.html', can: 'du_lieu_tuyen' },
+    // 3.68: 'xem_tuyen' = như 'du_lieu_tuyen' + cộng tác viên (Đối tác, chỉ xem — máy chủ chặn ghi). Nhập bù vẫn chỉ Vận hành.
+    { id: 'du_lieu_tuyen', ten: 'Dữ liệu tuyển', bt: '📁', mt: 'Người mình đã tuyển · đăng ký lại', cu: 'dulieutuyen.html', can: 'xem_tuyen' },
     { id: 'nhap_bu', ten: 'Nhập bù', bt: '➕', mt: 'Người đã đi làm mà chưa đăng ký', cu: 'nhapbu.html', can: 'du_lieu_tuyen' },
-    { id: 'gio_lam', ten: 'Giờ làm người tôi tuyển', bt: '⏱', mt: 'Giờ từng tháng theo file kế toán', cu: 'giotien.html', can: 'du_lieu_tuyen' },
+    { id: 'gio_lam', ten: 'Giờ làm người tôi tuyển', bt: '⏱', mt: 'Giờ từng tháng theo file kế toán', cu: 'giotien.html', can: 'xem_tuyen' },
     { id: 'ho_so_scan', ten: 'Hồ sơ scan', bt: '🗂️', mt: 'Bản scan căn cước tự xếp thư mục (máy tính)', cu: 'hososcan.html', can: 'van_hanh' }] },
   { id: 'ke_toan', ten: 'Kế toán', bt: '💰', ghi: 'Chỉ dành cho kế toán: bảng giá, file giờ. Đăng nhập riêng bằng tài khoản '
     + 'công–lương, không dùng mật khẩu tuyển dụng.', viec: [
@@ -46,8 +50,10 @@ var VP_MENU = [
   { id: 'bao_cao', ten: 'Báo cáo', bt: '📈', ghi: 'Số liệu tuyển dụng — trưởng nhóm và quản trị.', viec: [
     { id: 'bieu_do', ten: 'Biểu đồ tuyển dụng', bt: '📈', mt: 'Biến động tuyển dụng · quân số · nhân viên', cu: 'bieudo.html', can: 'phan_cong' }] },
   // 3.65 (vé 05): chỉ quản trị. Mục nằm trong khung trang chủ (không có `cu`).
-  { id: 'quan_tri', ten: 'Quản trị', bt: '⚙️', ghi: 'Chỉ quản trị. Xem để soát — sửa vẫn ở Sheet.', viec: [
-    { id: 'tai_khoan_quyen', ten: 'Tài khoản & quyền', bt: '🛡️', mt: 'Ai đăng nhập được · phòng · chức vụ — chỉ xem', can: 'quan_tri' }] }
+  // 3.68: 🏭 Nhà máy — thêm / sửa nhà máy ngay trên trang (không mở Sheet).
+  { id: 'quan_tri', ten: 'Quản trị', bt: '⚙️', ghi: 'Chỉ quản trị. Thêm, sửa nhà máy và tài khoản ngay trên trang.', viec: [
+    { id: 'quan_ly_nha_may', ten: 'Nhà máy', bt: '🏭', mt: 'Thêm · sửa nhà máy · lấy link đăng ký', can: 'quan_tri' },
+    { id: 'tai_khoan_quyen', ten: 'Tài khoản & quyền', bt: '🛡️', mt: 'Thêm · sửa · khoá tài khoản · đặt lại mật khẩu', can: 'quan_tri' }] }
 ];
 var VP_KHOA_VE = 'phien_ds_v3';   // CHUNG vé với trang chủ + các trang có đăng nhập
 
@@ -86,11 +92,16 @@ function vpThayViec_(v, coVe, q) {
   // (chỉ thấy mục công khai, như luật 3.64). Chưa biết quyền → hiện, trang hộp tự kiểm.
   if (v.can === 'dang_nhap') return !tk || (tk.phong !== 'doi_tac' && tk.phong !== '');
   if (v.can === 'quan_tri') return !!(tk && tk.la_quan_tri);   // 3.65 — chưa rõ quyền thì CHƯA hiện (như ô Kế toán của trang chủ)
+  // 3.68 — chưa rõ quyền thì chưa hiện (như quản trị)
+  var vhTK = !!tk && !tk.la_quan_tri && (tk.phong === undefined || tk.phong === 'van_hanh');
+  if (v.can === 'truong_nhom') return vhTK && !!tk.la_truong_nhom;
+  if (v.can === 'nv_van_hanh') return vhTK && !tk.la_truong_nhom;
   if (!tk) return true;
   var vanHanh = !!tk.la_quan_tri || tk.phong === undefined || tk.phong === 'van_hanh';
+  if (v.can === 'xem_tuyen' && tk.phong === 'doi_tac') return q.xemDlt !== false;   // 3.68 — cộng tác viên chỉ xem
   if (!vanHanh) return false;
   if (v.can === 'phan_cong') return !!tk.phan_cong_duoc;
-  if (v.can === 'du_lieu_tuyen') return q.xemDlt !== false;
+  if (v.can === 'du_lieu_tuyen' || v.can === 'xem_tuyen') return q.xemDlt !== false;
   return v.can === 'van_hanh';
 }
 /* ---------- 3.66 — con số của ô 🔔 Thông báo của tôi: hỏi THẲNG máy chủ hộp thông báo (cú tb_dem), không qua máy chủ tuyển dụng ----------

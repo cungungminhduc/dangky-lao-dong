@@ -333,6 +333,8 @@ function oDuocXem(tk, xemDlt) {
   return O_VIEC.filter(function (o) {
     if (o.can === 'quan_tri') return !!(tk && (tk.la_quan_tri || tk.phong === 'ke_toan'));   // chưa rõ quyền thì chưa hiện
     if (!o.can || !tk) return true;
+    // 3.68 — cộng tác viên (Đối tác) chỉ xem người mình tuyển: có ô Dữ liệu tuyển (trang tự giấu nút ghi), không ô nào khác
+    if (o.can === 'du_lieu_tuyen' && tk.phong === 'doi_tac') return xemDlt !== false;
     if (!vanHanh) return false;
     if (o.can === 'phan_cong') return !!tk.phan_cong_duoc;
     if (o.can === 'du_lieu_tuyen') return xemDlt !== false;

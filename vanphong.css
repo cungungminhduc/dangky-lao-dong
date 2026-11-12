@@ -108,6 +108,22 @@ button.vp-nut-chinh:disabled{opacity:.7;cursor:wait}
 .vp-tot{color:#157a41;font-weight:600}
 .vp-xau{color:#a5281b;font-weight:600}
 
+/* 3.68 — khai báo từ trang: hộp thêm / sửa, nút chọn một trong hai, ô tích, khung chép gửi, nút trong bảng */
+.vp-hop .vp-nhom-ten{margin-bottom:4px}
+.vp-chon{display:flex;flex-wrap:wrap;gap:8px}
+.vp-chon .vp-nut{flex:1 1 140px;margin:0}
+.vp-chon .vp-nut[aria-pressed="true"]{background:var(--xanh-nhat,#f2f9f4);border-color:var(--xanh,#1f9d55);color:#157a41}
+.vp-tich{display:flex;align-items:center;gap:10px;min-height:48px;margin-top:10px;font-weight:600;cursor:pointer}
+.vp-tich input{width:22px;height:22px;flex:none}
+.vp-gui{white-space:pre-wrap;word-break:break-all;background:#fff;border:1px dashed #9fb3a6;border-radius:8px;padding:10px 12px;margin:8px 0;
+  font-family:ui-monospace,Consolas,monospace;font-size:15px;color:var(--chu,#1f2933);user-select:all}
+.vp-nut-o{margin-top:0;flex-wrap:nowrap}
+.vp-nut-o .vp-nut{margin:0;padding:8px 10px;white-space:nowrap}
+.bc-the .vp-nut-o{flex-wrap:wrap}
+.vp-kem{flex-wrap:nowrap;margin-top:0;max-width:420px}
+.vp-kem .vp-o-go{flex:1 1 auto;min-width:0;max-width:none}
+.vp-kem .vp-nut{margin:0;flex:none}
+
 /* ---- Khuôn bảng chung (3.65, vé 04 — bang-chung.js) ---- */
 .bc-cong-cu{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 10px}
 .bc-loc{display:flex;flex-direction:column;gap:4px;min-width:180px}

@@ -163,6 +163,10 @@
   .thanh{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--vien);padding:9px 12px;box-shadow:0 -3px 12px rgba(0,0,0,.08);z-index:20}
   .thanh-gui,.thanh-chon{max-width:980px;margin:0 auto}
   .thanh-gui{padding-bottom:9px;margin-bottom:9px;border-bottom:1px solid var(--vien)}
+  /* 3.68 — cộng tác viên chỉ xem: không ô tích, không thanh chọn / gửi, không nút việc, không lối Nhập bù (máy chủ cũng chặn) */
+  body.chi-xem .o-tich, body.chi-xem .chon-tat, body.chi-xem #thanh_chon, body.chi-xem #thanh_gui, body.chi-xem .nut-dong,
+  body.chi-xem a.nut-nhap-bu[href="nhapbu.html"]{display:none!important}
+  .chi-xem-nhan{color:var(--mo);font-size:15px;white-space:nowrap}
   .thanh-gui .tt-gui{font-size:15px;color:#14532d}
   .hai-gui{display:flex;gap:8px;margin-top:6px}
   .hai-gui button{min-height:48px;border:0;border-radius:11px;font-size:16px;font-weight:700;cursor:pointer}
@@ -622,6 +626,8 @@ function taiDanhSach() {
       return;
     }
     duLieu = kq;
+    // 3.68 — cộng tác viên (Đối tác) chỉ xem: giấu mọi nút ghi (CSS .chi-xem); máy chủ cũng chặn
+    document.body.classList.toggle('chi-xem', !!kq.chi_xem);
     if (!daNhoViec) { daNhoViec = true; nhoLaiViec(); }    // việc chờ của lần mở trước (cùng tài khoản)
     $('ds_ai').textContent = (kq.ten_nguoi || '') + ' · Tên bạn hay ghi: ' + (kq.ten_tuyen || []).join(', ');
     var nhac = [];
@@ -803,6 +809,7 @@ function nutDong(viec, i, chu, lop) { return '<button type="button" class="nut-d
 function maLamCua(r) { return r.lam ? r.lam.ma_lam : (r.ma_lam || ''); }
 /** Nút việc của một người theo chế độ xem — dùng chung bảng và thẻ. */
 function nutViec(r, i) {
+  if (duLieu && duLieu.chi_xem) return '<span class="chi-xem-nhan">👁 Chỉ xem</span>';   // 3.68 — cộng tác viên
   if (cheDo === 'tuyen') {
     // Đang làm → nút Nghỉ việc; còn lại → nút Đã đi làm (sổ tự chặn nếu người đó đang làm ở lượt khác)
     return r.tt === 'dang_lam' && r.ma_lam ? nutDong('nghi', i, '🚪 Báo nghỉ việc', 'do') : nutDong('vao', i, '✅ Báo đã đi làm');
@@ -906,7 +913,9 @@ function ve() {
   tr.insertAdjacentHTML('beforeend', '<th class="c1">Họ tên</th>' + cot.map(function (c) { return '<th>' + tenCot(c) + '</th>'; }).join(''));
   capNhatNutThieu();
   $('tong').innerHTML = duLieu ? dungTong(dangHien) : '—';
-  $('goi_y').innerHTML = GOI_Y[cheDo];
+  $('goi_y').innerHTML = duLieu && duLieu.chi_xem
+    ? '👉 Danh sách người bạn đã tuyển và tình trạng của họ. Trang này <b>chỉ để xem</b> — cần sửa gì thì báo nhân viên phụ trách bạn.'
+    : GOI_Y[cheDo];
   if (!dangHien.length) {
     var trong = cheDo === 'tuyen'
       ? (duLieu && duLieu.ds && duLieu.ds.length ? 'Không ai khớp bộ lọc.' : 'Chưa có người nào bạn tuyển trong khoảng ngày này. Thử "30 ngày" hoặc "Tất cả".')

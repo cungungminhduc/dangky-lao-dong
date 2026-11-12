@@ -25,7 +25,9 @@ var GOI_CHI_DOC = ['danh_sach_cong_ty', 'kiem_tra', 'tra_cuu_don', 'cong_ty_cua_
                    // 3.64 — mục 🏢 Công ty công khai của khung Văn phòng: chỉ đọc hai tab, không ghi gì
                    'cong_khai',
                    // 3.65 — ⚙ Tài khoản & quyền: chỉ đọc tab NGUOI_DON, không ghi gì. doi_mat_khau là cú GHI: không thêm vào đây.
-                   'tk_ds'];
+                   'tk_ds',
+                   // 3.68 — 🏭 Nhà máy: chỉ đọc tab CONGTY. ct_luu, tk_them, tk_sua, tk_dat_mk, tk_khoa, tk_chuc là cú GHI: không thêm vào đây.
+                   'ct_ds'];
 
 // Cú GHI mà gửi lại vô hại (bản 3.32): `dang_nhap` chỉ ghi mốc "đăng nhập lần cuối" + một dòng nhật ký,
 // vé mới thay vé cũ. Trước 3.32 nó bị tính là cú ghi: hạn 90 giây, không thử lại — Dương báo 16/10/2026
