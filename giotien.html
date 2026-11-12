@@ -426,7 +426,8 @@ var dcMo = {};
 var NHOM_DC = [
   ['khop', '✅ Khớp', '✅ Khớp'],
   ['thieu', '⚠ Đã tuyển, đang làm mà không có giờ', '⚠ Đã tuyển, đang làm mà không có giờ'],
-  ['thua', '⚠ Có giờ ghi tên bạn mà không có trong danh sách tuyển của bạn', '⚠ Có giờ mà CCCD không có trong hệ tuyển dụng'],
+  // 3.67.1: khớp theo CCCD + công ty — nhóm này gồm cả người có trong tool nhưng ở công ty khác
+  ['thua', '⚠ Có giờ ghi tên bạn mà không có trong danh sách tuyển của bạn', '⚠ Có giờ mà tool không có người này ở công ty đó'],
   ['sai', '', '⚠ Giờ ghi sai người tuyển (chỉ quản trị thấy)']
 ];
 function boDauTim(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd'); }
