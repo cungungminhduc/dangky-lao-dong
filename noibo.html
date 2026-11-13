@@ -507,8 +507,12 @@ function vaoViec() {
     : '👉 Bấm vào <b>tên công ty</b> để xem tình trạng từng tháng.';
   if (typeof KieuLuoi !== 'undefined') KieuLuoi.ganNutKieu();
   if (kieuLuoi()) { KieuLuoi.vao(); return; }
-  if (chiXuLyPH()) { moPH(); return; }                // chỉ có quản lý, trưởng nhóm thì chỉ có việc này
+  if (chiXuLyPH() || tuChuongPH()) { moPH(); return; }   // chỉ có quản lý, trưởng nhóm thì chỉ có việc này; bấm từ chuông 🔔 thì vào thẳng 💬
   taiLuoi();
+}
+/** 2.6.1: mở từ chuông 🔔 hộp thông báo (noibo.html#phan-hoi) và có quyền xử lý phản hồi → vào thẳng màn 💬, mọi vai (kể cả kế toán, quản trị). */
+function tuChuongPH() {
+  return typeof location !== 'undefined' && location.hash === '#phan-hoi' && coCV('quan_ly', 'truong_nhom', 'ke_toan', 'quan_tri');
 }
 
 // ---------------- LƯỚI ----------------

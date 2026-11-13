@@ -225,7 +225,7 @@ var KieuLuoi = (function () {
   // ================== TRẠNG THÁI TRANG ==================
   var S = { trang: 'viec', tg: null, mo: { tg: true, o: true, ai: false, tt: false, dia: true }, moCay: {}, ct: {}, moDia: {}, timCT: '', tim: '', tuyen: {}, gop: {}, chk: {}, an: {}, gonBen: false, lui: [], moNgan: null, phMo: null, diaN: {} };
   var KHO = {}, LOI = {}, DANG = {}, KHO_SO = {}, KHO_SS = {}, KHO_SUA = {}, DA_HOI = {}, LOI_SO = '', dangLay = null, lanVe = 0;
-  var luoi = null, luoiTai = null, TAI = null, daDung = false, dangChuyen = false, BAT = null, tgDaDat = false, henBao = 0;
+  var luoi = null, luoiTai = null, TAI = null, daDung = false, dangChuyen = false, BAT = null, tgDaDat = false, henBao = 0, choPH = false;
 
   function manRong() { return !!(window.matchMedia && window.matchMedia('(min-width: 1001px)').matches); }
   function dangBat() { if (BAT === null) BAT = manRong() && doc(KHOA_KIEU) !== 'the'; return BAT; }
@@ -1502,12 +1502,14 @@ var KieuLuoi = (function () {
   function vao() {
     dung();
     if (chiXuLyPH()) { moTrang('ph'); return; }
+    choPH = tuChuongPH();                                // 2.6.1: bấm từ chuông 🔔 → lưới tải xong thì mở thẳng tab 💬 Phản hồi
     taiLuoi();
   }
   /** taiLuoi xong: có số công ty mới. Giữ tab đang đứng nếu vừa bấm 🔄; ngăn đang mở thì mở lại bản mới. */
   function luoiMoi() {
     if (!tgDaDat) { S.tg = thangMacDinh(); tgDaDat = true; }
     dangChuyen = false;
+    if (choPH) { choPH = false; moTrang('ph'); return; }
     veTrang(true);
     if (S.moNgan && S.trang === 'viec') {
       var ma = S.moNgan.ma, ky = S.moNgan.ky, r = TRANG.viec.dong().filter(function (x) { return x.ma_ct === ma && x.ky === ky; })[0];

@@ -18,7 +18,7 @@ a{color:var(--chinh)}
 .chi{background:var(--vang-nen);border-left:4px solid #e0b100;padding:8px 12px;border-radius:8px;margin:10px 0;font-size:16px}
 .capnhat{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;color:var(--phu);font-size:15px;margin-top:8px}
 .ba-so{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
-.o-so{background:var(--the);border:1px solid var(--vien);border-radius:12px;padding:8px 4px;text-align:center;font-size:15px}
+.o-so{background:var(--the);border:1px solid var(--vien);border-radius:12px;padding:8px 4px;text-align:center;font:inherit;font-size:15px;color:inherit;width:100%;min-height:44px;cursor:pointer}
 .o-so b{display:block;font-size:26px;line-height:1.2}
 .o-so.do b{color:var(--do)} .o-so.cam b{color:var(--cam)} .o-so.lam b{color:var(--chinh-dam)}
 .nhom-chu{font-weight:700;margin:16px 0 6px}
@@ -80,7 +80,7 @@ var KHOA_NHO = 'tb_hop_v1';              // bản nhớ trong máy: CHỈ đầu
 var CHI_DOC = ['tb_mo', 'tt_dang_mo', 'tt_theo_doi'];
 var LAM_MOI_MS = 5 * 60000;              // quay lại trang sau ≥ 5 phút mới tự hỏi máy chủ; bấm 🔄 thì hỏi ngay
 var st = { mo: null, luc: 0, tu_nho: false, dang_tai: null, loi_tai: '', man: 'hop', loc: 'tat_ca', muc: '', tim: '',
-           doc: {}, gui: {}, loi_dong: {}, dg: null, dm: null, theo: null, chuaDoc: {}, ban: false };
+           doc: {}, gui: {}, loi_dong: {}, dg: null, dm: null, theo: null, chuaDoc: {}, ban: false, het: {} };
 
 var $ = function (id) { return document.getElementById(id); };
 function e(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -194,6 +194,7 @@ function ve() {
 
 /* ---------- màn hộp ---------- */
 var LOC = [['tat_ca', 'Tất cả'], ['cua_toi', 'Của tôi'], ['phong_toi', 'Phòng tôi'], ['toi_gui', 'Tôi gửi']];
+var HIEN_DAU = 5;   // 0.3.2: khối Gấp / Hôm nay hiện trước 5 việc, còn lại bấm "Xem thêm"
 var MUC_CHU = { gap: ['🔴 Gấp', 'do'], can_lam: ['📌 Hôm nay', 'cam'], de_biet: ['⚪ Để biết', ''] };
 function khoaDong(x) { return x.nguon + '|' + x.ma; }
 function timDong(k) { return st.mo ? st.mo.ds.filter(function (x) { return khoaDong(x) === k; })[0] : null; }
@@ -221,8 +222,10 @@ function veHop() {
   }
   h += '<div class="chi">👉 ' + (n ? 'Hôm nay bạn có <b>' + n + ' việc cần làm</b>. Làm từ trên xuống: mục 🔴 trước, mục 📌 sau.'
                                    : 'Hôm nay bạn không có việc nào cần làm. 👍') + '</div>';
-  h += '<div class="ba-so"><div class="o-so do"><b>' + dem.gap + '</b>🔴 Gấp</div><div class="o-so cam"><b>' + dem.hom_nay + '</b>📌 Hôm nay</div>'
-    + '<div class="o-so lam"><b>' + dem.chua_doc + '</b>📬 Chưa đọc</div></div>';
+  // 0.3.2: bấm ô số → nhảy thẳng tới khối đó (Chưa đọc → khối hạng mục, nơi có số chưa đọc từng mục)
+  h += '<div class="ba-so"><button class="o-so do" data-lam="toi" data-ma="khoi_gap"><b>' + dem.gap + '</b>🔴 Gấp</button>'
+    + '<button class="o-so cam" data-lam="toi" data-ma="khoi_can_lam"><b>' + dem.hom_nay + '</b>📌 Hôm nay</button>'
+    + '<button class="o-so lam" data-lam="toi" data-ma="khoi_muc"><b>' + dem.chua_doc + '</b>📬 Chưa đọc</button></div>';
   if (m.tk.quyen.dang_tin) {
     h += '<div class="nut-hang"><button class="nut phu2" data-lam="man" data-ma="dang">✍️ Đăng tin</button>'
       + '<button class="nut phu2" data-lam="man" data-ma="theo">👀 Theo dõi ai chưa đọc</button></div>';
@@ -232,12 +235,16 @@ function veHop() {
   }).join('') + '</div>';
 
   [['gap', '🔴 Cần làm ngay', 'Không có việc gấp.'], ['can_lam', '📌 Hôm nay', 'Không có việc nào cho hôm nay.']].forEach(function (k) {
-    var trong = ds.filter(function (x) { return x.muc === k[0]; });
-    h += '<h2>' + k[1] + ' (' + trong.length + ')</h2>' + (trong.length ? trong.map(function (x) { return theDong(x, false); }).join('')
-                                                                         : '<div class="phu">' + k[2] + '</div>');
+    var trong = ds.filter(function (x) { return x.muc === k[0]; }), het = st.het[k[0]] || trong.length <= HIEN_DAU;
+    h += '<h2 id="khoi_' + k[0] + '">' + k[1] + ' (' + trong.length + ')</h2>'
+      + (trong.length ? (het ? trong : trong.slice(0, HIEN_DAU)).map(function (x) { return theDong(x, false); }).join('')
+                      : '<div class="phu">' + k[2] + '</div>')
+      // 0.3.2: danh sách dài chỉ hiện HIEN_DAU việc đầu (gấp nhất / hạn gần nhất) + nút xem hết / thu gọn
+      + (trong.length > HIEN_DAU ? '<div class="nut-hang"><button class="nut phu2" data-lam="het" data-ma="' + k[0] + '">'
+          + (st.het[k[0]] ? '▴ Thu gọn' : '▾ Xem thêm ' + (trong.length - HIEN_DAU) + ' việc') + '</button></div>' : '');
   });
 
-  h += '<h2>📂 Xem theo hạng mục</h2><div class="phu">Mọi thông báo, xếp theo loại. Bấm một mục để mở; mở mục khác thì mục cũ tự đóng.</div>'
+  h += '<h2 id="khoi_muc">📂 Xem theo hạng mục</h2><div class="phu">Mọi thông báo, xếp theo loại. Bấm một mục để mở; mở mục khác thì mục cũ tự đóng.</div>'
     + '<input type="search" id="hmTim" style="margin-top:8px" placeholder="🔎 Tìm theo tiêu đề hoặc người gửi" value="' + e(st.tim) + '" aria-label="Tìm thông báo">'
     + veHangMuc(ds);
   return h;
@@ -541,6 +548,9 @@ document.addEventListener('click', function (ev) {
     lam_moi: function () { tai(); },
     man: function () { moMan(ma); },
     loc: function () { st.loc = ma; ve(); },
+    // 0.3.2: cuộn tức thì (cuộn mượt không chạy trong khung xem của Zalo / trình duyệt nhúng)
+    toi: function () { var d = $(ma); if (d) d.scrollIntoView({ block: 'start' }); },
+    het: function () { st.het[ma] = !st.het[ma]; ve(); var d = $('khoi_' + ma); if (d && !st.het[ma]) d.scrollIntoView({ block: 'start' }); },
     mo_muc: function () {
       st.muc = st.muc === ma ? '' : ma; ve();
       if (st.muc) Array.prototype.forEach.call(document.querySelectorAll('[data-lam="mo_muc"]'), function (b) {
