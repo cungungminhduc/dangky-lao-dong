@@ -372,7 +372,7 @@ var KieuLuoi = (function () {
   var TRANG = {};
   TRANG.viec = {
     ten: '📋 Việc tháng', mau: MAU.luc, ben: ['tg', 'o', 'tt'], bang: 3, ten_tep: 'Viec thang',
-    quyen: ['hanh_chinh', 'xem_luong', 'ke_toan', 'quan_tri'],
+    quyen: ['hanh_chinh', 'nhap_cong', 'xem_luong', 'ke_toan', 'quan_tri'],
     chi: '👉 Mỗi công ty × tháng một dòng. Cột <b>✅ Việc của bạn</b> có nút làm ngay trên dòng (✅ Chốt tháng, 📥 Tải bảng công); việc khác bấm <b>📂 Mở</b>. Cột <b>Việc kế tiếp</b> nói việc cần làm.',
     rong: 'Tài khoản chưa được giao công ty nào, hoặc chưa chọn tháng. Báo người quản trị nếu thiếu công ty.',
     cot: function () {
@@ -479,7 +479,7 @@ var KieuLuoi = (function () {
 
   TRANG.cong = {
     ten: '🗓 1.Bảng công', mau: '#FF0000', ben: ['tg', 'o', 'ai', 'tt'], bang: 4, can: 'cong', ten_tep: 'Bang cong',
-    quyen: ['hanh_chinh', 'xem_luong', 'ke_toan', 'quan_tri'],
+    quyen: ['hanh_chinh', 'nhap_cong', 'xem_luong', 'ke_toan', 'quan_tri'],
     chi: '👉 Cùng khuôn với trang <b>1.Chấm công</b> của file. Lọc ở cột trái hoặc bấm <b>▾</b> trên tiêu đề cột. Bấm tên để xem một người. ' +
          'Sửa giờ: lọc đúng <b>một công ty, một tháng</b> rồi bấm <b>✏️ Sửa giờ</b> (hành chính, kế toán), gõ số vào ô ngày, xong bấm <b>📤 Gửi lên</b>.',
     rong: 'Tháng và công ty đang chọn chưa có bảng công.',
@@ -773,7 +773,7 @@ var KieuLuoi = (function () {
     if (v) moNgan('💬 ' + e(v.ho_ten), theViecPH(v));
   }
   TRANG.ph = {
-    ten: '💬 Phản hồi', mau: '#7F7F7F', ben: ['o', 'tt'], bang: 2, ten_tep: 'Phan hoi', quyen: ['quan_ly', 'truong_nhom', 'ke_toan', 'quan_tri'],
+    ten: '💬 Phản hồi', mau: '#7F7F7F', ben: ['o', 'tt'], bang: 2, ten_tep: 'Phan hoi', quyen: ['quan_ly', 'truong_nhom', 'hanh_chinh', 'nhap_cong', 'ke_toan', 'quan_tri'],
     chi: '👉 Mỗi phiếu một dòng, phiếu chưa xong xếp trước. Bấm <b>mã phiếu</b> để đọc trao đổi, nhận việc, trả lời. Công nhân thấy câu trả lời dưới phiếu của họ khi tra lại, chỉ thấy vai chứ không thấy tên anh/chị.',
     rong: 'Chưa có phiếu phản hồi nào.',
     bao: ['phBao', 'phCanh'],

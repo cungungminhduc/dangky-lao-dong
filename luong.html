@@ -383,9 +383,9 @@ function khoiTuChoi(p) {
 /** Một việc đã gửi: trạng thái, các tin, gửi thêm. */
 function viecPH(i, hm) {
   var m = kq.muc[i], p = m.ph[hm], k = i + '|' + hm, vai = HM[hm].vai, f = ph.form;
-  var h = '<div class="viec" id="viec' + k + '"><h3>' + HM[hm].ten + '</h3><div class="tt ' + p.tt + '">' + ttPH(p.tt, p.giu === 'ke_toan' ? 'kế toán' : vai) + '</div>';
+  var h = '<div class="viec" id="viec' + k + '"><h3>' + HM[hm].ten + '</h3><div class="tt ' + p.tt + '">' + ttPH(p.tt, p.giu === 'ke_toan' ? 'kế toán' : p.giu === 'nhap_cong' ? 'người nhập công' : vai) + '</div>';
   p.tin.forEach(function (t) {
-    h += '<div class="tin' + (t.ai === 'ql' ? ' ql' : '') + '"><div class="ai-gui">' + (t.ai === 'ql' ? '💼 ' + (t.vai === 'ke_toan' ? 'Kế toán' : hoaDau(vai)) : '👷 Anh/chị') +
+    h += '<div class="tin' + (t.ai === 'ql' ? ' ql' : '') + '"><div class="ai-gui">' + (t.ai === 'ql' ? '💼 ' + (t.vai === 'ke_toan' ? 'Kế toán' : t.vai === 'nhap_cong' ? 'Người nhập công' : hoaDau(vai)) : '👷 Anh/chị') +
          ' · ' + e(lucNgan(t.luc)) + (t.cho === true ? ' · ⏳ Đang chuyển tới ' + vai : '') + '</div>' + (t.chon ? '<div class="da-chon">Đã chọn: <b>' + t.chon.map(function (x) { return e(x); }).join(' · ') + '</b></div>' : '') +
          '<p>' + e(t.nd) + '</p></div>';
   });

@@ -495,12 +495,12 @@ function coCV() {
 function vaoViec() {
   $('ai').textContent = trangThai.tk.ho_ten + ' · ' + trangThai.tk.ten_vai_tro;
   $('thanhTK').classList.remove('an');
-  var coViec = { luong: coCV('hanh_chinh', 'xem_luong', 'ke_toan', 'quan_tri'), gio: coCV('ke_toan', 'quan_tri'), thangn: coCV('ke_toan', 'quan_tri'), so: coCV('ke_toan', 'quan_tri'),
-                 ph: coCV('quan_ly', 'truong_nhom', 'ke_toan', 'quan_tri') };
+  var coViec = { luong: coCV('hanh_chinh', 'nhap_cong', 'xem_luong', 'ke_toan', 'quan_tri'), gio: coCV('ke_toan', 'quan_tri'), thangn: coCV('ke_toan', 'quan_tri'), so: coCV('ke_toan', 'quan_tri'),
+                 ph: coCV('quan_ly', 'truong_nhom', 'hanh_chinh', 'nhap_cong', 'ke_toan', 'quan_tri') };
   [].forEach.call(document.querySelectorAll('#menuViec button'), function (b) { b.classList.toggle('an', !coViec[b.getAttribute('data-viec')]); });
   if (chiLuoiGoc === null) chiLuoiGoc = $('chiLuoi').innerHTML;
   $('chiLuoi').innerHTML = coCV('ke_toan', 'quan_tri') ? chiLuoiGoc
-    : coCV('hanh_chinh') ? '👉 Bấm vào <b>tên công ty</b>, chọn tháng, bấm <b>📥 Tải bảng công</b> ngay trong ô tháng đó. Kiểm xong bấm ' +
+    : coCV('hanh_chinh', 'nhap_cong') ? '👉 Bấm vào <b>tên công ty</b>, chọn tháng, bấm <b>📥 Tải bảng công</b> ngay trong ô tháng đó. Kiểm xong bấm ' +
       '<b>📤 Gửi lên</b>: công nhân xem được ngay, kế toán tính lương được ngay. Sai thì tải file đã sửa rồi gửi lại.' +
       (coCV('xem_luong') ? ' Có phiếu lương thì bấm <b>👁 Xem bảng lương</b> (chỉ xem).' : '')
     : coCV('xem_luong') ? '👉 Bấm vào <b>tên công ty</b>, chọn tháng, bấm <b>👁 Xem bảng lương</b>. Anh/chị chỉ xem được, không sửa được gì.'
@@ -512,7 +512,7 @@ function vaoViec() {
 }
 /** 2.6.1: mở từ chuông 🔔 hộp thông báo (noibo.html#phan-hoi) và có quyền xử lý phản hồi → vào thẳng màn 💬, mọi vai (kể cả kế toán, quản trị). */
 function tuChuongPH() {
-  return typeof location !== 'undefined' && location.hash === '#phan-hoi' && coCV('quan_ly', 'truong_nhom', 'ke_toan', 'quan_tri');
+  return typeof location !== 'undefined' && location.hash === '#phan-hoi' && coCV('quan_ly', 'truong_nhom', 'hanh_chinh', 'nhap_cong', 'ke_toan', 'quan_tri');
 }
 
 // ---------------- LƯỚI ----------------
@@ -669,7 +669,7 @@ function cauAn(r) {
   return ' Ngưỡng ' + String(r.nguong).replace('.', ',') + ' công: ' + (r.an.length ? '<b>' + r.an.length + ' người mới bị ẩn</b> khỏi trang công nhân (' + r.an.slice(0, 8).map(e).join(', ') + (r.an.length > 8 ? '…' : '') + ').' : 'không ai bị ẩn.');
 }
 /** Chức vụ nào làm phần nào (bảng chức vụ đặc tả mục 5) — máy chủ kiểm lại mọi cú. */
-var LAM_PHAN = { cong: ['hanh_chinh', 'quan_tri'], luong: ['ke_toan', 'quan_tri'] };
+var LAM_PHAN = { cong: ['hanh_chinh', 'nhap_cong', 'quan_tri'], luong: ['ke_toan', 'quan_tri'] };
 function lamPhan(phan) { return coCV.apply(null, LAM_PHAN[phan]); }
 /** Công nhân đã xem bản mới nhất của phần này chưa. Bảng công có bản riêng: lương đổi làm phiên bản kỳ tăng mà bảng công không đổi. Máy chủ cũ chưa gửi cong_phien thì so phiên bản kỳ. */
 function daCB(k, phan) {
@@ -698,6 +698,7 @@ function viecKe(k, i) {
   if (!ds.length && !lamPhan('cong') && !lamPhan('luong') && coCV('xem_luong')) {
     ds.push(k.co_luong ? 'Bấm <b>👁 Xem bảng lương</b> để xem (chỉ xem).' : 'Tháng này chưa có bảng lương.');
   }
+  if (k.cong_sau_luong === true && coCV('xem_luong', 'ke_toan', 'quan_tri')) ds.push('⚠ Bảng công gửi lên sau khi gửi lương — kiểm lại lương');
   return ds.length ? '<p class="viec-ke">👉 ' + ds.join('<br>👉 ') + '</p>' : '';
 }
 function oKy(k, i, j) {
@@ -1112,6 +1113,7 @@ function guiBanDi(c, k, phan, nut, ng) {
   var t = TEN_PHAN[phan], loi = nut.nextElementSibling, chu = nut.textContent;
   nut.disabled = true; nut.textContent = '⏳ Đang gửi lên… (vài giây)'; loi.classList.add('an');
   congBoGuiLen(c.ma_ct, k.ky, phan, k.phien_ban, ng).then(function (r) {
+    if (r.huy) { nut.disabled = false; nut.textContent = chu; return; }   // kế toán chọn "Thôi" ở hộp công chưa chốt
     if (!r.ok) {
       nut.disabled = false; nut.textContent = chu;
       loi.innerHTML = '<b>Chưa gửi.</b> ' + e(r.loi) + (r.ma === 'DA_DOI' ? ' <button onclick="taiLuoi()">🔄 Tải lại</button>' : '');
@@ -1130,6 +1132,22 @@ function guiBanDi(c, k, phan, nut, ng) {
  * → trang tự làm nốt như 2.3.0, lý do ghi "Gửi lên". `ng` = ngưỡng người gửi xác nhận trong hộp (bảng công, chưa có phiếu lương). Trả kết quả cú công bố, hoặc cú hỏng đầu tiên.
  */
 function congBoGuiLen(ma, ky, phan, pb, ng) {
+  if (phan === 'luong' && congChuaChot(ma, ky)) {
+    return new Promise(function (xong) {
+      hoi('<p><b>⚠ Bảng công ' + e(ma) + ' tháng ' + thangNam(ky) + ' chưa chốt trên hệ thống. Nếu công đã chốt ngoài hệ thống (số chuẩn) thì vẫn gửi lương được. Gửi lương?</b></p>',
+          '📤 Vẫn gửi lương', 'Thôi, chưa gửi', function () { xong(congBoGuiLenDi(ma, ky, phan, pb, ng)); },
+          function () { xong({ ok: false, huy: true, loi: 'Chưa gửi lương.' }); });
+    });
+  }
+  return congBoGuiLenDi(ma, ky, phan, pb, ng);
+}
+/** Kỳ này trên lưới đang có, bảng công chưa chốt (không thấy kỳ trong lưới thì không hỏi — máy chủ vẫn ghi vết). */
+function congChuaChot(ma, ky) {
+  var c = ((trangThai.luoi || {}).cong_ty || []).filter(function (x) { return x.ma_ct === ma; })[0];
+  var k = c && c.ky.filter(function (x) { return x.ky === ky; })[0];
+  return !!k && !((k.cong_chot_phien || 0) > 0);
+}
+function congBoGuiLenDi(ma, ky, phan, pb, ng) {
   var mot = function (lyDo) { return goi({ hanh_dong: 'kt_cong_bo', phien: trangThai.phien, ma_ct: ma, ky: ky, phan: phan, phien_ban_ky: pb, gui_len: true, ly_do: lyDo, nguong: ng == null ? undefined : ng }, 60); };
   return mot('').then(function (r) { return r.ma === 'THIEU_LY_DO' ? mot('Gửi lên') : r; }).then(function (r) {
     if (!r.ok || r.gui_len || phan !== 'cong') return r;
@@ -2123,7 +2141,7 @@ $('nutLuuGio').addEventListener('click', luuGio);
 var HM = VePhieu.HANG_MUC;
 var ph = { ds: null, loc: 'can', hm: '', tim: '', mo: '', nhap: {}, bao: {}, dang: {}, vuaXong: {} };   // nhap / bao / dang / vuaXong theo mã việc
 function phMoi() { return { ds: null, loc: 'can', hm: '', tim: '', mo: '', nhap: {}, bao: {}, dang: {}, vuaXong: {} }; }
-function chiXuLyPH() { return coCV('quan_ly', 'truong_nhom') && !coCV('hanh_chinh', 'xem_luong', 'ke_toan', 'quan_tri'); }
+function chiXuLyPH() { return coCV('quan_ly', 'truong_nhom') && !coCV('hanh_chinh', 'nhap_cong', 'xem_luong', 'ke_toan', 'quan_tri'); }
 function demMenuPH(n) { $('nutMenuPH').textContent = '💬 Phản hồi công nhân' + (n == null ? '' : ' (' + n + ' cần làm)'); }
 function ngayNgan(s) { return s ? s.substring(8, 10) + '/' + s.substring(5, 7) : ''; }
 function lucNgan(s) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(s || ''); return m ? m[4] + ' ngày ' + m[3] + '/' + m[2] : String(s || ''); }
@@ -2198,11 +2216,17 @@ function tomPH(vs) {
           d.xu_ly ? '🔧 ' + d.xu_ly + ' đang xử lý' : '', d.chuyen ? '↪️ ' + d.chuyen + ' chuyển kế toán' : '', d.xong ? '✅ ' + d.xong + ' đã xong' : '']
     .filter(Boolean).join(' · ');
 }
+/** Lần chuyển GẦN NHẤT của một việc (kế toán → nhập công → kế toán vẫn chuyển được): 'nhap_cong' | 'ke_toan' | ''. */
+function denPH(v) {
+  var cuoi = (v.tin || []).filter(function (t) { return t.ai === 'he' && (t.viec === 'chuyen_ke_toan' || t.viec === 'chuyen_nhap_cong'); }).pop();
+  return cuoi ? (cuoi.viec === 'chuyen_nhap_cong' ? 'nhap_cong' : 'ke_toan') : v.chuyen_nhap_cong ? 'nhap_cong' : v.chuyen_ke_toan ? 'ke_toan' : '';
+}
 function ttViecPH(v) {
   var toi = trangThai.tk.ho_ten, ai = v.nhan_boi === toi ? 'Anh/chị' : v.nhan_boi;
   if (v.tt === 'gui') return '📨 Chờ nhận';
   if (v.tt === 'xong') return '✅ Đã trả lời';
-  if (v.tt === 'xu_ly' && v.chuyen_ke_toan) return '↪️ Đã chuyển kế toán — đang xử lý';
+  if (v.tt === 'xu_ly' && v.chuyen_nhap_cong && denPH(v) === 'nhap_cong') return '↪️ Đã chuyển người nhập công — đang xử lý';
+  if (v.tt === 'xu_ly' && denPH(v) === 'ke_toan') return '↪️ Đã chuyển kế toán — đang xử lý';
   if (v.tt === 'nhan') return '🙋 ' + e(ai) + ' đã nhận (' + e(lucNgan(v.nhan_luc)) + ')';
   return '🔧 ' + (ai ? e(ai) + ' đang xử lý' : 'Đang xử lý') + ' — công nhân vừa gửi thêm';
 }
@@ -2223,8 +2247,10 @@ function theViecPH(v) {
     h += '<p class="ai" style="margin-top:8px">(' + e(tk.ten_vai_tro) + ' trả lời dự phòng khi quản lý vắng.)</p>';
   }
   var nutPhu = (v.nhan_boi ? '' : '<button' + tat + ' data-ma="' + ma + '" onclick="nhanPH(this)">🙋 Tôi nhận việc này</button>') +
-               ((v.hm === 'cong' || v.hm === 'luong') && !v.chuyen_ke_toan && tk.vai_tro !== 'ke_toan'
-                 ? '<button' + tat + ' data-ma="' + ma + '" onclick="chuyenPH(this)">↪️ Chuyển kế toán</button>' : '');
+               ((v.hm === 'cong' || v.hm === 'luong') && denPH(v) !== 'ke_toan' && tk.vai_tro !== 'ke_toan'
+                 ? '<button' + tat + ' data-ma="' + ma + '" onclick="chuyenPH(this)">↪️ Chuyển kế toán</button>' : '') +
+               // 2.7.0: mỗi nút chỉ ẩn khi phiếu ĐANG ở đúng nơi đó (lần chuyển gần nhất) — kế toán → nhập công → kế toán vẫn chuyển lại được
+               (v.hm === 'cong' && denPH(v) !== 'nhap_cong' && tk.vai_tro !== 'nhap_cong' ? '<button' + tat + ' data-ma="' + ma + '" onclick="chuyenNC(this)">↪️ Chuyển nhập công sửa</button>' : '');
   if (nutPhu) h += '<div class="nhom-nut">' + nutPhu + '</div>';
   var chu = ph.nhap[v.ma] || '';
   return h + '<label for="tl-' + ma + '">Câu trả lời cho công nhân (tối đa 500 chữ)</label><textarea id="tl-' + ma + '" maxlength="500"' + tat + ' data-ma="' + ma +
@@ -2262,6 +2288,16 @@ function chuyenPH(nut) {
   var ma = nut.getAttribute('data-ma'), v = timViecPH(ma);
   hoi('<p><b>Chuyển việc của ' + e(v.ho_ten) + ' cho kế toán kiểm?</b></p><p>Công nhân sẽ thấy "🔧 Kế toán đang xử lý". Việc này không rút lại được; anh/chị vẫn trả lời được nếu cần.</p>',
       '↪️ Chuyển kế toán', 'Thôi', function () { ghiPH(ma, { hanh_dong: 'ph_chuyen', phien: trangThai.phien, ma: ma }, function () {}); });
+}
+/** 2.7.0 — phiếu bảng công sai thật: chuyển người nhập công sửa bảng công, gửi lên lại, rồi trả lời công nhân. Nhà máy chưa có ai nhập công vẫn chuyển, trang báo trước. */
+function chuyenNC(nut) {
+  var ma = nut.getAttribute('data-ma'), v = timViecPH(ma);
+  hoi('<p><b>Chuyển phiếu của ' + e(v.ho_ten) + ' cho người nhập công sửa bảng công?</b></p><p>Công nhân sẽ thấy "🔧 Người nhập công đang xử lý". Người nhập công sửa bảng công, gửi lên lại rồi trả lời công nhân; anh/chị vẫn trả lời được nếu cần.</p>',
+      '↪️ Chuyển nhập công sửa', 'Thôi', function () {
+        ghiPH(ma, { hanh_dong: 'ph_chuyen', phien: trangThai.phien, ma: ma, den: 'nhap_cong' }, function (r) {
+          if (r.chua_co_nhap_cong) ph.bao[ma] = '<div class="bao cho">⚠️ ' + e(v.ma_ct) + ' chưa có ai chức Nhập công — phiếu vẫn ở quản lý / hành chính. Báo quản trị khai ở tab TÀI KHOẢN.</div>';
+        });
+      });
 }
 function traPH(nut) {
   var ma = nut.getAttribute('data-ma'), v = timViecPH(ma), nd = (ph.nhap[ma] || '').trim();
