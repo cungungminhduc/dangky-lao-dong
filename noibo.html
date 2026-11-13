@@ -194,7 +194,15 @@
 
   <!-- ĐĂNG NHẬP -->
   <section id="mDangNhap" class="the an">
-    <div class="chi">👉 Đăng nhập bằng số CCCD và mật khẩu <b>công–lương</b> người quản trị cấp — không phải mật khẩu Trang chủ.</div>
+    <!-- 2.6.0: người đón / trưởng nhóm vào bằng tài khoản Trang chủ tuyển dụng (vé cùng trang GitHub) -->
+    <div id="dnTD" class="an" style="margin-bottom:16px">
+      <div class="chi">👉 <b>Người đón, trưởng nhóm:</b> bấm nút dưới — dùng luôn tài khoản Trang chủ tuyển dụng, không cần mật khẩu khác.</div>
+      <button id="nutDNTD" class="chinh rong">🔑 Vào bằng tài khoản tuyển dụng</button>
+    </div>
+    <div id="dnTDChua" class="chi an">👉 <b>Người đón, trưởng nhóm:</b> đăng nhập ở <a href="trangchu.html">🏠 Trang chủ tuyển dụng</a>
+      rồi bấm <b>💬 Phản hồi công nhân</b> — không cần mật khẩu khác.</div>
+    <div id="dnTDBao" class="bao do an"></div>
+    <div class="chi">👉 <b>Kế toán, hành chính, quản trị:</b> đăng nhập bằng số CCCD và mật khẩu <b>công–lương</b> người quản trị cấp — không phải mật khẩu Trang chủ.</div>
     <label for="dnCccd">Số căn cước (CCCD)</label>
     <input id="dnCccd" type="text" inputmode="numeric" autocomplete="username" maxlength="14" placeholder="Ví dụ 024303008090">
     <div class="loi-o an" id="loiCccd"></div>
@@ -437,6 +445,30 @@ function dangNhap() {
     vaoViec();
   });
 }
+// 2.6.0 — người đón / trưởng nhóm vào bằng vé Trang chủ tuyển dụng. Vé nằm ở localStorage cùng trang GitHub; trang CHỈ chuyển nguyên văn
+// lên máy chủ công–lương (máy chủ hỏi hệ tuyển dụng xác minh), không đọc, không sửa, không xoá vé đó.
+var KHOA_VE_TD = 'phien_ds_v3';
+function veTD() { return doc(KHOA_VE_TD) || ''; }
+/** Màn đăng nhập: có vé tuyển dụng → nút 🔑; chưa có → dòng chỉ sang Trang chủ. */
+function veManDN() {
+  var co = !!veTD();
+  $('dnTD').classList.toggle('an', !co);
+  $('dnTDChua').classList.toggle('an', co);
+}
+function dangNhapTD() {
+  var ve = veTD();
+  $('dnTDBao').classList.add('an');
+  if (!ve) { veManDN(); hien('mDangNhap'); return; }
+  var nut = $('nutDNTD'); nut.disabled = true; nut.textContent = '⏳ Đang vào…';
+  goi({ hanh_dong: 'dang_nhap_td', phien_td: ve }).then(function (kq) {
+    nut.disabled = false; nut.textContent = '🔑 Vào bằng tài khoản tuyển dụng';
+    if (!kq.ok) { veManDN(); hien('mDangNhap'); $('dnTDBao').textContent = kq.loi; $('dnTDBao').classList.remove('an'); return; }
+    trangThai.phien = kq.phien;
+    trangThai.tk = { ho_ten: kq.ho_ten, ten_vai_tro: kq.ten_vai_tro, vai_tro: kq.vai_tro, chuc_vu: kq.chuc_vu, tu_td: true };
+    nho(KHOA_PHIEN, kq.phien); nho(KHOA_TK, JSON.stringify(trangThai.tk));
+    vaoViec();
+  });
+}
 function dangXuat() {
   trangThai = { phien: '', tk: null, luoi: null, dangTai: null, kqDoc: null };
   gio = { tom: null, kq: null, tenFile: '' };
@@ -451,6 +483,7 @@ function dangXuat() {
   demMenuPH(null);
   $('thanhTK').classList.add('an');
   if (kieuLuoi()) KieuLuoi.dangXuat();
+  veManDN();                                           // 2.6.0: không đụng vé Trang chủ tuyển dụng, không tự vào lại
   hien('mDangNhap');
 }
 var chiLuoiGoc = null;
@@ -2249,6 +2282,7 @@ $('nutLuuThangN').addEventListener('click', function () { luuThangN(); });
 $('nutXemSo').addEventListener('click', xemSo);
 $('nutXuatSo').addEventListener('click', xuatExcelSo);
 $('nutDN').addEventListener('click', dangNhap);
+$('nutDNTD').addEventListener('click', function () { dangNhapTD(); });
 $('dnMk').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') dangNhap(); });
 $('dnCccd').addEventListener('input', function () { xoaLoiO('loiCccd', 'dnCccd'); });
 $('dnMk').addEventListener('input', function () { xoaLoiO('loiMk', 'dnMk'); });
@@ -2271,7 +2305,12 @@ $('nutLuu').addEventListener('click', function () { luuNhap(); });   // không t
   if (!URL_API || !TOKEN_API) { $('daiCauHinh').classList.remove('an'); }
   trangThai.phien = doc(KHOA_PHIEN) || '';
   try { trangThai.tk = JSON.parse(doc(KHOA_TK) || 'null'); } catch (x) { trangThai.tk = null; }
-  if (trangThai.phien && trangThai.tk) vaoViec(); else hien('mDangNhap');
+  if (trangThai.phien && trangThai.tk) { vaoViec(); return; }
+  veManDN();
+  hien('mDangNhap');
+  // 2.6.0: mở từ Trang chủ tuyển dụng / chuông 🔔 (noibo.html#phan-hoi) mà máy có vé tuyển dụng → tự vào. Mở trang thường thì chờ bấm nút
+  // (kế toán, hành chính cũng mở trang này).
+  if (typeof location !== 'undefined' && location.hash === '#phan-hoi' && veTD()) dangNhapTD();
 })();
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>

@@ -14,7 +14,8 @@
  */
 
 // MỘT bảng dựng cả thanh menu lẫn ô việc ở trang chủ của khách. `ghi` là HTML viết sẵn ở đây, không có dữ liệu người dùng.
-// `can`: '' = ai cũng thấy · 'van_hanh' = phòng Vận hành (+ quản trị) · 'phan_cong' = trưởng nhóm / quản trị phòng Vận hành ·
+// `can`: '' = ai cũng thấy · 'van_hanh' = phòng Vận hành (+ quản trị) · 'nguoi_don' = phòng Vận hành, KHÔNG quản trị (3.69) ·
+//        'phan_cong' = trưởng nhóm / quản trị phòng Vận hành ·
 //        'du_lieu_tuyen' = Vận hành đã được khai tên tuyển (cờ xem_du_lieu_tuyen) · 'quan_tri' = chỉ quản trị (3.65).
 //        Đầu mục không còn việc nào thì không hiện.
 // `cu`: việc có trang riêng (mở trang đó); không có `cu` = mục nằm trong khung trang chủ.
@@ -34,6 +35,8 @@ var VP_MENU = [
     { id: 'dang_ky', ten: 'Đăng ký lao động', bt: '📝', mt: 'Ghi người sẽ đến nhà máy', cu: 'index.html' },
     { id: 'quet_the_don', ten: 'Quét thẻ đón', bt: '📷', mt: 'Đánh dấu người đã đến', cu: 'doncong.html' },
     { id: 'danh_sach_goi', ten: 'Danh sách gọi', bt: '📞', mt: 'Gọi lao động · báo vào làm · lấy dữ liệu', cu: 'danhsach.html', can: 'van_hanh' },
+    // 3.69 — sang trang phản hồi của hệ công–lương, tự vào bằng vé này (công ty theo phân công đón). Quản trị không có (quyền bên lương khai tay).
+    { id: 'phan_hoi_cn', ten: 'Phản hồi công nhân', bt: '💬', mt: 'Công nhân báo sai bảng công, lương · trả lời', cu: 'noibo.html#phan-hoi', can: 'nguoi_don' },
     { id: 'phan_cong_don', ten: 'Phân công đón', bt: '👥', mt: 'Ai phụ trách nhà máy nào', cu: 'phancong.html', can: 'phan_cong' },
     // 3.68 — thêm / khoá người ngay trên trang: trưởng nhóm với đội mình, nhân viên với cộng tác viên của mình (mục trong khung)
     { id: 'doi_cua_toi', ten: 'Đội của tôi', bt: '📇', mt: 'Thêm người vào đội · đặt lại mật khẩu · khoá', can: 'truong_nhom' },
@@ -96,6 +99,7 @@ function vpThayViec_(v, coVe, q) {
   var vhTK = !!tk && !tk.la_quan_tri && (tk.phong === undefined || tk.phong === 'van_hanh');
   if (v.can === 'truong_nhom') return vhTK && !!tk.la_truong_nhom;
   if (v.can === 'nv_van_hanh') return vhTK && !tk.la_truong_nhom;
+  if (v.can === 'nguoi_don') return vhTK;                       // 3.69 — người đón + trưởng nhóm Vận hành, không quản trị
   if (!tk) return true;
   var vanHanh = !!tk.la_quan_tri || tk.phong === undefined || tk.phong === 'van_hanh';
   if (v.can === 'xem_tuyen' && tk.phong === 'doi_tac') return q.xemDlt !== false;   // 3.68 — cộng tác viên chỉ xem
