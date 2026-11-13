@@ -34,6 +34,9 @@
     return '<div class="phieu">' +
       '<div class="ph-dv">Đơn vị: ' + e(tt.cong_ty || '') + '</div>' +
       '<div class="ph-tieude">BẢNG KÊ TIỀN LƯƠNG THÁNG ' + e(k.substring(5) + '/' + k.substring(0, 4)) + '</div>' +
+      // 2.7.1: số thứ tự trên tờ ký nhận lương — to, ngay dưới đơn vị, để đông người vẫn đọc nhanh cho người phát lương
+      (l.stt != null && l.stt !== '' ? '<div class="ph-stt" style="margin:8px 0;padding:6px 10px;border:2px solid currentColor;border-radius:8px;' +
+        'display:inline-block;font-size:1.15rem">Số thứ tự: <b style="font-size:1.45rem">' + e(l.stt) + '</b></div>' : '') +
       '<div class="ph-ten">Họ và tên: <b>' + e(n.ten_hien) + '</b></div>' +
       (n.ten_nha_may && n.ten_nha_may.toLowerCase() !== String(n.ten_hien).toLowerCase()
         ? '<div class="ph-phu">Hồ sơ nhà máy: ' + e(n.ten_nha_may) + '</div>' : '') +

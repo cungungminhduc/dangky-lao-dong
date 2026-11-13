@@ -219,6 +219,8 @@
     for (; laChuKhongSo(o(bl, dongMa, c)); c++) bc.ca.push({ ma: String(o(bl, dongMa, c)).trim().toUpperCase(), cot_gio: c });
     var cuoiMa = c - 1;
     bc.cccd = can('CCCD', dungChu('cccd'));
+    // 2.7.1: cột STT của bảng lương — số người phát lương dò trên tờ ký nhận; thiếu tiêu đề thì cột A như file mẫu
+    bc.stt = timCot(bl, dongs, dungChu('stt'), 1, bc.cccd || undefined) || 1;
     // "Tổng cộng" (tiền) và "TỔNG CÔNG" (số công) bỏ dấu là một chữ — chỉ tìm SAU các cột giờ
     bc.tong_luong = can('Tổng cộng', dungChu('tong cong'), cuoiMa + 1);
     bc.tong_pc = can('Tổng Phụ Cấp', baoGom('tong phu cap'), bc.tong_luong + 1);
@@ -415,6 +417,9 @@
         tong_khau_tru: tien(bBL.tong_gt),
         thuc_linh: Math.round(tl)
       };
+      // 2.7.1: STT nằm trong `luong` để theo phiếu ra trang công nhân (phát lương tìm theo số này). Ô trống → không có số
+      var sttO = o(bl, b, bBL.stt), sttSo = so(sttO);
+      if (!trong(sttO)) luong.stt = sttSo !== null && !isNaN(sttSo) ? Math.round(sttSo) : String(sttO).trim().substring(0, 12);
       if (dongLoiTien) continue;
       tongThucLinh += luong.thuc_linh;
       nCC.luong = luong;
