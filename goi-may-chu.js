@@ -24,6 +24,8 @@ var GOI_CHI_DOC = ['danh_sach_cong_ty', 'kiem_tra', 'tra_cuu_don', 'cong_ty_cua_
                    'goi_dau',
                    // 3.64 — mục 🏢 Công ty công khai của khung Văn phòng: chỉ đọc hai tab, không ghi gì
                    'cong_khai',
+                   // 3.70 — người phụ trách + SĐT của mục 🏭 Nhà máy đang tuyển: chỉ đọc tab NGUOI_DON, không ghi gì
+                   'lien_he_nha_may',
                    // 3.65 — ⚙ Tài khoản & quyền: chỉ đọc tab NGUOI_DON, không ghi gì. doi_mat_khau là cú GHI: không thêm vào đây.
                    'tk_ds',
                    // 3.68 — 🏭 Nhà máy: chỉ đọc tab CONGTY. ct_luu, tk_them, tk_sua, tk_dat_mk, tk_khoa, tk_chuc là cú GHI: không thêm vào đây.

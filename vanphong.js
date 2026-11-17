@@ -23,6 +23,7 @@ var VP_CHO = '<div class="vp-cho">⏳ <b>Đang lấy thông tin…</b> — có k
 var vpCK = { dang: false, kq: null, loi: '' };    // cú cong_khai: một lượt cho cả Thông tin lẫn Thông báo
 var vpTKQ = { dang: false, kq: null, loi: '' };   // 3.65 cú tk_ds (⚙ Tài khoản & quyền) — CHỈ giữ trong trang, không cất vào máy
 var vpNM = { dang: false, kq: null, loi: '' };    // danh sách nhà máy (cú danh_sach_cong_ty, bản nhớ chung trang đăng ký)
+var vpLH = { dang: false, kq: null, loi: '' };    // 3.70 — người phụ trách + SĐT từng nhà máy (cú lien_he_nha_may). CHỈ giữ trong trang
 var vpDaChenZalo = false;
 
 /** Địa chỉ → mục. Lạ, hoặc là việc mở trang riêng → trang chủ. */
@@ -340,6 +341,37 @@ function vpLayNhaMay_() {
     vpNM.loi = vpCauLoi_(loi);
     vpVeLai_();
   });
+}
+
+/** 3.70 — người phụ trách + SĐT. Cú riêng, không cất vào máy (SĐT nhân viên). Hỏng thì danh sách nhà máy vẫn hiện. */
+function vpLayLienHe_() {
+  if (vpLH.dang) return;
+  if (typeof goiMayChu_ !== 'function' || typeof TOKEN_API === 'undefined') {
+    vpLH.loi = 'Trang thiếu tệp cau-hinh.js hoặc goi-may-chu.js — báo quản trị.';
+    return;
+  }
+  vpLH.dang = true; vpLH.loi = '';
+  goiMayChu_({ token: TOKEN_API, hanh_dong: 'lien_he_nha_may' }).then(function (kq) {
+    if (kq && kq.ok) vpLH.kq = kq.lien_he || {};
+    else vpLH.loi = kq && kq.ma === 'SAI_HANH_DONG'
+      ? 'Máy chủ chưa lên bản 3.70 — quản trị cập nhật máy chủ (Apps Script) rồi tải lại trang.' : vpCauLoi_(kq);
+  }, function (e) { vpLH.loi = vpCauLoi_(e); }).then(function () {
+    vpLH.dang = false;
+    vpVeLai_();
+  });
+}
+/** 0912345678 → "0912 345 678" cho dễ đọc; số dài / ngắn khác thì để nguyên. */
+function vpSoDT_(s) { return /^\d{10}$/.test(s) ? s.slice(0, 4) + ' ' + s.slice(4, 7) + ' ' + s.slice(7) : s; }
+/** Dòng người phụ trách dưới tên một nhà máy. Chưa lấy xong / lấy hỏng → không vẽ gì (câu báo chung nằm trên danh sách). */
+function vpHtmlPhuTrach_(ma) {
+  if (!vpLH.kq) return '';
+  var ds = vpLH.kq[ma] || [];
+  if (!ds.length) return '<div class="vp-pt vp-ghi-mo">Chưa có người phụ trách</div>';
+  return ds.map(function (p) {
+    return '<div class="vp-pt">👤 ' + (vpThoat_(p.ten) || '(chưa ghi tên)') + (p.ca_dem ? ' <span class="vp-ghi-mo">(ca đêm)</span>' : '') +
+      (p.sdt ? ' <a class="vp-goi" href="tel:' + vpThoat_(p.sdt) + '">📞 ' + vpThoat_(vpSoDT_(p.sdt)) + '</a>'
+             : ' · <span class="vp-ghi-mo">chưa có số</span>') + '</div>';
+  }).join('');
 }
 
 // ---------------- 3.68 — khai báo từ trang: cú ghi + chép ----------------
@@ -834,9 +866,10 @@ var VP_TRANG = {
       });
   },
   nha_may_dang_tuyen: function () {
-    var dau = '<div class="vp-goi-y">👉 Các nhà máy đang nhận người. Muốn ghi người đi làm: bấm <b>📝 Đăng ký lao động</b> ở '
-      + 'cuối danh sách.</div>';
+    var dau = '<div class="vp-goi-y">👉 Các nhà máy đang nhận người. Cần hỏi: bấm <b>📞 số điện thoại</b> để gọi người phụ trách. '
+      + 'Muốn ghi người đi làm: bấm <b>📝 Đăng ký lao động</b> ở cuối danh sách.</div>';
     if (!vpNM.kq && !vpNM.loi) vpLayNhaMay_();
+    if (!vpLH.kq && !vpLH.loi) vpLayLienHe_();
     if (!vpNM.kq) return dau + (vpNM.loi ? vpHtmlLoi_(vpNM.loi, 'nha_may') : VP_CHO);
     var ds = vpNM.kq.danh_sach || [];
     var nhom = [['thoi_vu', '🟦 Thời vụ'], ['chinh_thuc', '🟩 Chính thức'], ['', 'Khác']];
@@ -844,11 +877,17 @@ var VP_TRANG = {
       var cua = ds.filter(function (c) { return n[0] ? c.loai === n[0] : c.loai !== 'thoi_vu' && c.loai !== 'chinh_thuc'; });
       if (!cua.length) return '';
       return '<section class="vp-the"><div class="vp-nhom-ten">' + n[1] + ' · ' + cua.length + ' nhà máy</div><ul class="vp-nm-ds">' +
-        cua.map(function (c) { return '<li>🏭 ' + vpThoat_(c.ten_cong_ty) + '</li>'; }).join('') + '</ul></section>';
+        cua.map(function (c) {
+          return '<li><div class="vp-nm-ten">🏭 ' + vpThoat_(c.ten_cong_ty) + '</div>' + vpHtmlPhuTrach_(c.ma_ct) + '</li>';
+        }).join('') + '</ul></section>';
     }).join('') || '<div class="vp-the vp-ghi-mo">Hiện chưa có nhà máy nào đang tuyển.</div>';
     var ghi = vpNM.loi ? '<div class="vp-loi">⚠️ Chưa lấy được bản mới: ' + vpThoat_(vpNM.loi) + ' Đang hiện danh sách lưu trong '
         + 'máy.</div><button type="button" class="vp-nut" data-thu-lai="nha_may">🔄 Thử lại</button>'
       : (vpNM.dang ? '<div class="vp-ghi-mo">⏳ Đang lấy bản mới…</div>' : '');
+    // 3.70 — người phụ trách: đang lấy / hỏng thì nói MỘT lần trên danh sách, nhà máy vẫn hiện
+    ghi += vpLH.loi ? '<div class="vp-loi">⚠️ Chưa lấy được người phụ trách: ' + vpThoat_(vpLH.loi) + '</div>'
+        + '<button type="button" class="vp-nut" data-thu-lai="lien_he">🔄 Thử lại</button>'
+      : (!vpLH.kq ? '<div class="vp-ghi-mo">⏳ Đang lấy người phụ trách và số điện thoại…</div>' : '');
     return dau + ghi + than + '<a class="vp-nut-chinh" href="index.html">📝 Đăng ký lao động</a>';
   },
   // 3.65 vé 05: chỉ xem · 3.68 vé 02–03: thêm / sửa / khoá ngay trên trang (máy chủ chặn quyền). Chỉ quản trị.
@@ -894,6 +933,7 @@ vpEl_('vp_trang').addEventListener('click', function (e) {
   var b = e.target && e.target.closest ? e.target.closest('[data-thu-lai]') : null;
   if (!b) return;
   if (b.getAttribute('data-thu-lai') === 'nha_may') { vpNM.loi = ''; vpLayNhaMay_(); }
+  else if (b.getAttribute('data-thu-lai') === 'lien_he') { vpLH.loi = ''; vpLayLienHe_(); }
   else if (b.getAttribute('data-thu-lai') === 'tk_ds') { vpTKQ.loi = ''; vpLayTKQ_(); }
   else if (b.getAttribute('data-thu-lai') === 'ct_ds') { vpQLNM.loi = ''; vpLayQLNM_(); }
   else { vpCK.loi = ''; vpLayCongKhai_(); }

@@ -88,6 +88,10 @@ body.vp-co-thanh a.nut-nho.phai[href="trangchu.html"]{display:none}
 /* Nhà máy đang tuyển */
 .vp-nm-ds{list-style:none;margin:6px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:0 16px}
 .vp-nm-ds li{padding:9px 0;border-bottom:1px solid var(--vien)}
+/* 3.70 — người phụ trách + số bấm gọi dưới tên nhà máy */
+.vp-nm-ten{font-weight:600}
+.vp-pt{font-size:15px;padding-left:26px;line-height:1.4}
+.vp-goi{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;font-weight:600;white-space:nowrap}
 /* 🔑 Đổi mật khẩu (3.65, vé 03) — ô gõ chữ 16 px để điện thoại không tự phóng to */
 .vp-dmk>.vp-nut{margin:8px 0 0}
 .vp-nhan{display:block;font-weight:600;margin:12px 0 4px}
