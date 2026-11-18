@@ -20,7 +20,14 @@
     return THU[d.getUTCDay()] + ' ' + p[2] + '/' + p[1];
   }
 
-  /** tt = { don_vi, cong_ty, ky: 'yyyy-MM', dia_ban } */
+  /** Tên kỳ in trên phiếu: 'yyyy-MM' → 'THÁNG 11/2026'; kỳ ngắn 'a~b' → 'KỲ 09/11–15/11/2026' (khác năm 'KỲ 29/12/2026–04/01/2027'). */
+  function tenKyIn(k) {
+    if (k.indexOf('~') < 0) return 'THÁNG ' + k.substring(5) + '/' + k.substring(0, 4);
+    var tu = k.substring(0, 10), den = k.substring(11), dm = function (s) { return s.substring(8, 10) + '/' + s.substring(5, 7); };
+    return 'KỲ ' + (tu.substring(0, 4) === den.substring(0, 4) ? dm(tu) + '–' + dm(den) + '/' + den.substring(0, 4) : dm(tu) + '/' + tu.substring(0, 4) + '–' + dm(den) + '/' + den.substring(0, 4));
+  }
+
+  /** tt = { don_vi, cong_ty, ky: 'yyyy-MM' hoặc kỳ ngắn 'yyyy-MM-dd~yyyy-MM-dd', dia_ban } */
   function phieuLuong(n, tt) {
     var l = n.luong, k = tt.ky || '';
     function nhom(so, ten, tong, dong, coGio) {
@@ -33,7 +40,7 @@
     }
     return '<div class="phieu">' +
       '<div class="ph-dv">Đơn vị: ' + e(tt.cong_ty || '') + '</div>' +
-      '<div class="ph-tieude">BẢNG KÊ TIỀN LƯƠNG THÁNG ' + e(k.substring(5) + '/' + k.substring(0, 4)) + '</div>' +
+      '<div class="ph-tieude">BẢNG KÊ TIỀN LƯƠNG ' + e(tenKyIn(k)) + '</div>' +
       // 2.7.1: số thứ tự trên tờ ký nhận lương — to, ngay dưới đơn vị, để đông người vẫn đọc nhanh cho người phát lương
       (l.stt != null && l.stt !== '' ? '<div class="ph-stt" style="margin:8px 0;padding:6px 10px;border:2px solid currentColor;border-radius:8px;' +
         'display:inline-block;font-size:1.15rem">Số thứ tự: <b style="font-size:1.45rem">' + e(l.stt) + '</b></div>' : '') +

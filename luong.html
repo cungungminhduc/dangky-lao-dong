@@ -16,6 +16,8 @@
   KHÔNG BAO GIỜ nói "sai thông tin" khi chưa tra được.
   1.3 (Chặng 4 vé 12): dưới phiếu lương / bảng công đã công bố có khung "💬 Báo sai" — gửi bằng VÉ TRA máy chủ trả ở lượt tra
   (giữ trong bộ nhớ, sống 30 phút). Máy chủ cũ không trả vé → không hiện khung. Việc GHI không tự thử lại (tránh gửi trùng).
+  Kỳ ngắn vé 05: dưới phiếu lương có thẻ "🏦 Tài khoản nhận lương" (công nhân lưu / đổi / xoá số tài khoản nhập tay). Mở thẻ mới gọi stk_xem; cú stk_*
+  luôn gửi thẳng URL_API (kể cả khi URL_XEM bật) với CCCD + tên đã gõ lúc tra (giữ trong bộ nhớ trang). Số đầy đủ chỉ tồn tại trong ô đang gõ, không bao giờ vẽ lại.
   1.4 (vé 12b, đặc tả mục 0c): một nút "💬 Báo sai / thắc mắc" → chọn hạng mục (hạng mục quyết định ai nhận) → 🕒 chọn ngày / 💵 tích mục →
   ô chữ. Thêm khối "✍️ Thắc mắc khác" + ghi chú 📸 chụp màn hình. Máy chủ trước 1.4 (ph không có hạng mục khac) → ẩn phần báo sai.
 -->
@@ -52,6 +54,7 @@
   .dau-kq .ten { font-size: 1.1rem; margin-bottom: 10px; }
   .cac-nut { display: grid; grid-template-columns: 1fr; grid-gap: 8px; }
   .cac-nut button { width: 100%; text-align: left; color: var(--chu); border-color: var(--vien); font-weight: 600; }
+  .cac-nut.con { margin: 0 0 8px 14px; }
   .cac-nut button.chon { background: var(--chinh); border-color: var(--chinh); color: #fff; }
   .nhom-chon + .nhom-chon { margin-top: 16px; }
   .mot { font-weight: 600; }
@@ -109,6 +112,21 @@
   details[open] { padding-bottom: 8px; }
   summary { min-height: 48px; padding: 12px 4px; font-weight: 600; cursor: pointer; }
   .da-chon { font-size: .92rem; margin: 2px 0; }
+  /* kỳ ngắn vé 04 — "Tôi đồng ý thông tin lương này" ngay dưới phiếu lương (nút thừa hưởng min-height 52px của button) */
+  .dongy { border-top: 2px solid #e2e8f0; margin-top: 14px; padding-top: 12px; }
+  .dongy .buoc { margin-top: 0; }
+  .dongy button { margin-top: 10px; }
+  /* kỳ ngắn vé 05 — thẻ 🏦 tài khoản nhận lương dưới phiếu lương (ô rộng 100%, nút thừa hưởng min-height 52px; không nowrap để 375px không tràn) */
+  /* kỳ ngắn vé 09 — nút "💸 Xem tiền đã chuyển chưa" ngay dưới phiếu lương (≥ 44px, không nowrap để 375px không tràn) */
+  .ct-tien { border-top: 2px solid #e2e8f0; margin-top: 14px; padding-top: 12px; }
+  .ct-tien button { margin-top: 10px; min-height: 48px; }
+  .ct-tien .ct-dong { margin-top: 8px; line-height: 1.4; }
+  .stk { border-top: 2px solid #e2e8f0; margin-top: 14px; padding-top: 12px; }
+  .stk h3 { font-size: 1rem; margin-bottom: 4px; }
+  .stk button { margin-top: 10px; }
+  .stk input[type=text], .stk select { width: 100%; min-height: 52px; padding: 10px 12px; font-size: 1.1rem; font-family: inherit; background: #fff; border: 1.5px solid var(--vien); border-radius: 8px; }
+  .stk label { margin: 12px 0 6px; }
+  .stk .o-chon { margin-top: 14px; line-height: 1.35; }
   @media print {
     body { background: #fff; padding: 0; }
     .khong-in { display: none !important; }
@@ -167,6 +185,9 @@
 
 <script src="cau-hinh-luong.js"></script>
 <script src="ve-phieu.js"></script>
+<script src="ngan-hang-luong.js"></script>
+<script src="https://unpkg.com/jsqr@1.4.0/dist/jsQR.js"></script>
+<script src="vietqr-luong.js"></script>
 <script>
 var $ = function (id) { return document.getElementById(id); };
 var e = VePhieu.e;
@@ -177,6 +198,23 @@ var kq = null, chon = { ky: '', i: -1 };
 
 function bao(id, loai, html) { $(id).innerHTML = html ? '<div class="bao ' + loai + '">' + html + '</div>' : ''; }
 function thangNam(ky) { return ky.substring(5) + '/' + ky.substring(0, 4); }
+/** Cùng luật tenKyBatKy_ ở Code.gs: '2026-11' → '11/2026' · '2026-11-09~2026-11-15' → '09/11–15/11/2026' · khác năm '29/12/2026–04/01/2027'. */
+function tenKyBatKy(ky) {
+  ky = String(ky || '');
+  if (ky.indexOf('~') < 0) return ky.length >= 7 ? thangNam(ky) : ky;
+  var tu = ky.substring(0, 10), den = ky.substring(11), dm = function (s) { return s.substring(8) + '/' + s.substring(5, 7); };
+  return tu.substring(0, 4) === den.substring(0, 4) ? dm(tu) + '–' + dm(den) + '/' + den.substring(0, 4) : dm(tu) + '/' + tu.substring(0, 4) + '–' + dm(den) + '/' + den.substring(0, 4);
+}
+/** Chữ trên nút chọn kỳ: "Tháng 11/2026" · kỳ ngắn 5–8 ngày "Tuần 09/11–15/11" · còn lại "Kỳ 09/11–11/11" (cùng năm bỏ năm). */
+function nhanKy(ky) {
+  if (ky.indexOf('~') < 0) return 'Tháng ' + thangNam(ky);
+  var tu = ky.substring(0, 10), den = ky.substring(11);
+  var ngay = Math.round((Date.UTC(+den.substring(0, 4), +den.substring(5, 7) - 1, +den.substring(8, 10)) - Date.UTC(+tu.substring(0, 4), +tu.substring(5, 7) - 1, +tu.substring(8, 10))) / 86400000) + 1;
+  var ten = tu.substring(0, 4) === den.substring(0, 4) ? tenKyBatKy(ky).replace(/\/\d{4}$/, '') : tenKyBatKy(ky);
+  return (ngay >= 5 && ngay <= 8 ? 'Tuần ' : 'Kỳ ') + ten;
+}
+/** Tháng để gom khi danh sách kỳ dài: tháng → chính nó; kỳ ngắn → tháng của ngày cuối kỳ (trang không nhận tháng quyết toán). */
+function thangCua(ky) { return ky.indexOf('~') > 0 ? ky.substring(11, 18) : ky; }
 /** 'yyyy-MM-dd HH:mm' → 'HH:mm ngày dd/MM/yyyy' */
 function lucDep(s) {
   var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(s || '');
@@ -260,7 +298,7 @@ function xem() {
   bao('traBao', 'cho', '⏳ Đang tìm phiếu của anh/chị… (vài giây)');
   traQuaMay({ hanh_dong: 'tra_luong', so_cccd: so, ho_ten: ten }).then(function (r) {
     nut.disabled = false; nut.textContent = '🔍 Xem';
-    if (r.ok) { bao('traBao'); $('soCccd').value = ''; $('hoTen').value = ''; hienKetQua(r); return; }
+    if (r.ok) { bao('traBao'); $('soCccd').value = ''; $('hoTen').value = ''; stk = moiStk(); stk.nguoi = { so: so, ten: ten }; ct = moiCt(); hienKetQua(r); return; }
     if (CO_THE_THU_LAI[r.ma]) {
       bao('traBao', 'do', 'Chưa tra được vì máy chủ đang quá đông hoặc mạng chập chờn — <b>không phải anh/chị gõ sai</b>. ' +
           'Đợi ít phút rồi bấm 🔍 Xem lại.');
@@ -288,15 +326,26 @@ function chonKy(ky) {
   for (var i = 0; i < kq.muc.length; i++) if (kq.muc[i].ky === ky) { chon.i = i; break; }
   ve();
 }
+/** Danh sách kỳ dài đang gập theo tháng: bấm một tháng → mở tháng đó, xem kỳ mới nhất của nó. */
+function chonThang(th) {
+  for (var i = 0; i < kq.muc.length; i++) if (thangCua(kq.muc[i].ky) === th) { chonKy(kq.muc[i].ky); return; }
+}
 function chonCT(i) { chon.i = i; ve(); }
 function ve() {
   var cacKy = [];
   kq.muc.forEach(function (m) { if (cacKy.indexOf(m.ky) < 0) cacKy.push(m.ky); });
-  $('dsKy').innerHTML = cacKy.length < 2 ? '<div class="mot">Tháng ' + thangNam(cacKy[0]) + '</div>'
-    : '<div class="cac-nut">' + cacKy.map(function (ky) {
-        var la = ky === chon.ky;
-        return '<button class="' + (la ? 'chon' : '') + '" aria-pressed="' + la + '" onclick="chonKy(\'' + ky + '\')">' +
-               (la ? '✔ ' : '') + 'Tháng ' + thangNam(ky) + '</button>';
+  function nutKy(ky) {
+    var la = ky === chon.ky;
+    return '<button class="' + (la ? 'chon' : '') + '" aria-pressed="' + la + '" onclick="chonKy(\'' + ky + '\')">' + (la ? '✔ ' : '') + nhanKy(ky) + '</button>';
+  }
+  var cacThang = [];
+  cacKy.forEach(function (ky) { if (cacThang.indexOf(thangCua(ky)) < 0) cacThang.push(thangCua(ky)); });
+  $('dsKy').innerHTML = cacKy.length < 2 ? '<div class="mot">' + nhanKy(cacKy[0]) + '</div>'
+    : cacKy.length <= 6 ? '<div class="cac-nut">' + cacKy.map(nutKy).join('') + '</div>'
+    : '<div class="cac-nut">' + cacThang.map(function (th) {          // nhiều kỳ: gập theo tháng, chỉ tháng đang xem mở ra
+        var mo = th === thangCua(chon.ky), trongThang = cacKy.filter(function (ky) { return thangCua(ky) === th; });
+        return '<button aria-expanded="' + mo + '" onclick="chonThang(\'' + th + '\')">' + (mo ? '▾ ' : '▸ ') + 'Tháng ' + thangNam(th) + ' (' + trongThang.length + ' kỳ)</button>' +
+               (mo ? '<div class="cac-nut con">' + trongThang.map(nutKy).join('') + '</div>' : '');
       }).join('') + '</div>';
   var trong = [];
   kq.muc.forEach(function (m, i) { if (m.ky === chon.ky) trong.push(i); });
@@ -316,12 +365,12 @@ function ve() {
   $('kqCapNhat').textContent = cn ? '🕒 Số cập nhật lúc ' + cn[3] + ' ngày ' + cn[2] + '/' + cn[1] : '';
   $('kqCapNhat').classList.toggle('an', !cn);
   var chua = '<p class="chua">⏳ <b>Chưa công bố.</b> Kế toán công bố xong mới xem được — quay lại sau.</p>';
-  $('khungLuong').innerHTML = !m.luong ? chua :
+  $('khungLuong').innerHTML = !m.luong ? chua + hopStk() :
     CHUP + '<p class="phu khong-in">Cập nhật lúc ' + e(lucDep(m.luong_luc)) + '</p>' +
     '<button class="rong khong-in" onclick="inPhieu()">🖨 In / Lưu PDF phiếu này</button>' +
     '<div id="inBao" class="khong-in"></div>' +
     VePhieu.phieuLuong({ ten_hien: m.ten_hien, ten_nha_may: m.ten_nha_may, luong: m.luong }, { cong_ty: m.ten_ct, ky: m.ky }) +
-    hopPH(chon.i, 'luong');
+    hopCt(m) + hopDongY(chon.i) + hopStk() + hopPH(chon.i, 'luong');
   $('khungCong').innerHTML = !m.cong ? chua :
     CHUP + '<p class="phu">Cập nhật lúc ' + e(lucDep(m.cong_luc)) + '</p>' + VePhieu.bangCong({ cong: m.cong }) + hopPH(chon.i, 'cong');
   var khac = hopPH(chon.i, 'khac');
@@ -334,6 +383,7 @@ var HM = VePhieu.HANG_MUC;
 var HM_KHAC = Object.keys(HM).filter(function (k) { return k !== 'cong' && k !== 'luong'; });
 var CHUP = '<div class="chup khong-in">📸 Chụp màn hình phần này để lần sau xem lại trong máy, khỏi phải tra lại — ngày đông người tra, mạng rất chậm.</div>';
 var ph = { form: null, bao: {} };                     // form = biểu mẫu đang mở (mỗi lúc một cái) · bao theo khoá 'chỉ số lựa chọn|hạng mục'
+var dy = { dang: {}, bao: {} };                         // đồng ý lương (vé 04): đang gửi / báo lỗi theo chỉ số lựa chọn
 var nhapCho = null;                                   // biểu mẫu gõ dở khi vé tra hết hạn — giữ tới lúc tra lại, rời trang là xoá
 var TEN_PH = { luong: 'phiếu lương', cong: 'bảng công' };
 function ngayDep(s) { return s ? s.substring(8, 10) + '/' + s.substring(5, 7) : ''; }
@@ -371,6 +421,339 @@ function hopPH(i, noi) {
   }
   return h + '</div>';
 }
+// ---------------- ĐỒNG Ý THÔNG TIN LƯƠNG (kỳ ngắn vé 04) ----------------
+/** 'yyyy-MM-dd HH:mm' → 'HH:mm dd/MM' (Đã đồng ý lúc 10:20 18/11). */
+function lucDongY(s) { var m = /^\d{4}-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(s || ''); return m ? m[3] + ' ' + m[2] + '/' + m[1] : String(s || ''); }
+/**
+ * Dòng 👉 + nút ngay dưới phiếu lương. Máy chủ cũ (muc không có da_dong_y) hoặc chưa có vé → không hiện gì, trang như trước.
+ * Không chặn việc gì: sai thì vẫn dùng nút báo sai bên dưới.
+ */
+function hopDongY(i) {
+  var m = kq.muc[i];
+  if (!kq.ve || !m.luong || m.da_dong_y === undefined || !(m.phien_luong > 0)) return '';
+  var d = m.da_dong_y, h = '<div class="dongy khong-in" id="dongy' + i + '">';
+  if (d && d.cho) {
+    h += '<div class="bao cho">⏳ Đã nhận lời đồng ý lúc ' + e(lucDongY(d.luc)) + ' — đang chuyển cho kế toán. Xem lại sau ít phút.</div>';
+  } else if (d) {
+    h += '<div class="bao xanh">✅ Đã đồng ý lúc ' + e(lucDongY(d.luc)) + '</div>';
+  } else {
+    h += (m.dong_y_cu ? '<div class="bao cho">⚠ Bảng lương đã được sửa. Xem lại và đồng ý lại</div>' : '') +
+         (m.dong_y_loi ? '<div class="bao do">❌ Lời đồng ý lúc trước chưa gửi được: ' + e(m.dong_y_loi) + '</div>' : '') +
+         '<p class="buoc">👉 Xem kỹ số tiền. Đúng thì bấm Đồng ý</p>' + (dy.bao[i] || '') +
+         '<button class="rong chinh"' + (dy.dang[i] ? ' disabled' : '') + ' onclick="dongYLuong(' + i + ')">' +
+         (dy.dang[i] ? '⏳ Đang gửi…' : '✅ Tôi đồng ý thông tin lương này') + '</button>' +
+         (m.ph && m.ph.khac ? '<p class="ghi">Số tiền sai thì bấm nút "💬 Báo sai / thắc mắc" ở dưới.</p>' : '');   // chỉ nhắc khi khung báo sai có thật
+  }
+  return h + '</div>';
+}
+function dongYLuong(i) {
+  var m = kq.muc[i];
+  if (dy.dang[i] || !m || !(m.phien_luong > 0)) return;
+  dy.dang[i] = 1; dy.bao[i] = ''; ve();
+  var giu = kq, goiTin = { hanh_dong: 'xn_gui', ve: kq.ve, ma_ct: m.ma_ct, ky: m.ky, hs: m.hs, phien_luong: m.phien_luong };
+  // Như báo sai: "máy chủ đang bận" (BAN) = chưa ghi gì → tự gửi lại không trùng. Gửi về đúng máy chủ đã cấp vé; máy chủ xem hỏng thì KHÔNG sang Apps Script.
+  function guiCoThuLai(lan) {
+    return goi(goiTin).then(function (r) {
+      if (r.ma !== 'BAN' || lan >= THU_LAI || kq !== giu) return r;
+      dy.bao[i] = '<div class="bao cho">⏳ Máy chủ đang bận, máy tự gửi lại… (lần ' + (lan + 2) + ' / ' + (THU_LAI + 1) + ') — đừng đóng trang.</div>';
+      ve();
+      return cho(2 + Math.random() * 6).then(function () { return guiCoThuLai(lan + 1); });
+    });
+  }
+  var qua = kq.nguon === 'xem' && coXem();
+  (qua ? goiXem(goiTin) : guiCoThuLai(0)).then(function (r) {
+    if (kq !== giu) return;                           // đã tra người khác / rời trang trong lúc chờ
+    dy.dang[i] = 0; dy.bao[i] = '';
+    if (r === XEM_HONG) {
+      dy.bao[i] = '<div class="bao do">Chưa chắc lời đồng ý đã tới — mạng tới máy chủ chập chờn. Bấm 🔄 Tra lại xem đã đồng ý chưa rồi mới bấm lại.</div>';
+    } else if (r.ok && r.da_dong_y) {
+      m.da_dong_y = r.da_dong_y; m.dong_y_cu = undefined; m.dong_y_loi = undefined;
+    } else if (CO_THE_THU_LAI[r.ma] || r.ma === 'MAT_MANG' || (qua && r.ma === 'BAN')) {
+      dy.bao[i] = '<div class="bao do">Chưa chắc đã gửi được vì mạng chập chờn hoặc máy chủ đang đông. Đợi ít phút rồi bấm lại.</div>';
+    } else {
+      dy.bao[i] = '<div class="bao do">' + e(r.loi || 'Chưa gửi được — thử lại sau ít phút.') + '</div>';
+    }
+    ve();
+  });
+}
+// ---------------- TÀI KHOẢN NHẬN LƯƠNG (kỳ ngắn vé 05) ----------------
+var CAU_DONG_Y_STK = 'Tôi đồng ý để công ty lưu số tài khoản này chỉ để chuyển lương cho tôi. Chỉ người phụ trách chuyển lương xem được. Tôi tự đổi hoặc xoá được ở trang này.';
+var CAU_BAN_STK = 'Máy chủ đang bận, số chưa lưu. Thử lại sau ít phút.';
+var CAU_QR_HONG = 'Không đọc được tài khoản trong ảnh này. Anh/chị nhập tay nhé';
+var CAU_QR_THE = 'QR này là số thẻ, không phải số tài khoản. Anh/chị nhập tay nhé';
+var CAU_QR_DAY = 'Đã điền sẵn từ ảnh. Anh/chị soát lại, tích ô đồng ý rồi bấm 💾 Lưu.';
+var CAU_NHAC_TEN = 'Gõ tên chủ tài khoản như trên app ngân hàng';
+var CANH_ANH_TOI_DA = 1600;                          // ảnh QR lớn thu nhỏ về cạnh dài này trước khi đọc (điện thoại yếu không treo)
+var CAU_KHAC_CHU = '⚠ Tên chủ tài khoản khác tên anh/chị. Người chuyển tiền sẽ xác nhận trước khi chuyển.';
+function moiStk() { return { nguoi: null, mo: false, tat: false, dang: 0, tt: null, loiXem: '', f: null, xoa: false, bao: '', qrDang: 0 }; }
+var stk = moiStk();                                  // nguoi = CCCD + tên đã gõ lúc tra (trong bộ nhớ trang, không lưu máy). tt = trả lời stk_xem (chỉ 4 số cuối)
+/** Số tài khoản gõ vào → 6–19 chữ số (bỏ dấu cách, chấm, gạch); sai → ''. Cùng luật chuanSoTk_ ở Code.gs. */
+function chuanSoTk(s) {
+  if (s == null) return '';
+  var t = String(s).replace(/[\s.\-]/g, '');
+  return /^\d{6,19}$/.test(t) ? t : '';
+}
+/** Lỗi từ máy chủ → một câu cho người dùng. Bận / hết giờ / trang lỗi: nói thẳng là số CHƯA lưu. */
+function loiStk(r, viec) {
+  if (r.ma === 'MAT_MANG') return r.loi;
+  if (r.ma === 'TAM' || r.ma === 'BAN' || r.ma === 'LOI_HE_THONG' || r.ma === 'DANG_GHI') {
+    return viec === 'luu' ? CAU_BAN_STK : viec === 'xoa' ? 'Máy chủ đang bận, số chưa xoá. Thử lại sau ít phút.' : 'Máy chủ đang bận, chưa xem được. Thử lại sau ít phút.';
+  }
+  return r.loi || 'Chưa làm được — thử lại sau ít phút.';
+}
+/** Thẻ 🏦 ngay dưới phiếu lương. Chỉ hiện khi có ít nhất một phiếu lương đã công bố. Máy chủ cũ (stk_xem không có) → ẩn. */
+function hopStk() {
+  if (typeof NGAN_HANG === 'undefined' || !kq || stk.tat || !stk.nguoi || !kq.muc.some(function (m) { return !!m.luong; })) return '';
+  var h = '<div class="stk khong-in" id="theStk">';
+  if (!stk.mo) {
+    return h + '<button class="rong" aria-expanded="false" onclick="moStk()">🏦 Tài khoản nhận lương</button>' +
+           '<p class="ghi">Nhận lương chuyển khoản: bấm để thêm hoặc xem số tài khoản.</p></div>';
+  }
+  h += '<h3>🏦 Tài khoản nhận lương</h3><p class="phu">Một tài khoản dùng chung cho mọi công ty, mọi kỳ.</p>';
+  if (stk.dang === 'xem') h += '<div class="bao cho">⏳ Đang mở…</div>';
+  else if (stk.loiXem) h += '<div class="bao do">' + e(stk.loiXem) + '</div><button class="rong" onclick="stkThuLai()">🔄 Thử lại</button>';
+  else if (stk.f) h += veFormStk();
+  else if (stk.xoa) h += hoiXoaStk();
+  else if (stk.tt) h += trangThaiStk();
+  return h + (stk.f || stk.xoa ? '' : '<button class="rong" aria-expanded="true" onclick="moStk()">Đóng</button>') + '</div>';
+}
+function trangThaiStk() {
+  var t = stk.tt, h = stk.bao || '';
+  if (!t.co) {
+    return h + '<p class="buoc">👉 Thêm số tài khoản để nhận lương chuyển khoản</p>' +
+      (stk.qrDang ? '<div class="bao cho">⏳ Đang đọc ảnh…</div>' :
+        '<button class="rong' + (coDocQR() ? '' : ' an') + '" id="stkQR" onclick="stkMoAnh()">📷 Tải ảnh QR</button>' +
+        '<input type="file" accept="image/*" id="stkAnh" class="an" autocomplete="off" onchange="stkChonAnh(this)">' +
+        '<button class="rong chinh" onclick="stkNhapTay()">✍️ Nhập tay</button>');
+  }
+  return h + '<div class="toi">🏦 <b>' + e(t.ngan_hang) + '</b> ••••' + e(t.so4) + '</div><p>Chủ tài khoản: <b>' + e(t.ten_chu_tk) + '</b></p>' +
+    (t.khac_chu ? '<div class="bao cho">' + CAU_KHAC_CHU + '</div>' : '') +
+    (t.cap_nhat_luc ? '<p class="ghi">Cập nhật lúc ' + e(lucDep(t.cap_nhat_luc)) + '</p>' : '') +
+    '<div class="hai-nut"><button onclick="stkDoi()">✍️ Đổi số</button><button onclick="stkXoaHoi()">🗑 Xoá số</button></div>';
+}
+function hoiXoaStk() {
+  var dang = stk.dang === 'xoa';
+  return (stk.bao || '') + '<div class="bao cho"><b>Xoá số tài khoản ••••' + e(stk.tt && stk.tt.so4) + '?</b> Sau khi xoá công ty không còn số của anh/chị để chuyển lương.</div>' +
+    '<div class="hai-nut"><button class="chinh"' + (dang ? ' disabled' : '') + ' onclick="stkXoa()">' + (dang ? '⏳ Đang xoá…' : '🗑 Xoá số') + '</button>' +
+    '<button' + (dang ? ' disabled' : '') + ' onclick="stkThoi()">Thôi</button></div>';
+}
+function loiO_stk(c) { return c ? '<div class="loi-o">⚠ ' + e(c) + '</div>' : ''; }
+function veFormStk() {
+  var f = stk.f, tat = f.dang ? ' disabled' : '';
+  if (f.hoi) {
+    return '<div class="bao cho"><b>Thay số cũ ••••' + e(f.hoi.so4_cu) + ' bằng số mới ••••' + e(f.hoi.so4_moi) + '?</b></div>' +
+      '<div class="hai-nut"><button class="chinh" onclick="stkThay()">✅ Thay số</button><button onclick="stkGiuCu()">Giữ số cũ</button></div>';
+  }
+  var h = (f.dau || '') + '<label for="stkNH">Ngân hàng</label><select id="stkNH" onchange="stkGo(\'nh\', this.value); ve()"' + tat + '><option value="">— Chọn ngân hàng —</option>';
+  NGAN_HANG.forEach(function (b, i) {
+    var v = b.bin ? String(i) : 'khac';
+    h += '<option value="' + v + '"' + (String(f.nh) === v ? ' selected' : '') + '>' + e(b.ten) + '</option>';
+  });
+  h += '</select>' + loiO_stk(f.loi.nh);
+  if (f.nh === 'khac') {
+    h += '<label for="stkNHKhac">Tên ngân hàng</label><input id="stkNHKhac" type="text" autocomplete="off" maxlength="60" value="' + e(f.nhKhac) +
+         '" oninput="stkGo(\'nhKhac\', this.value)" placeholder="Ví dụ: Ngân hàng Bản Việt"' + tat + '>';
+  }
+  h += '<label for="stkSo">Số tài khoản</label><input id="stkSo" type="text" inputmode="numeric" autocomplete="off" maxlength="30" value="' + e(f.so) +
+       '" oninput="stkGo(\'so\', this.value)" placeholder="Chỉ gõ số"' + tat + '>' + loiO_stk(f.loi.so);
+  if (f.nhacTen && !f.ten) h += '<p class="buoc">👉 ' + CAU_NHAC_TEN + '</p>';
+  h += '<label for="stkTen">Tên chủ tài khoản</label><input id="stkTen" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="80" value="' + e(f.ten) +
+       '" oninput="stkGo(\'ten\', this.value)" placeholder="Như in trên thẻ ngân hàng"' + tat + '>' + loiO_stk(f.loi.ten);
+  h += '<button class="o-chon' + (f.dongY ? ' chon' : '') + '" aria-pressed="' + !!f.dongY + '"' + tat + ' onclick="stkDongY()"><span class="o">' + (f.dongY ? '✓' : '') +
+       '</span><span>' + CAU_DONG_Y_STK + '</span></button>' + loiO_stk(f.loi.dongY);
+  return h + (f.bao || '') + '<div class="hai-nut"><button class="chinh"' + tat + ' onclick="stkLuu()">' + (f.dang ? '⏳ Đang lưu…' : '💾 Lưu') + '</button>' +
+         '<button' + tat + ' onclick="stkThoi()">Thôi</button></div>';
+}
+function moStk() {
+  stk.mo = !stk.mo;
+  if (stk.mo && !stk.tt && !stk.dang && stk.nguoi) guiXemStk(); else ve();
+}
+function stkThuLai() { stk.loiXem = ''; guiXemStk(); }
+/** stk_* luôn tới URL_API (Apps Script), kể cả khi URL_XEM bật: máy chủ xem không giữ số tài khoản. */
+function guiXemStk() {
+  var giu = stk;
+  stk.dang = 'xem'; stk.loiXem = ''; ve();
+  goi({ hanh_dong: 'stk_xem', so_cccd: stk.nguoi.so, ho_ten: stk.nguoi.ten }).then(function (r) {
+    if (stk !== giu) return;                          // đã tra người khác / rời trang trong lúc chờ
+    stk.dang = 0;
+    if (r.ok) stk.tt = r;
+    else if (r.ma === 'KHONG_RO' || r.ma === 'SAI_TOKEN' || r.ma === 'SAI_DINH_DANG') stk.tat = true;   // máy chủ chưa có cú này: ẩn thẻ, trang như trước
+    else stk.loiXem = loiStk(r, 'xem');
+    ve();
+  });
+}
+// ---------------- 💸 XEM TIỀN ĐÃ CHUYỂN CHƯA (kỳ ngắn vé 09) ----------------
+var CAU_CT_LOI = 'Chưa xem được, thử lại sau ít phút';
+var CHU_CT = { thieu_tk: 'Chưa có số tài khoản — thêm ở thẻ 🏦', chua: 'Chưa chuyển', dang: 'Đang chuyển', kiem: 'Đang chuyển' };   // công nhân không thấy "Cần kiểm tra" (máy chủ đã đổi kiem → dang; đây là dây an toàn)
+function moiCt() { return { dang: false, ds: null, loi: false };  }
+var ct = moiCt();                                    // ds = trả lời ct_cua_toi (mọi kỳ, một lần); mất khi tra người khác / rời trang
+/** Giờ chuyển 'yyyy-MM-dd HH:mm:ss' → 'HH:mm dd/MM'. */
+function gioChuyen(s) {
+  var m = /^\d{4}-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(s || '');
+  return m ? m[3] + ' ' + m[2] + '/' + m[1] : '';
+}
+function chuCt(k) {
+  if (k.tt !== 'xong') return CHU_CT[k.tt] || CHU_CT.chua;
+  var gio = gioChuyen(k.xong_luc);
+  return '✅ Đã chuyển' + (gio ? ' ' + gio : '') + (k.so4 ? ' vào ••••' + e(k.so4) : '');
+}
+/** Nút + kết quả ngay dưới phiếu lương của kỳ đang xem. Chỉ gọi máy chủ khi bấm nút. */
+function hopCt(m) {
+  if (!stk.nguoi) return '';
+  var h = '<div class="ct-tien khong-in" id="theCt">';
+  if (ct.dang) return h + '<button class="rong" disabled>⏳ Đang xem…</button></div>';
+  if (ct.loi) return h + '<div class="bao do">' + CAU_CT_LOI + '</div><button class="rong" onclick="ctMo()">🔄 Thử lại</button></div>';
+  if (!ct.ds) return h + '<button class="rong" onclick="ctMo()">💸 Xem tiền đã chuyển chưa</button></div>';
+  var ds = ct.ds.filter(function (k) { return k.ma_ct === m.ma_ct && k.ky === m.ky; }), ho = {};
+  ds.forEach(function (k) { ho[k.cccd_nha_may] = true; });
+  var nhieuHo = Object.keys(ho).length > 1;
+  h += '<h3>💸 Tiền lương đã chuyển chưa</h3>';
+  if (!ds.length) h += '<p class="phu">Kỳ này chưa có khoản nào để chuyển.</p>';
+  ds.forEach(function (k) {
+    h += '<div class="ct-dong">' + (k.loai === 'bo_sung' ? '<b>Khoản bổ sung</b> · ' : '') + (nhieuHo ? 'hồ sơ ' + e(k.cccd_nha_may) + ' · ' : '') +
+         '<b>' + Number(k.so_tien).toLocaleString('vi-VN') + ' đ</b><br>' + chuCt(k) + '</div>';
+  });
+  return h + '<button class="rong" onclick="ctMo()">🔄 Xem lại</button></div>';
+}
+/** ct_cua_toi luôn tới URL_API (Apps Script), kể cả khi URL_XEM bật: máy chủ xem không giữ trạng thái chuyển tiền. */
+function ctMo() {
+  if (!stk.nguoi || ct.dang) return;
+  var giu = ct;
+  ct.dang = true; ct.loi = false; ve();
+  goi({ hanh_dong: 'ct_cua_toi', so_cccd: stk.nguoi.so, ho_ten: stk.nguoi.ten }).then(function (r) {
+    if (ct !== giu) return;                          // đã tra người khác / rời trang trong lúc chờ
+    ct.dang = false;
+    if (r && r.ok && Array.isArray(r.khoan)) ct.ds = r.khoan; else ct.loi = true;
+    ve();
+  });
+}
+function stkNhapTay() {
+  stk.xoa = false; stk.bao = '';
+  stk.f = { nh: '', nhKhac: '', so: '', ten: '', dongY: false, loi: {}, bao: '', dang: 0, hoi: null, thay: false, nguon: 'tay', bin: '', dau: '', nhacTen: false };
+  ve();
+}
+function stkDoi() { stkNhapTay(); }
+/** Nút 📷 chỉ hiện khi thư viện đọc QR (jsQR từ unpkg) và VietQR đều đã tải; thiếu một → ẩn, công nhân nhập tay như vé 05. */
+function coDocQR() { return typeof jsQR !== 'undefined' && typeof VietQR !== 'undefined'; }
+function stkMoAnh() { var o = $('stkAnh'); if (o && o.click) o.click(); }
+/** Ảnh lớn → thu nhỏ giữ tỉ lệ, cạnh dài ≤ 1600px. */
+function kichThuocThu(w, h) {
+  var d = Math.max(w, h);
+  if (d <= CANH_ANH_TOI_DA) return { w: w, h: h };
+  var t = CANH_ANH_TOI_DA / d;
+  return { w: Math.max(1, Math.round(w * t)), h: Math.max(1, Math.round(h * t)) };
+}
+/** Đọc ảnh QR TRONG MÁY (canvas + jsQR; ảnh không gửi đi đâu). File → Promise<chuỗi QR | null>. Mọi hỏng hóc → null. Test thay hàm này bằng kết quả giả. */
+function docAnhQR(file) {
+  return new Promise(function (xong) {
+    var url = '';
+    try {
+      url = URL.createObjectURL(file);
+      var img = new Image();
+      img.onload = function () {
+        try {
+          var k = kichThuocThu(img.naturalWidth || img.width, img.naturalHeight || img.height);
+          var c = document.createElement('canvas'); c.width = k.w; c.height = k.h;
+          var g = c.getContext('2d', { willReadFrequently: true });
+          g.drawImage(img, 0, 0, k.w, k.h);
+          var d = g.getImageData(0, 0, k.w, k.h);
+          var r = jsQR(d.data, k.w, k.h, { inversionAttempts: 'attemptBoth' });
+          xong(r && r.data ? r.data : null);
+        } catch (x) { xong(null); }
+        try { URL.revokeObjectURL(url); } catch (x) {}
+      };
+      img.onerror = function () { try { URL.revokeObjectURL(url); } catch (x) {} xong(null); };
+      img.src = url;
+    } catch (x) { xong(null); }
+  });
+}
+/** Công nhân chọn ảnh: đọc → điền sẵn form (chưa tích đồng ý, chưa lưu). Không đọc được → câu nhập tay + form trống. */
+function stkChonAnh(inp) {
+  var file = inp && inp.files && inp.files[0];
+  if (inp) { try { inp.value = ''; } catch (x) {} }  // để chọn lại đúng ảnh đó vẫn nổ sự kiện
+  if (!file || stk.qrDang || !stk.nguoi || !stk.tt) return;
+  var giu = stk;
+  stk.qrDang = 1; stk.bao = ''; ve();
+  Promise.resolve().then(function () { return docAnhQR(file); }).then(function (c) { return c; }, function () { return null; }).then(function (chuoi) {
+    if (stk !== giu) return;                          // đã tra người khác / rời trang trong lúc đọc
+    stk.qrDang = 0;
+    stkTuQR(typeof chuoi === 'string' && chuoi ? VietQR.doc(chuoi) : { ok: false, ly_do: 'rong' });
+  });
+}
+function stkTuQR(r) {
+  stkNhapTay();
+  var f = stk.f;
+  if (!r.ok) {
+    f.dau = '<div class="bao do">' + e(r.ly_do === 'the' ? CAU_QR_THE : CAU_QR_HONG) + '</div>';
+    ve(); return;
+  }
+  var i = -1;
+  NGAN_HANG.forEach(function (b, j) { if (b.bin === r.bin) i = j; });
+  if (i >= 0) f.nh = String(i); else { f.nh = 'khac'; f.nhKhac = 'Mã ngân hàng ' + r.bin; }
+  f.so = r.so_tk; f.ten = r.ten || ''; f.nguon = 'qr'; f.bin = r.bin; f.nhacTen = !r.ten;
+  f.dau = '<div class="bao cho">' + e(CAU_QR_DAY) + '</div>';
+  ve();
+  if (!f.ten) { var o = $('stkTen'); if (o && o.focus) o.focus(); }
+}
+/** Gõ vào ô: chỉ nhớ trong bộ nhớ trang, không vẽ lại (vẽ lại làm mất con trỏ). */
+function stkGo(k, v) {
+  var f = stk.f;
+  if (!f) return;
+  f[k] = v; f.loi[k === 'nhKhac' ? 'nh' : k] = '';
+  if (k === 'nh' || k === 'nhKhac' || k === 'so') { f.nguon = 'tay'; f.bin = ''; }   // sửa ngân hàng / số sau khi điền sẵn từ QR: không còn là "đọc từ QR"
+  if (k === 'so') f.thay = false;                     // đổi số sau khi đã xác nhận thay → hỏi lại
+}
+function stkDongY() { var f = stk.f; if (!f) return; f.dongY = !f.dongY; f.loi.dongY = ''; ve(); }
+function stkThoi() { stk.f = null; stk.xoa = false; stk.bao = ''; ve(); }
+function stkGiuCu() { stk.f = null; ve(); }
+function stkThay() {
+  var f = stk.f;
+  if (!f || !f.hoi) return;
+  f.hoi = null; f.thay = true;
+  stkLuu();
+}
+function stkLuu() {
+  var f = stk.f;
+  if (!f || f.dang || !stk.nguoi) return;
+  f.loi = {}; f.bao = '';
+  var nh = f.nh === 'khac' ? { ten: String(f.nhKhac || '').trim(), bin: f.nguon === 'qr' ? f.bin : '' } : f.nh !== '' && NGAN_HANG[+f.nh] ? { ten: NGAN_HANG[+f.nh].ten, bin: NGAN_HANG[+f.nh].bin } : null;
+  if (!nh) f.loi.nh = 'Chọn ngân hàng trong danh sách.';
+  else if (nh.ten.length < 2) f.loi.nh = 'Gõ tên ngân hàng (ví dụ: Ngân hàng Bản Việt).';
+  var so = chuanSoTk(f.so), ten = String(f.ten || '').trim();
+  if (!so) f.loi.so = 'Số tài khoản chỉ gồm chữ số, dài 6 đến 19 số. Xoá chữ hoặc dấu lạ rồi lưu.';
+  if (ten.length < 2) f.loi.ten = 'Gõ tên chủ tài khoản như in trên thẻ ngân hàng.';
+  if (!f.dongY) f.loi.dongY = 'Cần tích ô đồng ý trước khi lưu số tài khoản.';
+  if (f.loi.nh || f.loi.so || f.loi.ten || f.loi.dongY) { ve(); return; }
+  var giu = stk, thay = f.thay;
+  f.dang = 1; ve();
+  goi({ hanh_dong: 'stk_luu', so_cccd: stk.nguoi.so, ho_ten: stk.nguoi.ten, ngan_hang: nh.ten, ma_bin: nh.bin, so_tk: so, ten_chu_tk: ten, nguon: f.nguon === 'qr' ? 'qr' : 'tay', dong_y: true,
+        thay_so_cu: thay ? true : undefined }).then(function (r) {
+    if (stk !== giu) return;
+    f.dang = 0;
+    if (r.ok) { stk.tt = r; stk.f = null; stk.bao = ''; }
+    else if (r.ma === 'CO_SO_CU') f.hoi = { so4_cu: r.so4_cu, so4_moi: so.slice(-4) };
+    else if (r.ma === 'SAI_SO') f.loi.so = r.loi;
+    else if (r.ma === 'SAI_TEN_CHU') f.loi.ten = r.loi;
+    else if (r.ma === 'SAI_NGAN_HANG') f.loi.nh = r.loi;
+    else if (r.ma === 'CAN_DONG_Y') f.loi.dongY = r.loi;
+    else f.bao = '<div class="bao do">' + e(loiStk(r, 'luu')) + '</div>';
+    ve();
+  });
+}
+function stkXoaHoi() { if (!stk.tt || !stk.tt.co) return; stk.f = null; stk.xoa = true; stk.bao = ''; ve(); }
+function stkXoa() {
+  if (!stk.nguoi || stk.dang === 'xoa') return;
+  var giu = stk;
+  stk.dang = 'xoa'; stk.bao = ''; ve();
+  goi({ hanh_dong: 'stk_xoa', so_cccd: stk.nguoi.so, ho_ten: stk.nguoi.ten }).then(function (r) {
+    if (stk !== giu) return;
+    stk.dang = 0;
+    if (r.ok) { stk.tt = r; stk.xoa = false; }
+    else stk.bao = '<div class="bao do">' + e(loiStk(r, 'xoa')) + '</div>';
+    ve();
+  });
+}
+
 /** Tin bị từ chối khi chuyển (máy chủ xem trả p.tu_choi): mỗi tin một khối đỏ + trích tối đa 80 chữ. */
 function khoiTuChoi(p) {
   if (!p || !p.tu_choi || !p.tu_choi.length) return '';
@@ -576,7 +959,7 @@ function inPhieu() {
 /** Tra người khác / rời trang: xoá mọi thứ đang hiện — điện thoại hay dùng chung. */
 function xoaHet() {
   kq = null; chon = { ky: '', i: -1 };
-  ph = { form: null, bao: {} }; nhapCho = null;
+  ph = { form: null, bao: {} }; dy = { dang: {}, bao: {} }; nhapCho = null; stk = moiStk(); ct = moiCt();
   ['kqTen', 'dsKy', 'dsCT', 'khungLuong', 'khungCong', 'khungKhac', 'traBao'].forEach(function (id) { $(id).innerHTML = ''; });
   $('theKhac').classList.add('an');
   $('kqCapNhat').textContent = ''; $('kqCapNhat').classList.add('an');
