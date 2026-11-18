@@ -2743,9 +2743,11 @@ function khoiQR(r, q) {
   } catch (x) {
     anh = '<div class="bao cho">⚠ Không vẽ được QR (' + e(x.message || String(x)) + ') — chuyển tay theo đúng các dòng dưới.</div>';
   }
+  if (q.ma_an) anh += '<div class="canh-ck">⚠ Tài khoản lưu dạng mã QR — sau khi quét, xem tên người nhận trên app ngân hàng phải là <b>' + e(r.ho_ten) + '</b> rồi mới chuyển.</div>';
   return '<div class="qr-ck" id="qr-' + ma + '">' + anh + '<dl>' +
     '<dt>Ngân hàng</dt><dd>' + e(q.ngan_hang) + '</dd>' +
-    '<dt>Số tài khoản</dt><dd><b class="so-day">' + e(q.so_tk) + '</b> <button type="button" onclick="chepCK(\'' + e(q.so_tk) + '\', this)">📋 Chép</button></dd>' +
+    (q.ma_an ? '<dt>Số tài khoản</dt><dd>Mã QR <b class="so-day">' + e(q.so_tk) + '</b> — <b>chỉ chuyển bằng cách quét QR</b> (app ngân hàng tự ra số thật)</dd>'
+             : '<dt>Số tài khoản</dt><dd><b class="so-day">' + e(q.so_tk) + '</b> <button type="button" onclick="chepCK(\'' + e(q.so_tk) + '\', this)">📋 Chép</button></dd>') +
     '<dt>Tên chủ</dt><dd>' + e(q.ten_chu_tk) + '</dd>' +
     '<dt>Số tiền</dt><dd><b>' + tien(q.so_tien) + ' đ</b></dd>' +
     '<dt>Nội dung</dt><dd><b class="noi-dung">' + e(q.noi_dung) + '</b> <button type="button" onclick="chepCK(\'' + e(q.noi_dung) + '\', this)">📋 Chép</button></dd></dl>' +
@@ -2760,7 +2762,8 @@ function formCK(r) {
   var f = ck.form[r.ma_chi], ma = e(r.ma_chi), tat = ck.dang[r.ma_chi] ? ' disabled' : '';
   if (!f) return '';
   if (f === 'xong') {
-    return '<div class="form-ck"><label for="ckGd-' + ma + '">Mã giao dịch (không bắt buộc)</label><input type="text" id="ckGd-' + ma + '" maxlength="40" autocomplete="off">' +
+    return '<div class="form-ck">' + (r.ma_an ? '<label class="tich"><input type="checkbox" id="ckTen-' + ma + '"> Tên người nhận trên app ngân hàng đúng là <b>' + e(r.ho_ten) + '</b></label>' : '') +
+      '<label for="ckGd-' + ma + '">Mã giao dịch (không bắt buộc)</label><input type="text" id="ckGd-' + ma + '" maxlength="40" autocomplete="off">' +
       '<label for="ckBl-' + ma + '">Ghi chú biên lai (không bắt buộc)</label><input type="text" id="ckBl-' + ma + '" maxlength="200" autocomplete="off">' +
       '<div class="nhom-nut"><button class="chinh"' + tat + ' data-ma="' + ma + '" onclick="xongCK(this)">' + (ck.dang[r.ma_chi] ? '⏳ Đang ghi… (vài giây)' : '✅ Xác nhận đã chuyển') + '</button>' +
       '<button data-ma="' + ma + '" onclick="moFormCK(this,\'\')">Thôi</button></div></div>';
@@ -2821,7 +2824,11 @@ function ghiNhanCK(ma, xn) {
 }
 function xongCK(nut) {
   var ma = nut.getAttribute('data-ma'), gd = ($('ckGd-' + ma).value || '').trim(), bl = ($('ckBl-' + ma).value || '').trim();
-  var g = { hanh_dong: 'ct_xong' };
+  var g = { hanh_dong: 'ct_xong' }, rTen = timCK(ma), oTen = rTen && rTen.ma_an ? $('ckTen-' + ma) : null;
+  if (rTen && rTen.ma_an) {                                                          // tài khoản mã QR: người chuyển xác nhận tên đã thấy trên app ngân hàng
+    if (!oTen || !oTen.checked) { ck.bao[ma] = '<div class="bao do">Tích ô "Tên người nhận trên app ngân hàng đúng" trước khi xác nhận.</div>'; veCK(); return; }
+    g.xn_ten_app = true;
+  }
   if (gd) g.ma_gd = gd;
   if (bl) g.bien_lai = bl;
   ghiCK(ma, g, function (kq) {

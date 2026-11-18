@@ -90,6 +90,13 @@ body.kl { height: 100vh; overflow: hidden; padding: 0 16px; }
 .kl #mTai.co-luoi .tom b { display: inline; margin-left: 4px; font-size: .95rem !important; }
 .kl #mTai.co-luoi .tom .ai { display: none; }
 .kl #mTai h2 { margin-bottom: 0; }
+/* Ô ngày kỳ ngắn: một dòng ngang cạnh nút Chọn file, chừa chỗ cho lưới. Lỗi / cảnh báo xuống dòng riêng khi có. */
+.kl #mTai #kyNganO { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; margin: 2px 0; padding: 4px 10px; }
+.kl #mTai #kyNganO label { margin: 0; font-size: .9rem; white-space: nowrap; }
+.kl #mTai #kyNganO input { width: auto; min-height: 34px; padding: 2px 8px; font-size: .95rem; }
+.kl #mTai #kyNganO button { margin: 0; min-height: 34px; padding: 2px 12px; }
+.kl #mTai #kyNganO .loi-o, .kl #mTai #kyNganO #kyCanh { flex: 1 1 100%; margin: 0; }
+.kl #mTai #kyNganO #kyCanh:empty { display: none; }
 .kl #mTai.co-luoi > .ai { display: none; }
 .kl-tai { order: 4; flex: 1; min-height: 0; display: flex; gap: 8px; }
 .kl-tai-loi { width: 340px; flex: none; overflow: auto; font-size: .9rem; background: #fff; border: 1px solid #8c939b; padding: 4px 8px; }

@@ -464,22 +464,32 @@ function dongYLuong(i) {
   (qua ? goiXem(goiTin) : guiCoThuLai(0)).then(function (r) {
     if (kq !== giu) return;                           // đã tra người khác / rời trang trong lúc chờ
     dy.dang[i] = 0; dy.bao[i] = '';
+    var sang = false;
     if (r === XEM_HONG) {
       dy.bao[i] = '<div class="bao do">Chưa chắc lời đồng ý đã tới — mạng tới máy chủ chập chờn. Bấm 🔄 Tra lại xem đã đồng ý chưa rồi mới bấm lại.</div>';
     } else if (r.ok && r.da_dong_y) {
       m.da_dong_y = r.da_dong_y; m.dong_y_cu = undefined; m.dong_y_loi = undefined;
+      sang = true;
     } else if (CO_THE_THU_LAI[r.ma] || r.ma === 'MAT_MANG' || (qua && r.ma === 'BAN')) {
       dy.bao[i] = '<div class="bao do">Chưa chắc đã gửi được vì mạng chập chờn hoặc máy chủ đang đông. Đợi ít phút rồi bấm lại.</div>';
     } else {
       dy.bao[i] = '<div class="bao do">' + e(r.loi || 'Chưa gửi được — thử lại sau ít phút.') + '</div>';
     }
     ve();
+    if (sang) sangStk();
   });
+}
+/** Đồng ý lương xong → mở luôn thẻ 🏦 (chưa có số thì hiện ngay 📷 Tải ảnh QR / ✍️ Nhập tay) và cuộn tới đó. */
+function sangStk() {
+  if (typeof NGAN_HANG === 'undefined' || stk.tat || !stk.nguoi) return;
+  if (!stk.mo) { stk.mo = true; if (!stk.tt && !stk.dang) guiXemStk(); else ve(); }
+  var o = $('theStk'); if (o && o.scrollIntoView) o.scrollIntoView({ block: 'start' });
 }
 // ---------------- TÀI KHOẢN NHẬN LƯƠNG (kỳ ngắn vé 05) ----------------
 var CAU_DONG_Y_STK = 'Tôi đồng ý để công ty lưu số tài khoản này chỉ để chuyển lương cho tôi. Chỉ người phụ trách chuyển lương xem được. Tôi tự đổi hoặc xoá được ở trang này.';
 var CAU_BAN_STK = 'Máy chủ đang bận, số chưa lưu. Thử lại sau ít phút.';
 var CAU_QR_HONG = 'Không đọc được tài khoản trong ảnh này. Anh/chị nhập tay nhé';
+var CAU_QR_AN = 'Đã đọc mã QR. Mã này của ngân hàng giấu số tài khoản (hiện mã «MA») — vẫn chuyển được bằng cách quét. Anh/chị gõ tên chủ tài khoản như trên app, tích ô đồng ý rồi bấm 💾 Lưu.';
 var CAU_QR_THE = 'QR này là số thẻ, không phải số tài khoản. Anh/chị nhập tay nhé';
 var CAU_QR_DAY = 'Đã điền sẵn từ ảnh. Anh/chị soát lại, tích ô đồng ý rồi bấm 💾 Lưu.';
 var CAU_NHAC_TEN = 'Gõ tên chủ tài khoản như trên app ngân hàng';
@@ -690,8 +700,8 @@ function stkTuQR(r) {
   var i = -1;
   NGAN_HANG.forEach(function (b, j) { if (b.bin === r.bin) i = j; });
   if (i >= 0) f.nh = String(i); else { f.nh = 'khac'; f.nhKhac = 'Mã ngân hàng ' + r.bin; }
-  f.so = r.so_tk; f.ten = r.ten || ''; f.nguon = 'qr'; f.bin = r.bin; f.nhacTen = !r.ten;
-  f.dau = '<div class="bao cho">' + e(CAU_QR_DAY) + '</div>';
+  f.so = r.so_tk; f.ten = r.ten || ''; f.nguon = 'qr'; f.bin = r.bin; f.nhacTen = !r.ten; f.maAn = !!r.ma_an;
+  f.dau = '<div class="bao cho">' + e(r.ma_an ? CAU_QR_AN.replace('«MA»', r.so_tk) : CAU_QR_DAY) + '</div>';
   ve();
   if (!f.ten) { var o = $('stkTen'); if (o && o.focus) o.focus(); }
 }
@@ -700,7 +710,7 @@ function stkGo(k, v) {
   var f = stk.f;
   if (!f) return;
   f[k] = v; f.loi[k === 'nhKhac' ? 'nh' : k] = '';
-  if (k === 'nh' || k === 'nhKhac' || k === 'so') { f.nguon = 'tay'; f.bin = ''; }   // sửa ngân hàng / số sau khi điền sẵn từ QR: không còn là "đọc từ QR"
+  if (k === 'nh' || k === 'nhKhac' || k === 'so') { f.nguon = 'tay'; f.bin = ''; f.maAn = false; }   // sửa ngân hàng / số sau khi điền sẵn từ QR: không còn là "đọc từ QR"
   if (k === 'so') f.thay = false;                     // đổi số sau khi đã xác nhận thay → hỏi lại
 }
 function stkDongY() { var f = stk.f; if (!f) return; f.dongY = !f.dongY; f.loi.dongY = ''; ve(); }
@@ -719,7 +729,7 @@ function stkLuu() {
   var nh = f.nh === 'khac' ? { ten: String(f.nhKhac || '').trim(), bin: f.nguon === 'qr' ? f.bin : '' } : f.nh !== '' && NGAN_HANG[+f.nh] ? { ten: NGAN_HANG[+f.nh].ten, bin: NGAN_HANG[+f.nh].bin } : null;
   if (!nh) f.loi.nh = 'Chọn ngân hàng trong danh sách.';
   else if (nh.ten.length < 2) f.loi.nh = 'Gõ tên ngân hàng (ví dụ: Ngân hàng Bản Việt).';
-  var so = chuanSoTk(f.so), ten = String(f.ten || '').trim();
+  var so = f.maAn && f.nguon === 'qr' ? f.so : chuanSoTk(f.so), ten = String(f.ten || '').trim();   // mã ẩn chỉ nhận khi còn nguyên từ QR
   if (!so) f.loi.so = 'Số tài khoản chỉ gồm chữ số, dài 6 đến 19 số. Xoá chữ hoặc dấu lạ rồi lưu.';
   if (ten.length < 2) f.loi.ten = 'Gõ tên chủ tài khoản như in trên thẻ ngân hàng.';
   if (!f.dongY) f.loi.dongY = 'Cần tích ô đồng ý trước khi lưu số tài khoản.';

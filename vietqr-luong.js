@@ -46,6 +46,9 @@
   }
   function hong() { return { ok: false, ly_do: 'khong_phai_vietqr' }; }
 
+  /** Mã ẩn thay số thật trong QR "nhận tiền" (vd. MB: VQRQACEXR0638): 6–19 chữ HOA + số, có ít nhất một chữ. Ngân hàng người chuyển tự đổi ra tài khoản thật lúc quét. */
+  function laMaAn(s) { return typeof s === 'string' && /^[0-9A-Z]{6,19}$/.test(s) && /[A-Z]/.test(s); }
+
   function doc(chuoi) {
     if (typeof chuoi !== 'string' || chuoi.trim() === '') return { ok: false, ly_do: 'rong' };
     var s = chuoi.trim();
@@ -64,6 +67,8 @@
     if (k02 && k02.gt === 'QRIBFTTC') return { ok: false, ly_do: 'the' };
     var n59 = lay(ds, '59');
     var ten = n59 ? n59.gt.replace(/\s+/g, ' ').trim().toUpperCase() : '';
+    if (laMaAn(so.gt)) return { ok: true, bin: bin.gt, so_tk: so.gt, ten: ten, ma_an: true };
+    if (!/^\d+$/.test(so.gt)) return hong();
     return { ok: true, bin: bin.gt, so_tk: so.gt, ten: ten };
   }
 
@@ -80,7 +85,7 @@
   function dung(x) {
     if (!x || typeof x !== 'object') throw new Error('VietQR.dung: thiếu thông tin tài khoản (bin, so_tk).');
     if (typeof x.bin !== 'string' || !/^\d{6}$/.test(x.bin)) throw new Error('VietQR.dung: bin phải là chuỗi 6 chữ số.');
-    if (typeof x.so_tk !== 'string' || !/^\d{6,19}$/.test(x.so_tk)) throw new Error('VietQR.dung: so_tk phải là chuỗi 6 đến 19 chữ số (kiểu chuỗi để không mất số 0 đầu).');
+    if (typeof x.so_tk !== 'string' || !(/^\d{6,19}$/.test(x.so_tk) || laMaAn(x.so_tk))) throw new Error('VietQR.dung: so_tk phải là chuỗi 6 đến 19 chữ số (kiểu chuỗi để không mất số 0 đầu).');
     var tien = '';
     if (x.tien != null) {
       var ok = (typeof x.tien === 'number' && isFinite(x.tien) && Math.floor(x.tien) === x.tien) || (typeof x.tien === 'string' && /^\d+$/.test(x.tien));
