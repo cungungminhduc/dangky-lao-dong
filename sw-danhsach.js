@@ -29,7 +29,9 @@
 //       goi-may-chu.js thêm ct_ds vào cú chỉ đọc) — đổi BAN để máy đã cài bỏ bản cũ.
 // 3.69: thanh-menu.js thêm việc 💬 Phản hồi công nhân (sang noibo.html của hệ công–lương — tệp đó KHÔNG cất) — đổi BAN.
 // 3.70: 🏭 Nhà máy đang tuyển hiện người phụ trách + SĐT (vanphong.js + vanphong.css, goi-may-chu.js thêm lien_he_nha_may) — đổi BAN.
-var BAN = 'ds-3.70.0';
+// 3.70.1: quanso.html ghi "đã bỏ tích ở báo cáo …" cho người ở mục Mới không còn tích sẵn — đổi BAN.
+// 3.71: quanso.html — mục Mới có ✕ Không vào làm / 🚪 Nghỉ việc — đổi BAN.
+var BAN = 'ds-3.71.0';
 var TEP = ['danhsach.html', 'trangchu.html', 'phancong.html', 'quanso.html',
            'cau-hinh.js', 'goi-may-chu.js', 'goi-dau.js', 'ngoai-zalo.js', 'vanphong.js', 'vanphong.css', 'thanh-menu.js',
            'bang-chung.js',
