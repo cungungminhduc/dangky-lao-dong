@@ -144,6 +144,9 @@
   .so-nen{font-size:14.5px}
   .nut-nho{display:inline-block;min-height:44px;margin-top:8px;padding:8px 12px;border:1px solid var(--vien);background:#fff;border-radius:9px;font-size:13.5px;font-weight:600;color:#3c4753;cursor:pointer}
   .nut-nho.chinh{background:var(--lam);border-color:var(--lam);color:#fff}
+  /* 3.72 — tên gõ ở khối 🔢 trùng người có tên: câu + nút chuyển một chạm */
+  .canh-ten{margin:8px 0;padding:10px 12px;border:1px solid #e0a800;background:#fff8e1;border-radius:9px;font-size:16px;line-height:1.45;color:#5d4200}
+  .canh-ten .nut-chuyen{display:block;width:100%;min-height:48px;margin-top:8px;font-size:16px}
 
   details.nhom{margin:10px 14px 0;border-radius:12px;background:var(--the);border:1px solid var(--vien)}
   details.nhom > summary{list-style:none;padding:12px 13px;font-weight:700;font-size:15px;cursor:pointer;display:flex;align-items:center;gap:8px}
@@ -1408,9 +1411,10 @@ function khoiTaoNguoi(u) {
 }
 
 /** Chụp trạng thái TRƯỚC khi đổi → "↩ Hoàn tác" trả đúng bước đó (kể cả bước cả nhóm). Giữ tối đa 50 bước. */
-function chupNg(u, moTa) {
+function chupNg(u, moTa, chuyen) {
   var ng = u.ng;
-  ng.lich.push({ moTa: moTa, s: JSON.stringify({ viec: ng.viec, sang_ca: ng.sang_ca, moi: ng.moi, bo_moi: ng.bo_moi, nhan: ng.nhan, them: ng.them, soat: ng.soat }) });
+  ng.lich.push({ moTa: moTa, s: JSON.stringify({ viec: ng.viec, sang_ca: ng.sang_ca, moi: ng.moi, bo_moi: ng.bo_moi, nhan: ng.nhan, them: ng.them, soat: ng.soat,
+                                                 chuyen: chuyen || null }) });
   if (ng.lich.length > 50) ng.lich.shift();
   ng.dai = '✅ ' + moTa; ng.daiLui = false;
 }
@@ -1421,7 +1425,49 @@ function hoanTacNg(u) {
   ng.viec = s.viec; ng.sang_ca = s.sang_ca; ng.moi = s.moi; ng.bo_moi = s.bo_moi || {}; ng.nhan = s.nhan; ng.them = s.them;
   if (s.soat && coSoatNg(u.theo_nguoi)) { ng.soat = s.soat; apSoatNg(u); ng.viec = s.viec; }
   ng.dai = '↩ Đã hoàn tác: ' + b.moTa; ng.daiLui = true; ng.mo = '';
+  // 3.72 — hoàn tác "chuyển từ khối 🔢": trả dòng tên về ô gõ, số +1 (không đè chữ gõ sau đó), vẽ lại ô gõ
+  if (s.chuyen) {
+    var c = s.chuyen, cu = String(ng.khac_ct[c.ma] || '').replace(/\s+$/, ''), so = String(ng.khac_so[c.ma] || '').trim();
+    ng.khac_ct[c.ma] = (cu ? cu + '\n' : '') + c.dong;
+    if (c.tru) ng.khac_so[c.ma] = /^\d+$/.test(so) ? String(Number(so) + 1) : '1';
+    veNguoi(u); return;
+  }
   veDsNguoi(u);
+}
+
+/** 3.72 — khoá tên của một dòng gõ tay — CÙNG luật tenGoQS_ máy chủ (bỏ số thứ tự, ghi chú sau — ( , :, năm sinh / số cuối). */
+function tenGoNg(s) {
+  var t = String(s || '').replace(/\s+/g, ' ').trim().replace(/^\d+\s*[.)]\s*/, '').split(/\s+-\s*|[—–(,:;|]/)[0];
+  return boDauNg(t.replace(/[\d\s.]+$/, ''));
+}
+/** Việc của người có tên ứng với một ô khối 🔢 (bd_np → np, dll_kp → lam, nv_lam → nv…). */
+function viecCuaBienNg(ma) { var p = String(ma).split('_'); return p[0] === 'bd' ? p[1] : (p[0] === 'dll' ? 'lam' : p[0]); }
+/** Dòng gõ ở khối 🔢 mà tên trùng người CÓ TÊN trong danh sách → [{ ma, i (thứ tự dòng có chữ), dong, ai: [người] }]. */
+function trungKhacNg(u) {
+  var ng = u.ng, theo = {}, ra = [];
+  ng.nen.forEach(function (p) { var k = boDauNg(p.ho_ten); (theo[k] = theo[k] || []).push(p); });
+  bienKhacNg(u).forEach(function (b) {
+    String(ng.khac_ct[b.ma] || '').split('\n').filter(function (x) { return x.trim(); }).forEach(function (dong, i) {
+      var ai = theo[tenGoNg(dong)];
+      if (ai) ra.push({ ma: b.ma, i: i, dong: dong.trim(), ai: ai });
+    });
+  });
+  return ra;
+}
+function veTrungKhacNg(u) {
+  var el = $('ng_khac_trung');
+  if (!el) return;
+  el.innerHTML = trungKhacNg(u).map(function (t) {
+    var v = viecCuaBienNg(t.ma), p = t.ai[0];
+    var cau = '⚠ "' + thoat(t.dong) + '" đang có tên trong danh sách bên dưới. Báo ở khối 🔢 thì máy trừ người chưa có tên, còn người có tên vẫn nằm lại.';
+    if (t.ai.length > 1) return '<div class="canh-ten">' + cau + ' Có ' + t.ai.length + ' người tên này — chạm đúng người ở danh sách để chọn việc, rồi xoá dòng này.</div>';
+    if (v === 'di' || v === 'nhan' || !maViecNg(v, p.tt)) {
+      return '<div class="canh-ten">' + cau + ' ' + thoat(p.ho_ten) + ' (' + thoat(String(TEN_TT_NG[p.tt] || p.tt).toLowerCase()) +
+             ') — chạm tên người đó ở danh sách để chọn việc cho đúng, rồi xoá dòng này.</div>';
+    }
+    return '<div class="canh-ten">' + cau + '<button type="button" class="nut-nho chinh nut-chuyen" data-ng-chuyen="' + thoat(t.ma + '|' + t.i + '|' + p.ma_lam) +
+           '">👉 Báo "' + thoat(TEN_VIEC_NG[v]) + '" cho ' + thoat(p.ho_ten) + ' ở danh sách</button></div>';
+  }).join('');
 }
 
 /**
@@ -1511,7 +1557,9 @@ function veNguoi(u) {
   }
   if (tn.mot_phan) h += '<div class="dau-ngay" id="ng_dau"></div>';      // 3.58.1 — số đầu ngày đứng đầu màn (veThanhNguoi điền)
   // 3.63.1 — đơn vị một phần: việc chính là BÁO SỐ (khối 🔢 ngay dưới); tên chỉ là gợi ý, chọn dần qua nhiều ngày
-  h += '<div class="tin-tuc">' + (tn.mot_phan ? '👉 Việc chính: báo số hôm nay ở khối 🔢 ngay dưới. Người đã có tên thì chạm tên để chọn việc.' +
+  // 3.72 — bỏ "Việc chính: báo số ở khối 🔢": người báo gõ tay cả người đã có tên → người đó nằm lại danh sách (ca Magtron 20/11)
+  h += '<div class="tin-tuc">' + (tn.mot_phan ? '👉 Người có tên trong danh sách bên dưới: luôn chạm tên để chọn việc. ' +
+                                     'Chỉ người KHÔNG có tên mới báo số ở khối 🔢 ngay dưới.' +
                                      (coSoatNg(tn) ? ' Danh sách 📋 Gợi ý tên chỉ là gợi ý, không bắt buộc — rảnh thì chọn dần.' : '')
                                    : '👉 Chạm tên một người để chọn việc ngay dưới tên. Người không đổi gì thì để nguyên — máy tự giữ.') + '</div>' + veKhacNg(u) +
        '<div class="mach" style="padding:8px 16px 0">' + (tn.mot_phan ? '<b>👥 Người đã có tên.</b> ' : '') +
@@ -1553,9 +1601,10 @@ function veNguoi(u) {
 function veKhacNg(u) {
   var ng = u.ng, tn = u.theo_nguoi;
   if (!tn.mot_phan) return '';
-  var h = '<div class="khoi" id="ng_khac"><h3>🔢 Báo số hôm nay</h3><div class="ghi" id="ng_khac_tom"></div>' +
-    '<div class="ghi">👉 Người chưa có tên trong danh sách: gõ số và tên như trước đây. Người mới vào làm đã có sẵn ở mục ' +
-    '"🆕 Mới vào làm" phía dưới — không gõ ở đây. Nạp danh sách đối chiếu xong thì phần này tự hết.</div>';
+  var h = '<div class="khoi" id="ng_khac"><h3>🔢 Người cũ chưa có tên — báo số hôm nay</h3><div class="ghi" id="ng_khac_tom"></div>' +
+    '<div class="ghi">👉 Chỉ người CHƯA có tên trong danh sách: gõ số và tên như trước đây. Nghỉ việc, cắt giảm, nghỉ ngang: ghi tên ' +
+    'từng người, mỗi dòng một tên. Người đã có tên thì chạm tên người đó ở danh sách, đừng gõ ở đây. Người mới vào làm đã có sẵn ở mục ' +
+    '"🆕 Mới vào làm" phía dưới. Nạp danh sách đối chiếu xong thì phần này tự hết.</div><div id="ng_khac_trung"></div>';
   if (tn.kieu === 'soat' && tn.khac_nen_tay) {
     h += '<div class="ghi"><b>Đơn vị chưa từng báo — nhập tổng quân số đầu ngày một lần</b> (gồm cả người ở khối 📋). Phải khớp ' +
          'T + NP + KP + CV = Q.</div><div class="bon-so">' + ['t', 'q', 'np', 'kp', 'cv'].map(function (k) {
@@ -1570,7 +1619,8 @@ function veKhacNg(u) {
     g.ma.forEach(function (ma) {
       h += '<div class="dong-bd"><div class="tren"><label for="ks_' + ma + '">' + thoat(nhanNgan(ma)) + '</label>' +
            '<input class="o-so" id="ks_' + ma + '" data-kso="' + ma + '" inputmode="numeric" autocomplete="off" value="' + thoat(ng.khac_so[ma] || '') + '"></div>' +
-           '<textarea class="o-ct" data-kct="' + ma + '" placeholder="Mỗi dòng một người: tên — ghi chú">' + thoat(ng.khac_ct[ma] || '') + '</textarea></div>';
+           '<textarea class="o-ct" data-kct="' + ma + '" placeholder="' + (/^(nv|cg|nn)_/.test(ma) ? 'Bắt buộc ghi tên — mỗi dòng một người: tên — ghi chú'
+             : 'Mỗi dòng một người: tên — ghi chú') + '">' + thoat(ng.khac_ct[ma] || '') + '</textarea></div>';
     });
     h += '</div></details>';
   });
@@ -1861,6 +1911,7 @@ function veThanhNguoi(u) {
   }
   var r = tinhNguoi(u), c = r.cuoi, n0 = r.nen;
   if ($('ng_khac_tom')) $('ng_khac_tom').innerHTML = tomKhacNg(r, u);         // 3.58 — khối 🔢 cập nhật theo từng lần gõ / chạm
+  veTrungKhacNg(u);                                                            // 3.72 — tên gõ trùng người có tên: hỏi ngay
   if ($('ng_dau')) $('ng_dau').innerHTML = dauNgayNg(u, r);
   var thu = (luot.nhomTin || []).filter(function (x) { return r.nhom[x.ma]; }).map(function (x) { return x.nhan + ' ' + r.nhom[x.ma].length; });
   el.innerHTML = (ng.dai ? '<div class="dai' + (ng.daiLui ? ' lui' : '') + '">' + thoat(ng.dai) + '</div>' : '') +
@@ -1877,6 +1928,23 @@ function bamNguoi(u, e) {
   var d = b.dataset;
   // 3.58 — soát lần đầu: chạm tên mở hàng lựa chọn; chọn xong danh sách có tên + khối 🔢 tính lại ngay
   if (d.ngSoatMo) { ng.mo = ng.mo === 'soat:' + d.ngSoatMo ? '' : 'soat:' + d.ngSoatMo; veDsNguoi(u); return; }
+  // 3.72 — chuyển một dòng gõ tay ở khối 🔢 sang người có tên: bỏ dòng, số −1, chọn việc cho người đó (hoàn tác được)
+  if (d.ngChuyen) {
+    var pc = d.ngChuyen.split('|'), maB = pc[0], iD = Number(pc[1]), pn = nguoiNen(u, pc.slice(2).join('|')), vc = viecCuaBienNg(maB);
+    if (!pn || !maViecNg(vc, pn.tt)) return;
+    var n = -1, bo = '';
+    ng.khac_ct[maB] = String(ng.khac_ct[maB] || '').split('\n').filter(function (x) {
+      if (!x.trim()) return true;
+      n++;
+      if (n === iD) { bo = x.trim(); return false; }
+      return true;
+    }).join('\n');
+    var soC = String(ng.khac_so[maB] || '').trim(), tru = /^\d+$/.test(soC) && Number(soC) > 0;
+    chupNg(u, pn.ho_ten + ' → ' + TEN_VIEC_NG[vc] + ' (chuyển từ khối 🔢)', { ma: maB, dong: bo, tru: tru });
+    if (tru) ng.khac_so[maB] = Number(soC) > 1 ? String(Number(soC) - 1) : '';
+    ng.viec[pn.ma_lam] = vc; delete ng.sang_ca[pn.ma_lam];
+    veNguoi(u); return;
+  }
   if (d.ngSoat !== undefined && d.ngSid) {
     var ps = u.theo_nguoi.soat.filter(function (x) { return x.ma_lam === d.ngSid; })[0];
     chupNg(u, ps.ho_ten + ' → ' + TEN_SOAT_NG[d.ngSoat]);
