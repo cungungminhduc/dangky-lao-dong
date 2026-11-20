@@ -16,7 +16,7 @@
   KHÔNG BAO GIỜ nói "sai thông tin" khi chưa tra được.
   1.3 (Chặng 4 vé 12): dưới phiếu lương / bảng công đã công bố có khung "💬 Báo sai" — gửi bằng VÉ TRA máy chủ trả ở lượt tra
   (giữ trong bộ nhớ, sống 30 phút). Máy chủ cũ không trả vé → không hiện khung. Việc GHI không tự thử lại (tránh gửi trùng).
-  Kỳ ngắn vé 05: dưới phiếu lương có thẻ "🏦 Tài khoản nhận lương" (công nhân lưu / đổi / xoá số tài khoản nhập tay). Mở thẻ mới gọi stk_xem; cú stk_*
+  Lương tuần vé 05: dưới phiếu lương có thẻ "🏦 Tài khoản nhận lương" (công nhân lưu / đổi / xoá số tài khoản nhập tay). Mở thẻ mới gọi stk_xem; cú stk_*
   luôn gửi thẳng URL_API (kể cả khi URL_XEM bật) với CCCD + tên đã gõ lúc tra (giữ trong bộ nhớ trang). Số đầy đủ chỉ tồn tại trong ô đang gõ, không bao giờ vẽ lại.
   1.4 (vé 12b, đặc tả mục 0c): một nút "💬 Báo sai / thắc mắc" → chọn hạng mục (hạng mục quyết định ai nhận) → 🕒 chọn ngày / 💵 tích mục →
   ô chữ. Thêm khối "✍️ Thắc mắc khác" + ghi chú 📸 chụp màn hình. Máy chủ trước 1.4 (ph không có hạng mục khac) → ẩn phần báo sai.
@@ -36,18 +36,19 @@
   label { display: block; font-weight: 600; margin: 14px 0 6px; }
   input[type=text] { width: 100%; min-height: 52px; padding: 10px 12px; font-size: 1.1rem; border: 1.5px solid var(--vien); border-radius: 8px; }
   input.sai { border-color: var(--do); }
-  .loi-o { color: var(--do); font-size: .95rem; margin-top: 4px; }
+  .loi-o { color: var(--do); font-size: 1rem; margin-top: 4px; }
   button { min-height: 52px; padding: 10px 16px; font-size: 1.05rem; font-weight: 600; border-radius: 8px; cursor: pointer;
            border: 1.5px solid var(--chinh); background: #fff; color: var(--chinh); font-family: inherit; }
   button.chinh { background: var(--chinh); color: #fff; }
   button:disabled { opacity: .6; cursor: wait; }
   .rong { width: 100%; }
   .an { display: none !important; }
-  .ghi { color: var(--mo); font-size: .92rem; margin-top: 10px; }
+  small { font-size: 1rem; }   /* luật giao diện 20/11: chữ phụ cũng ≥ 16px */
+  .ghi { color: var(--mo); font-size: 1rem; margin-top: 10px; }
   .bao { padding: 10px 12px; border-radius: 8px; margin: 12px 0 0; }
   .bao.do { background: #fef2f2; border: 1px solid #fecaca; color: var(--do); }
   .bao.cho { background: var(--vang); border: 1px solid #fde68a; }
-  .cap-nhat { color: var(--mo); font-size: .85rem; margin: -6px 4px 12px; }
+  .cap-nhat { color: var(--mo); font-size: 1rem; margin: -6px 4px 12px; }
   .dai-do { background: var(--do); color: #fff; padding: 10px 12px; border-radius: 8px; margin: 10px 0; }
   #nutXem { margin-top: 16px; }
   /* kết quả */
@@ -58,14 +59,14 @@
   .cac-nut button.chon { background: var(--chinh); border-color: var(--chinh); color: #fff; }
   .nhom-chon + .nhom-chon { margin-top: 16px; }
   .mot { font-weight: 600; }
-  .phu { color: var(--mo); font-size: .92rem; margin-bottom: 10px; }
+  .phu { color: var(--mo); font-size: 1rem; margin-bottom: 10px; }
   .chua { background: #f8fafc; border: 1px dashed var(--vien); border-radius: 8px; padding: 12px; color: var(--mo); }
   /* phiếu (ve-phieu.js) — giống trang nội bộ để kế toán xem trước đúng thứ công nhân thấy */
   .phieu { border: 1px solid var(--vien); border-radius: 8px; padding: 12px; margin-top: 12px; }
-  .ph-dv { font-weight: 700; font-size: .9rem; }
+  .ph-dv { font-weight: 700; font-size: 1rem; }
   .ph-tieude { text-align: center; font-weight: 700; margin: 8px 0; }
-  .ph-phu { color: var(--mo); font-size: .88rem; }
-  table.bang { width: 100%; border-collapse: collapse; font-size: .9rem; margin-top: 8px; }
+  .ph-phu { color: var(--mo); font-size: 1rem; }
+  table.bang { width: 100%; border-collapse: collapse; font-size: 1rem; margin-top: 8px; }
   .bang th, .bang td { border: 1px solid #94a3b8; padding: 5px 6px; vertical-align: top; }
   .bang td:first-child { text-align: center; width: 34px; }
   .bang td.so { text-align: right; white-space: nowrap; }
@@ -73,7 +74,7 @@
   .bang tr.tong td { background: #fef08a; font-weight: 700; }
   .cong ul { list-style: none; margin: 6px 0 10px; }
   .cong-tong li { display: -webkit-box; display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding: 4px 0; }
-  .ngay-lam li { display: -webkit-box; display: flex; padding: 6px 0; border-bottom: 1px solid #edf2f7; font-size: .95rem; }
+  .ngay-lam li { display: -webkit-box; display: flex; padding: 6px 0; border-bottom: 1px solid #edf2f7; font-size: 1rem; }
   .ngay-lam .ngay { min-width: 76px; margin-right: 10px; color: var(--mo); }
   .cong .bao { background: #f8fafc; border: 1px dashed var(--vien); color: var(--mo); }
   /* 1.3 — báo sai ngay dưới phiếu lương / bảng công */
@@ -88,22 +89,22 @@
   .ph .tt.xong { background: #f0fdf4; border-color: #bbf7d0; color: var(--xanh); }
   .tin { border-left: 4px solid var(--vien); padding: 6px 10px; margin-top: 8px; background: #fafafa; }
   .tin.ql { border-left-color: var(--xanh); background: #f0fdf4; }
-  .tin .ai-gui { font-size: .85rem; color: var(--mo); }
+  .tin .ai-gui { font-size: 1rem; color: var(--mo); }
   .tin p { white-space: pre-wrap; word-wrap: break-word; }
-  .dem { text-align: right; font-size: .85rem; color: var(--mo); }
+  .dem { text-align: right; font-size: 1rem; color: var(--mo); }
   .het { background: #f8fafc; border: 1px dashed var(--vien); border-radius: 8px; padding: 10px 12px; color: var(--mo); margin-top: 10px; }
   .hai-nut button { width: 100%; margin-top: 8px; }
   /* 1.4 — ghi chú chụp màn hình + biểu mẫu chọn hạng mục (không dùng gap của flex: trình duyệt Zalo đời cũ) */
-  .chup { background: #fff8e6; border: 1px dashed #e0b44a; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: .95rem; }
+  .chup { background: #fff8e6; border: 1px dashed #e0b44a; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px; font-size: 1rem; }
   .viec + .viec, .viec + .form, .viec + button { margin-top: 14px; }
   .buoc { font-weight: 700; margin: 14px 0 6px; }
-  .buoc span { font-weight: 400; color: var(--mo); font-size: .92rem; }
+  .buoc span { font-weight: 400; color: var(--mo); font-size: 1rem; }
   .cac-hm { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-gap: 8px; }
-  .cac-hm button { width: 100%; padding: 8px 10px; font-size: .95rem; line-height: 1.25; text-align: left; color: var(--chu); border-color: var(--vien); }
+  .cac-hm button { width: 100%; padding: 8px 10px; font-size: 1rem; line-height: 1.25; text-align: left; color: var(--chu); border-color: var(--vien); }
   .cac-hm button.chon { background: var(--chinh); border-color: var(--chinh); color: #fff; }
   .toi { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 8px; padding: 8px 10px; font-weight: 600; margin: 10px 0; }
   .o-chon { display: -webkit-box; display: flex; align-items: center; width: 100%; margin-top: 6px; padding: 8px 10px; text-align: left;
-            font-size: .95rem; font-weight: 400; color: var(--chu); border-color: var(--vien); }
+            font-size: 1rem; font-weight: 400; color: var(--chu); border-color: var(--vien); }
   .o-chon .o { flex: 0 0 26px; width: 26px; height: 26px; line-height: 22px; margin-right: 10px; border: 2px solid var(--vien); border-radius: 6px;
                text-align: center; font-weight: 700; }
   .o-chon.chon { background: #eff6ff; border-color: var(--chinh); }
@@ -111,13 +112,13 @@
   details { border: 1px solid var(--vien); border-radius: 8px; margin-top: 6px; padding: 0 8px; }
   details[open] { padding-bottom: 8px; }
   summary { min-height: 48px; padding: 12px 4px; font-weight: 600; cursor: pointer; }
-  .da-chon { font-size: .92rem; margin: 2px 0; }
-  /* kỳ ngắn vé 04 — "Tôi đồng ý thông tin lương này" ngay dưới phiếu lương (nút thừa hưởng min-height 52px của button) */
+  .da-chon { font-size: 1rem; margin: 2px 0; }
+  /* lương tuần vé 04 — "Tôi đồng ý thông tin lương này" ngay dưới phiếu lương (nút thừa hưởng min-height 52px của button) */
   .dongy { border-top: 2px solid #e2e8f0; margin-top: 14px; padding-top: 12px; }
   .dongy .buoc { margin-top: 0; }
   .dongy button { margin-top: 10px; }
-  /* kỳ ngắn vé 05 — thẻ 🏦 tài khoản nhận lương dưới phiếu lương (ô rộng 100%, nút thừa hưởng min-height 52px; không nowrap để 375px không tràn) */
-  /* kỳ ngắn vé 09 — nút "💸 Xem tiền đã chuyển chưa" ngay dưới phiếu lương (≥ 44px, không nowrap để 375px không tràn) */
+  /* lương tuần vé 05 — thẻ 🏦 tài khoản nhận lương dưới phiếu lương (ô rộng 100%, nút thừa hưởng min-height 52px; không nowrap để 375px không tràn) */
+  /* lương tuần vé 09 — nút "💸 Xem tiền đã chuyển chưa" ngay dưới phiếu lương (≥ 44px, không nowrap để 375px không tràn) */
   .ct-tien { border-top: 2px solid #e2e8f0; margin-top: 14px; padding-top: 12px; }
   .ct-tien button { margin-top: 10px; min-height: 48px; }
   .ct-tien .ct-dong { margin-top: 8px; line-height: 1.4; }
@@ -205,15 +206,15 @@ function tenKyBatKy(ky) {
   var tu = ky.substring(0, 10), den = ky.substring(11), dm = function (s) { return s.substring(8) + '/' + s.substring(5, 7); };
   return tu.substring(0, 4) === den.substring(0, 4) ? dm(tu) + '–' + dm(den) + '/' + den.substring(0, 4) : dm(tu) + '/' + tu.substring(0, 4) + '–' + dm(den) + '/' + den.substring(0, 4);
 }
-/** Chữ trên nút chọn kỳ: "Tháng 11/2026" · kỳ ngắn 5–8 ngày "Tuần 09/11–15/11" · còn lại "Kỳ 09/11–11/11" (cùng năm bỏ năm). */
+/** Chữ trên nút chọn kỳ: "Tháng 11/2026" · lương tuần 5–8 ngày "Tuần 09/11–15/11" · còn lại "Kỳ 09/11–11/11" (cùng năm bỏ năm). */
 function nhanKy(ky) {
   if (ky.indexOf('~') < 0) return 'Tháng ' + thangNam(ky);
   var tu = ky.substring(0, 10), den = ky.substring(11);
   var ngay = Math.round((Date.UTC(+den.substring(0, 4), +den.substring(5, 7) - 1, +den.substring(8, 10)) - Date.UTC(+tu.substring(0, 4), +tu.substring(5, 7) - 1, +tu.substring(8, 10))) / 86400000) + 1;
   var ten = tu.substring(0, 4) === den.substring(0, 4) ? tenKyBatKy(ky).replace(/\/\d{4}$/, '') : tenKyBatKy(ky);
-  return (ngay >= 5 && ngay <= 8 ? 'Tuần ' : 'Kỳ ') + ten;
+  return (ngay >= 5 && ngay <= 8 ? 'Tuần ' : 'Lương ') + ten;
 }
-/** Tháng để gom khi danh sách kỳ dài: tháng → chính nó; kỳ ngắn → tháng của ngày cuối kỳ (trang không nhận tháng quyết toán). */
+/** Tháng để gom khi danh sách kỳ dài: tháng → chính nó; lương tuần → tháng của ngày cuối kỳ (trang không nhận tháng tính lương). */
 function thangCua(ky) { return ky.indexOf('~') > 0 ? ky.substring(11, 18) : ky; }
 /** 'yyyy-MM-dd HH:mm' → 'HH:mm ngày dd/MM/yyyy' */
 function lucDep(s) {
@@ -344,7 +345,7 @@ function ve() {
     : cacKy.length <= 6 ? '<div class="cac-nut">' + cacKy.map(nutKy).join('') + '</div>'
     : '<div class="cac-nut">' + cacThang.map(function (th) {          // nhiều kỳ: gập theo tháng, chỉ tháng đang xem mở ra
         var mo = th === thangCua(chon.ky), trongThang = cacKy.filter(function (ky) { return thangCua(ky) === th; });
-        return '<button aria-expanded="' + mo + '" onclick="chonThang(\'' + th + '\')">' + (mo ? '▾ ' : '▸ ') + 'Tháng ' + thangNam(th) + ' (' + trongThang.length + ' kỳ)</button>' +
+        return '<button aria-expanded="' + mo + '" onclick="chonThang(\'' + th + '\')">' + (mo ? '▾ ' : '▸ ') + 'Tháng ' + thangNam(th) + ' (' + trongThang.length + ' lần lương)</button>' +
                (mo ? '<div class="cac-nut con">' + trongThang.map(nutKy).join('') + '</div>' : '');
       }).join('') + '</div>';
   var trong = [];
@@ -364,7 +365,7 @@ function ve() {
   var cn = /^\d{4}-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(kq.cap_nhat || '');
   $('kqCapNhat').textContent = cn ? '🕒 Số cập nhật lúc ' + cn[3] + ' ngày ' + cn[2] + '/' + cn[1] : '';
   $('kqCapNhat').classList.toggle('an', !cn);
-  var chua = '<p class="chua">⏳ <b>Chưa công bố.</b> Kế toán công bố xong mới xem được — quay lại sau.</p>';
+  var chua = '<p class="chua">⏳ <b>Chưa có.</b> Kế toán gửi lên xong anh/chị mới xem được — quay lại sau.</p>';
   $('khungLuong').innerHTML = !m.luong ? chua + hopStk() :
     CHUP + '<p class="phu khong-in">Cập nhật lúc ' + e(lucDep(m.luong_luc)) + '</p>' +
     '<button class="rong khong-in" onclick="inPhieu()">🖨 In / Lưu PDF phiếu này</button>' +
@@ -394,8 +395,8 @@ function ttPH(tt, vai) {
            xong: '✅ ' + hoaDau(vai) + ' đã trả lời' }[tt];
 }
 function toiPH(hm, m) {
-  if (hm === 'phan_anh_ql') return 'Trưởng nhóm phụ trách ' + m.ma_ct + ' (quản lý công ty KHÔNG thấy phiếu này)';
-  if (hm === 'phan_anh_tn') return 'Giám đốc (trưởng nhóm KHÔNG thấy phiếu này)';
+  if (hm === 'phan_anh_ql') return 'Trưởng nhóm phụ trách ' + m.ma_ct + ' (quản lý công ty KHÔNG thấy tin này)';
+  if (hm === 'phan_anh_tn') return 'Giám đốc (trưởng nhóm KHÔNG thấy tin này)';
   return 'Quản lý công ty ' + m.ma_ct;
 }
 /** Phần báo sai dưới phiếu lương (noi = luong) / bảng công (cong) / trong khối thắc mắc khác (khac). */
@@ -421,7 +422,7 @@ function hopPH(i, noi) {
   }
   return h + '</div>';
 }
-// ---------------- ĐỒNG Ý THÔNG TIN LƯƠNG (kỳ ngắn vé 04) ----------------
+// ---------------- ĐỒNG Ý THÔNG TIN LƯƠNG (lương tuần vé 04) ----------------
 /** 'yyyy-MM-dd HH:mm' → 'HH:mm dd/MM' (Đã đồng ý lúc 10:20 18/11). */
 function lucDongY(s) { var m = /^\d{4}-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(s || ''); return m ? m[3] + ' ' + m[2] + '/' + m[1] : String(s || ''); }
 /**
@@ -435,7 +436,8 @@ function hopDongY(i) {
   if (d && d.cho) {
     h += '<div class="bao cho">⏳ Đã nhận lời đồng ý lúc ' + e(lucDongY(d.luc)) + ' — đang chuyển cho kế toán. Xem lại sau ít phút.</div>';
   } else if (d) {
-    h += '<div class="bao xanh">✅ Đã đồng ý lúc ' + e(lucDongY(d.luc)) + '</div>';
+    h += '<div class="bao xanh">✅ Đã đồng ý lúc ' + e(lucDongY(d.luc)) + '</div>' + (dy.bao[i] || '') +
+         (stk.nguoi ? '<button class="rong"' + (dy.dang[i] ? ' disabled' : '') + ' onclick="rutDongY(' + i + ')">' + (dy.dang[i] ? '⏳ Đang rút lại…' : '↩ Rút lại đồng ý') + '</button>' : '');
   } else {
     h += (m.dong_y_cu ? '<div class="bao cho">⚠ Bảng lương đã được sửa. Xem lại và đồng ý lại</div>' : '') +
          (m.dong_y_loi ? '<div class="bao do">❌ Lời đồng ý lúc trước chưa gửi được: ' + e(m.dong_y_loi) + '</div>' : '') +
@@ -445,6 +447,24 @@ function hopDongY(i) {
          (m.ph && m.ph.khac ? '<p class="ghi">Số tiền sai thì bấm nút "💬 Báo sai / thắc mắc" ở dưới.</p>' : '');   // chỉ nhắc khi khung báo sai có thật
   }
   return h + '</div>';
+}
+/** ↩ Rút lại đồng ý (luật hoàn tác 20/11): gửi thẳng Apps Script bằng CCCD + tên đã gõ lúc tra (như thẻ 🏦). Máy chủ giữ dòng cũ, ghi giờ rút. */
+function rutDongY(i) {
+  var m = kq.muc[i];
+  if (dy.dang[i] || !m || !stk.nguoi) return;
+  dy.dang[i] = 1; dy.bao[i] = ''; ve();
+  var giu = kq;
+  goi({ hanh_dong: 'xn_rut', so_cccd: stk.nguoi.so, ho_ten: stk.nguoi.ten, ma_ct: m.ma_ct, ky: m.ky, hs: m.hs }).then(function (r) {
+    if (kq !== giu) return;
+    dy.dang[i] = 0;
+    if (r.ok) {
+      m.da_dong_y = null; m.dong_y_cu = undefined; m.dong_y_loi = undefined;
+      dy.bao[i] = '<div class="bao xanh">↩ Đã rút lại lời đồng ý. Muốn đồng ý lại thì bấm nút dưới.</div>';
+    } else {
+      dy.bao[i] = '<div class="bao do">' + e(r.ma === 'MAT_MANG' || r.ma === 'TAM' || r.ma === 'BAN' ? 'Chưa rút lại được vì mạng chập chờn hoặc máy chủ đang đông. Đợi ít phút rồi bấm lại.' : (r.loi || 'Chưa rút lại được — thử lại sau ít phút.')) + '</div>';
+    }
+    ve();
+  });
 }
 function dongYLuong(i) {
   var m = kq.muc[i];
@@ -464,7 +484,7 @@ function dongYLuong(i) {
   (qua ? goiXem(goiTin) : guiCoThuLai(0)).then(function (r) {
     if (kq !== giu) return;                           // đã tra người khác / rời trang trong lúc chờ
     dy.dang[i] = 0; dy.bao[i] = '';
-    var sang = false;
+    var sang = false;   // (bao của lần rút trước đã xoá ở dòng trên)
     if (r === XEM_HONG) {
       dy.bao[i] = '<div class="bao do">Chưa chắc lời đồng ý đã tới — mạng tới máy chủ chập chờn. Bấm 🔄 Tra lại xem đã đồng ý chưa rồi mới bấm lại.</div>';
     } else if (r.ok && r.da_dong_y) {
@@ -485,7 +505,7 @@ function sangStk() {
   if (!stk.mo) { stk.mo = true; if (!stk.tt && !stk.dang) guiXemStk(); else ve(); }
   var o = $('theStk'); if (o && o.scrollIntoView) o.scrollIntoView({ block: 'start' });
 }
-// ---------------- TÀI KHOẢN NHẬN LƯƠNG (kỳ ngắn vé 05) ----------------
+// ---------------- TÀI KHOẢN NHẬN LƯƠNG (lương tuần vé 05) ----------------
 var CAU_DONG_Y_STK = 'Tôi đồng ý để công ty lưu số tài khoản này chỉ để chuyển lương cho tôi. Chỉ người phụ trách chuyển lương xem được. Tôi tự đổi hoặc xoá được ở trang này.';
 var CAU_BAN_STK = 'Máy chủ đang bận, số chưa lưu. Thử lại sau ít phút.';
 var CAU_QR_HONG = 'Không đọc được tài khoản trong ảnh này. Anh/chị nhập tay nhé';
@@ -519,7 +539,7 @@ function hopStk() {
     return h + '<button class="rong" aria-expanded="false" onclick="moStk()">🏦 Tài khoản nhận lương</button>' +
            '<p class="ghi">Nhận lương chuyển khoản: bấm để thêm hoặc xem số tài khoản.</p></div>';
   }
-  h += '<h3>🏦 Tài khoản nhận lương</h3><p class="phu">Một tài khoản dùng chung cho mọi công ty, mọi kỳ.</p>';
+  h += '<h3>🏦 Tài khoản nhận lương</h3><p class="phu">Một tài khoản dùng chung cho mọi công ty, mọi tháng, mọi tuần.</p>';
   if (stk.dang === 'xem') h += '<div class="bao cho">⏳ Đang mở…</div>';
   else if (stk.loiXem) h += '<div class="bao do">' + e(stk.loiXem) + '</div><button class="rong" onclick="stkThuLai()">🔄 Thử lại</button>';
   else if (stk.f) h += veFormStk();
@@ -592,9 +612,9 @@ function guiXemStk() {
     ve();
   });
 }
-// ---------------- 💸 XEM TIỀN ĐÃ CHUYỂN CHƯA (kỳ ngắn vé 09) ----------------
+// ---------------- 💸 XEM TIỀN ĐÃ CHUYỂN CHƯA (lương tuần vé 09) ----------------
 var CAU_CT_LOI = 'Chưa xem được, thử lại sau ít phút';
-var CHU_CT = { thieu_tk: 'Chưa có số tài khoản — thêm ở thẻ 🏦', chua: 'Chưa chuyển', dang: 'Đang chuyển', kiem: 'Đang chuyển' };   // công nhân không thấy "Cần kiểm tra" (máy chủ đã đổi kiem → dang; đây là dây an toàn)
+var CHU_CT = { thieu_tk: 'Chưa có số tài khoản — thêm ở thẻ 🏦', chua: 'Chưa chuyển', dang: 'Đang chuyển', kiem: 'Đang chuyển' };   // công nhân không thấy "Chưa rõ đã chuyển" (máy chủ đã đổi kiem → dang; đây là dây an toàn)
 function moiCt() { return { dang: false, ds: null, loi: false };  }
 var ct = moiCt();                                    // ds = trả lời ct_cua_toi (mọi kỳ, một lần); mất khi tra người khác / rời trang
 /** Giờ chuyển 'yyyy-MM-dd HH:mm:ss' → 'HH:mm dd/MM'. */
@@ -618,7 +638,7 @@ function hopCt(m) {
   ds.forEach(function (k) { ho[k.cccd_nha_may] = true; });
   var nhieuHo = Object.keys(ho).length > 1;
   h += '<h3>💸 Tiền lương đã chuyển chưa</h3>';
-  if (!ds.length) h += '<p class="phu">Kỳ này chưa có khoản nào để chuyển.</p>';
+  if (!ds.length) h += '<p class="phu">Lương này chưa có tiền nào cần chuyển.</p>';
   ds.forEach(function (k) {
     h += '<div class="ct-dong">' + (k.loai === 'bo_sung' ? '<b>Khoản bổ sung</b> · ' : '') + (nhieuHo ? 'hồ sơ ' + e(k.cccd_nha_may) + ' · ' : '') +
          '<b>' + Number(k.so_tien).toLocaleString('vi-VN') + ' đ</b><br>' + chuCt(k) + '</div>';
@@ -758,8 +778,24 @@ function stkXoa() {
   goi({ hanh_dong: 'stk_xoa', so_cccd: stk.nguoi.so, ho_ten: stk.nguoi.ten }).then(function (r) {
     if (stk !== giu) return;
     stk.dang = 0;
-    if (r.ok) { stk.tt = r; stk.xoa = false; }
-    else stk.bao = '<div class="bao do">' + e(loiStk(r, 'xoa')) + '</div>';
+    if (r.ok) {
+      stk.tt = r; stk.xoa = false;
+      if (r.so4_xoa) stk.bao = '<div class="bao xanh">🗑 Đã xoá số ••••' + e(r.so4_xoa) + '. Lỡ tay thì bấm lấy lại (trong ' + e(r.lay_lai_phut) + ' phút).</div>' +
+                               '<button class="rong" onclick="stkLayLai()">↩ Lấy lại số vừa xoá</button>';
+    } else stk.bao = '<div class="bao do">' + e(loiStk(r, 'xoa')) + '</div>';
+    ve();
+  });
+}
+/** ↩ Lấy lại số vừa xoá (luật hoàn tác 20/11). Máy chủ giữ số đã xoá 30 phút. */
+function stkLayLai() {
+  if (!stk.nguoi || stk.dang) return;
+  var giu = stk;
+  stk.dang = 'lay'; stk.bao = '<div class="bao cho">⏳ Đang lấy lại…</div>'; ve();
+  goi({ hanh_dong: 'stk_lay_lai', so_cccd: stk.nguoi.so, ho_ten: stk.nguoi.ten }).then(function (r) {
+    if (stk !== giu) return;
+    stk.dang = 0;
+    if (r.ok) { stk.tt = r; stk.bao = '<div class="bao xanh">↩ Đã lấy lại số ••••' + e(r.so4) + '.</div>'; }
+    else stk.bao = '<div class="bao do">' + e(r.ma === 'HET_HAN' || r.ma === 'DA_CO_SO' ? r.loi : loiStk(r, 'luu')) + '</div>';
     ve();
   });
 }
@@ -800,7 +836,7 @@ function veForm(m) {
   var f = ph.form, hm = f.hm, tat = f.dang ? ' disabled' : '', nhan = 'Gửi thêm cho ' + (hm ? HM[hm].vai : '') + ' (tối đa 500 chữ)';
   var h = '<div class="form" id="form">';
   if (!f.them) {
-    h += '<h3>💬 Báo sai / thắc mắc</h3><p class="buoc">1️⃣ Chọn hạng mục</p><div class="cac-hm">';
+    h += '<h3>💬 Báo sai / thắc mắc</h3><p class="buoc">1️⃣ Chọn mục muốn hỏi</p><div class="cac-hm">';
     Object.keys(HM).forEach(function (k) {
       if (!m.ph[k] || !m.ph[k].mo) return;            // phần chưa công bố / đã hết hạn / đủ tin
       var la = hm === k;
@@ -809,8 +845,8 @@ function veForm(m) {
     h += '</div>' + loiForm('loiHm', f.loi.hm);
     if (hm) {
       var coChon = hm === 'cong' || hm === 'luong';
-      h += '<div class="toi">👉 Phiếu này tới: ' + e(toiPH(hm, m)) + '</div>';
-      if (m.ph[hm] && m.ph[hm].tt) h += '<p class="ghi">Anh/chị đã có phiếu hạng mục này — tin này vào cùng phiếu đó.</p>';
+      h += '<div class="toi">👉 Tin này tới: ' + e(toiPH(hm, m)) + '</div>';
+      if (m.ph[hm] && m.ph[hm].tt) h += '<p class="ghi">Anh/chị đã hỏi về mục này rồi — tin này gộp vào cùng chỗ đó.</p>';
       if (coChon) h += veChon(f, m, tat) + loiForm('loiChon', f.loi.chon);
       nhan = (coChon ? '3️⃣ ' : '2️⃣ ') + (hm === 'cong' ? 'Sai ở đâu?' : 'Anh/chị muốn nói gì?') + ' (tối đa 500 chữ)';
     }
@@ -880,7 +916,7 @@ function goChu(o) { ph.form.nd = o.value; $('demND').textContent = o.value.lengt
 function guiPH() {
   var f = ph.form, hm = f.hm, m = kq.muc[f.i], nd = f.nd.trim(), k = f.i + '|' + hm;
   f.loi = {}; f.bao = '';
-  if (!hm) f.loi.hm = 'Chọn một hạng mục ở bước 1 — hạng mục quyết định ai sẽ giải quyết.';
+  if (!hm) f.loi.hm = 'Chọn một mục ở bước 1 — mục đó cho biết ai sẽ trả lời anh/chị.';
   else {
     if (!f.them && !f.chon.length) {
       if (hm === 'luong') f.loi.chon = 'Tích ít nhất một mục bị sai trên phiếu.';

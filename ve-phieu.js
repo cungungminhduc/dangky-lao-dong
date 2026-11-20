@@ -20,14 +20,14 @@
     return THU[d.getUTCDay()] + ' ' + p[2] + '/' + p[1];
   }
 
-  /** Tên kỳ in trên phiếu: 'yyyy-MM' → 'THÁNG 11/2026'; kỳ ngắn 'a~b' → 'KỲ 09/11–15/11/2026' (khác năm 'KỲ 29/12/2026–04/01/2027'). */
+  /** Tên kỳ in trên phiếu: 'yyyy-MM' → 'THÁNG 11/2026'; lương tuần 'a~b' → 'TỪ 09/11 ĐẾN 15/11/2026' (khác năm 'TỪ 29/12/2026 ĐẾN 04/01/2027') — chữ đời thường, luật giao diện 20/11. */
   function tenKyIn(k) {
     if (k.indexOf('~') < 0) return 'THÁNG ' + k.substring(5) + '/' + k.substring(0, 4);
     var tu = k.substring(0, 10), den = k.substring(11), dm = function (s) { return s.substring(8, 10) + '/' + s.substring(5, 7); };
-    return 'KỲ ' + (tu.substring(0, 4) === den.substring(0, 4) ? dm(tu) + '–' + dm(den) + '/' + den.substring(0, 4) : dm(tu) + '/' + tu.substring(0, 4) + '–' + dm(den) + '/' + den.substring(0, 4));
+    return 'TỪ ' + (tu.substring(0, 4) === den.substring(0, 4) ? dm(tu) + ' ĐẾN ' + dm(den) + '/' + den.substring(0, 4) : dm(tu) + '/' + tu.substring(0, 4) + ' ĐẾN ' + dm(den) + '/' + den.substring(0, 4));
   }
 
-  /** tt = { don_vi, cong_ty, ky: 'yyyy-MM' hoặc kỳ ngắn 'yyyy-MM-dd~yyyy-MM-dd', dia_ban } */
+  /** tt = { don_vi, cong_ty, ky: 'yyyy-MM' hoặc lương tuần 'yyyy-MM-dd~yyyy-MM-dd', dia_ban } */
   function phieuLuong(n, tt) {
     var l = n.luong, k = tt.ky || '';
     function nhom(so, ten, tong, dong, coGio) {
@@ -52,7 +52,7 @@
       nhom('II', 'Các khoản phụ cấp', l.tong_phu_cap, l.phu_cap, false) +
       nhom('III', 'Các khoản khấu trừ', l.tong_khau_tru, l.khau_tru, false) +
       '<tr class="tong"><td>IV</td><td>Thực lĩnh (I + II − III)</td><td></td><td class="so">' + tien(l.thuc_linh) + '</td></tr>' +
-      (l.thuc_linh < 0 ? '<tr><td colspan="4">Số âm nghĩa là anh/chị đã nhận trước nhiều hơn lương kỳ này.</td></tr>' : '') +
+      (l.thuc_linh < 0 ? '<tr><td colspan="4">Số âm nghĩa là anh/chị đã nhận trước nhiều hơn lương lần này.</td></tr>' : '') +
       '</tbody></table></div>';
   }
 

@@ -355,7 +355,7 @@ var KieuLuoi = (function () {
    * Kế toán / quản trị: ✅ Chốt tháng khi đủ · 🔒 Đã chốt + 🔓 Mở · chưa đủ thì chữ xám nói thiếu gì. Hành chính: 📥 Tải bảng công khi tháng chưa có.
    */
   function veViecBan(r, i) {
-    if (r._ngan) return '';                                           // vé 02: dòng kỳ ngắn không có việc chốt tháng / tải bảng công
+    if (r._ngan) return '';                                           // vé 02: dòng lương tuần không có việc chốt tháng / tải bảng công
     var k = r._k, h = '', thieu = k.co_file && !k.thang_chot_luc && lamPhan('luong') ? thieuChot(k) : '';
     if (lamPhan('luong') && k.thang_chot_luc) h = '<span class="da-chot">🔒 Đã chốt</span><button type="button" class="nut-mo" data-kl="mo_chot" data-v="' + i + '" title="Mở chốt tháng (ghi lý do)">🔓 Mở</button>';
     else if (r._duChot) h = '<button type="button" class="nut-chot" data-kl="chot" data-v="' + i + '">✅ Chốt tháng</button>';
@@ -371,8 +371,8 @@ var KieuLuoi = (function () {
     return lamPhan('luong') && k.co_file && !k.thang_chot_luc ? thieuChot(k) : '';
   }
   /**
-   * Vé 02 — dòng kỳ ngắn dưới dòng tháng quyết toán của nó (trang Việc tháng). Chỉ việc của file lương: không nút chốt / việc của bạn, không quy tắc, không khoản trừ.
-   * `h` = { nhan, daGui, daCB } của noibo.html (nhãn "📅 Tuần 09/11–15/11 · quyết toán T11", luật đã gửi lên / công nhân đã xem) — truyền vào để hàm này thuần, kiểm bằng Node.
+   * Vé 02 — dòng lương tuần dưới dòng tháng tính lương của nó (trang Việc tháng). Chỉ việc của file lương: không nút chốt / việc của bạn, không quy tắc, không khoản trừ.
+   * `h` = { nhan, daGui, daCB } của noibo.html (nhãn "📅 Tuần 09/11–15/11 · tính vào T11", luật đã gửi lên / công nhân đã xem) — truyền vào để hàm này thuần, kiểm bằng Node.
    */
   function dongKyNgan(c, n, i, jn, h) {
     var cb = (n.cb_luong_phien || 0) > 0;
@@ -386,7 +386,7 @@ var KieuLuoi = (function () {
     };
   }
   /**
-   * Vé 02 (sửa lượt 1) — kỳ ngắn có tháng quyết toán CHƯA có dòng tháng trên lưới vẫn phải hiện: trả [{ n, jn }] của công ty `c` trong khoảng tháng đang xem `tg`
+   * Vé 02 (sửa lượt 1) — lương tuần có tháng tính lương CHƯA có dòng tháng trên lưới vẫn phải hiện: trả [{ n, jn }] của công ty `c` trong khoảng tháng đang xem `tg`
    * (khoảng gồm tháng hiện tại thì cả tháng sau đó, vì lưới chỉ đếm tới tháng hiện tại `nay`). Pure.
    */
   function thangKyNganLe(c, tg, nay) {
@@ -443,12 +443,12 @@ var KieuLuoi = (function () {
             chot: k.thang_chot_luc ? '🔒 Đã chốt' : k.co_luong ? 'Chưa' : '', ph: k.so_ph == null ? '' : k.so_ph,
             viec_ban: chuViecBan(k), _duChot: !quaGiu && lamPhan('luong') && !k.thang_chot_luc && k.co_luong && !thieuChot(k)
           });
-          (c.ky_ngan || []).forEach(function (n, jn) {                  // vé 02: kỳ ngắn của tháng quyết toán này, một dòng riêng ngay dưới dòng tháng
+          (c.ky_ngan || []).forEach(function (n, jn) {                  // vé 02: lương tuần của tháng tính lương này, một dòng riêng ngay dưới dòng tháng
             if (n.thang_qt === ky) ra.push(dongKyNgan(c, n, i, jn, { nhan: nhanKyNgan(n), daGui: daGui, daCB: daCB }));
           });
         });
       });
-      congTy().forEach(function (c, i) {                              // sửa lượt 1: kỳ ngắn của tháng chưa có dòng tháng — đặt theo thứ tự tháng (cùng tháng thì giữ thứ tự công ty)
+      congTy().forEach(function (c, i) {                              // sửa lượt 1: lương tuần của tháng chưa có dòng tháng — đặt theo thứ tự tháng (cùng tháng thì giữ thứ tự công ty)
         if (chon.length && !S.ct[c.ma_ct]) return;
         thangKyNganLe(c, S.tg, thangNay()).forEach(function (x) { ra.push(dongKyNgan(c, x.n, i, x.jn, { nhan: nhanKyNgan(x.n), daGui: daGui, daCB: daCB })); });
       });
@@ -841,7 +841,7 @@ var KieuLuoi = (function () {
     },
     mo: moPhieu
   };
-  // ---- 💸 Chuyển lương (kỳ ngắn vé 08): luật + nút ở noibo.html (theCK), lưới chỉ bày danh sách; ngăn phải dùng lại theCK ----
+  // ---- 💸 Chuyển lương (lương tuần vé 08): luật + nút ở noibo.html (theCK), lưới chỉ bày danh sách; ngăn phải dùng lại theCK ----
   /** Giờ 'yyyy-MM-dd HH:mm:ss' → 'HH:mm'; kèm ngày → 'HH:mm dd/MM'. */
   function gioCKL(luc) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(String(luc || '')); return m ? m[4] : String(luc || ''); }
   function lucCKL(luc) { var m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}:\d{2})/.exec(String(luc || '')); return m ? m[4] + ' ' + m[3] + '/' + m[2] : String(luc || ''); }
@@ -849,7 +849,7 @@ var KieuLuoi = (function () {
   function dongCK(ds) {
     return (ds || []).map(function (r) {
       var tt = r.tt === 'dang' ? (r.cua_toi ? '💸 Đang chuyển — của bạn' : '💸 ' + r.giu_boi + ' đang chuyển từ ' + gioCKL(r.giu_luc))
-        : r.tt === 'kiem' ? '❗ Cần kiểm tra — mở lịch sử ngân hàng tìm ' + r.ma_chi
+        : r.tt === 'kiem' ? '❗ Chưa rõ đã chuyển — mở lịch sử ngân hàng tìm ' + r.ma_chi
         : r.tt === 'xong' ? '✅ Đã chuyển ' + lucCKL(r.xong_luc) + ' · ' + r.xong_boi
         : r.tt === 'thieu_tk' ? '🏦 Chưa có số tài khoản'
         : r.khong_con ? '⛔ Không còn trong phiếu' : '⏳ Chưa chuyển';
@@ -866,8 +866,8 @@ var KieuLuoi = (function () {
   }
   TRANG.ck = {
     ten: '💸 Chuyển lương', mau: '#00B050', ben: ['ai', 'tt'], bang: 2, ten_tep: 'Chuyen luong', quyen: ['chuyen_tien', 'ke_toan', 'quan_ly', 'quan_tri'],
-    chi: '👉 Chọn công ty và kỳ, bấm <b>tên người</b> rồi bấm <b>Nhận chuyển khoản</b> từng người. Máy giữ khoản cho riêng anh/chị rồi mới hiện QR — chuyển xong bấm <b>✅ Đã chuyển</b>.',
-    rong: 'Chưa có khoản chi nào ở công ty × kỳ này (hoặc ở nhóm đang lọc).',
+    chi: '👉 Chọn công ty và kỳ, bấm <b>tên người</b> rồi bấm <b>Nhận chuyển khoản</b> từng người. Máy để riêng khoản này cho anh/chị rồi mới hiện QR — chuyển xong bấm <b>✅ Đã chuyển</b>.',
+    rong: 'Chưa có tiền cần chuyển nào ở công ty × kỳ này (hoặc ở nhóm đang lọc).',
     bao: ['ckBao'], rieng: 'ck',
     truocVe: function () { if (!DA_HOI.ck) { DA_HOI.ck = 1; moCK(); } },
     cot: function () {
@@ -879,7 +879,7 @@ var KieuLuoi = (function () {
     },
     dong: function () { return ck.kq ? dongCK(ck.kq.dong) : []; },
     chk: [{ k: 'chua', ten: 'Chưa chuyển', khop: function (r) { return r._tt === 'chua'; } }, { k: 'canh', ten: 'Có cảnh báo', khop: function (r) { return r._canh; } },
-          { k: 'dang', ten: 'Đang chuyển', khop: function (r) { return r._tt === 'dang'; } }, { k: 'kiem', ten: 'Cần kiểm tra', khop: function (r) { return r._tt === 'kiem'; } },
+          { k: 'dang', ten: 'Đang chuyển', khop: function (r) { return r._tt === 'dang'; } }, { k: 'kiem', ten: 'Chưa rõ đã chuyển', khop: function (r) { return r._tt === 'kiem'; } },
           { k: 'xong', ten: 'Đã chuyển', khop: function (r) { return r._tt === 'xong'; } }, { k: 'thieu_tk', ten: 'Thiếu tài khoản', khop: function (r) { return r._tt === 'thieu_tk'; } }],
     tom: function (ds) {
       var t = 0, dem = function (k) { return ds.filter(function (r) { return r._tt === k; }).length; };
@@ -1123,7 +1123,7 @@ var KieuLuoi = (function () {
     var r3 = document.createElement('span'), nhanCK = document.createElement('label');   // vé 08: ô chọn công ty × kỳ của 💸
     r3.className = 'kl-rieng'; r3.setAttribute('data-trang', 'ck');
     nhanCK.setAttribute('for', 'ckChon'); nhanCK.textContent = 'Công ty và kỳ';
-    r3.appendChild(nhanCK); r3.appendChild($('ckChon')); r3.appendChild($('nutDC'));   // vé 10: nút 💸 Đối chiếu tháng mở ngăn phải
+    r3.appendChild(nhanCK); r3.appendChild($('ckChon')); r3.appendChild($('nutDC'));   // vé 10: nút 💸 So với lương tháng mở ngăn phải
     $('klCuRieng').appendChild(r3);
     luoi = L.tao($('klLuoi'), { bao: baoNhanh, mo: moDong, sauLoc: veTom, sauSua: sauSua, suaRieng: suaRieng, zoom: Number(doc(KHOA_ZOOM)) || 100, khiZoom: function (z) { nho(KHOA_ZOOM, z); } });
     $('mKL').addEventListener('click', bamTrang);
@@ -1440,7 +1440,7 @@ var KieuLuoi = (function () {
   function dongNgan() { $('klNgan').hidden = true; S.moNgan = null; S.phMo = null; S.ckMo = null; }
   function moViec(r) {
     var c = congTy()[r._i];
-    if (r._ngan) {                                                      // vé 02: dòng kỳ ngắn → ngăn chỉ có phần kỳ ngắn (xem, tải lại, gửi lên)
+    if (r._ngan) {                                                      // vé 02: dòng lương tuần → ngăn chỉ có phần lương tuần (xem, tải lại, gửi lên)
       var n = c.ky_ngan[r._jn];
       S.moNgan = { ma: c.ma_ct, ky: n.ky };
       moNgan(e(c.ten), nutKyNgan(c, r._i) + oKyNgan(n, r._i, r._jn));
