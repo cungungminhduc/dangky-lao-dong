@@ -361,6 +361,9 @@ var KieuLuoi = (function () {
     else if (r._duChot) h = '<button type="button" class="nut-chot" data-kl="chot" data-v="' + i + '">✅ Chốt tháng</button>';
     else if (lamPhan('cong') && !k.co_file && !k.thang_chot_luc) h = '<button type="button" class="nut-tai" data-kl="tai_cong" data-v="' + i + '">📥 Tải bảng công</button>';
     else if (thieu) h = '<span class="thieu" title="' + e(thieu) + '">' + e(thieu) + '</span>';
+    // 20/11 (Dương): ➕ Lương tuần bấm thẳng trên dòng tháng, không phải mở ngăn — cùng luật nutKyNgan của noibo.html (máy chủ có ky_ngan + người tải file lương)
+    var ct = congTy()[r._i];
+    if (ct && Array.isArray(ct.ky_ngan) && lamPhan('luong')) h += '<button type="button" class="nut-tuan" data-kl="ky_ngan" data-v="' + i + '" title="Tải file lương tuần / mấy ngày của công ty này">➕ Lương tuần</button>';
     return h ? '<div class="viec-ban">' + h + '</div>' : '';
   }
   /** Chữ của ô đó khi chép / tải Excel. */
@@ -402,14 +405,14 @@ var KieuLuoi = (function () {
   TRANG.viec = {
     ten: '📋 Việc tháng', mau: MAU.luc, ben: ['tg', 'o', 'tt'], bang: 3, ten_tep: 'Viec thang',
     quyen: ['hanh_chinh', 'nhap_cong', 'xem_luong', 'ke_toan', 'quan_tri'],
-    chi: '👉 Mỗi công ty × tháng một dòng. Cột <b>✅ Việc của bạn</b> có nút làm ngay trên dòng (✅ Chốt tháng, 📥 Tải bảng công); việc khác bấm <b>📂 Mở</b>. Cột <b>Việc kế tiếp</b> nói việc cần làm.',
+    chi: '👉 Mỗi công ty × tháng một dòng. Cột <b>✅ Việc của bạn</b> có nút làm ngay trên dòng (✅ Chốt tháng, 📥 Tải bảng công, ➕ Lương tuần); việc khác bấm <b>📂 Mở</b>. Cột <b>Việc kế tiếp</b> nói việc cần làm.',
     rong: 'Tài khoản chưa được giao công ty nào, hoặc chưa chọn tháng. Báo người quản trị nếu thiếu công ty.',
     cot: function () {
       var x2 = MAU.xam2, mot = cacThang().length <= 1;
       return cotThang(mot).concat([
         C('ten_ct', 'Công ty', 240, { mau: MAU.duong, dam: 1 }),
         // 2.4.0 vé 05: việc kế của người đang xem, bấm ngay trên dòng (không phải 📂 Mở từng công ty)
-        C('viec_ban', '✅ Việc của bạn', 178, { mau: MAU.luc, ve: veViecBan, ct: 'Kế toán: ✅ Chốt tháng khi dòng đã đủ. Hành chính: 📥 Tải bảng công khi tháng chưa có.' }),
+        C('viec_ban', '✅ Việc của bạn', 290, { mau: MAU.luc, ve: veViecBan, ct: 'Kế toán: ✅ Chốt tháng khi dòng đã đủ. Hành chính: 📥 Tải bảng công khi tháng chưa có.' }),
         C('_mo', 'Mở', 70, { mau: MAU.duong, ve: function (r, i) { return '<button type="button" class="mo-viec" data-mo="' + i + '">📂 Mở</button>'; }, chep: false }),
         C('viec', 'Việc kế tiếp', 330, { mau: MAU.vang2, ct: 'Câu này đổi theo chức vụ đang đăng nhập.' }), C('ma_ct', 'Mã', 86, { mau: MAU.duong, giua: 1 }), C('dia', 'Địa bàn', 90, { mau: MAU.duong, giua: 1 }),
         C('cong_tt', ['🗓 Bảng công', 'Tình trạng'], 150, { mau: x2 }), C('cong_n', ['🗓 Bảng công', 'Số người'], 56, { mau: x2, kieu: 'dem', tong: 1 }), C('cong_cb', ['🗓 Bảng công', 'Công nhân xem'], 118, { mau: x2, giua: 1 }),
@@ -1535,6 +1538,10 @@ var KieuLuoi = (function () {
         veTrang(); break;
       case 'chep': luoi.chep(); break;
       // 2.4.0 vé 05: nút trong ô "✅ Việc của bạn" + ✅ Chốt hết — luật ở noibo.html, dùng chung với kiểu thẻ
+      case 'ky_ngan':
+        var rk = luoi.dangXem().dong[Number(v)];
+        if (rk) moKyNgan(rk._i);
+        break;
       case 'chot': case 'mo_chot': case 'tai_cong':
         var rv = luoi.dangXem().dong[Number(v)];
         if (!rv) break;

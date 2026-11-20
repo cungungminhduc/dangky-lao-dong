@@ -179,6 +179,7 @@ table.xl { border-collapse: separate; border-spacing: 0; table-layout: fixed; fo
 .xl .viec-ban button { min-height: 0; height: calc(100% - 3px); border-radius: 4px; font: 600 13px "Segoe UI", Arial, sans-serif; padding: 0 6px; cursor: pointer; }
 .xl .viec-ban .nut-chot { flex: 1; border: 1px solid #15803d; background: #15803d; color: #fff; }
 .xl .viec-ban .nut-tai { flex: 1; border: 1px solid var(--chinh); background: #fff; color: var(--chinh); }
+.xl .viec-ban .nut-tuan { flex: none; border: 1px solid #b45309; background: #fffbeb; color: #92400e; }
 .xl .viec-ban .nut-mo { border: 1px solid var(--vien); background: #fff; color: var(--mo); }
 .xl .viec-ban .da-chot { color: #15803d; font-weight: 600; }
 .xl .viec-ban .thieu { color: var(--mo); overflow: hidden; text-overflow: ellipsis; }
