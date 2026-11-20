@@ -352,7 +352,16 @@ function ve() {
   kq.muc.forEach(function (m, i) { if (m.ky === chon.ky) trong.push(i); });
   var trungMa = {};
   trong.forEach(function (i) { var ma = kq.muc[i].ma_ct; trungMa[ma] = (trungMa[ma] || 0) + 1; });
-  function tenCT(m) { return e(m.ten_ct) + (trungMa[m.ma_ct] > 1 ? ' · hồ sơ ' + e(m.ten_nha_may) : ''); }
+  // Cùng công ty có ≥ 2 phiếu: ghi bộ phận (khi phiếu nào cũng có và khác nhau) → không thì tên hồ sơ nhà máy (khác nhau) → không thì "phiếu 1, 2…"
+  function tenCT(m) {
+    if (!(trungMa[m.ma_ct] > 1)) return e(m.ten_ct);
+    var cung = trong.map(function (i) { return kq.muc[i]; }).filter(function (x) { return x.ma_ct === m.ma_ct; });
+    var khacNhau = function (k, chapRong) {
+      var v = cung.map(function (x) { return String(x[k] || ''); });
+      return v.every(function (s, j) { return (chapRong || s !== '') && v.indexOf(s) === j; });
+    };
+    return e(m.ten_ct) + ' · ' + (khacNhau('bo_phan') ? e(m.bo_phan) : khacNhau('ten_nha_may', true) ? 'hồ sơ ' + e(m.ten_nha_may) : 'phiếu ' + (cung.indexOf(m) + 1));
+  }
   $('dsCT').innerHTML = trong.length < 2 ? '<div class="mot">' + tenCT(kq.muc[trong[0]]) + '</div>'
     : '<div class="cac-nut">' + trong.map(function (i) {
         var la = i === chon.i;
@@ -637,7 +646,9 @@ function hopCt(m) {
   var ds = ct.ds.filter(function (k) { return k.ma_ct === m.ma_ct && k.ky === m.ky; }), ho = {};
   ds.forEach(function (k) { ho[k.cccd_nha_may] = true; });
   var nhieuHo = Object.keys(ho).length > 1;
+  var soPhieu = kq.muc.filter(function (x) { return x.ma_ct === m.ma_ct && x.ky === m.ky; }).length;   // vé 04: máy chủ gộp các hồ sơ cùng người thành MỘT số
   h += '<h3>💸 Tiền lương đã chuyển chưa</h3>';
+  if (soPhieu >= 2) h += '<p class="phu">Số này đã gộp cả ' + soPhieu + ' phiếu ' + e(m.ten_ct) + ' của lần lương này.</p>';
   if (!ds.length) h += '<p class="phu">Lương này chưa có tiền nào cần chuyển.</p>';
   ds.forEach(function (k) {
     h += '<div class="ct-dong">' + (k.loai === 'bo_sung' ? '<b>Khoản bổ sung</b> · ' : '') + (nhieuHo ? 'hồ sơ ' + e(k.cccd_nha_may) + ' · ' : '') +
@@ -838,7 +849,7 @@ function veForm(m) {
   if (!f.them) {
     h += '<h3>💬 Báo sai / thắc mắc</h3><p class="buoc">1️⃣ Chọn mục muốn hỏi</p><div class="cac-hm">';
     Object.keys(HM).forEach(function (k) {
-      if (!m.ph[k] || !m.ph[k].mo) return;            // phần chưa công bố / đã hết hạn / đủ tin
+      if (!m.ph[k] || !m.ph[k].mo) return;            // phần chưa gửi lên / đã hết hạn / đủ tin
       var la = hm === k;
       h += '<button class="' + (la ? 'chon' : '') + '" aria-pressed="' + la + '"' + tat + ' onclick="chonHM(\'' + k + '\')">' + (la ? '✔ ' : '') + HM[k].ten + '</button>';
     });

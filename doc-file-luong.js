@@ -34,6 +34,21 @@
     return (s.length === 12 || s.length === 9) ? s : '';
   }
 
+  /** Như chuanMaHoSo_ của Code.gs: số giấy tờ chuẩn, có thể kèm đuôi (1), (2)… của hồ sơ phụ — "004183003944(1)". Sai thì ''. */
+  function chuanMaHoSo(v) {
+    var s = chuanSoGiayTo(v);
+    if (s) return s;
+    s = String(v == null ? '' : v);
+    if (s.charAt(0) === "'") s = s.substring(1);
+    var m = s.match(/^(.+?)\s*\(\s*(\d{1,2})\s*\)$/);
+    if (!m) return '';
+    var g = chuanSoGiayTo(m[1]), n = parseInt(m[2], 10);
+    return g && n >= 1 ? g + '(' + n + ')' : '';
+  }
+
+  /** Như gocHoSo_ của Code.gs: số giấy tờ gốc của mã hồ sơ (bỏ đuôi (n)); mã sai thì ''. */
+  function gocHoSo(v) { return chuanMaHoSo(v).replace(/\(\d+\)$/, ''); }
+
   /** "TÊN A (TÊN B)" / "TÊN A - TÊN B" → mọi tên tra được (đã chuẩn hoá), giống web phiếu lương cũ. */
   function bienTheTen(ten) {
     var s = String(ten == null ? '' : ten).replace(/\s+/g, ' ').trim();
@@ -192,13 +207,16 @@
     bc.so_code = timCot(cc, hai, baoGom('so code'), 1, bc.ca - 1);
     bc.sinh = timCot(cc, hai, function (s) { return s.indexOf('nam sinh') >= 0 || s.indexOf('ngay sinh') >= 0; }, 1, bc.ca - 1);
     bc.ngay_nghi = timCot(cc, hai, baoGom('ngay nghi'), 1, bc.ca - 1);
+    bc.bo_phan = timCot(cc, hai, baoGom('bo phan'), 1, bc.ca - 1);   // vé 05: bộ phận của hồ sơ — chỉ để phân biệt nút trên trang công nhân
     return bc;
   }
 
   /** Vé 16 — số code, ngày sinh, ngày nghỉ của một người, đọc ở dòng đầu của người đó. Ô sai dạng coi như trống. */
   function thongTinNguoi(cc, r, bc) {
     var doc = function (cot) { return cot ? docNgay(o(cc, r, cot)) : ''; }, ma = bc.so_code ? o(cc, r, bc.so_code) : '';
-    return { so_code: trong(ma) || ma === 0 ? '' : String(ma).trim(), ngay_sinh: doc(bc.sinh), ngay_nghi: doc(bc.ngay_nghi) };
+    var bp = bc.bo_phan ? o(cc, r, bc.bo_phan) : '';
+    return { so_code: trong(ma) || ma === 0 ? '' : String(ma).trim(), ngay_sinh: doc(bc.sinh), ngay_nghi: doc(bc.ngay_nghi),
+             bo_phan: trong(bp) ? '' : String(bp).replace(/\s+/g, ' ').trim().substring(0, 40) };
   }
 
   function boCucBangLuong(bl, tBL, chan) {
@@ -258,6 +276,34 @@
   function nhacThieuSinh(ds, trang, bao) {
     var so = ds.filter(function (n) { return !n.ngay_sinh; }).length;
     if (so) bao(trang, '', so + ' người thiếu hoặc sai ngày sinh: vẫn lưu được, nhưng file giờ Tháng N không xét được tuổi của họ. Điền cột "Ngày tháng năm sinh" rồi tải lại nếu cần.');
+  }
+
+  /**
+   * Vé 05 — báo vàng khi các hồ sơ cùng CCCD thực / cùng số gốc (dùng chung file 334 và file bảng công; `vat` = 'phiếu' | 'bảng công'; `coTien` = file này có tạo tiền cần chuyển).
+   * (1) Nhiều hồ sơ cùng CCCD thực: chỉ báo khi không phải toàn hồ sơ phụ của chính người đó (số gốc khác CCCD thực) — một câu cho mỗi hồ sơ thứ hai trở đi.
+   * (2) Nhiều hồ sơ cùng số gốc mà CCCD thực không giống hồ sơ đầu nhóm: MỘT câu mỗi nhóm, theo thứ tự nhóm xuất hiện (khớp khac_cccd của gopHoSoChi_ trong Code.gs).
+   */
+  function nhacTrungTra(ds, trang, bao, vat, coTien) {
+    var theoTra = {}, daThay = {}, theoGoc = {}, thuTu = [];
+    ds.forEach(function (n) { (theoTra[n.cccd_tra] = theoTra[n.cccd_tra] || []).push(n); });
+    ds.forEach(function (n) {
+      daThay[n.cccd_tra] = (daThay[n.cccd_tra] || 0) + 1;
+      if (daThay[n.cccd_tra] > 1 && theoTra[n.cccd_tra].some(function (x) { return gocHoSo(x.cccd_nha_may) !== n.cccd_tra; })) {
+        bao(trang, '', 'Hai hồ sơ nhà máy cùng một CCCD thực (' + n.ten_hien + ') — người đó tra sẽ thấy cả hai ' + vat + '.');
+      }
+    });
+    ds.forEach(function (n) {
+      var g = gocHoSo(n.cccd_nha_may);
+      if (!theoGoc[g]) { theoGoc[g] = []; thuTu.push(g); }
+      theoGoc[g].push(n);
+    });
+    thuTu.forEach(function (g) {
+      var nhom = theoGoc[g];
+      if (nhom.length > 1 && nhom.some(function (x) { return x.cccd_tra !== nhom[0].cccd_tra; })) {
+        bao(trang, '', 'Các hồ sơ …' + g.slice(-4) + ' (' + nhom[0].ten_hien + ') ghi CCCD thực khác nhau. Kiểm lại cột CCCD THỰC' +
+            (coTien ? ' — tiền cần chuyển của người này sẽ không tự tạo cho tới khi sửa.' : '.'));
+      }
+    });
   }
 
   function laDongTong(bl, b) {
@@ -334,8 +380,8 @@
     for (var r = bCC.dau; r <= cc.length; r++) {
       var cRaw = o(cc, r, bCC.cccd);
       if (trong(cRaw) || cRaw === 0 || cRaw === '0') continue;           // dòng khuôn trống
-      var cNM = chuanSoGiayTo(cRaw);
-      if (!cNM) { chan(tCC, tenO(r, bCC.cccd), 'Số CCCD nhà máy không hợp lệ.', 'Cần 12 số CCCD (hoặc 9 số CMND).'); continue; }
+      var cNM = chuanMaHoSo(cRaw);
+      if (!cNM) { chan(tCC, tenO(r, bCC.cccd), 'Số CCCD nhà máy không hợp lệ.', 'Cần 12 số CCCD (hoặc 9 số CMND), có thể kèm đuôi (1), (2) của nhà máy.'); continue; }
       var mct = bCC.ma_ct ? chuanMaCT(o(cc, r, bCC.ma_ct)) : '';
       if (mct) maCTFile[mct] = true;
       var ng = theoCCCD[cNM];
@@ -346,7 +392,7 @@
         var tenThuc = String(o(cc, r, bCC.ten_thuc) || '').replace(/\s+/g, ' ').trim();
         ng = theoCCCD[cNM] = {
           dong: r, stt: o(cc, r, 1), cccd_nha_may: cNM, ten_nha_may: tenNM,
-          cccd_tra: cThuc || cNM, ten_hien: tenThuc || tenNM,
+          cccd_tra: cThuc || gocHoSo(cNM), ten_hien: tenThuc || tenNM,
           nguoi_tuyen: String(o(cc, r, bCC.tuyen) || '').trim(), ngay_vao: cVao ? docNgay(o(cc, r, cVao)) : '', tt: thongTinNguoi(cc, r, bCC), ca: [], nghi: {}
         };
         bCC.nghi.forEach(function (x) { var v = so(o(cc, r, x[1])); if (v) ng.nghi[x[0]] = v; });
@@ -379,8 +425,8 @@
       if (laDongTong(bl, b)) { dongTong = b; break; }
       var raw = o(bl, b, bBL.cccd);
       if (trong(raw) || raw === 0 || raw === '0') continue;
-      var c = chuanSoGiayTo(raw);
-      if (!c) { chan(tBL, tenO(b, bBL.cccd), 'Số CCCD không hợp lệ.', 'Cần 12 số CCCD (hoặc 9 số CMND).'); continue; }
+      var c = chuanMaHoSo(raw);
+      if (!c) { chan(tBL, tenO(b, bBL.cccd), 'Số CCCD không hợp lệ.', 'Cần 12 số CCCD (hoặc 9 số CMND), có thể kèm đuôi (1), (2) của nhà máy.'); continue; }
       if (daThay[c]) { chan(tBL, tenO(b, bBL.cccd), 'Số CCCD này đã có ở dòng ' + daThay[c] + '.', 'Mỗi người một dòng — xoá dòng lặp.'); continue; }
       daThay[c] = b;
       var nCC = theoCCCD[c];
@@ -388,7 +434,8 @@
         // 2.4.0 vé 03: báo vàng, không chặn — người này không có bảng công để ghép nên không có phiếu; thực lĩnh vẫn tính khi so dòng Tổng cộng
         var tlNgoai = so(o(bl, b, bBL.thuc_linh));
         ngoaiCC.push(tlNgoai === null || isNaN(tlNgoai) ? 0 : Math.round(tlNgoai));
-        bao(tBL, tenO(b, bBL.cccd), 'Người ở dòng ' + b + ' bảng lương (CCCD …' + c.slice(-4) + ') không có trong trang chấm công — vẫn nhận file, nhưng người này không có phiếu. Đúng thì kiểm số CCCD ở hai trang.');
+        var gocNgoai = gocHoSo(c), duoiNgoai = c.length > gocNgoai.length ? ' ' + c.slice(gocNgoai.length) : '';   // hồ sơ phụ: …3944 (1)
+        bao(tBL, tenO(b, bBL.cccd), 'Người ở dòng ' + b + ' bảng lương (CCCD …' + gocNgoai.slice(-4) + duoiNgoai + ') không có trong trang chấm công — vẫn nhận file, nhưng người này không có phiếu. Đúng thì kiểm số CCCD ở hai trang.');
         continue;
       }
       var tl = so(o(bl, b, bBL.thuc_linh));
@@ -457,17 +504,13 @@
       return {
         cccd_tra: n.cccd_tra, ten_tra: bienTheTen(n.ten_hien), ten_hien: n.ten_hien,
         cccd_nha_may: n.cccd_nha_may, ten_nha_may: n.ten_nha_may, nguoi_tuyen: n.nguoi_tuyen, ngay_vao: n.ngay_vao,
-        so_code: n.tt.so_code, ngay_sinh: n.tt.ngay_sinh, ngay_nghi: n.tt.ngay_nghi,
+        so_code: n.tt.so_code, bo_phan: n.tt.bo_phan, ngay_sinh: n.tt.ngay_sinh, ngay_nghi: n.tt.ngay_nghi,
         cong: { ngay: ngay, co_chi_tiet: coNgay,
                 ca: n.ca.map(function (x) { return { ma: x.ma, ten: x.ten, gio: x.gio, tong: x.tong }; }), nghi: n.nghi },
         luong: n.luong, ky_nhan: n.ky_nhan, ghi_chu: n.ghi_chu, them: n.them
       };
     });
-    var cacTra = {};
-    dsNguoi.forEach(function (n) {
-      if (cacTra[n.cccd_tra]) bao(tCC, '', 'Hai hồ sơ nhà máy cùng một CCCD thực (' + n.ten_hien + ') — người đó tra sẽ thấy cả hai phiếu.');
-      cacTra[n.cccd_tra] = true;
-    });
+    nhacTrungTra(dsNguoi, tCC, bao, 'phiếu', true);
     nhacThieuSinh(dsNguoi, tCC, bao);
 
     kq.nguoi = dsNguoi;
@@ -477,11 +520,11 @@
     return kq;
   }
 
-  goc.DocFileLuong = { docFile: docFile, chuanSoGiayTo: chuanSoGiayTo, chuanTenTra: chuanTenTra, bienTheTen: bienTheTen,
+  goc.DocFileLuong = { docFile: docFile, chuanSoGiayTo: chuanSoGiayTo, chuanMaHoSo: chuanMaHoSo, gocHoSo: gocHoSo, chuanTenTra: chuanTenTra, bienTheTen: bienTheTen,
                        ngayExcel: ngayExcel, tenO: tenO, TEN_PHIEU_CA: TEN_PHIEU_CA,
                        // doc-bang-cong.js đọc cùng bố cục trang Chấm công — dùng chung, không chép bản thứ hai
                        coBan: { o: o, so: so, tron: tron, trong: trong, chuanChu: chuanChu, laNgay: laNgay, docNgay: docNgay, laChuKhongSo: laChuKhongSo,
                                 timCot: timCot, baoGom: baoGom, dungChu: dungChu, boCucChamCong: boCucChamCong, thangDep: thangDep, TEN_CA: TEN_CA,
-                                thongTinNguoi: thongTinNguoi, nhacThieuSinh: nhacThieuSinh, taoChan: taoChan, diaChiO: diaChiO,
+                                thongTinNguoi: thongTinNguoi, nhacThieuSinh: nhacThieuSinh, nhacTrungTra: nhacTrungTra, taoChan: taoChan, diaChiO: diaChiO,
                                 khopCongTy: khopCongTy, cauSaiCongTy: cauSaiCongTy } };
 })(typeof window !== 'undefined' ? window : globalThis);

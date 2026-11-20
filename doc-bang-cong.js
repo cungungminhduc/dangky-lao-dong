@@ -108,8 +108,8 @@
         }
         continue;
       }
-      var cNM = F.chuanSoGiayTo(cRaw);
-      if (!cNM) { chan(t, tenO(r, bc.cccd), 'Số CCCD nhà máy không hợp lệ.', 'Cần 12 số CCCD (hoặc 9 số CMND).'); continue; }
+      var cNM = F.chuanMaHoSo(cRaw);
+      if (!cNM) { chan(t, tenO(r, bc.cccd), 'Số CCCD nhà máy không hợp lệ.', 'Cần 12 số CCCD (hoặc 9 số CMND), có thể kèm đuôi (1), (2) của nhà máy.'); continue; }
       if (bc.ma_ct && !trong(o(cc, r, bc.ma_ct))) { var tenMa = String(o(cc, r, bc.ma_ct)).trim(); if (!maCTFile[tenMa]) maCTFile[tenMa] = tenO(r, bc.ma_ct); }
       var ng = theoCCCD[cNM];
       if (!ng) {
@@ -123,7 +123,7 @@
           chan(t, tenO(r, bc.vao), trong(vRaw) ? 'Thiếu ngày vào.' : 'Ngày vào "' + String(vRaw).trim() + '" không đọc được.',
                'Gõ ngày vào làm (vd 05/09/2026) — máy cần ngày này để biết người mới hay cũ, tính thâm niên.');
         }
-        ng = theoCCCD[cNM] = { dong: r, cccd_nha_may: cNM, ten_nha_may: tenNM, cccd_tra: cThuc || cNM, ten_hien: tenThuc || tenNM,
+        ng = theoCCCD[cNM] = { dong: r, cccd_nha_may: cNM, ten_nha_may: tenNM, cccd_tra: cThuc || F.gocHoSo(cNM), ten_hien: tenThuc || tenNM,
                                nguoi_tuyen: String(o(cc, r, bc.tuyen) || '').trim(), ngay_vao: vao, tt: K.thongTinNguoi(cc, r, bc), ca: [], nghi: {} };
         dem.forEach(function (x) {                            // cột đếm ở dòng đầu mỗi người là chuẩn — đọc số, không đếm lại
           var v = o(cc, r, x.cot), n = so(v);
@@ -163,16 +163,12 @@
       return {
         cccd_tra: n.cccd_tra, ten_tra: F.bienTheTen(n.ten_hien), ten_hien: n.ten_hien,
         cccd_nha_may: n.cccd_nha_may, ten_nha_may: n.ten_nha_may, nguoi_tuyen: n.nguoi_tuyen, ngay_vao: n.ngay_vao,
-        so_code: n.tt.so_code, ngay_sinh: n.tt.ngay_sinh, ngay_nghi: n.tt.ngay_nghi,
+        so_code: n.tt.so_code, bo_phan: n.tt.bo_phan, ngay_sinh: n.tt.ngay_sinh, ngay_nghi: n.tt.ngay_nghi,
         cong: { ngay: ngay, co_chi_tiet: n.ca.some(function (x) { return x.co_ngay; }),
                 ca: n.ca.map(function (x) { return { ma: x.ma, ten: x.ten, gio: x.gio, tong: x.tong }; }), nghi: n.nghi }
       };
     });
-    var cacTra = {};
-    dsNguoi.forEach(function (n) {
-      if (cacTra[n.cccd_tra]) bao(t, '', 'Hai hồ sơ nhà máy cùng một CCCD thực (' + n.ten_hien + ') — người đó tra sẽ thấy cả hai bảng công.');
-      cacTra[n.cccd_tra] = true;
-    });
+    K.nhacTrungTra(dsNguoi, t, bao, 'bảng công', false);
     K.nhacThieuSinh(dsNguoi, t, bao);
     if (!dsNguoi.length && !loi.length) chan(t, '', 'Bảng công không có người nào.', 'Kiểm file đã điền CCCD nhà máy chưa.');
     // 2.4.0 vé 04: bảng công nay cũng xét công ty (trước chỉ theo ô đã chọn) — khớp Tên công ty / Mã / Tên chạy lương cũ. File không có cột công ty thì không xét

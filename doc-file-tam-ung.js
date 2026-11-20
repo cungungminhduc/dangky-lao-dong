@@ -56,7 +56,7 @@
         if (tien) bao(t, tenO(r, cTien), 'Dòng ' + r + ' có số tiền nhưng không có CCCD: không tính.');
         return null;
       }
-      return tien ? { c: F.chuanSoGiayTo(raw), tien: tien } : null;
+      return tien ? { c: F.chuanMaHoSo(raw), tien: tien } : null;
     }
 
     var tt = { co_tam_ung: false, co_luu_dong: false, co_ghi_chu: false, dong_bo_qua: 0, tien_bo_qua: 0 };
@@ -116,7 +116,7 @@
         if (giam !== null && isNaN(giam)) { chan(t, tenO(r, cGiam), 'Ô giảm trừ khác không phải số.', 'Sửa ô này thành số.'); continue; }
         if (!moi(raw)) { if (giam || ghi) bao(t, tenO(r, cCCCD), 'Dòng ' + r + ' có nội dung nhưng không có CCCD: không tính.'); continue; }
         if (!giam && !ghi) continue;
-        var ng = tim(F.chuanSoGiayTo(raw), t, tenO(r, cCCCD));
+        var ng = tim(F.chuanMaHoSo(raw), t, tenO(r, cCCCD));
         if (!ng) { chan(t, tenO(r, cCCCD), 'Dòng ' + r + ': CCCD này không có trong bảng công đã chốt.', CACH_SUA_CCCD); continue; }
         ng.giam_tru_khac += giam || 0;
         if (ghi) ng.ghi_chu = (ng.ghi_chu ? ng.ghi_chu + '; ' : '') + ghi;
