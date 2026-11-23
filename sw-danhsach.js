@@ -32,7 +32,8 @@
 // 3.70.1: quanso.html ghi "đã bỏ tích ở báo cáo …" cho người ở mục Mới không còn tích sẵn — đổi BAN.
 // 3.71: quanso.html — mục Mới có ✕ Không vào làm / 🚪 Nghỉ việc — đổi BAN.
 // 3.72: quanso.html — khối 🔢 bắt ghi tên người nghỉ, gõ tên trùng người có tên thì nhắc + nút chuyển — đổi BAN.
-var BAN = 'ds-3.72.0';
+// 3.74: quanso.html — ngày quên báo bị khoá, dải vàng khi ở ngày đã qua, hỏi lại khi gửi ngày đã qua — đổi BAN.
+var BAN = 'ds-3.74.0';
 var TEP = ['danhsach.html', 'trangchu.html', 'phancong.html', 'quanso.html',
            'cau-hinh.js', 'goi-may-chu.js', 'goi-dau.js', 'ngoai-zalo.js', 'vanphong.js', 'vanphong.css', 'thanh-menu.js',
            'bang-chung.js',

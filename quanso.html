@@ -93,6 +93,14 @@
   .the-tab button.dang{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);color:var(--chu)}
 
   .hang-ngay{display:flex;gap:6px;padding:0 14px;align-items:center}
+  /* 3.74 — đang ở ngày đã qua: dải to, chữ 16px, kèm nút về hôm nay (Vũ Hào 23/11: báo nhầm sang ngày 18/11) */
+  .dai-ngay-cu{margin:10px 14px 0;padding:12px;border-radius:10px;background:#fff4c2;border:2px solid #e0b100;color:#5a4100;
+    font-size:16px;line-height:1.5;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+  .dai-ngay-cu b{flex:1 1 200px}
+  .dai-ngay-cu button{min-height:48px;padding:8px 16px;border:0;border-radius:10px;background:#1f6feb;color:#fff;font:inherit;
+    font-weight:700;cursor:pointer}
+  .dv.khoa{cursor:default;background:#f3f4f6;border-style:dashed}
+  .dv.khoa .ten span{font-size:16px;color:#4b5563;white-space:normal}
   .hang-ngay input{flex:1;min-width:0;min-height:44px;padding:10px;font-size:16px;border:1px solid #d9dde2;border-radius:10px;background:#fff}
   .hang-ngay button{min-width:44px;min-height:44px;padding:10px 12px;border:1px solid var(--vien);background:#fff;border-radius:10px;font-size:14.5px;font-weight:600;color:#3c4753;cursor:pointer}
 
@@ -325,6 +333,8 @@
     <button type="button" id="ng_toi" aria-label="Ngày sau">▶</button>
     <button type="button" id="ng_nay">Hôm nay</button>
   </div>
+  <div class="dai-ngay-cu an" id="dai_ngay_cu" role="status"><b>⚠️ Bạn đang ở ngày <span id="dai_ngay_cu_ngay"></span> — ngày đã qua,
+    KHÔNG phải hôm nay.</b><button type="button" id="nut_ve_hom_nay">Về hôm nay</button></div>
   <div class="mach" style="padding-bottom:0">Ca đêm tính theo ngày BẮT ĐẦU ca (ca đêm 06→07 là ngày 06).</div>
   <div class="loi an" id="ds_loi"></div>
   <div class="chon-nhanh an" id="ds_chon_nhanh">
@@ -687,6 +697,7 @@ function moNgay(ngay) {
   $('ds_ngay').value = ngay;
   $('ds_ngay').max = homNay;
   $('ng_toi').disabled = ngay >= homNay;
+  if (typeof veDaiNgayCu === 'function') veDaiNgayCu(ngay);   // 3.74 — bộ kiểm trang nạp từng hàm lẻ
   $('ds_loi').classList.add('an');
   $('dai_moi').classList.add('an');
   hien('man_ds');
@@ -732,6 +743,7 @@ function apDonVi(kq, ngay) {
   homNay = kq.hom_nay || homNay;
   $('ds_ngay').max = homNay;
   $('ng_toi').disabled = ngay >= homNay;
+  if (typeof veDaiNgayCu === 'function') veDaiNgayCu(ngay);   // 3.74 — bộ kiểm trang nạp từng hàm lẻ
   dsDonVi = kq.don_vi || [];
   nhomNhan = kq.nhom_nhan || { ok: true };
   // Giữ chọn của lượt đang dở; không thì giữ ô đang tích (lấy lại cùng ngày), còn lại KHÔNG tích gì — 3.36, Dương
@@ -739,6 +751,7 @@ function apDonVi(kq, ngay) {
   var daTich = chon;
   chon = {};
   dsDonVi.forEach(function (d) {
+    if (d.khoa_ngay) return;                                  // 3.74 — ngày quên báo / sửa quá xa: không chọn được
     if (luot) { if (luot.dv.some(function (u) { return u.khoa === d.khoa; })) chon[d.khoa] = true; }
     else if (daTich[d.khoa]) chon[d.khoa] = true;
   });
@@ -769,6 +782,12 @@ $('ds_ngay').addEventListener('change', function () { if (this.value) moNgay(thi
 $('ng_lui').addEventListener('click', function () { moNgay(congNgay(ngayBao, -1)); });
 $('ng_toi').addEventListener('click', function () { if (ngayBao < homNay) moNgay(congNgay(ngayBao, 1)); });
 $('ng_nay').addEventListener('click', function () { moNgay(homNay); });
+$('nut_ve_hom_nay').addEventListener('click', function () { moNgay(homNay); });
+/** 3.74 — đang ở ngày đã qua thì hiện dải vàng to + nút "Về hôm nay"; hôm nay thì ẩn. */
+function veDaiNgayCu(ngay) {
+  $('dai_ngay_cu_ngay').textContent = ngayVN(ngay);
+  $('dai_ngay_cu').classList.toggle('an', !(ngay && homNay && ngay < homNay));
+}
 
 function veDanhSach() {
   if (!dsDonVi.length) {
@@ -786,6 +805,12 @@ function veDanhSach() {
       : '<span class="nhan-tt xam">Chưa báo</span>';
     if (d.can_ra_nen) tt += ' <span class="nhan-tt vang">cần rà lại nền</span>';
     if (d.co_nhap) tt += ' <span class="nhan-tt lam">có nháp</span>';
+    if (d.khoa_ngay) {                                         // 3.74 — ADR 0003: không chọn được, nói vì sao + cách làm
+      var cau = String(d.khoa_ngay.loi || '');
+      h += '<div class="dv khoa" role="note"><span class="tick">🔒</span><span class="ten"><b>' + thoat(d.ca ? d.ten_ca : 'Công ty (không ca)') +
+           '</b><span>' + thoat(cau.charAt(0).toUpperCase() + cau.slice(1)) + '</span></span></div>';
+      return;
+    }
     h += '<button type="button" class="dv' + (chon[d.khoa] ? ' chon' : '') + '" data-khoa="' + thoat(d.khoa) + '">' +
          '<span class="tick">' + (chon[d.khoa] ? '✓' : '') + '</span>' +
          '<span class="ten"><b>' + thoat(d.ca ? d.ten_ca : 'Công ty (không ca)') + '</b><span>' + tt + '</span></span></button>';
@@ -808,11 +833,12 @@ function dongCongTy(d) {
 function chonCongTy(maCt) {
   var ds = donViCuaCT(maCt);
   if (ds.some(function (d) { return chon[d.khoa]; })) { ds.forEach(function (d) { delete chon[d.khoa]; }); return; }
+  ds = ds.filter(function (d) { return !d.khoa_ngay; });      // 3.74
   var chuaBao = ds.filter(function (d) { return !d.hien_hanh; });
   (chuaBao.length ? chuaBao : ds).forEach(function (d) { chon[d.khoa] = true; });
 }
 /** "Chọn tất cả công ty được phân công": danh sách vốn chỉ có công ty mình được giao — chọn mọi ca CHƯA BÁO. */
-function chonTatCa() { dsDonVi.forEach(function (d) { if (!d.hien_hanh) chon[d.khoa] = true; }); }
+function chonTatCa() { dsDonVi.forEach(function (d) { if (!d.hien_hanh && !d.khoa_ngay) chon[d.khoa] = true; }); }
 
 $('ds_noi').addEventListener('click', function (e) {
   var c = e.target.closest('.ct-dong');
@@ -1054,7 +1080,7 @@ function veNhap(u) {
   if (hh) h += '<div class="nhac">Đang SỬA bản đã báo lúc ' + thoat((hh.thoi_gian || '').slice(11, 16)) + ' bởi ' + thoat(hh.nguoi_bao) +
                ' (SL ' + soSL(hh.cuoi) + '). Gửi sẽ thành tin ĐÍNH CHÍNH.</div>';
   if (u.sau && u.sau.length) h += '<div class="nhac">Đã có báo cáo ngày ' + u.sau.map(ngayVN).join(', ') + ' sau ngày này — ' +
-               'báo/sửa ngày này thì báo cáo đó giữ nguyên số và hiện "cần rà lại nền".</div>';
+               'sửa ngày này thì các ngày đó TỰ TÍNH LẠI theo bản sửa. Bạn xem số mới và xác nhận ở bước duyệt.</div>';
   h += veNen(u);
   h += veMoi(u);
   NHOM_UI.forEach(function (g) {
@@ -1083,8 +1109,8 @@ function veNen(u) {
   if (nh.nen_kieu === 'ke_thua') {
     h += '<div class="so-nen">Kế thừa báo cáo ngày <b>' + ngayVN(u.nen.nguon_ngay) + '</b>' + (u.nen.nguoi_bao ? ' (' + thoat(u.nen.nguoi_bao) + ')' : '') +
          ': <b>SL ' + soSL(u.nen.gia_tri) + '</b> · ' + soTon(u.nen.gia_tri) + '</div>';
-    if (u.nen.khoang_trong) h += '<div class="nhac" style="margin:8px 0 0">Thiếu báo cáo ngày ' + ngayVN(u.nen.ngay_lien_truoc) +
-         '. Nhớ nhập CẢ biến động chưa ghi nhận từ sau ngày ' + ngayVN(u.nen.nguon_ngay) + '.</div>';
+    if (u.nen.khoang_trong) h += '<div class="nhac" style="margin:8px 0 0">Ngày ' + ngayVN(u.nen.ngay_lien_truoc) +
+         ' chưa báo — không sao. Chọn những thay đổi từ sau ngày ' + ngayVN(u.nen.nguon_ngay) + ' tới hôm nay là đủ, không cần báo bù.</div>';
     if (u.nen.nguon_can_ra) h += '<div class="nhac" style="margin:8px 0 0">Báo cáo ngày ' + ngayVN(u.nen.nguon_ngay) +
          ' (nguồn nền) đang cần rà lại nền: ' + thoat(u.nen.nguon_can_ra) + ' Số kế thừa có thể chưa đúng — nên rà ngày đó trước.</div>';
     if (hh) h += '<button type="button" class="nut-nho" data-nen-kieu="' + (hh.nen_tu_nhap ? 'tay' : 'luu') + '">Quay về nền đã lưu</button>';
@@ -2242,6 +2268,9 @@ $('nut_gui').addEventListener('click', function () {
 });
 
 function guiLuot() {
+  // 3.74 — gửi cho ngày đã qua thì hỏi lại một lần (Vũ Hào 23/11: báo nhầm sang ngày 18/11)
+  if (luot.ngay < homNay && typeof confirm === 'function' &&
+      !confirm('Bạn đang gửi báo cáo cho ngày ' + ngayVN(luot.ngay) + ' — ngày đã qua, KHÔNG phải hôm nay.\n\nĐúng là ngày này thì bấm OK. Nhầm ngày thì bấm Huỷ rồi bấm "Về hôm nay".')) return;
   var kq = duyet.kq, n = $('nut_gui'), batDau = Date.now();
   var ds = luot.dv.map(function (u, i) {
     var y = yeuCauDV(u), d = kq.don_vi[i];
