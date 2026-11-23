@@ -230,6 +230,11 @@
   .form-ck.nguy-ck { background: #fef2f2; border: 1.5px solid var(--do); color: var(--do); }
   button.nguy { border-color: var(--do); color: #fff; background: var(--do); }
   .khoi-chi .loi-ds li { margin: 6px 0; }
+  /* 2.11.0 — 🔍 đối chiếu người tuyển với hệ tuyển dụng */
+  .dc-td-dau{font-size:1.05rem;margin:16px 0 4px}
+  .dc-td li{margin:8px 0}
+  .dc-td button{margin:6px 6px 0 0}
+  .kl #mTai.co-luoi #tuyenBao{flex:1 1 100%;min-width:0}
 </style>
 </head>
 <body>
@@ -337,6 +342,17 @@
       <div id="gioXem" class="an"></div>
       <div class="thanh-duoi"><button id="nutLuuGio" class="chinh an">💾 Lưu tháng này</button></div>
     </div>
+    <!-- 2.11.0 — 🔍 ĐỐI CHIẾU NGƯỜI TUYỂN VỚI HỆ TUYỂN DỤNG (kiểu lưới: kieu-luoi.js chuyển khối này lên trang ⏱ Giờ tuyển dụng) -->
+    <div class="the" id="dcTD">
+      <h2 style="font-size:1.05rem">🔍 Đối chiếu người tuyển với hệ tuyển dụng</h2>
+      <div class="chi" style="margin-top:8px">👉 Hệ tuyển dụng là chuẩn: mỗi người lao động, mỗi công ty, mỗi tháng tính cho <b>một</b> người tuyển — người tuyển từ đầu tháng.
+        Máy tự kiểm ngay sau mỗi lần 🔒 chốt tháng. Muốn kiểm lại: chọn tháng rồi bấm <b>🔍 Kiểm</b>.</div>
+      <label for="dcThang">Tháng</label>
+      <input id="dcThang" type="month">
+      <button id="nutDoiChieuTD" type="button" class="chinh rong" style="margin-top:12px">🔍 Kiểm</button>
+      <div id="dcTDBao"></div>
+      <div id="dcTDKq"></div>
+    </div>
     <div class="the">
       <h2 style="font-size:1.05rem">Các tháng đã lưu</h2>
       <div id="gioCacThang" style="margin-top:8px"></div>
@@ -441,6 +457,7 @@
         <button type="button" id="kyThoi">Thôi</button>
       </div>
       <div id="taiBao"></div>
+      <div id="tuyenBao"></div>
       <div id="xemTruoc" class="an">
         <div class="tom" id="tom"></div>
         <label for="timNguoi" id="nhanNguoi">Xem phiếu từng người (bấm tên)</label>
@@ -637,7 +654,7 @@ function taiLuoi() {
     demMenuPH(kq.ph_can_lam);
     var canh = kq.ma_khong_co && kq.ma_khong_co.length
       ? 'Tài khoản có khai công ty ' + e(kq.ma_khong_co.join(', ')) + ' nhưng tab CÔNG TY chưa có — báo người quản trị thêm vào.' : '';
-    canh = [canh, nhacGioCu(), nhacTai()].filter(Boolean).join('<br>');   // vé 06: giờ tuyển dụng chưa cập nhật · việc 3b: tháng chưa tải dữ liệu kế toán
+    canh = [canh, nhacGioCu(), nhacTai(), nhacDoiChieu()].filter(Boolean).join('<br>');   // 2.11.0: tháng còn việc đối chiếu người tuyển   // vé 06: giờ tuyển dụng chưa cập nhật · việc 3b: tháng chưa tải dữ liệu kế toán
     bao('luoiBao', canh ? 'cho' : '', canh);
     if (kieuLuoi()) { KieuLuoi.luoiMoi(); return; }
     if (!kq.cong_ty.length) { $('luoi').innerHTML = '<div class="bao cho">Tài khoản chưa được giao công ty nào — báo người quản trị.</div>'; return; }
@@ -983,6 +1000,7 @@ function hoiChotDong(i, j) {
           if (!r.ok) { bao('luoiBao', 'do', '<b>Chưa chốt ' + ten + '.</b> ' + e(r.loi) + (r.ma === 'DA_DOI' ? ' <button onclick="taiLuoi()">🔄 Tải lại</button>' : '')); return; }
           bao('luoiBao', r.thieu_phieu || (r.gio && !r.gio.ok) ? 'cho' : 'xanh', cauDaChot(c, k, r) + cauGio(r.gio));
           taiLuoiGiuBao($('luoiBao').innerHTML);
+          if (!r.da_co) doiChieuSauChot(k.ky);                          // 2.11.0: kế toán thấy đối chiếu người tuyển ngay sau chốt
         });
       });
 }
@@ -1009,6 +1027,7 @@ function chayChotHet(dong) {
     bao('luoiBao', loi.length || /⚠/.test(cauGioHet) ? 'cho' : 'xanh', '🔒 Đã chốt ' + xong.length + '/' + n + ' công ty' + (xong.length ? ': ' + xong.map(e).join(', ') : '') + '.' +
         (loi.length ? ' <b>⚠ ' + loi.length + ' chưa chốt</b>: ' + loi.map(function (l) { return e(l.ten) + ' — ' + e(l.loi); }).join(' · ') : '') + cauGioHet);
     taiLuoiGiuBao($('luoiBao').innerHTML);
+    thangChot.forEach(doiChieuSauChot);                                // 2.11.0: mỗi tháng vừa chốt một lần đối chiếu
   }
   /** Vé 06: chốt hết thì lưu giờ MỘT lần mỗi tháng có công ty vừa chốt, sau cả lượt. */
   function luuGioCuoi(i, cau) {
@@ -1048,6 +1067,7 @@ function guiChotThang(c, k, dongY, nut) {
     trangThai.moCT = c.ma_ct;
     bao('luoiBao', r.thieu_phieu || (r.gio && !r.gio.ok) ? 'cho' : 'xanh', cauDaChot(c, k, r) + cauGio(r.gio));   // vé 06: kèm kết quả tự lưu giờ
     taiLuoiGiuBao($('luoiBao').innerHTML);
+    if (!r.da_co) doiChieuSauChot(k.ky);
   });
 }
 function moChotThang(i, j, nut) {
@@ -1616,6 +1636,7 @@ function hoiGuiLen() {
       }).join(' · ') + (dt.gio_sua.length > 6 ? '…' : '') + '</p>' : '') +
       (ktt.length ? '<p class="ai">⚠ ' + ktt.length + ' người có chữ <b>KTT</b> ở cột Ký nhận sẽ bị ẩn khỏi trang công nhân: ' + ktt.slice(0, 8).map(e).join(', ') + (ktt.length > 8 ? '…' : '') + '</p>' : '') +
       (canh ? '<ul class="loi-ds" style="color:#92400e">' + canh + '</ul>' : '') +
+      (trangThai.kiemTuyen && lechTuyen().khac.length ? '<p class="viec-ke">⚠ ' + lechTuyen().khac.length + ' người ghi người tuyển khác hệ tuyển dụng. Muốn sửa trước khi gửi: bấm <b>Thôi, chưa gửi</b> rồi <b>✅ Lấy theo hệ tuyển dụng</b>.</p>' : '') +
       (xoa.length ? '<p class="viec-ke">⚠ Mỗi công ty chỉ giữ ' + GIU_KY + ' tháng: gửi tháng ' + thangNam(dt.ky) + ' sẽ <b>XOÁ ' + tenXoa +
                     '</b> — công nhân không tra được tháng đó nữa, phản hồi của tháng đó cũng mất. File Excel gốc vẫn ở máy anh/chị.</p>' : '') +
       (laCong && dt.can_nguong ? khoiNguong(true) : '') +
@@ -1742,7 +1763,7 @@ function guiSuaGio(i, j, ds, sua) {
                         cb: (k.cb_cong_phien || 0) > 0 ? k.cb_cong_luc || '' : '', can_nguong: !((k.cb_luong_phien || 0) > 0), nguong: c.nguong, ma_an: k.ma_an || null,
                         sua_luoi: true, gio_sua: g.gio_sua };
   trangThai.kqDoc = { ok: true, nguoi: g.nguoi, canh_bao: [], ten_file: 'Sửa giờ trên lưới (' + g.gio_sua.length + ' ô)', thong_tin: {} };
-  trangThai.oSua = [];
+  trangThai.oSua = []; trangThai.doiTuyen = []; trangThai.kiemTuyen = null; $('tuyenBao').innerHTML = '';
   hoiGuiLen();
 }
 /** Chọn nhầm ô tháng: đưa đúng file này (kể cả ô đã sửa) sang ô tháng của file, mở thêm ô tháng đó trên lưới nếu chưa có. */
@@ -1760,6 +1781,7 @@ function doiThangTai(ky) {
 /** Workbook (đã đọc bằng thư viện) → soát → hiện xem trước. Tách riêng để thử được không cần chọn file thật. */
 function docWorkbook(wb, tenFile) {
   var cacTrang = {}, dt = trangThai.dangTai, laCong = dt.loai === 'cong', laTU = dt.loai === 'tam_ung';
+  $('tuyenBao').innerHTML = ''; trangThai.kiemTuyen = null; trangThai.doiTuyen = [];   // 2.11.0: kết quả so người tuyển của file trước hết nghĩa
   wb.SheetNames.forEach(function (t) { cacTrang[t] = bangTuTrang(wb.Sheets[t]); });
   // Bảng công: công ty theo ô đã chọn (không theo tên trang / cột mã công ty của file), kỳ theo ngày của kỳ công
   // 2.4.0 vé 04: cả bảng công lẫn file lương khớp tên công ty trong file với Tên công ty (tên hợp đồng) / Mã / Tên chạy lương cũ
@@ -1804,6 +1826,7 @@ function docWorkbook(wb, tenFile) {
   veDanhSach('');
   $('xemTruoc').classList.remove('an'); $('nutLuu').classList.remove('an');
   if (kieuLuoi()) KieuLuoi.xemTruocFile(kq);
+  kiemTuyenFile();                                                    // 2.11.0: chặn từ đầu nguồn — người tuyển so với hệ tuyển dụng
 }
 function veDanhSach(loc) {
   var q = DocFileLuong.chuanTenTra(loc || '');
@@ -1896,7 +1919,8 @@ function guiLenFile(xoaKy, dongYGio) {
         thang_qt: dt.laKyNgan ? dt.thang_qt : undefined,
         ten_file: kq.ten_file, nguoi: kq.nguoi, xoa_ky: xoaKy || [], gui_len: true, dong_y_gio: dongYGio === true,
         nguong: laCong && dt.can_nguong ? dt.nguong_gui : undefined, o_sua: trangThai.oSua || [],
-        sua_luoi: dt.sua_luoi === true || undefined, gio_sua: dt.sua_luoi ? dt.gio_sua : undefined }, 120).then(function (r) {
+        sua_luoi: dt.sua_luoi === true || undefined, gio_sua: dt.sua_luoi ? dt.gio_sua : undefined,
+        doi_tuyen: (trangThai.doiTuyen || []).length ? trangThai.doiTuyen.map(function (x) { return { cccd: x.cccd, ten: x.ten, cu: x.cu, moi: x.moi }; }) : undefined }, 120).then(function (r) {
     if (!r.ok || r.gui_len) return r;
     return congBoGuiLen(dt.ma_ct, dt.laKyNgan ? dt.kyGui : dt.ky, laCong ? 'cong' : 'luong', r.phien_ban).then(function (x) {
       return x.ok ? r : { ok: false, ma: x.ma, da_luu: true, loi: 'Đã lưu nhưng CHƯA tới công nhân (máy chủ chưa lên bản 2.4.0): ' + x.loi };
@@ -1953,9 +1977,16 @@ function hoiGioKhac(r, xoaKy) {
       '<p class="ai">Không cần ghi lý do: máy tự ghi "gửi theo giờ của file" kèm số chỗ khác.</p>',
       '📤 Vẫn gửi theo file', 'Thôi, chưa gửi', function () { guiLenFile(xoaKy, true); });
 }
+/** Tải lại lưới, giữ câu báo đang hiện. 2.11.0: câu thêm sau (đối chiếu người tuyển sau chốt) gộp vào bằng themBaoGiu, lưới tải xong trước hay sau đều còn. */
+function themBaoGiu(cau) {
+  trangThai.baoGiu = (trangThai.baoGiu || '') + cau;
+  var o = $('luoiBao').firstChild;
+  if (o && $('luoiBao').textContent.indexOf('Đang lấy') < 0) o.innerHTML += cau;
+}
 function taiLuoiGiuBao(html) {
+  trangThai.baoGiu = html;
   taiLuoi();
-  var cho = setInterval(function () { if (trangThai.luoi && $('luoiBao').textContent.indexOf('Đang lấy') < 0) { $('luoiBao').innerHTML = html; clearInterval(cho); } }, 200);
+  var cho = setInterval(function () { if (trangThai.luoi && $('luoiBao').textContent.indexOf('Đang lấy') < 0) { $('luoiBao').innerHTML = trangThai.baoGiu; clearInterval(cho); } }, 200);
   setTimeout(function () { clearInterval(cho); }, 30000);
 }
 
@@ -2399,6 +2430,7 @@ function thangTruoc() {
 function moGio() {
   if (kieuLuoi()) gio.kq = null; else hien('mGio');
   if (!$('gioThang').value) $('gioThang').value = thangTruoc();
+  if (!$('dcThang').value) $('dcThang').value = thangTruoc();      // 2.11.0: khung đối chiếu người tuyển
   $('gioXem').classList.add('an'); $('nutLuuGio').classList.add('an');
   if (kieuLuoi()) bao('gioBao', 'cho', '⏳ Đang lấy các tháng đã lưu…'); else bao('gioBao', '', '');
   $('gioCacThang').innerHTML = '<div class="bao cho">⏳ Đang lấy các tháng đã lưu…</div>';
@@ -3087,7 +3119,216 @@ function xuatExcelDC() {
   XLSX.writeFile(wb, 'Doi chieu ' + dc.ma_ct + ' ' + dc.thang + '.xlsx');
 }
 
+// ---------------- 2.11.0 — 🔍 ĐỐI CHIẾU NGƯỜI TUYỂN VỚI HỆ TUYỂN DỤNG (ADR 0002 bên tuyển dụng: hệ tuyển dụng làm chuẩn "ai tuyển") ----------------
+// Mỗi người lao động × công ty × tháng tính cho MỘT người tuyển: người tuyển từ đầu tháng theo hệ tuyển dụng. Kế toán thấy ngay sau chốt tháng,
+// sửa tên theo hệ tuyển dụng (một nút cho cả danh sách) hoặc xác nhận người tuyển của người chưa có trong hệ; mọi lần sửa có ↩ Hoàn tác.
+var dcTD = { r: null };
+function cccd4(c) { return '***' + String(c || '').slice(-4); }
+/** Câu tóm tắt một lần đối chiếu (dùng ở khung đối chiếu và câu báo sau chốt). */
+function tomDoiChieu(r) {
+  var p = ['✅ ' + r.khop + ' người khớp'];
+  if (r.ghi_khac.length) p.push('⚠ ' + r.ghi_khac.length + ' ghi người tuyển khác hệ tuyển dụng');
+  if (r.chua_co.length) p.push('❔ ' + r.chua_co.length + ' chưa có trong hệ tuyển dụng');
+  if (r.thieu.length) p.push('⚠ ' + r.thieu.length + ' đang làm mà không có giờ');
+  if (r.khong_cccd) p.push('⛔ ' + r.khong_cccd + ' dòng thiếu CCCD');
+  return p.join(' · ');
+}
+function kiemDoiChieuTD() {
+  var thang = $('dcThang').value;
+  if (!thang) { bao('dcTDBao', 'do', 'Chọn tháng trước, rồi bấm 🔍 Kiểm.'); return; }
+  bao('dcTDBao', 'cho', '⏳ Đang đối chiếu người tuyển tháng ' + thangNam(thang) + ' với hệ tuyển dụng… (5–30 giây)');
+  $('dcTDKq').innerHTML = '';
+  return goi({ hanh_dong: 'kt_doi_chieu_td', phien: trangThai.phien, thang: thang }, 120).then(function (r) {
+    if (!r.ok) { dcTD.r = null; bao('dcTDBao', 'do', '<b>Chưa đối chiếu được.</b> ' + e(r.loi) + ' <button type="button" onclick="kiemDoiChieuTD()">Thử lại</button>'); return; }
+    dcTD.r = r;
+    veDoiChieuTD();
+  });
+}
+function veDoiChieuTD() {
+  var r = dcTD.r, viecKT = r.viec > 0;
+  bao('dcTDBao', viecKT ? 'cho' : 'xanh', '<b>Tháng ' + thangNam(r.thang) + ':</b> ' + tomDoiChieu(r) + '.' +
+    (viecKT ? '' : ' Không còn việc gì kế toán phải làm.'));
+  var h = '', dau = function (x) { return '<b>' + e(x.ho_ten) + '</b> · ' + cccd4(x.cccd) + ' · ' + e(x.cong_ty); };
+  if (r.ghi_khac.length) {
+    h += '<h3 class="dc-td-dau">⚠ Ghi người tuyển khác hệ tuyển dụng (' + r.ghi_khac.length + ')</h3>' +
+      '<p class="ai">Hệ tuyển dụng là chuẩn (người tuyển từ đầu tháng). Bấm sửa thì file Tháng N + giờ tuyển dụng ghi đúng tên; file Excel gốc không đổi.</p>' +
+      '<button type="button" class="chinh rong" onclick="suaHetTheoHe()">✅ Sửa hết theo hệ tuyển dụng (' + r.ghi_khac.length + ' người)</button><ul class="loi-ds dc-td">' +
+      r.ghi_khac.map(function (x, i) {
+        return '<li>' + dau(x) + ' · ' + tien(x.gio) + ' giờ: file ghi "' + e(x.ghi.join(', ')) + '" → hệ tuyển dụng: <b>' + e(x.chu) + '</b>' +
+          ' <button type="button" class="rong" onclick="suaTheoHe(' + i + ')">Sửa theo hệ tuyển dụng</button></li>';
+      }).join('') + '</ul>';
+  }
+  if (r.chua_co.length) {
+    h += '<h3 class="dc-td-dau">❔ Chưa có trong hệ tuyển dụng (' + r.chua_co.length + ') — chưa tính cho ai</h3>' +
+      '<p class="ai">Kế toán xác nhận ai tuyển → người đó bấm nhận trong hệ tuyển dụng → máy tự nhập bù, từ đó tự khớp.</p><ul class="loi-ds dc-td">' +
+      r.chua_co.map(function (x, i) {
+        var ten = x.ghi[0] || '', s = x.sua && x.sua.loai === 'xac_nhan' ? x.sua : null;
+        var tc = x.tu_choi.length ? '<br>⚠ ' + e(x.tu_choi.join(', ')) + ' báo không phải mình tuyển — bấm ✏️ Người tuyển khác để sửa.' : '';
+        var nut = s
+          ? '<br>✅ Đã xác nhận <b>' + e(s.nguoi_tuyen) + '</b> tuyển (' + e(s.luc) + ' · ' + e(s.boi) + ') — chờ ' + e(s.nguoi_tuyen) + ' nhận trong hệ tuyển dụng. ' +
+            '<button type="button" class="rong" onclick="boSuaTD(\'' + e(x.ma_ct) + '\',\'' + e(x.cccd) + '\')">↩ Hoàn tác</button>'
+          : '<br>' + (ten && ten !== 'CHƯA GHI NGƯỜI TUYỂN' ? '<button type="button" class="chinh" onclick="xacNhanTD(' + i + ')">✅ Đúng ' + e(ten) + ' tuyển</button> ' : '');
+        return '<li>' + dau(x) + ' · ' + tien(x.gio) + ' giờ · file ghi "' + e(x.ghi.join(', ')) + '"' + tc + nut +
+          ' <button type="button" class="rong" onclick="hoiTenKhacTD(' + i + ')">✏️ Người tuyển khác…</button></li>';
+      }).join('') + '</ul>';
+  }
+  if (r.thieu.length) {
+    h += '<h3 class="dc-td-dau">⚠ Hệ tuyển dụng ghi đang làm mà không có giờ (' + r.thieu.length + ')</h3><ul class="loi-ds dc-td">' +
+      r.thieu.map(function (x) { return '<li>' + dau(x) + ' · người tuyển ' + e(x.chu) + ' — 👉 Kiểm lại bảng công: người này có đi làm tháng ' + thangNam(r.thang) + ' không.</li>'; }).join('') + '</ul>';
+  }
+  if (r.khong_cccd) h += '<p class="viec-ke">⛔ ' + r.khong_cccd + ' dòng trong bảng công thiếu số CCCD — chưa đối chiếu được. Hành chính điền CCCD rồi gửi lại bảng công.</p>';
+  var trongCho = {};
+  r.chua_co.forEach(function (x) { trongCho[x.ma_ct + '|' + x.cccd] = true; });
+  var daSua = r.da_sua.filter(function (x) { return !trongCho[x.ma_ct + '|' + x.cccd]; });
+  if (daSua.length) {
+    h += '<h3 class="dc-td-dau">✏️ Đã sửa tên người tuyển (' + daSua.length + ')</h3><ul class="loi-ds dc-td">' +
+      daSua.map(function (x) {
+        return '<li>' + dau(x) + ': "' + e(x.ten_cu) + '" → <b>' + e(x.nguoi_tuyen) + '</b> (' + e(x.luc) + ' · ' + e(x.boi) + ') ' +
+          '<button type="button" class="rong" onclick="boSuaTD(\'' + e(x.ma_ct) + '\',\'' + e(x.cccd) + '\')">↩ Hoàn tác</button></li>';
+      }).join('') + '</ul>';
+  }
+  $('dcTDKq').innerHTML = h;
+}
+/** Ghi SUA_TUYEN rồi kiểm lại (lần kiểm gửi số mới sang hệ tuyển dụng: người tuyển thấy ngay). */
+function guiSuaTD(ds, cau) {
+  bao('dcTDBao', 'cho', '⏳ Đang lưu ' + ds.length + ' người, cập nhật giờ tuyển dụng… (10–60 giây)');
+  goi({ hanh_dong: 'kt_sua_tuyen', phien: trangThai.phien, thang: dcTD.r.thang, ds: ds }, 240).then(function (x) {
+    if (!x.ok) { bao('dcTDBao', 'do', '<b>Chưa lưu.</b> ' + e(x.loi)); return; }
+    kiemDoiChieuTD().then(function () {
+      if (dcTD.r) $('dcTDBao').innerHTML = '<div class="bao xanh">' + cau + (x.gio && !x.gio.ok ? ' <b>⚠ Giờ tuyển dụng chưa cập nhật:</b> ' + e(x.gio.loi) : '') + '</div>' + $('dcTDBao').innerHTML;
+    });
+  });
+}
+function suaHetTheoHe() {
+  var ds = dcTD.r.ghi_khac;
+  hoi('<p><b>Sửa tên người tuyển của ' + ds.length + ' người theo hệ tuyển dụng?</b></p><p>File Tháng N và giờ tuyển dụng tháng ' + thangNam(dcTD.r.thang) +
+      ' sẽ ghi tên theo hệ tuyển dụng. File Excel gốc không đổi. Sửa nhầm thì bấm ↩ Hoàn tác từng người.</p>',
+      '✅ Sửa hết theo hệ tuyển dụng', 'Thôi', function () {
+        guiSuaTD(ds.map(function (x) { return { ma_ct: x.ma_ct, cccd: x.cccd, nguoi_tuyen: x.chu, loai: 'theo_he' }; }), '✅ Đã sửa ' + ds.length + ' người theo hệ tuyển dụng.');
+      });
+}
+function suaTheoHe(i) {
+  var x = dcTD.r.ghi_khac[i];
+  guiSuaTD([{ ma_ct: x.ma_ct, cccd: x.cccd, nguoi_tuyen: x.chu, loai: 'theo_he' }], '✅ Đã sửa ' + e(x.ho_ten) + ' theo hệ tuyển dụng: ' + e(x.chu) + '.');
+}
+function xacNhanTD(i) {
+  var x = dcTD.r.chua_co[i], ten = x.ghi[0];
+  guiSuaTD([{ ma_ct: x.ma_ct, cccd: x.cccd, nguoi_tuyen: ten, loai: 'xac_nhan' }], '✅ Đã xác nhận ' + e(ten) + ' tuyển ' + e(x.ho_ten) + '. ' + e(ten) + ' sẽ thấy ở ⏱ Giờ làm để bấm nhận.');
+}
+function hoiTenKhacTD(i) {
+  var x = dcTD.r.chua_co[i];
+  hoi('<p><b>' + e(x.ho_ten) + '</b> (' + cccd4(x.cccd) + ', ' + e(x.cong_ty) + ') do ai tuyển?</p>' +
+      '<label for="tenTuyenKhac">Tên người tuyển (đúng tên tuyển của người đó trong hệ tuyển dụng)</label><input id="tenTuyenKhac" type="text" autocomplete="off" maxlength="60">' +
+      '<div class="loi-o an" id="tenTuyenLoi"></div>',
+      '✅ Lưu người tuyển', 'Thôi', function () {
+        var ten = $('tenTuyenKhac').value.trim();
+        guiSuaTD([{ ma_ct: x.ma_ct, cccd: x.cccd, nguoi_tuyen: ten, loai: 'xac_nhan' }], '✅ Đã xác nhận ' + e(ten) + ' tuyển ' + e(x.ho_ten) + '.');
+      }, null, function () {
+        if ($('tenTuyenKhac').value.trim()) return true;
+        $('tenTuyenLoi').textContent = 'Chưa gõ tên người tuyển.'; $('tenTuyenLoi').classList.remove('an');
+        return false;
+      });
+}
+function boSuaTD(ma, cccd) {
+  bao('dcTDBao', 'cho', '⏳ Đang hoàn tác, cập nhật giờ tuyển dụng… (10–60 giây)');
+  goi({ hanh_dong: 'kt_bo_sua_tuyen', phien: trangThai.phien, thang: dcTD.r.thang, ma_ct: ma, cccd: cccd }, 240).then(function (x) {
+    if (!x.ok) { bao('dcTDBao', 'do', '<b>Chưa hoàn tác.</b> ' + e(x.loi)); return; }
+    kiemDoiChieuTD();
+  });
+}
+/** Lưới / câu báo chốt → mở khung đối chiếu đúng tháng (kiểu lưới: sang trang ⏱ Giờ tuyển dụng). */
+function moDoiChieuTD(thang) {
+  if (kieuLuoi() && KieuLuoi.moTrang) KieuLuoi.moTrang('gio'); else moGio();
+  $('dcThang').value = thang;
+  kiemDoiChieuTD();
+}
+/** Chốt tháng xong → tự đối chiếu, thêm một câu vào câu báo đang hiện (kế toán thấy ngay — Dương chốt 21/11). Hỏng thì chỉ báo vàng, chốt vẫn xong. */
+function doiChieuSauChot(thang) {
+  if (!coCV('ke_toan', 'quan_tri') || !thang) return;
+  goi({ hanh_dong: 'kt_doi_chieu_td', phien: trangThai.phien, thang: thang }, 120).then(function (r) {
+    var nut = ' <button type="button" onclick="moDoiChieuTD(\'' + e(thang) + '\')">🔍 Xem và xử lý</button>';
+    var cau = !r.ok ? '<br><b>🔍 Chưa đối chiếu được người tuyển tháng ' + thangNam(thang) + ':</b> ' + e(r.loi)
+      : '<br>' + (r.viec || r.thieu.length ? '<b>🔍 Đối chiếu người tuyển tháng ' + thangNam(thang) + ':</b> ' + tomDoiChieu(r) + '.' + nut
+        : '🔍 Đối chiếu người tuyển tháng ' + thangNam(thang) + ': ✅ khớp hệ tuyển dụng (' + r.khop + ' người).');
+    themBaoGiu(cau);
+  });
+}
+/** Lưới Việc tháng: tháng còn việc đối chiếu người tuyển theo lần kiểm gần nhất (máy chủ gửi `nhac_doi_chieu`, không hỏi sang hệ tuyển dụng). */
+function nhacDoiChieu() {
+  var ds = (trangThai.luoi && trangThai.luoi.nhac_doi_chieu) || [];
+  return ds.map(function (x) {
+    return '🔍 Tháng ' + thangNam(x.thang) + ' còn ' + x.viec + ' việc đối chiếu người tuyển (lần kiểm ' + e(x.luc) + '). ' +
+      '<button type="button" onclick="moDoiChieuTD(\'' + e(x.thang) + '\')">🔍 Xem và xử lý</button>';
+  }).join('<br>');
+}
+
+// ---------------- 2.11.0 — CHẶN TỪ ĐẦU NGUỒN: người tuyển trong file so với hệ tuyển dụng ----------------
+/** Đọc xong file bảng công / lương THÁNG: hỏi hệ tuyển dụng người tuyển đầu tháng của từng người. Khác → khung vàng + một nút lấy theo hệ. Hỏng → dòng xám, vẫn gửi được. */
+function kiemTuyenFile() {
+  var dt = trangThai.dangTai, kq = trangThai.kqDoc;
+  trangThai.doiTuyen = []; trangThai.kiemTuyen = null;
+  $('tuyenBao').innerHTML = '';
+  if (!kq || !kq.ok || dt.laKyNgan || (dt.loai !== 'cong' && dt.loai !== 'luong') || !/^\d{4}-\d{2}$/.test(String(dt.ky || ''))) return;
+  var nguoi = kq.nguoi.filter(function (n) { return n.cccd_tra; }).map(function (n) { return { cccd: n.cccd_tra, ten: n.nguoi_tuyen || '' }; });
+  if (!nguoi.length) return;
+  bao('tuyenBao', 'cho', '⏳ Đang so người tuyển trong file với hệ tuyển dụng…');
+  var moc = kq;
+  goi({ hanh_dong: 'kt_kiem_tuyen', phien: trangThai.phien, thang: dt.ky, ma_ct: dt.ma_ct, nguoi: nguoi }, 60).then(function (r) {
+    if (trangThai.kqDoc !== moc) return;                               // đã chọn file khác trong lúc chờ
+    if (!r.ok) { bao('tuyenBao', '', 'ℹ Chưa so được người tuyển với hệ tuyển dụng (' + e(r.loi) + '). Vẫn gửi lên được.'); return; }
+    trangThai.kiemTuyen = r.nguoi || {};
+    veKiemTuyen();
+  });
+}
+function lechTuyen() {
+  var kt = trangThai.kiemTuyen || {}, khac = [], chua = [];
+  ((trangThai.kqDoc && trangThai.kqDoc.nguoi) || []).forEach(function (n, i) {
+    var x = kt[n.cccd_tra];
+    if (!x) return;
+    if (x.chu && !x.khop) khac.push({ i: i, n: n, chu: x.chu });
+    else if (!x.chu) chua.push({ i: i, n: n });
+  });
+  return { khac: khac, chua: chua };
+}
+function veKiemTuyen() {
+  var l = lechTuyen(), da = trangThai.doiTuyen || [], h = '';
+  if (!l.khac.length && !l.chua.length && !da.length) { bao('tuyenBao', 'xanh', '✅ Người tuyển trong file khớp hệ tuyển dụng.'); return; }
+  if (da.length) h += '<p>✅ Đã lấy người tuyển theo hệ tuyển dụng cho <b>' + da.length + ' người</b> (file Excel gốc không đổi; máy ghi nhật ký khi gửi). ' +
+    '<button type="button" class="rong" onclick="boLayTuyen()">↩ Hoàn tác</button></p>';
+  if (l.khac.length) {
+    h += '<p><b>⚠ ' + l.khac.length + ' người ghi người tuyển khác hệ tuyển dụng</b> (hệ tuyển dụng là chuẩn: người tuyển từ đầu tháng):</p><ul class="loi-ds">' +
+      l.khac.slice(0, 20).map(function (x) {
+        return '<li>' + e(x.n.ten_hien) + ' · ' + cccd4(x.n.cccd_tra) + ': file ghi "' + e(x.n.nguoi_tuyen || 'trống') + '" → hệ tuyển dụng: <b>' + e(x.chu) + '</b></li>';
+      }).join('') + (l.khac.length > 20 ? '<li>… và ' + (l.khac.length - 20) + ' người nữa</li>' : '') + '</ul>' +
+      '<button type="button" class="chinh" onclick="layTheoTuyen()">✅ Lấy theo hệ tuyển dụng (' + l.khac.length + ' người)</button>';
+  }
+  if (l.chua.length) {
+    h += '<p class="ai">❔ ' + l.chua.length + ' người chưa có trong hệ tuyển dụng: ' + l.chua.slice(0, 8).map(function (x) { return e(x.n.ten_hien); }).join(', ') +
+      (l.chua.length > 8 ? '…' : '') + '. Vẫn gửi được: sau khi chốt tháng kế toán xác nhận người tuyển, người tuyển nhận trong hệ tuyển dụng.</p>';
+  }
+  bao('tuyenBao', l.khac.length ? 'cho' : '', h);
+}
+function layTheoTuyen() {
+  var l = lechTuyen(), da = trangThai.doiTuyen || (trangThai.doiTuyen = []);
+  l.khac.forEach(function (x) {
+    da.push({ i: x.i, cccd: x.n.cccd_tra, ten: x.n.ten_hien, cu: x.n.nguoi_tuyen || '', moi: x.chu });
+    x.n.nguoi_tuyen = x.chu;
+    trangThai.kiemTuyen[x.n.cccd_tra].khop = true;
+  });
+  veKiemTuyen();
+}
+function boLayTuyen() {
+  (trangThai.doiTuyen || []).forEach(function (d) {
+    var n = trangThai.kqDoc.nguoi[d.i];
+    if (n) n.nguoi_tuyen = d.cu;
+    if (trangThai.kiemTuyen && trangThai.kiemTuyen[d.cccd]) trangThai.kiemTuyen[d.cccd].khop = false;
+  });
+  trangThai.doiTuyen = [];
+  veKiemTuyen();
+}
+
 // ---------------- GẮN NÚT ----------------
+$('nutDoiChieuTD').addEventListener('click', function () { kiemDoiChieuTD(); });
 $('menuViec').addEventListener('click', function (ev) {
   var b = ev.target.closest('button[data-viec]');
   if (!b) return;

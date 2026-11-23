@@ -779,7 +779,7 @@ var KieuLuoi = (function () {
     ten: '⏱ 6.Giờ tuyển dụng', mau: '#ED7D31', ben: function () { return gioFile() ? [] : ['tg']; }, bangDen: 'nm', ten_tep: 'Gio tuyen dung', quyen: ['ke_toan', 'quan_tri'],
     chi: '👉 Mỗi tháng × nhà máy một dòng, chỉ có giờ và Đạt, không tính tiền. Thêm tháng mới: chọn <b>tháng của file</b>, bấm <b>📂 Chọn file giờ</b>, kiểm lại rồi bấm <b>💾 Lưu</b>.',
     rong: 'Tháng đang chọn chưa lưu giờ. Chọn tháng khác ở cột trái, hoặc bấm 📂 Chọn file giờ.',
-    bao: ['gioBao', 'gioXem'], rieng: 'gio',
+    bao: ['gioBao', 'gioXem', 'dcTD'], rieng: 'gio',
     truocVe: function () { if (!DA_HOI.gio) { DA_HOI.gio = 1; moGio(); } },
     cot: function () {
       var x = MAU.xam, l = '#2E75B5';
@@ -1112,7 +1112,7 @@ var KieuLuoi = (function () {
     nhanh.id = 'klBao'; nhanh.className = 'kl-bao'; nhanh.setAttribute('role', 'status'); nhanh.hidden = true; khung.appendChild(nhanh);
     ngan.addEventListener('click', bamTrang);
     // Câu báo của các nút cũ phải hiện trên lưới, không nằm trong màn thẻ đang ẩn. Kiểu đã chọn chỉ đổi khi tải lại trang nên chuyển chỗ một lần là đủ
-    ['luoiBao', 'thnChua', 'thnCanh', 'thnBao', 'gioBao', 'gioXem', 'phBao', 'phCanh', 'ckBao'].forEach(function (id) { $('klBaoChung').appendChild($(id)); });
+    ['luoiBao', 'thnChua', 'thnCanh', 'thnBao', 'gioBao', 'gioXem', 'dcTD', 'phBao', 'phCanh', 'ckBao'].forEach(function (id) { $('klBaoChung').appendChild($(id)); });   // 2.11.0: dcTD = khung đối chiếu người tuyển
     var r1 = document.createElement('span'), r2 = document.createElement('span');
     r1.className = r2.className = 'kl-rieng'; r1.setAttribute('data-trang', 'thangn'); r2.setAttribute('data-trang', 'gio');
     r1.appendChild($('nutLuuThangN'));
@@ -1295,7 +1295,7 @@ var KieuLuoi = (function () {
   /** Câu báo riêng của từng trang + hàng nút riêng: chỉ hiện ở đúng trang. */
   function veRieng() {
     var p = trang(), coBao = p.bao || [], co = false;
-    ['thnChua', 'thnCanh', 'thnBao', 'gioBao', 'gioXem', 'phBao', 'phCanh', 'ckBao'].forEach(function (id) { $(id).hidden = coBao.indexOf(id) < 0; });
+    ['thnChua', 'thnCanh', 'thnBao', 'gioBao', 'gioXem', 'dcTD', 'phBao', 'phCanh', 'ckBao'].forEach(function (id) { $(id).hidden = coBao.indexOf(id) < 0; });
     [].forEach.call(document.querySelectorAll('.kl-rieng'), function (x) { var cua = x.getAttribute('data-trang') === p.rieng; x.hidden = !cua; if (cua) co = true; });
     $('klCuRieng').hidden = !co;
     $('klBoGio').hidden = !gioFile();
@@ -1688,6 +1688,7 @@ var KieuLuoi = (function () {
 
   return {
     dangBat: dangBat, vao: vao, luoiMoi: luoiMoi, sauHien: sauHien, dangXuat: dangXuat, xemLuong: xemLuong, ganNutKieu: ganNutKieu,
+    moTrang: moTrang,   // 2.11.0: câu báo chốt / lưới → mở trang ⏱ Giờ tuyển dụng (khung đối chiếu người tuyển)
     xoaTai: xoaTai, xemTruocFile: xemTruocFile, xemLoiFile: xemLoiFile, xemBangMay: xemBangMay, soMay: soMay, moQuyTac: moQuyTac, thangNMoi: thangNMoi, gioMoi: gioMoi, vePH: vePHLuoi, hoiRoi: hoiRoi,
     xongSuaGio: xongSuaGio, veCK: veCKLuoi, moNgan: moNgan,
     thuan: { dongCongNguoi: dongCongNguoi, dongCongGop: dongCongGop, dongLuongNguoi: dongLuongNguoi, nguoiTuSo: nguoiTuSo, maCaCo: maCaCo, ngayCo: ngayCo, cotCong: cotCong, cotLuong: cotLuong, laMoi: laMoi, chuTuHtml: chuTuHtml, thuCua: thuCua,
