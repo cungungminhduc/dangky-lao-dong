@@ -7,6 +7,9 @@
 <title>Giờ làm của người tôi tuyển</title>
 <!--
   TRANG GIỜ LÀM CỦA NGƯỜI TÔI TUYỂN — bản 3.52; 3.62 bỏ hẳn phần tiền (Dương chốt 05/11/2026).
+  3.73 (ADR 0002): HỆ THỐNG LÀM CHUẨN — bảng + tổng = người mình tuyển theo danh sách tuyển (người tuyển đầu tháng), không theo tên kế toán ghi;
+  khung "🧾 Cần xử lý" nói từng chỗ lệch + ai làm gì; người chưa có trong hệ mà kế toán đã xác nhận → "✅ Đúng tôi tuyển" (máy tự nhập bù).
+  Đặc tả: .scratch/gio-he-thong-lam-chuan/DAC-TA.md.
   Đặc tả: .scratch/gio-tien-tuyen-dung/DAC-TA.md mục 0 (mục 6 là bản cũ có tiền).
 
   Người tuyển xem SỐ GIỜ đi làm từng tháng của từng người mình tuyển + Đạt / Không đạt (cột cuối). Số do KẾ TOÁN tải ở
@@ -32,14 +35,14 @@
   .che-hop{background:#fff;border-radius:14px;padding:22px 26px;min-width:210px;max-width:84%;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,.2)}
   .che-xoay{width:34px;height:34px;margin:0 auto 12px;border:3px solid var(--xam-nut);border-top-color:var(--xanh);border-radius:50%;animation:che-quay .8s linear infinite}
   @keyframes che-quay{to{transform:rotate(360deg)}}
-  .che-chu{font-size:15px;font-weight:600;line-height:1.45;white-space:pre-line}
+  .che-chu{font-size:16px;font-weight:600;line-height:1.45;white-space:pre-line}
 
   .ve-chu{display:inline-flex;align-items:center;gap:7px;min-height:44px;margin:10px 0 0 14px;padding:7px 14px 7px 10px;border:1px solid #c9d8f2;
-    border-radius:22px;background:#eef4fd;color:#1d5fbf;font-size:15px;font-weight:700;text-decoration:none}
+    border-radius:22px;background:#eef4fd;color:#1d5fbf;font-size:16px;font-weight:700;text-decoration:none}
   .ve-chu-ic{font-size:22px;line-height:1}
   .dinh{padding:14px 14px 6px}
   .dinh b{font-size:18px}
-  .dinh .phu{font-size:15px;color:var(--mo)}
+  .dinh .phu{font-size:16px;color:var(--mo)}
 
   .nut{display:block;width:calc(100% - 28px);margin:14px;padding:14px;min-height:48px;border:0;border-radius:12px;background:var(--xanh);color:#fff;font-size:16px;font-weight:700;cursor:pointer}
   .nut.vien{background:#fff;color:var(--chu);border:1px solid #c9d0d8;margin-top:28px}
@@ -49,46 +52,55 @@
   .mk-o{position:relative}
   .mk-o input{padding-right:70px}
   .mk-o input::-ms-reveal{display:none}
-  .mk-hien{position:absolute;right:2px;top:6px;bottom:0;padding:0 14px;border:0;background:none;font:inherit;font-size:15px;font-weight:600;color:#2d6cdf;cursor:pointer}
-  .nhan{font-size:15px;color:var(--mo);margin-top:14px}
-  .loi-o{margin-top:6px;font-size:15px;color:#8a1c13}
+  .mk-hien{position:absolute;right:2px;top:6px;bottom:0;padding:0 14px;border:0;background:none;font:inherit;font-size:16px;font-weight:600;color:#2d6cdf;cursor:pointer}
+  .nhan{font-size:16px;color:var(--mo);margin-top:14px}
+  .loi-o{margin-top:6px;font-size:16px;color:#8a1c13}
   .o input.sai,.mk-o.sai input{border-color:#e0a39b;background:#fff7f6}
-  .loi{margin:10px 14px 0;padding:10px 12px;border-radius:9px;background:var(--do-nhat);color:#8a1c13;font-size:15px;white-space:pre-line}
-  .nhac{margin:10px 14px 0;padding:10px 12px;border-radius:10px;background:var(--vang-nhat);border:1px solid var(--vang-vien);color:#6b4e00;font-size:15px}
-  .goi-y{margin:10px 14px 0;padding:9px 12px;border-radius:10px;background:var(--xanh-nhat);border:1px solid #bfe0c9;color:#17663a;font-size:15px}
-  .mach{padding:4px 16px 18px;font-size:15px;color:var(--mo);line-height:1.55}
+  .loi{margin:10px 14px 0;padding:10px 12px;border-radius:9px;background:var(--do-nhat);color:#8a1c13;font-size:16px;white-space:pre-line}
+  .nhac{margin:10px 14px 0;padding:10px 12px;border-radius:10px;background:var(--vang-nhat);border:1px solid var(--vang-vien);color:#6b4e00;font-size:16px}
+  .goi-y{margin:10px 14px 0;padding:9px 12px;border-radius:10px;background:var(--xanh-nhat);border:1px solid #bfe0c9;color:#17663a;font-size:16px}
+  .mach{padding:4px 16px 18px;font-size:16px;color:var(--mo);line-height:1.55}
 
-  .tieu{margin:16px 14px 6px;font-size:15px;font-weight:700;color:#3c4753}
+  .tieu{margin:16px 14px 6px;font-size:16px;font-weight:700;color:#3c4753}
   .luoi-thang{display:flex;flex-wrap:wrap;gap:8px;margin:0 14px}
-  .luoi-thang button{min-height:46px;padding:8px 16px;border:1px solid #c9d0d8;border-radius:10px;background:#fff;font-size:15px;font-weight:600;color:var(--chu);cursor:pointer}
+  .luoi-thang button{min-height:46px;padding:8px 16px;border:1px solid #c9d0d8;border-radius:10px;background:#fff;font-size:16px;font-weight:600;color:var(--chu);cursor:pointer}
   .luoi-thang button.dang{background:var(--chu);border-color:var(--chu);color:#fff}
   .luoi-thang button.dang::before{content:'✓ '}
   .che-do{display:flex;gap:4px;margin:10px 14px 0;background:var(--xam-nut);padding:3px;border-radius:11px}
-  .che-do button{flex:1;min-height:48px;padding:9px 4px;border:0;border-radius:9px;background:transparent;font-size:15px;font-weight:700;color:#3c4753;cursor:pointer}
+  .che-do button{flex:1;min-height:48px;padding:9px 4px;border:0;border-radius:9px;background:transparent;font-size:16px;font-weight:700;color:#3c4753;cursor:pointer}
   .che-do button.dang{background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);color:var(--chu)}
 
-  .tong{margin:12px 14px 0;padding:12px 14px;border-radius:12px;background:var(--lam-nhat);border:1px solid #c9dbf5;color:#163f7a;font-size:15px}
+  .tong{margin:12px 14px 0;padding:12px 14px;border-radius:12px;background:var(--lam-nhat);border:1px solid #c9dbf5;color:#163f7a;font-size:16px}
   .tong .lon{font-size:24px;font-weight:800;display:block}
   .tong .ba{display:flex;gap:14px;flex-wrap:wrap;margin-top:4px}
-  .bao-lai{margin:10px 14px 0;padding:10px 12px;border-radius:12px;background:var(--vang-nhat);border:1px solid var(--vang-vien);color:#6b4e00;font-size:15px}
+  .bao-lai{margin:10px 14px 0;padding:10px 12px;border-radius:12px;background:var(--vang-nhat);border:1px solid var(--vang-vien);color:#6b4e00;font-size:16px}
   .bao-lai b.dau{display:block;margin-bottom:4px}
   .bao-lai ul{margin:4px 0 0;padding-left:20px}
 
   /* 3.67 — khung 🔍 đối chiếu */
   .doi-chieu{margin:10px 14px 0;padding:10px 12px;border-radius:12px;background:#fff;border:1px solid #c9d0d8}
   .doi-chieu b.dau{display:block;font-size:16px}
-  .dc-chi{font-size:15px;color:var(--mo);margin:2px 0 8px}
-  .dc-bao{margin:0 0 8px;padding:8px 10px;border-radius:9px;background:var(--vang-nhat);border:1px solid var(--vang-vien);color:#6b4e00;font-size:15px;white-space:pre-line}
+  .dc-chi{font-size:16px;color:var(--mo);margin:2px 0 8px}
+  .dc-bao{margin:0 0 8px;padding:8px 10px;border-radius:9px;background:var(--vang-nhat);border:1px solid var(--vang-vien);color:#6b4e00;font-size:16px;white-space:pre-line}
   #dc_tim{width:100%;min-height:46px;padding:9px 10px;font-size:16px;border:1px solid #d9dde2;border-radius:9px;margin-bottom:6px}
   .dc-nhom{border-top:1px solid #e1e5ea}
-  .dc-nhom > button{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:8px 2px;border:0;background:none;font:inherit;font-size:15px;font-weight:700;color:var(--chu);text-align:left;cursor:pointer}
+  .dc-nhom > button{display:flex;align-items:center;gap:8px;width:100%;min-height:48px;padding:8px 2px;border:0;background:none;font:inherit;font-size:16px;font-weight:700;color:var(--chu);text-align:left;cursor:pointer}
   .dc-nhom > button .ten{flex:1}
   .dc-so{min-width:32px;padding:1px 9px;border-radius:20px;text-align:center;font-weight:800}
   .dc-so.xanh{background:#d4f0dd;color:#0f5a2e}
   .dc-so.vang{background:#fdf0cc;color:#6b4e00}
   .dc-so.xam{background:var(--xam-nut);color:#3c4753}
   .dc-mui{color:var(--lam);font-weight:600;white-space:nowrap}
-  .dc-than ul{margin:0 0 8px;padding-left:20px;font-size:15px}
+  .dc-gio{color:var(--mo);font-weight:600;white-space:nowrap}
+  .dc-than .viec{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 4px}
+  .dc-than .viec button{flex:1 1 200px;min-height:48px;padding:8px 12px;border-radius:10px;font:inherit;font-size:16px;font-weight:700;cursor:pointer}
+  .dc-than .viec .nhan-ok{background:var(--xanh);border:0;color:#fff}
+  .dc-than .viec .nhan-khong{background:#fff;border:1px solid #c9d0d8;color:var(--chu)}
+  .lop .hoi select,.lop .hoi input[type=date]{width:100%;min-height:48px;padding:9px 10px;font-size:16px;border:1px solid #d9dde2;border-radius:9px;margin-top:6px;background:#fff}
+  .lop .hoi .tick{display:flex;gap:10px;align-items:flex-start;margin-top:12px;font-size:16px}
+  .lop .hoi .tick input{width:24px;height:24px;flex:none;margin-top:2px}
+  .lop .hoi .chi{font-size:16px;color:var(--mo);margin-top:6px}
+  .dc-than ul{margin:0 0 8px;padding-left:20px;font-size:16px}
   .dc-than li{margin:4px 0}
   .dc-than .trong{padding:6px 0 10px;text-align:left}
 
@@ -99,7 +111,7 @@
   .boc{max-width:1200px}
   .ds{margin:10px 14px 0;background:#fff;border:1px solid #c9d0d8;border-radius:10px;overflow:auto;max-height:calc(100vh - 150px);
     -webkit-overflow-scrolling:touch}
-  table.bang{border-collapse:separate;border-spacing:0;width:100%;font-size:15px}
+  table.bang{border-collapse:separate;border-spacing:0;width:100%;font-size:16px}
   .bang th,.bang td{padding:6px 10px;border-right:1px solid #e1e5ea;border-bottom:1px solid #e1e5ea;white-space:nowrap;background:#fff;text-align:left}
   .bang thead th{position:sticky;top:0;z-index:3;background:#eef1f4;font-weight:700;color:#3c4753}
   .bang tfoot td{position:sticky;bottom:0;z-index:3;background:#e3ecfb;font-weight:800;color:#163f7a;border-top:2px solid #9fbbe6}
@@ -116,8 +128,8 @@
   .tt-chua_ro{color:#6b4e00;font-weight:600}
   .tt-thieu{color:#8a1c13;font-weight:600}
   .tt-he{color:#6b4e00;font-weight:600}
-  .goi-bang{margin:6px 14px 0;font-size:15px;color:var(--mo)}
-  .trong{padding:22px 14px;color:var(--mo);text-align:center;font-size:15px}
+  .goi-bang{margin:6px 14px 0;font-size:16px;color:var(--mo)}
+  .trong{padding:22px 14px;color:var(--mo);text-align:center;font-size:16px}
   .nut-phu{display:block;width:calc(100% - 28px);margin:10px 14px 0;min-height:48px;border:1px solid #c9d0d8;border-radius:11px;background:#fff;font-size:16px;font-weight:700;color:var(--chu);cursor:pointer}
 
   .lop{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:flex-end;z-index:200}
@@ -176,13 +188,13 @@
 
   <div id="khoi_so" class="an">
     <div class="tong" id="tong"></div>
-    <div class="bao-lai an" id="bao_lai"></div>
-    <!-- 3.67: 🔍 đối chiếu giờ với danh sách tuyển — máy chủ khớp theo CCCD. Nhóm thu gọn, bấm nhóm nào mở nhóm đó, giữ ô tìm -->
+    <div class="goi-y an" id="bao_xong"></div>
+    <!-- 3.73: 🧾 Cần xử lý — chỗ lệch giữa danh sách tuyển (chuẩn) và cột người tuyển kế toán ghi. Nhóm thu gọn, bấm nhóm nào mở nhóm đó, giữ ô tìm -->
     <div class="doi-chieu an" id="doi_chieu">
-      <b class="dau" id="dc_tieu">🔍 Đối chiếu với danh sách tuyển</b>
-      <div class="dc-chi">👉 Bấm nhóm nào mở nhóm đó. Gõ tên để tìm trong mọi nhóm.</div>
+      <b class="dau" id="dc_tieu">🧾 Cần xử lý</b>
+      <div class="dc-chi" id="dc_khop"></div>
       <div class="dc-bao an" id="dc_bao"></div>
-      <input id="dc_tim" type="search" placeholder="🔍 Tìm tên trong đối chiếu" autocomplete="off" aria-label="Tìm tên trong đối chiếu">
+      <input id="dc_tim" type="search" placeholder="🔍 Tìm tên trong các việc" autocomplete="off" aria-label="Tìm tên trong các việc">
       <div id="dc_nhom"></div>
     </div>
     <div class="loc">
@@ -193,8 +205,7 @@
         <option value="dat">✅ Đạt</option>
         <option value="khong_dat">⏸ Không đạt</option>
         <option value="chua_ro">❔ Chưa rõ Đạt</option>
-        <option value="thieu_cccd">⛔ Thiếu CCCD</option>
-        <option value="he">⚠ Không có trong hệ</option>
+        <option value="ghi_khac">📝 Kế toán ghi người tuyển khác</option>
       </select>
     </div>
     <div class="goi-bang" id="goi_bang"></div>
@@ -299,7 +310,7 @@ $('nut_dn').addEventListener('click', function () {
   var n = this; n.disabled = true; n.textContent = 'Đang kiểm tra…';
   goiAPI({ token: TOKEN_API, hanh_dong: 'dang_nhap', so_cccd: cccd, mat_khau: mk, phien: '-' }, 'Đang đăng nhập…')
     .then(function (kq) {
-      if (kq && kq.ok) { datPhien(kq.phien); taiSo(''); return; }
+      if (kq && kq.ok) { datPhien(kq.phien); taiSo(THANG_DAU); return; }
       veManDangNhap((kq && kq.loi) || 'Không đăng nhập được.');
     }, function (e) { veManDangNhap(cauLoi(e) + ' Kiểm tra mạng rồi thử lại.'); })
     .then(function () { n.disabled = false; n.textContent = 'Đăng nhập'; });
@@ -375,35 +386,16 @@ function veSo() {
     return;
   }
   $('khoi_so').classList.remove('an');
-  // Giờ là của MỌI người (Dương bỏ tiền 05/11/2026) — không còn "được tính / không tính"
-  var ds = kq.ds, tongGio = 0, dem = { dat: 0, khong_dat: 0, '': 0 };
+  // 3.73 (ADR 0002): bảng + tổng = người mình tuyển THEO HỆ THỐNG (người tuyển đầu tháng). Giờ của mọi người trong bảng (cả Không đạt)
+  var ds = kq.ds, tongGio = 0, dem = { dat: 0, khong_dat: 0, '': 0 }, tatCa = kq.xem === 'tat_ca';
   ds.forEach(function (d) { tongGio += d.gio; dem[khoaDat(d)]++; });
-  $('tong').innerHTML = 'Tháng ' + thangNam(kq.thang) + ' — tổng giờ làm<span class="lon">' + so(lamTron(tongGio)) + ' giờ</span>' +
+  $('tong').innerHTML = 'Tháng ' + thangNam(kq.thang) + ' — tổng giờ ' + (tatCa ? 'mọi người tuyển' : 'người bạn tuyển') + '<span class="lon">' + so(lamTron(tongGio)) + ' giờ</span>' +
     '<div class="ba"><span>👥 ' + ds.length + ' người</span><span>✅ ' + dem.dat + ' Đạt</span><span>⏸ ' + dem.khong_dat + ' Không đạt</span>' +
     (dem[''] ? '<span>❔ ' + dem[''] + ' chưa rõ Đạt</span>' : '') + '</div>' +
-    '<div style="margin-top:4px">Kế toán cập nhật lúc ' + thoat(kq.cap_nhat_luc || '—') + gioLay(kq.lay_luc) +
-    (kq.loi_doi_chieu ? '<br>' + thoat(kq.loi_doi_chieu) : '') + '</div>';
+    (kq.he_chuan ? '<div style="margin-top:4px">Tính theo danh sách tuyển trong hệ thống: ' + (tatCa ? 'mỗi người lao động tính cho người tuyển' : 'người bạn tuyển') +
+      ' từ đầu tháng, ở từng công ty. Tên người tuyển kế toán ghi khác thì xem ở "🧾 Cần xử lý".</div>' : '') +
+    '<div style="margin-top:4px">Kế toán cập nhật lúc ' + thoat(kq.cap_nhat_luc || '—') + gioLay(kq.lay_luc) + '</div>';
   veDoiChieu();
-  // Quản trị: mục Cần báo lại
-  if (kq.xem === 'tat_ca') {
-    var lech = {}, he = 0, thieu = 0, chuaRo = dem[''];
-    ds.forEach(function (d) {
-      if (!d.khop_tk) lech[d.nguoi_tuyen] = (lech[d.nguoi_tuyen] || 0) + 1;
-      if (d.khong_trong_he) he++;
-      if (!d.cccd4) thieu++;
-    });
-    var tenLech = Object.keys(lech).sort(), co = tenLech.length || he || thieu || chuaRo;
-    $('bao_lai').innerHTML = co
-      ? '<b class="dau">⚠ Cần báo lại</b><ul>' +
-        (tenLech.length ? '<li>Tên người tuyển <b>không khớp tài khoản nào</b> (thêm vào cột ten_tuyen tab NGUOI_DON, hoặc báo kế toán sửa tên): ' +
-          tenLech.map(function (t) { return thoat(t) + ' (' + lech[t] + ' người)'; }).join(' · ') + '</li>' : '') +
-        (he ? '<li><b>' + he + '</b> người có CCCD nhưng <b>không có trong hệ tuyển dụng</b> — vẫn hiện giờ. Lọc "⚠ Không có trong hệ" để xem.</li>' : '') +
-        (thieu ? '<li><b>' + thieu + '</b> người <b>thiếu số CCCD</b> trong file kế toán. Lọc "⛔ Thiếu CCCD" để xem.</li>' : '') +
-        (chuaRo ? '<li><b>' + chuaRo + '</b> người có <b>ô Đạt trống hoặc lỗi</b> trong file kế toán — báo kế toán dán giá trị cột Đạt rồi tải lại. ' +
-          'Lọc "❔ Chưa rõ Đạt" để xem.</li>' : '') + '</ul>'
-      : '';
-    $('bao_lai').classList.toggle('an', !co);
-  } else $('bao_lai').classList.add('an');
   var nm = {};
   ds.forEach(function (d) { nm[d.nha_may] = true; });
   var chon = $('loc_nm').value;
@@ -413,7 +405,7 @@ function veSo() {
   veDs();
 }
 // ============================================================
-// 3.67 — 🔍 ĐỐI CHIẾU VỚI DANH SÁCH TUYỂN (doi_chieu trong gt_lay). Đặc tả: hệ công–lương .scratch/gon-quy-trinh/DAC-TA.md mục H
+// 3.73 — 🧾 CẦN XỬ LÝ (can_xu_ly trong gt_lay). Đặc tả: .scratch/gio-he-thong-lam-chuan/DAC-TA.md mục 3, 5
 // ============================================================
 /** " · số lấy lúc 14:20 (10 phút lấy lại một lần)" — máy chủ giữ giờ của hệ lương 10 phút. */
 function gioLay(ms) {
@@ -422,73 +414,165 @@ function gioLay(ms) {
   return ' · số lấy lúc ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ' (10 phút lấy lại một lần)';
 }
 var dcMo = {};
-// [nhóm, tên khi xem người mình tuyển, tên khi quản trị xem tất cả]; nhóm 'sai' chỉ quản trị có
+// [nhóm, tên khi xem người mình tuyển, tên khi quản trị xem tất cả] — việc cần bấm đứng trước; tên '' thì vai đó không có nhóm này
 var NHOM_DC = [
-  ['khop', '✅ Khớp', '✅ Khớp'],
-  ['thieu', '⚠ Đã tuyển, đang làm mà không có giờ', '⚠ Đã tuyển, đang làm mà không có giờ'],
-  // 3.67.1: khớp theo CCCD + công ty — nhóm này gồm cả người có trong tool nhưng ở công ty khác
-  ['thua', '⚠ Có giờ ghi tên bạn mà không có trong danh sách tuyển của bạn', '⚠ Có giờ mà tool không có người này ở công ty đó'],
-  ['sai', '', '⚠ Giờ ghi sai người tuyển (chỉ quản trị thấy)']
+  ['cho_xac_nhan', '❔ Chưa có trong danh sách tuyển — chờ xác nhận (chưa cộng vào tổng)', '❔ Chưa có trong hệ thống — chưa tính cho ai'],
+  ['thieu', '⚠ Đang làm mà không có giờ', '⚠ Đang làm mà không có giờ'],
+  ['khong_cua_toi', '↪️ Kế toán ghi tên bạn, nhưng người khác tuyển người này từ đầu tháng — không tính cho bạn', ''],
+  ['ghi_khac', '📝 Kế toán ghi tên người tuyển khác — giờ VẪN tính cho bạn', '📝 Kế toán ghi người tuyển khác hệ thống'],
+  ['thieu_cccd', '⛔ File kế toán thiếu số CCCD — chưa tính', '⛔ File kế toán thiếu số CCCD — chưa tính cho ai']
 ];
 function boDauTim(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd'); }
-/** Một dòng trong nhóm: tên · công ty · CCCD 4 số — số giờ / việc cần làm. */
-function chuDongDC(k, r, tatCa, th) {
+function ngayVN(iso) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? m[3] + '/' + m[2] + '/' + m[1] : String(iso || ''); }
+/** Một dòng trong nhóm: tên · công ty · CCCD 4 số — số giờ — việc cần làm (+ nút khi mình phải bấm). `i` = vị trí trong nhóm cho nút. */
+function chuDongDC(k, r, tatCa, th, i) {
   var dau = '<b>' + thoat(r.ho_ten) + '</b>' + (r.cong_ty ? ' · ' + thoat(r.cong_ty) : '') + ' · ' + thoat(r.cccd4 || 'thiếu CCCD');
-  if (k === 'khop') return dau + ' — ' + so(r.gio) + ' giờ ' + NHAN_DAT[khoaDat(r)];
-  if (k === 'thieu') return dau + ' — 👉 Hỏi lại nhà máy hoặc kế toán: người này có đi làm tháng ' + th + ' không.';
-  if (k === 'thua') return dau + ' — ' + so(r.gio) + ' giờ — 👉 ' + (!r.cccd4 ? 'file kế toán thiếu CCCD: báo kế toán điền số CCCD.'
-    : tatCa ? 'nhập bù vào tool, hoặc báo kế toán sửa CCCD.' : 'bạn tuyển mà chưa nhập vào tool, hoặc kế toán ghi nhầm người tuyển.');
-  return dau + ' — ' + so(r.gio) + ' giờ — giờ ghi "' + thoat(r.ghi_gio) + '", tool ghi "' + thoat(r.ghi_tool) + '".';
+  var gio = r.gio !== undefined ? ' — ' + so(r.gio) + ' giờ' : '';
+  if (k === 'thieu') return dau + (tatCa && r.nguoi_tuyen ? ' (người tuyển: ' + thoat(r.nguoi_tuyen) + ')' : '') + ' — 👉 Hỏi lại nhà máy hoặc kế toán: người này có đi làm tháng ' + th + ' không.';
+  if (k === 'thieu_cccd') return dau + gio + (tatCa ? ' — kế toán ghi "' + thoat(r.ke_toan_ghi) + '"' : '') + ' — 👉 Báo kế toán điền số CCCD của người này.';
+  if (k === 'ghi_khac') return dau + gio + ' ' + NHAN_DAT[khoaDat(r)] + (tatCa
+    ? ' — kế toán ghi "' + thoat(r.ke_toan_ghi) + '", hệ thống: ' + thoat(r.nguoi_tuyen) + ' — 👉 Kế toán bấm "Sửa theo hệ tuyển dụng" ở trang công–lương.'
+    : ' — 👉 Không cần làm gì: kế toán sẽ sửa tên.');
+  if (k === 'khong_cua_toi') return dau + gio + ' — 👉 Bạn tuyển người này từ đầu tháng thì báo quản trị.';
+  // cho_xac_nhan
+  if (tatCa) {
+    return dau + gio + ' — kế toán ghi "' + thoat(r.ke_toan_ghi) + '"' + (r.kt_xac_nhan_ten ? ' · kế toán đã xác nhận: ' + thoat(r.kt_xac_nhan_ten) + ' (chờ người đó nhận)' : ' · kế toán chưa xác nhận') +
+      (r.tu_choi && r.tu_choi.length ? ' · ⚠ ' + thoat(r.tu_choi.join(', ')) + ' báo không phải mình tuyển' : '');
+  }
+  if (r.da_tu_choi) return dau + gio + ' — Bạn đã báo không phải bạn tuyển. Chờ kế toán sửa tên.' +
+    '<div class="viec"><button type="button" class="nhan-khong" data-bo-tu-choi="' + i + '">↩ Tôi bấm nhầm</button></div>';
+  if (r.kt_xac_nhan) return dau + gio + ' — ✅ Kế toán xác nhận bạn tuyển người này' + (r.ngay_vao ? ' (vào làm ' + ngayVN(r.ngay_vao) + ')' : '') + '.' +
+    '<div class="viec"><button type="button" class="nhan-ok" data-nhan="' + i + '">✅ Đúng tôi tuyển — đưa vào danh sách</button>' +
+    '<button type="button" class="nhan-khong" data-tu-choi="' + i + '">🙅 Không phải tôi tuyển</button></div>';
+  return dau + gio + ' — ⏳ Chờ kế toán xác nhận người tuyển. Không phải bạn tuyển thì bấm:' +
+    '<div class="viec"><button type="button" class="nhan-khong" data-tu-choi="' + i + '">🙅 Không phải tôi tuyển</button></div>';
 }
 function veDoiChieu() {
-  var kq = duLieu, dc = kq.doi_chieu;
-  if (!dc) { $('doi_chieu').classList.add('an'); return; }        // máy chủ bản cũ: không có khung
+  var kq = duLieu, n = kq.can_xu_ly;
+  if (!n) { $('doi_chieu').classList.add('an'); return; }        // máy chủ bản cũ: không có khung
   $('doi_chieu').classList.remove('an');
-  var tatCa = kq.xem === 'tat_ca', th = Number(kq.thang.substring(5, 7)), bao = [];
-  $('dc_tieu').textContent = '🔍 Đối chiếu với danh sách tuyển · Tháng ' + thangNam(kq.thang);
-  if (dc.loi) bao.push('⚠ ' + dc.loi);
-  if (dc.nhom && !dc.co_ma_ct) bao.push('⚠ Hệ lương chưa lên bản mới: chưa biết được ai đang làm mà không có giờ.');
-  if (dc.ct_lech && dc.ct_lech.length) bao.push('⚠ Mã công ty bên hệ lương không khớp công ty nào bên tuyển dụng: ' + dc.ct_lech.join(', ') +
-    '. Đặt Mã giống nhau ở hai hệ thì mới báo được ai thiếu giờ ở công ty đó.');
+  var tatCa = kq.xem === 'tat_ca', th = Number(kq.thang.substring(5, 7)), bao = [], tong = 0;
+  $('dc_tieu').textContent = '🧾 Cần xử lý · Tháng ' + thangNam(kq.thang);
+  NHOM_DC.forEach(function (g) { if (tatCa ? g[2] : g[1]) tong += (n[g[0]] || []).length; });
+  $('dc_khop').textContent = '✅ ' + ((kq.dem && kq.dem.khop) || 0) + ' người: hệ thống và kế toán ghi cùng người tuyển — không phải làm gì.' +
+    (tong ? ' 👉 Bấm nhóm nào mở nhóm đó.' : ' Tháng này không có việc gì cần xử lý.');
+  if (kq.co_ma_ct === false) bao.push('⚠ Hệ lương chưa lên bản mới: chưa biết được ai đang làm mà không có giờ.');
+  if (kq.ct_lech && kq.ct_lech.length) bao.push('⚠ Mã công ty bên hệ lương không khớp công ty nào bên tuyển dụng: ' + kq.ct_lech.join(', ') +
+    '. Đặt Mã giống nhau ở hai hệ thì giờ công ty đó mới xếp được cho người tuyển.');
   $('dc_bao').textContent = bao.join('\n');
   $('dc_bao').classList.toggle('an', !bao.length);
-  $('dc_tim').classList.toggle('an', !dc.nhom);
-  if (!dc.nhom) { $('dc_nhom').innerHTML = ''; return; }
+  $('dc_tim').classList.toggle('an', !tong);
   var q = boDauTim($('dc_tim').value.trim());
-  $('dc_nhom').innerHTML = NHOM_DC.filter(function (n) { return dc.nhom[n[0]] && (tatCa ? n[2] : n[1]); }).map(function (n) {
-    var k = n[0], ds = dc.nhom[k].filter(function (r) { return !q || boDauTim(r.ho_ten).indexOf(q) >= 0; });
-    var mo = !!dcMo[k] || (!!q && ds.length > 0), lop = k === 'khop' ? 'xanh' : ds.length ? 'vang' : 'xam';
-    return '<div class="dc-nhom"><button type="button" data-dc="' + k + '" aria-expanded="' + mo + '"><span class="ten">' + (tatCa ? n[2] : n[1]) + '</span>' +
+  $('dc_nhom').innerHTML = NHOM_DC.filter(function (g) { return n[g[0]] && n[g[0]].length && (tatCa ? g[2] : g[1]); }).map(function (g) {
+    var k = g[0], tat = n[k], ds = [];
+    tat.forEach(function (r, i) { if (!q || boDauTim(r.ho_ten).indexOf(q) >= 0) ds.push({ r: r, i: i }); });
+    var gio = tat.reduce(function (t, r) { return t + (r.gio || 0); }, 0);
+    var mo = !!dcMo[k] || (!!q && ds.length > 0), lop = ds.length ? 'vang' : 'xam';
+    return '<div class="dc-nhom"><button type="button" data-dc="' + k + '" aria-expanded="' + mo + '"><span class="ten">' + (tatCa ? g[2] : g[1]) + '</span>' +
+      (gio ? '<span class="dc-gio">' + so(lamTron(gio)) + ' giờ</span>' : '') +
       '<span class="dc-so ' + lop + '">' + ds.length + '</span><span class="dc-mui">' + (mo ? '▲ Thu gọn' : '▼ Mở') + '</span></button>' +
-      (mo ? '<div class="dc-than">' + (ds.length ? '<ul>' + ds.map(function (r) { return '<li>' + chuDongDC(k, r, tatCa, th) + '</li>'; }).join('') + '</ul>'
+      (mo ? '<div class="dc-than">' + (ds.length ? '<ul>' + ds.map(function (x) { return '<li>' + chuDongDC(k, x.r, tatCa, th, x.i) + '</li>'; }).join('') + '</ul>'
         : '<div class="trong">Không có ai.</div>') + '</div>' : '') + '</div>';
   }).join('');
 }
 $('dc_nhom').addEventListener('click', function (e) {
-  var b = e.target.closest('button[data-dc]');
+  var b = e.target.closest('button');
   if (!b) return;
+  var cho = (duLieu && duLieu.can_xu_ly && duLieu.can_xu_ly.cho_xac_nhan) || [];
+  if (b.getAttribute('data-nhan') != null) { hoiNhan(cho[Number(b.getAttribute('data-nhan'))]); return; }
+  if (b.getAttribute('data-tu-choi') != null) { tuChoi(cho[Number(b.getAttribute('data-tu-choi'))], false); return; }
+  if (b.getAttribute('data-bo-tu-choi') != null) { tuChoi(cho[Number(b.getAttribute('data-bo-tu-choi'))], true); return; }
   var k = b.getAttribute('data-dc');
+  if (!k) return;
   dcMo[k] = !dcMo[k];
   veDoiChieu();
 });
 $('dc_tim').addEventListener('input', veDoiChieu);
+function baoXong(chu) { $('bao_xong').innerHTML = chu; $('bao_xong').classList.toggle('an', !chu); }
+function maYC() { return 'gt-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
+
+/** "✅ Đúng tôi tuyển": hộp xác nhận (ca nếu thời vụ, ngày vào nếu kế toán chưa gửi, tích đồng ý như nhập bù tay) → gt_nhan → máy tự nhập bù. */
+function hoiNhan(r) {
+  if (!r) return;
+  var dsCa = duLieu.ds_ca || [];
+  var lop = document.createElement('div');
+  lop.className = 'lop';
+  lop.innerHTML = '<div class="hoi" role="dialog"><b>✅ Đưa người này vào danh sách của bạn?</b>' +
+    '<div>' + thoat(r.ho_ten) + ' · ' + thoat(r.cong_ty) + ' · ' + thoat(r.cccd4) + ' — ' + so(r.gio) + ' giờ tháng ' + thangNam(duLieu.thang) + '.</div>' +
+    '<div class="chi">Máy tự nhập bù (như trang ➕ Nhập bù) bằng họ tên, CCCD, ngày sinh, ngày vào làm kế toán gửi sang. Xong thì giờ cộng vào tổng của bạn.</div>' +
+    (r.ngay_vao ? '<div class="chi">Ngày vào làm: <b>' + ngayVN(r.ngay_vao) + '</b></div>'
+      : '<div class="nhan">Ngày vào làm (kế toán chưa ghi)</div><input type="date" id="nh_ngay" aria-label="Ngày vào làm">') +
+    (r.can_ca ? '<div class="nhan">Ca làm</div><select id="nh_ca" aria-label="Ca làm"><option value="">— Chọn ca —</option>' +
+      dsCa.map(function (c) { return '<option value="' + thoat(c.ma) + '">' + thoat(c.ten) + '</option>'; }).join('') + '</select>' : '') +
+    '<label class="tick"><input type="checkbox" id="nh_dong_y"><span>Lao động đã đồng ý cho xử lý <b>số CCCD, họ tên, ngày sinh, nơi thường trú, số điện thoại</b> nhằm mục đích ' +
+    'tuyển dụng; dữ liệu lưu trên <b>Google Sheets (máy chủ ở nước ngoài)</b>; có quyền yêu cầu xem, sửa hoặc xoá bất cứ lúc nào.</span></label>' +
+    '<div class="loi-o an" id="nh_loi"></div>' +
+    '<button type="button" class="hoi-dong" id="nh_gui">✅ Đúng, đưa vào danh sách của tôi</button><button type="button" class="hoi-thoi">Thôi</button></div>';
+  var dong = function () { if (lop.parentNode) document.body.removeChild(lop); };
+  var loi = function (t) { $('nh_loi').textContent = t; $('nh_loi').classList.remove('an'); };
+  lop.addEventListener('click', function (e) {
+    if (e.target.classList.contains('hoi-thoi') || e.target === lop) { dong(); return; }
+    if (e.target.id !== 'nh_gui') return;
+    var ca = r.can_ca ? $('nh_ca').value : '', ngay = r.ngay_vao ? '' : $('nh_ngay').value;
+    if (!r.ngay_vao && !ngay) { loi('Chưa chọn ngày vào làm.'); return; }
+    if (r.can_ca && !ca) { loi('Chưa chọn ca làm.'); return; }
+    if (!$('nh_dong_y').checked) { loi('Cần tích ô lao động đồng ý mới lưu được.'); return; }
+    e.target.disabled = true;
+    goiAPI({ token: TOKEN_API, hanh_dong: 'gt_nhan', thang: duLieu.thang, ma: r.ma, ca_lam: ca, ngay: ngay, dong_y: true, ma_yeu_cau: maYC() }, 'Đang đưa vào danh sách…')
+      .then(function (kq) {
+        e.target.disabled = false;
+        if (!kq || kq.ma === 'HET_PHIEN') { dong(); return; }
+        if (!kq.ok) { loi(kq.loi || 'Chưa lưu được.'); return; }
+        dong();
+        return taiSo(duLieu.thang).then(function () {
+          baoXong('✅ Đã đưa <b>' + thoat(kq.ho_ten || r.ho_ten) + '</b> vào danh sách của bạn (nhập bù ngày ' + thoat(kq.ngay || '') + '). Giờ đã cộng vào tổng. ' +
+            '<a href="#" id="bo_nhan" data-ma="' + thoat(kq.ma_kho || '') + '">↩ Bỏ nhận (bấm nhầm)</a>');
+        });
+      }, function (x) { e.target.disabled = false; loi(cauLoi(x) + ' Kiểm tra mạng rồi bấm lại.'); });
+  });
+  document.body.appendChild(lop);
+}
+/** "🙅 Không phải tôi tuyển" / "↩ Tôi bấm nhầm" — chỉ đánh dấu, kế toán thấy để sửa tên. */
+function tuChoi(r, bo) {
+  if (!r) return;
+  goiAPI({ token: TOKEN_API, hanh_dong: 'gt_tu_choi', thang: duLieu.thang, ma: r.ma, bo: bo }, bo ? 'Đang rút lại…' : 'Đang báo kế toán…').then(function (kq) {
+    if (!kq || kq.ma === 'HET_PHIEN') return;
+    if (!kq.ok) { baoLoiTrang(kq.loi || 'Chưa ghi được.'); return; }
+    r.da_tu_choi = !bo;
+    baoXong(bo ? '↩ Đã rút lại. Người này chờ kế toán xác nhận như trước.' : '✅ Đã báo: ' + thoat(r.ho_ten) + ' không phải bạn tuyển. Kế toán sẽ sửa tên người tuyển.');
+    veDoiChieu();
+  }, function (x) { baoLoiTrang(cauLoi(x) + ' Kiểm tra mạng rồi bấm lại.'); });
+}
+$('bao_xong').addEventListener('click', function (e) {
+  if (!e.target || e.target.id !== 'bo_nhan') return;
+  e.preventDefault();
+  goiAPI({ token: TOKEN_API, hanh_dong: 'gt_bo_nhan', thang: duLieu.thang, ma_kho: e.target.getAttribute('data-ma') }, 'Đang bỏ nhận…').then(function (kq) {
+    if (!kq || kq.ma === 'HET_PHIEN') return;
+    if (!kq.ok) { baoLoiTrang(kq.loi || 'Chưa bỏ nhận được.'); return; }
+    return taiSo(duLieu.thang).then(function () { baoXong('↩ Đã bỏ nhận: phiếu nhập bù đã huỷ, người này về mục chờ xác nhận.'); });
+  }, function (x) { baoLoiTrang(cauLoi(x) + ' Kiểm tra mạng rồi bấm lại.'); });
+});
 
 function dangHien() {
   if (!duLieu || !duLieu.ds) return [];
-  var q = $('loc_ten').value.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd');
+  var q = boDauTim($('loc_ten').value.trim());
   var nm = $('loc_nm').value, tt = $('loc_tt').value;
   return duLieu.ds.filter(function (d) {
     if (nm && d.nha_may !== nm) return false;
-    if (tt === 'he' ? !d.khong_trong_he : tt === 'thieu_cccd' ? !!d.cccd4 : (tt && khoaDat(d) !== (tt === 'chua_ro' ? '' : tt))) return false;
-    if (q && d.ho_ten.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').indexOf(q) < 0) return false;
+    if (tt === 'ghi_khac' ? !d.ghi_khac : (tt && khoaDat(d) !== (tt === 'chua_ro' ? '' : tt))) return false;
+    if (q && boDauTim(d.ho_ten).indexOf(q) < 0) return false;
     return true;
   });
+}
+/** Ghi chú một dòng: kế toán ghi người tuyển khác (quản trị thấy tên). */
+function ghiChu(d, tatCa) {
+  return d.ghi_khac ? 'Kế toán ghi người tuyển khác' + (tatCa && d.ke_toan_ghi ? ': ' + d.ke_toan_ghi : '') : '';
 }
 /** Bảng kiểu Excel — mỗi người một dòng, dòng TỔNG (của các dòng đang hiện) dính đáy bảng. */
 function veDs() {
   var ds = dangHien(), tatCa = duLieu.xem === 'tat_ca';
   if (!ds.length) {
-    $('ds').innerHTML = '<div class="trong">' + (duLieu.ds.length ? 'Không có người nào khớp bộ lọc.' : 'Tháng này không có người nào mang tên tuyển của bạn trong file kế toán.') + '</div>';
+    $('ds').innerHTML = '<div class="trong">' + (duLieu.ds.length ? 'Không có người nào khớp bộ lọc.' : 'Tháng này chưa có giờ của người nào bạn tuyển. Xem "🧾 Cần xử lý" ở trên.') + '</div>';
     $('goi_bang').textContent = '';
     $('nut_excel').classList.add('an');
     return;
@@ -496,14 +580,11 @@ function veDs() {
   var gio = 0;
   var hang = ds.map(function (d, i) {
     gio += d.gio;
-    var ghi = [], k = khoaDat(d);
-    if (!d.cccd4) ghi.push('<span class="tt-thieu">⛔ File kế toán thiếu CCCD</span>');
-    if (d.khong_trong_he) ghi.push('<span class="tt-he">⚠ Không có trong hệ</span>');
-    if (tatCa && !d.khop_tk) ghi.push('<span class="tt-he">⚠ Tên tuyển không khớp tài khoản</span>');
+    var k = khoaDat(d), g = ghiChu(d, tatCa);
     // Giờ đứng NGAY sau Họ tên — điện thoại không phải vuốt ngang mới thấy số chính. Đạt ở cột CUỐI (Dương chốt 05/11/2026)
     return '<tr><td class="c0">' + (i + 1) + '</td><td class="c1">' + thoat(d.ho_ten) + '</td>' +
       '<td class="so">' + so(d.gio) + '</td><td>' + thoat(d.nha_may) + '</td>' + (tatCa ? '<td>' + thoat(d.nguoi_tuyen) + '</td>' : '') +
-      '<td>' + thoat(d.cccd4 || '—') + '</td><td>' + ghi.join(' · ') + '</td>' +
+      '<td>' + thoat(d.cccd4 || '—') + '</td><td>' + (g ? '<span class="tt-he">📝 ' + thoat(g) + '</span>' : '') + '</td>' +
       '<td class="tt-' + (k || 'chua_ro') + '">' + NHAN_DAT[k] + '</td></tr>';
   }).join('');
   $('ds').innerHTML = '<table class="bang"><thead><tr><th class="c0">#</th><th class="c1">Họ tên</th><th class="so">Giờ</th><th>Nhà máy</th>' +
@@ -519,12 +600,7 @@ $('nut_excel').addEventListener('click', function () {
   var tatCa = duLieu.xem === 'tat_ca';
   var dong = [['Họ tên', 'Giờ', 'Nhà máy'].concat(tatCa ? ['Người tuyển'] : [], ['CCCD (4 số cuối)', 'Ghi chú', 'Đạt'])]
     .concat(dangHien().map(function (d) {
-      var ghi = [];
-      if (!d.cccd4) ghi.push('File kế toán thiếu CCCD');
-      if (d.khong_trong_he) ghi.push('Không có trong hệ tuyển dụng');
-      if (tatCa && !d.khop_tk) ghi.push('Tên tuyển không khớp tài khoản');
-      return [d.ho_ten, d.gio, d.nha_may].concat(tatCa ? [d.nguoi_tuyen] : [],
-        [d.cccd4, ghi.join(' · '), NHAN_DAT[khoaDat(d)].replace(/^\S+ /, '')]);
+      return [d.ho_ten, d.gio, d.nha_may].concat(tatCa ? [d.nguoi_tuyen] : [], [d.cccd4, ghiChu(d, tatCa), NHAN_DAT[khoaDat(d)].replace(/^\S+ /, '')]);
     }));
   var chu = dong.map(function (h) { return h.join('\t'); }).join('\n'), nut = this;
   var xong = function () { nut.textContent = '✅ Đã chép — dán vào Excel'; setTimeout(function () { nut.textContent = '📋 Sao chép Excel (người đang hiện)'; }, 2500); };
@@ -532,7 +608,9 @@ $('nut_excel').addEventListener('click', function () {
   else baoLoiTrang('Máy không cho chép — thử lại bằng Chrome.');
 });
 
-if (layPhien()) taiSo(''); else veManDangNhap('');
+// 3.73: mở thẳng một tháng từ dải báo ở Dữ liệu tuyển (giotien.html?thang=2026-10)
+var THANG_DAU = (function () { try { var m = /[?&]thang=(\d{4}-\d{2})/.exec(location.search || ''); return m ? m[1] : ''; } catch (e) { return ''; } })();
+if (layPhien()) taiSo(THANG_DAU); else veManDangNhap('');
 </script>
 </body>
 </html>

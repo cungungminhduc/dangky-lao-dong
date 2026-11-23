@@ -95,6 +95,9 @@
   .gio-khong{color:#8a1c13;font-weight:600}
   .gio-ro,.gio-ct{color:var(--mo)}
   .gio-thieu{display:inline-block;padding:1px 9px;border-radius:20px;background:#fdf0cc;color:#6b4e00;font-weight:600}
+  /* 3.73: dải báo việc cần xem ở ⏱ Giờ làm (Dương chốt 21/11: báo khi mở trang, không báo đẩy) */
+  .nhac-gio{display:flex;align-items:center;min-height:48px;margin:6px 14px 0;padding:8px 12px;border-radius:10px;background:var(--vang-nhat);
+    border:1px solid var(--vang-vien);color:#6b4e00;font-size:16px;font-weight:700;text-decoration:none}
 
   /* Tổng kiểu SUBTOTAL — luôn ở TRÊN danh sách */
   .tong{margin:8px 14px 0;padding:10px 12px;border-radius:12px;background:var(--lam-nhat);border:1px solid #c9dbf5;color:#163f7a;font-size:15px}
@@ -291,6 +294,7 @@
   </div>
   <a class="nut-nhap-bu" href="nhapbu.html">➕ Nhập bù: người đã đi làm, chưa đăng ký</a>
   <a class="nut-nhap-bu" href="giotien.html">⏱ Giờ làm của người tôi tuyển</a>
+  <a class="nhac-gio an" id="nhac_gio" href="giotien.html"></a>
   <div id="ds_nhac" class="nhac an"></div>
 
   <div class="che-do" id="che_do">
@@ -665,7 +669,7 @@ function taiGio(thang) {
   ghiGio('⏳ Đang lấy giờ làm từ hệ lương…');
   return goiAPI({ token: TOKEN_API, hanh_dong: 'dlt_gio', thang: thang || '' }, '', false).then(function (kq) {
     if (!kq || kq.ma === 'HET_PHIEN') return;
-    if (!kq.ok) { gioDL = null; locThieu = false; ghiGio('⚠ Chưa lấy được giờ làm: ' + (kq.loi || 'máy chủ không trả số.')); ve(); return; }
+    if (!kq.ok) { gioDL = null; locThieu = false; nhacGio(null); ghiGio('⚠ Chưa lấy được giờ làm: ' + (kq.loi || 'máy chủ không trả số.')); ve(); return; }
     thangGio = kq.thang || '';
     gioDL = kq.co_thang ? kq : null;
     if (!gioDL || !gioDL.co_ma_ct) locThieu = false;
@@ -675,16 +679,25 @@ function taiGio(thang) {
     }).join('');
     $('hang_gio').classList.toggle('an', !ds.length);
     ghiGio(chuGhiGio(kq));
+    nhacGio(kq);
     ve();
-  }, function (e) { gioDL = null; locThieu = false; ghiGio('⚠ Chưa lấy được giờ làm: ' + cauLoi(e) + ' Bấm lại nút khoảng ngày để thử lại.'); ve(); });
+  }, function (e) { gioDL = null; locThieu = false; nhacGio(null); ghiGio('⚠ Chưa lấy được giờ làm: ' + cauLoi(e) + ' Bấm lại nút khoảng ngày để thử lại.'); ve(); });
 }
 function ghiGio(chu) { $('gio_ghi').textContent = chu; $('gio_ghi').classList.toggle('an', !chu); }
+/** 3.73 — dải "⚠ Giờ tháng N: k việc cần bạn xem → Xem" (máy chủ đếm can_xem như khung 🧾 Cần xử lý), bấm mở đúng tháng ở ⏱ Giờ làm. */
+function nhacGio(kq) {
+  var n = kq && kq.co_thang ? Number(kq.can_xem) || 0 : 0, a = $('nhac_gio');
+  a.classList.toggle('an', !n);
+  if (!n) return;
+  a.textContent = '⚠ Giờ tháng ' + thangNam(kq.thang) + ': ' + n + ' việc cần bạn xem → Xem';
+  a.setAttribute('href', 'giotien.html?thang=' + kq.thang);
+}
 function thangNam(t) { return t ? Number(t.slice(5, 7)) + '/' + t.slice(0, 4) : ''; }
 /** Dòng chữ dưới ô chọn tháng: số này là gì, lấy lúc nào, "⚠ Không có giờ" nghĩa là gì, hệ lương cũ thì nói thẳng. */
 function chuGhiGio(kq) {
   if (!kq.co_thang) return (kq.cac_thang || []).length ? '⏱ Tháng ' + thangNam(kq.thang) + ' kế toán chưa có giờ.' : '⏱ Kế toán chưa có giờ tháng nào.';
   var luc = kq.lay_luc ? new Date(kq.lay_luc) : null;
-  return '⏱ Giờ T' + Number(kq.thang.slice(5, 7)) + ' = giờ kế toán đã chốt, khớp theo số CCCD' +
+  return '⏱ Giờ T' + Number(kq.thang.slice(5, 7)) + ' = giờ kế toán đã chốt, tính cho người tuyển từ đầu tháng theo danh sách tuyển' +
     (luc ? ' · số lúc ' + hai(luc.getHours()) + ':' + hai(luc.getMinutes()) + ' (10 phút lấy lại một lần)' : '') + '.\n' +
     (kq.co_ma_ct ? '⚠ Không có giờ = người đang làm ở công ty đã có giờ tháng này mà kế toán không có dòng của người đó — hỏi lại nhà máy hoặc kế toán.'
       : '⚠ Hệ lương chưa lên bản mới: chỉ hiện số giờ, chưa báo được ai thiếu giờ.') +
@@ -702,6 +715,7 @@ function chuGio(o) {
   if (!o) return '';
   if (o.gio !== undefined) return '<b>' + soGio(o.gio) + '</b> giờ ' + (NHAN_DAT_GIO[o.dat] || NHAN_DAT_GIO['']);
   if (o.thieu) return '<span class="gio-thieu">⚠ Không có giờ</span>';
+  if (o.khac_chu) return '<span class="gio-ct">Tính cho người tuyển đầu tháng</span>';   // 3.73: đăng ký lại giữa tháng — giờ tháng này của người tuyển trước
   return '<span class="gio-ct">Công ty chưa có giờ</span>';
 }
 function oGio(r) { return gioDL ? '<td>' + chuGio(oGioCua(r)) + '</td>' : ''; }
