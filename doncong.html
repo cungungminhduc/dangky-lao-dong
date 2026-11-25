@@ -1457,7 +1457,9 @@ function veManMoi(kq) {
     dong_('Số căn cước', kq.cccd_che) +
     dong_('Ngày sinh', q && q.ngay_sinh) +
     dong_('Giới tính', q && q.gioi_tinh) +
-    dong_('Thường trú', q && q.noi_thuong_tru);
+    dong_('Thường trú', q && q.noi_thuong_tru) +
+    // 3.74.1: người này từng đi làm qua hệ thống, lượt đó đã xong → lần này đăng ký mới, ghi cho người tuyển lần này
+    (kq.lan_truoc ? dong_('Lần trước', kq.lan_truoc + ' (đã xong — lần này ghi mới)') : '');
   $('moi_sdt').value = '';
   // Hay gặp nhất là chính người đón tuyển — điền sẵn, nhưng NÓI RA là đang điền sẵn (Dương chốt 26/10/2026)
   $('moi_nguoi_dk').value = nguoiDon;

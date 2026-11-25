@@ -10,7 +10,8 @@
  *     iPhone → x-safari-https:// (Apple không có cách mở "trình duyệt mặc định", chỉ mở được Safari).
  *     Cả hai đều là MẸO, Zalo có thể chặn — nên luôn kèm đường tay: ⋯ → Mở bằng trình duyệt · Chép link.
  *   - Hướng dẫn bật một lần trong Zalo "Mở bằng trình duyệt web" — chắc nhất, từ đó mọi link tự ra ngoài.
- *   - Dòng phụ "Vẫn dùng trong Zalo" (Dương chốt giữ): gỡ trang chặn, nhớ trong phiên của tab.
+ *   - 3.74.1 (Dương 25/11/2026 "chặn hoàn toàn"): BỎ dòng "Vẫn dùng trong Zalo" (trước 3.36 chốt giữ) và bỏ luôn cờ nhớ cũ
+ *     `an_nhac_zalo` — máy đã bấm bỏ qua trước đây cũng bị chặn lại. Chỉ còn đường mở bằng trình duyệt.
  *   - Dương mở trên iPhone mà KHÔNG thấy nhắc → không dựa vào chữ "Zalo" trong user agent ở iPhone: trình duyệt
  *     nhúng trong ứng dụng (WKWebView) không có chữ "Safari/" như Safari, Chrome, Edge, Firefox trên iPhone đều có.
  *     Ứng dụng đã cài ra màn hình chính (navigator.standalone) cũng không có chữ đó — phải loại ra.
@@ -26,7 +27,17 @@
   var nhungIOS = ios && !/Safari\//.test(ua) && !navigator.standalone;
   var nhungAndroid = android && /; wv\)/.test(ua);
   if (!zalo && !nhungIOS && !nhungAndroid) return;
-  try { if (sessionStorage.getItem('an_nhac_zalo') === '1') return; } catch (e) {}
+
+  // 3.74.1 — CHE NGAY, trước khi trang kịp hiện / kịp bấm. Bản cũ nạp tệp này bằng `defer` → mã của trang chạy TRƯỚC,
+  // trang hiện ra dùng được vài giây (sóng yếu trong Zalo thì lâu hơn) rồi mới bị che: "chặn chưa hoàn toàn". Nay trang
+  // nạp tệp này ở <head> KHÔNG defer, và dòng dưới giấu hết nội dung trang cho tới khi trang chặn hiện lên.
+  var giau = null;   // thẻ giấu nội dung — không gỡ: trong Zalo trang chỉ còn màn chặn
+  try {
+    giau = document.createElement('style');
+    giau.id = 'chan_zalo_giau';
+    giau.textContent = 'body>*:not(#chan_zalo){display:none!important}';
+    (document.head || document.documentElement).appendChild(giau);
+  } catch (e) { giau = null; }
 
   var link = location.href.split('#')[0];
   var duong = location.host + location.pathname + location.search;
@@ -40,10 +51,10 @@
   var hop = 'max-width:440px;margin:0 auto';
   var nut = 'display:block;width:100%;box-sizing:border-box;margin:10px 0 0;padding:15px;border:0;border-radius:12px;' +
             'font:inherit;font-size:16.5px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer;';
-  var the = 'margin:16px 0 0;padding:13px 14px;border-radius:12px;background:#fff;border:1px solid #e6e9ed;font-size:14.5px';
+  var the = 'margin:16px 0 0;padding:13px 14px;border-radius:12px;background:#fff;border:1px solid #e6e9ed;font-size:16px';
   d.innerHTML = '<div style="' + hop + '">' +
     '<div style="font-size:19px;font-weight:800;text-align:center">Mở bằng trình duyệt để dùng</div>' +
-    '<div style="margin-top:8px;text-align:center;color:#56606b;font-size:14.5px">Bạn đang mở trong ' + noi + ' — ở đây trang ' +
+    '<div style="margin-top:8px;text-align:center;color:#56606b;font-size:16px">Bạn đang mở trong ' + noi + ' — ở đây trang ' +
       'dễ chậm, đơ và hay bắt đăng nhập lại. Mở bằng trình duyệt của máy thì nhanh và nhớ đăng nhập.</div>' +
     '<a id="nz_mo" style="' + nut + 'margin-top:18px;background:#1f9d55;color:#fff" href="' + mo + '">Mở bằng trình duyệt</a>' +
     '<div style="' + the + '"><b>Bấm mà không chuyển?</b><br>Bấm <b>⋯</b> (hoặc biểu tượng trình duyệt) ở góc trên bên phải → ' +
@@ -52,8 +63,6 @@
     '<div style="' + the + '"><b>Làm một lần cho khỏi gặp lại</b><br>Trong Zalo: <b>Cá nhân</b> → <b>⚙ Cài đặt</b> → ' +
       '<b>Quyền riêng tư</b> → <b>Tiện ích</b> → tích <b>Mở bằng trình duyệt web</b>. Từ đó mọi link trong Zalo tự mở ' +
       'bằng trình duyệt.</div>' +
-    '<div style="margin-top:22px;text-align:center"><a href="#" id="nz_van_dung" style="font-size:13.5px;color:#7b8794">' +
-      'Vẫn dùng trong Zalo</a><div style="font-size:12px;color:#9aa3ad">(dễ chậm, hay phải đăng nhập lại)</div></div>' +
     '</div>';
 
   function gan() {
@@ -67,11 +76,6 @@
       } else {
         prompt('Chép link này rồi dán vào trình duyệt:', link);
       }
-    });
-    document.getElementById('nz_van_dung').addEventListener('click', function (e) {
-      if (e && e.preventDefault) e.preventDefault();
-      try { sessionStorage.setItem('an_nhac_zalo', '1'); } catch (er) {}
-      d.parentNode.removeChild(d);
     });
   }
   if (document.body) gan(); else document.addEventListener('DOMContentLoaded', gan);

@@ -62,7 +62,10 @@ function vpVe_() {
   vpLop_(vpEl_('vp_cu'), 'an', !cu);
   vpLop_(vpEl_('vp_trang'), 'an', cu);
   vpVeThanh_();
-  if (cu) { vpChenNgoaiZalo_(); if (coVe) vpVeThemCu_(); } else vpVeMuc_();
+  // 3.74.1: mục CẦN đăng nhập (⚙ Tài khoản & quyền, sửa nhà máy / người…) cũng chặn trong Zalo — trước chỉ chặn màn đăng
+  // nhập + trang chủ đã đăng nhập, nên đã đăng nhập rồi mở thẳng #tai-khoan trong Zalo thì lọt.
+  if (cu || (fCan && fCan.v.can)) vpChenNgoaiZalo_();
+  if (cu) { if (coVe) vpVeThemCu_(); } else vpVeMuc_();
 }
 
 /** Mã cũ của trang chủ vừa đổi màn: đăng nhập xong → man_chu · vé hết / đăng xuất → man_dn. Số làm mới ngầm cũng gọi vào đây
