@@ -43,7 +43,7 @@ function vpTheoDuong_() {
   // 3.68 — rời mục thì đóng hộp đang mở + khung có mật khẩu vừa đặt (mật khẩu chỉ hiện MỘT lần, không nằm lại chờ người sau)
   if (cu !== vpMuc) {
     vpNG.hop = null; vpNG.xong = null; vpNG.bao = '';
-    vpQLNM.hop = null; vpQLNM.xong = null;
+    vpQLNM.hop = null; vpQLNM.xong = null; vpQLNM.hopDon = null; vpQLNM.bao = null;   // 3.75
   }
   vpMoDm = '';
   vpVe_();
@@ -75,7 +75,8 @@ function vpDoiMan_(man) {
   // 3.65: đăng xuất / vé hết → bỏ danh sách tài khoản đang giữ trong trang (máy dùng chung: người sau không được thấy)
   if (man === 'man_dn' && !vpCoVe_()) {
     vpTKQ = { dang: false, kq: null, loi: '' };
-    vpQLNM = { dang: false, kq: null, loi: '', hop: null, xong: null, gui: false, mang: 'thoi_vu', maTay: false };   // 3.68
+    vpQLNM = { dang: false, kq: null, loi: '', hop: null, xong: null, gui: false, mang: 'thoi_vu', maTay: false,
+    dangBat: {}, hopDon: null, bao: null, dangDon: false, moSau: '' };   // 3.68
     vpNG = { hop: null, xong: null, gui: false, loai: 'nv', bao: '' };   // 3.68 — mật khẩu vừa đặt không được nằm lại cho người sau
   }
   var fCan = vpTimViec_(vpMuc);
@@ -424,15 +425,20 @@ function vpBoDauHoa_(s) {
 
 // ---------------- 3.68 vé 01 — ⚙ Quản trị → 🏭 Nhà máy ----------------
 // hop: null | { sua: mã đang sửa ('' = thêm mới) } · xong: null | { nm, moi } · maTay: người đã tự gõ ô Mã (thôi gợi ý theo tên)
-var vpQLNM = { dang: false, kq: null, loi: '', hop: null, xong: null, gui: false, mang: 'thoi_vu', maTay: false };
+var vpQLNM = { dang: false, kq: null, loi: '', hop: null, xong: null, gui: false, mang: 'thoi_vu', maTay: false,
+    dangBat: {}, hopDon: null, bao: null, dangDon: false, moSau: '' };
 var VP_O_NM = { ten: 'vp_nm_ten', ma_ct: 'vp_nm_ma', loai: 'vp_nm_mang', zalo_chat_id: 'vp_nm_zalo', nhom: 'vp_nm_doi', khu_vuc: 'vp_nm_kv' };
 
 function vpLayQLNM_() {
   if (vpQLNM.dang) return;
   vpQLNM.dang = true; vpQLNM.loi = '';
-  vpGoi_({ hanh_dong: 'ct_ds' }).then(function (kq) {
-    if (kq && kq.ok) vpQLNM.kq = kq;
-    else if (kq && kq.ma === 'SAI_HANH_DONG') vpQLNM.loi = 'Máy chủ chưa lên bản 3.68 — quản trị cập nhật máy chủ (Apps Script) trước rồi tải lại trang.';
+  // 3.75 — bảng điều khiển: bdk_ds (nhà máy + công tắc + người đón + danh bạ) thay ct_ds
+  vpGoi_({ hanh_dong: 'bdk_ds' }).then(function (kq) {
+    if (kq && kq.ok) {
+      vpQLNM.kq = kq;
+      if (vpQLNM.moSau) { var m = vpQLNM.moSau; vpQLNM.moSau = ''; if (vpNMCua_(m)) vpMoHopDon_(m, true); }   // ➕ Thêm → 👥 Chọn người đón ngay
+    }
+    else if (kq && kq.ma === 'SAI_HANH_DONG') vpQLNM.loi = 'Máy chủ chưa lên bản 3.75 — quản trị cập nhật máy chủ (Apps Script) trước rồi tải lại trang.';
     else if (!(kq && kq.ma === 'HET_PHIEN')) vpQLNM.loi = vpCauLoi_(kq);
   }, function (e) { vpQLNM.loi = vpCauLoi_(e); }).then(function () {
     vpQLNM.dang = false;
@@ -487,10 +493,11 @@ function vpHtmlXongNM_() {
     (x.moi ? '<div class="vp-xong">' + (n.dang_dung ? 'Trang đăng ký đã thấy nhà máy này.' : 'Nhà máy đang tạm ngừng — bấm ✏️ Sửa để mở tuyển.') + '</div>' : '') +
     '<div class="vp-nhom-ghi">👉 Gửi link này cho người đi tuyển: mở ra là vào thẳng nhà máy này.</div>' +
     '<div class="vp-gui" id="vp_nm_link">' + vpThoat_(n.link) + '</div>' +
-    (x.moi ? '<div class="vp-cho">Còn 2 việc: <b>Phân công đón</b> để giao người phụ trách · báo kế toán thêm nhà máy bên hệ công–lương với '
+    (x.moi ? '<div class="vp-cho">Còn 2 việc: chọn <b>người đón</b> (nút dưới) · báo kế toán thêm nhà máy bên hệ công–lương với '
       + '<b>đúng mã ' + vpThoat_(n.ma_ct) + '</b> (lệch mã thì cột ⏱ Giờ không khớp).</div>' : '') +
     '<div class="vp-xong an" id="vp_nm_chep_bao" role="status"></div>' +
     '<div class="vp-hang-nut"><button type="button" class="vp-nut-chinh" data-nm="chep">📋 Chép link</button>' +
+    (x.moi ? '<button type="button" class="vp-nut vp-bdk-nut" data-nm="chon_don" data-ma="' + vpThoat_(n.ma_ct) + '">👥 Chọn người đón ngay</button>' : '') +
     '<button type="button" class="vp-nut" data-nm="xong">Xong</button></div></section>';
 }
 function vpBamNM_(viec, ma) {
@@ -498,6 +505,7 @@ function vpBamNM_(viec, ma) {
   else if (viec === 'sua') { vpQLNM.hop = { sua: ma }; vpVeMuc_(); }
   else if (viec === 'link') { var c = vpNMCua_(ma); if (c) { vpQLNM.xong = { nm: c, moi: false }; vpVeMuc_(); } }
   else if (viec === 'huy') { vpQLNM.hop = null; vpVeMuc_(); }
+  else if (viec === 'chon_don') { vpQLNM.xong = null; vpQLNM.kq = null; vpQLNM.moSau = ma; vpVeMuc_(); }   // 3.75
   else if (viec === 'xong') { var moi = vpQLNM.xong && vpQLNM.xong.moi; vpQLNM.xong = null; if (moi) vpQLNM.kq = null; vpVeMuc_(); }
   else if (viec === 'chep' && vpQLNM.xong) vpChep_(vpQLNM.xong.nm.link, 'vp_nm_link', 'vp_nm_chep_bao');
   else if (viec === 'luu' && !vpQLNM.gui) vpLuuNM_();
@@ -554,6 +562,186 @@ function vpLuuNM_() {
 function vpBaoChung_(id, cau) {
   var o = vpEl_(id);
   if (o) { o.textContent = cau ? '⚠️ ' + cau : ''; vpLop_(o, 'an', !cau); }
+}
+
+// ---------------- 3.75 — BẢNG ĐIỀU KHIỂN NHÀ MÁY: công tắc + người đón ngay trên bảng (máy chủ bdk_ds / bdk_bat / bdk_don) ----------------
+// Bàn bạc: .scratch/bang-dieu-khien-nha-may/BAN-BAC.md. Quản trị: mọi nhà máy + thêm / sửa. Trưởng nhóm: nhà máy đội mình, chỉ bật / tắt +
+// người đón. Đổi người đón KHÔNG gửi tin Zalo. Mỗi việc ghi đều có ↩ Hoàn tác (vpQLNM.bao.hoan).
+function vpCauBat_(c, o, moi) {
+  var t = '"' + c.ten_cong_ty + '"';
+  if (o === 'dang_dung') return moi ? '✅ Đã mở tuyển ' + t + ' — trang đăng ký thấy lại nhà máy này.'
+    : '⏸ Đã tạm ngừng tuyển ' + t + ' — trang đăng ký không còn thấy nhà máy này. Người đang làm, người đón, báo quân số vẫn như cũ.';
+  return moi ? '📊 ' + t + ' phải báo quân số — trang Báo quân số có lại nhà máy này.'
+    : '🚫 ' + t + ' không cần báo quân số nữa — không hiện ở trang Báo quân số, không bị nhắc "chưa báo".';
+}
+/** Chạm công tắc (o = dang_dung | bao_quan_so). hoan = giá trị muốn đặt khi bấm ↩ Hoàn tác (không có = bấm công tắc thường). */
+function vpBatBDK_(ma, o, hoan) {
+  var c = vpNMCua_(ma), khoa = ma + '|' + o;
+  if (!c || vpQLNM.dangBat[khoa]) return;
+  var moi = hoan === undefined ? !c[o] : hoan;
+  vpQLNM.dangBat[khoa] = true;
+  vpQLNM.bao = null;
+  vpVeMuc_();
+  vpGoi_({ hanh_dong: 'bdk_bat', ma_ct: ma, o: o, gia_tri: moi }).then(function (kq) {
+    if (kq && kq.ok) {
+      c[o] = kq.gia_tri;
+      vpQLNM.bao = hoan === undefined
+        ? { cau: vpCauBat_(c, o, kq.gia_tri), hoan: { kieu: 'bat', ma: ma, o: o, gia_tri: !kq.gia_tri } }
+        : { cau: '↩ Đã trả lại như cũ: ' + vpCauBat_(c, o, kq.gia_tri) };
+    } else if (!(kq && kq.ma === 'HET_PHIEN')) {
+      vpQLNM.bao = { loi: 'Chưa đổi được "' + c.ten_cong_ty + '": ' + vpCauLoi368_(kq) };
+    }
+  }, function () {
+    vpQLNM.bao = { loi: 'Không nối được máy chủ — chưa chắc đã đổi "' + c.ten_cong_ty + '". Bấm 🔄 Lấy lại để xem tình trạng thật.' };
+  }).then(function () {
+    delete vpQLNM.dangBat[khoa];
+    vpVeLai_();
+  });
+}
+/** Người đón đang có của một nhà máy (không tính người khai cố định trong Sheet) → { ds, ds_dem }. */
+function vpDonDangCo_(c) {
+  var ra = { ds: [], ds_dem: [] };
+  (c.don || []).forEach(function (n) { if (n.co_dinh) return; ra.ds.push(n.khoa); if (n.ca === 'dem') ra.ds_dem.push(n.khoa); });
+  return ra;
+}
+function vpMoHopDon_(ma, khongVe) {
+  var c = vpNMCua_(ma);
+  if (!c) return;
+  var chon = {};
+  (c.don || []).forEach(function (n) { if (!n.co_dinh) chon[n.khoa] = n.ca === 'dem' ? 'dem' : 'ngay'; });
+  vpQLNM.hopDon = { ma: ma, chon: chon, tim: '', gui: false, loi: '', vuaDoi: false };
+  vpQLNM.bao = null;
+  if (khongVe) return;
+  vpVeMuc_();
+  if (window.scrollTo) window.scrollTo(0, 0);
+}
+function vpTenCa_(c, ca) { return c.loai === 'chinh_thuc' ? '' : (ca === 'dem' ? ' (🌙 ca đêm)' : ' (☀️ ca ngày)'); }
+/** Chữ người đón một nhà máy: "☀️ Ca ngày: Lan, Mai · 🌙 Ca đêm: Tú" (chính thức: "Lan, Mai"). */
+function vpChuDon_(c) {
+  var ngay = [], dem = [];
+  (c.don || []).forEach(function (n) { (n.ca === 'dem' && c.loai !== 'chinh_thuc' ? dem : ngay).push(n.ten + (n.co_dinh ? ' 🔒' : '')); });
+  if (!ngay.length && !dem.length) return '';
+  if (c.loai === 'chinh_thuc') return ngay.join(', ');
+  return (ngay.length ? '☀️ Ca ngày: ' + ngay.join(', ') : '') + (ngay.length && dem.length ? ' · ' : '') + (dem.length ? '🌙 Ca đêm: ' + dem.join(', ') : '');
+}
+function vpCauAnHan_() {
+  var n = (vpQLNM.kq && vpQLNM.kq.an_han_ngay) || 0;
+  return n <= 0 ? 'mất quyền xem danh sách ngay' : n === 1 ? 'vẫn xem được danh sách tới hết ngày mai để báo nốt việc'
+    : 'vẫn xem được danh sách thêm ' + n + ' ngày để báo nốt việc';
+}
+function vpHtmlHopDon_() {
+  var h = vpQLNM.hopDon, c = vpNMCua_(h.ma) || {}, kq = vpQLNM.kq || {}, ct = c.loai === 'chinh_thuc';
+  var ten = {};
+  (kq.danh_ba || []).forEach(function (n) { ten[n.khoa] = n.ten_nguoi; });
+  var coDinh = (c.don || []).filter(function (n) { return n.co_dinh; }).map(function (n) { return n.ten; });
+  var dang = Object.keys(h.chon).filter(function (k) { return h.chon[k]; }).map(function (k) {
+    return (ten[k] || (c.don || []).filter(function (n) { return n.khoa === k; }).map(function (n) { return n.ten; })[0] || '?') + vpTenCa_(c, h.chon[k]);
+  });
+  var cacCa = ct ? [['', 'Không đón'], ['ngay', '✅ Đón']] : [['', 'Không đón'], ['ngay', '☀️ Ca ngày'], ['dem', '🌙 Ca đêm']];
+  return '<section class="vp-the vp-hop" id="vp_bdk_hop"><div class="vp-nhom-ten">👥 Người đón — ' + vpThoat_(c.ten_cong_ty) + '</div>' +
+    '<div class="vp-bdk-chu">👉 Chọn ' + (ct ? '"✅ Đón"' : 'ca') + ' cho từng người rồi bấm <b>💾 Lưu người đón</b>. Người bị bỏ ra ' +
+      vpCauAnHan_() + '. Không gửi tin Zalo — bản tin phân công sáng mai tự báo.</div>' +
+    (coDinh.length ? '<div class="vp-bdk-chu">🔒 Khai cố định trong Sheet, không đổi ở đây: <b>' + vpThoat_(coDinh.join(', ')) + '</b></div>' : '') +
+    '<div class="vp-bdk-chu">Đang chọn: <b>' + (dang.length ? vpThoat_(dang.join(', ')) : 'chưa chọn ai') + '</b></div>' +
+    '<label class="vp-nhan" for="vp_bdk_tim">Tìm người</label>' +
+    '<input class="vp-o-go" id="vp_bdk_tim" value="' + vpThoat_(h.tim) + '" placeholder="Gõ vài chữ của tên" autocomplete="off">' +
+    '<div id="vp_bdk_ds">' + ((kq.danh_ba || []).map(function (n) {
+      var cur = h.chon[n.khoa] || '';
+      return '<div class="vp-bdk-nguoi" data-tim="' + vpThoat_(vpBoDauHoa_(n.ten_nguoi)) + '"><div><b>' + vpThoat_(n.ten_nguoi) + '</b> <span class="vp-bdk-phu">' +
+        vpThoat_(n.cccd_che || '') + (n.nhom ? ' · Đội ' + vpThoat_(String(n.nhom).toUpperCase()) : '') + '</span></div>' +
+        '<div class="vp-chon" role="group" aria-label="' + vpThoat_(n.ten_nguoi) + '">' + cacCa.map(function (x) {
+          return '<button type="button" class="vp-nut vp-bdk-nut" data-bdk="chon" data-khoa="' + vpThoat_(n.khoa) + '" data-ca="' + x[0] + '" aria-pressed="' +
+            (cur === x[0]) + '">' + x[1] + '</button>';
+        }).join('') + '</div></div>';
+    }).join('') || '<div class="vp-bdk-chu">Chưa có ai trong danh bạ để chọn — thêm người ở mục Tài khoản / Đội của tôi trước.</div>') + '</div>' +
+    (h.loi ? '<div class="vp-loi" role="alert">⚠️ ' + vpThoat_(h.loi) + '</div>' +
+      (h.vuaDoi ? '<button type="button" class="vp-nut vp-bdk-nut" data-thu-lai="ct_ds">🔄 Lấy lại</button>' : '') : '') +
+    '<div class="vp-hang-nut"><button type="button" class="vp-nut-chinh" id="vp_bdk_luu" data-bdk="luu_don"' + (h.gui ? ' disabled' : '') + '>' +
+      (h.gui ? '⏳ Đang lưu… có khi phải chờ vài chục giây' : '💾 Lưu người đón') + '</button>' +
+    '<button type="button" class="vp-nut vp-bdk-nut" data-bdk="huy_don">Huỷ</button></div></section>';
+}
+/** Gửi người đón. hoan = { ds, ds_dem, don } khi bấm ↩ Hoàn tác; không có = lưu từ hộp chọn. */
+function vpLuuDon_(hoan) {
+  var h = vpQLNM.hopDon, ma = hoan ? hoan.ma : h.ma, c = vpNMCua_(ma);
+  if (!c || (h && h.gui) || vpQLNM.dangDon) return;
+  var ten = {};
+  ((vpQLNM.kq && vpQLNM.kq.danh_ba) || []).forEach(function (n) { ten[n.khoa] = n.ten_nguoi; });
+  (c.don || []).forEach(function (n) { if (!ten[n.khoa]) ten[n.khoa] = n.ten; });
+  var cu = vpDonDangCo_(c), donCu = (c.don || []).filter(function (n) { return !n.co_dinh; });
+  var moi;
+  if (hoan) moi = { ds: hoan.ds, ds_dem: hoan.ds_dem };
+  else {
+    moi = { ds: [], ds_dem: [] };
+    Object.keys(h.chon).forEach(function (k) { if (!h.chon[k]) return; moi.ds.push(k); if (h.chon[k] === 'dem') moi.ds_dem.push(k); });
+    h.gui = true; h.loi = ''; h.vuaDoi = false;
+  }
+  vpQLNM.dangDon = true;
+  if (hoan) vpQLNM.bao = { cau: '⏳ Đang trả người đón "' + c.ten_cong_ty + '" về như cũ…' };
+  vpVeMuc_();
+  vpGoi_({ hanh_dong: 'bdk_don', ma_ct: ma, ds: moi.ds, ds_dem: moi.ds_dem, dang_thay: cu.ds, dang_thay_dem: cu.ds_dem }).then(function (kq) {
+    if (kq && kq.ok) {
+      var coDinh = (c.don || []).filter(function (n) { return n.co_dinh; });
+      c.don = moi.ds.map(function (k) { return { khoa: k, ten: ten[k] || '?', ca: moi.ds_dem.indexOf(k) >= 0 ? 'dem' : '' }; }).concat(coDinh);
+      var boRa = cu.ds.filter(function (k) { return moi.ds.indexOf(k) < 0; }).map(function (k) { return ten[k] || '?'; });
+      vpQLNM.hopDon = null;
+      vpQLNM.bao = hoan ? { cau: '↩ Đã trả người đón "' + c.ten_cong_ty + '" về như cũ.' } : {
+        cau: '✅ Đã lưu người đón "' + c.ten_cong_ty + '": ' + (vpChuDon_(c) || 'không còn ai') + '.' +
+          (boRa.length ? ' ' + boRa.join(', ') + ' ' + (kq.het_han_hien_thi && kq.go_bo ? 'còn xem được danh sách tới hết ngày ' + kq.het_han_hien_thi
+            : 'thôi phụ trách nhà máy này') + '.' : ''),
+        hoan: { kieu: 'don', ma: ma, ds: cu.ds, ds_dem: cu.ds_dem } };
+      return;
+    }
+    if (kq && kq.ma === 'HET_PHIEN') return;
+    var cau = vpCauLoi368_(kq);
+    if (hoan) vpQLNM.bao = { loi: 'Chưa trả lại được: ' + cau };
+    else { h.loi = cau; h.vuaDoi = !!(kq && kq.ma === 'VUA_DOI'); }
+  }, function () {
+    var cau = 'Không nối được máy chủ — chưa chắc đã lưu. Bấm 🔄 Lấy lại để xem người đón thật.';
+    if (hoan) vpQLNM.bao = { loi: cau }; else { h.loi = cau; h.vuaDoi = true; }
+  }).then(function () {
+    vpQLNM.dangDon = false;
+    if (vpQLNM.hopDon) vpQLNM.hopDon.gui = false;
+    vpVeLai_();
+  });
+}
+function vpBamBDK_(viec, el) {
+  var ma = el.getAttribute('data-ma');
+  if (viec === 'tuyen') vpBatBDK_(ma, 'dang_dung');
+  else if (viec === 'bqs') vpBatBDK_(ma, 'bao_quan_so');
+  else if (viec === 'don') vpMoHopDon_(ma);
+  else if (viec === 'huy_don') { vpQLNM.hopDon = null; vpVeMuc_(); }
+  else if (viec === 'luu_don') vpLuuDon_();
+  else if (viec === 'chon' && vpQLNM.hopDon && !vpQLNM.hopDon.gui) {
+    var t = vpEl_('vp_bdk_tim');
+    if (t) vpQLNM.hopDon.tim = t.value || '';
+    vpQLNM.hopDon.chon[el.getAttribute('data-khoa')] = el.getAttribute('data-ca');
+    var y = window.pageYOffset || 0;
+    vpVeMuc_();
+    if (window.scrollTo) window.scrollTo(0, y);
+  }
+  else if (viec === 'hoan' && vpQLNM.bao && vpQLNM.bao.hoan) {
+    var x = vpQLNM.bao.hoan;
+    vpQLNM.bao = null;
+    if (x.kieu === 'bat') vpBatBDK_(x.ma, x.o, x.gia_tri);
+    else vpLuuDon_(x);
+  }
+  else if (viec === 'tat_bao') { vpQLNM.bao = null; vpVeMuc_(); }
+}
+/** Ô Tìm người trong hộp người đón: ẩn / hiện từng dòng tại chỗ (không vẽ lại — ô gõ không mất con trỏ). */
+function vpLocDon_() {
+  var t = vpEl_('vp_bdk_tim'), g = vpEl_('vp_bdk_ds');
+  if (!t || !g || !g.querySelectorAll) return;
+  var q = vpBoDauHoa_(String(t.value || '').trim());
+  if (vpQLNM.hopDon) vpQLNM.hopDon.tim = t.value || '';
+  [].forEach.call(g.querySelectorAll('.vp-bdk-nguoi'), function (d) { vpLop_(d, 'an', !!q && (d.getAttribute('data-tim') || '').indexOf(q) < 0); });
+}
+function vpHtmlBaoBDK_() {
+  var b = vpQLNM.bao;
+  if (!b) return '';
+  if (b.loi) return '<div class="vp-loi" role="alert">⚠️ ' + vpThoat_(b.loi) + '</div>';
+  return '<div class="vp-xong vp-bdk-bao" role="status">' + vpThoat_(b.cau) +
+    '<div class="vp-hang-nut">' + (b.hoan ? '<button type="button" class="vp-nut vp-bdk-nut" data-bdk="hoan">↩ Hoàn tác</button>' : '') +
+    '<button type="button" class="vp-nut vp-bdk-nut" data-bdk="tat_bao">Đã xem</button></div></div>';
 }
 
 // ---------------- 3.68 vé 02–04 — thêm / sửa / khoá người ----------------
@@ -798,41 +986,70 @@ var VP_TRANG = {
   doi_cua_toi: function () { return vpHtmlNguoi_('doi_cua_toi'); },
   ctv_cua_toi: function () { return vpHtmlNguoi_('ctv_cua_toi'); },
   quan_ly_nha_may: function () {
-    var dau = '<div class="vp-goi-y">👉 Thêm nhà máy mới ở đây: bấm <b>➕ Thêm nhà máy</b>. Lưu xong là trang đăng ký thấy ngay, không phải mở Sheet.</div>';
+    // 3.75 — BẢNG ĐIỀU KHIỂN: quản trị (mọi nhà máy, thêm / sửa) + trưởng nhóm (nhà máy đội mình, bật / tắt + người đón)
     var q = vpTK_();
-    if (q.tk && !q.tk.la_quan_tri) return dau + '<div class="vp-loi">⚠️ Mục này chỉ quản trị dùng được.</div>';
+    if (q.tk && !q.tk.la_quan_tri && !q.tk.phan_cong_duoc) return '<div class="vp-loi">⚠️ Mục này chỉ quản trị và trưởng nhóm dùng được.</div>';
     if (vpQLNM.xong) return vpHtmlXongNM_();
     if (!vpQLNM.kq && !vpQLNM.loi) vpLayQLNM_();
-    if (!vpQLNM.kq) return dau + (vpQLNM.loi ? vpHtmlLoi_(vpQLNM.loi, 'ct_ds') : VP_CHO);
-    if (vpQLNM.hop) return vpHtmlHopNM_();
-    if (typeof moBang_ !== 'function') return dau + '<div class="vp-loi">⚠️ Trang thiếu tệp bang-chung.js — tải lại trang (máy tính: Ctrl + F5).</div>';
-    var kq = vpQLNM.kq, bn = kq.bo_nho || {};
+    if (!vpQLNM.kq) return vpQLNM.loi ? vpHtmlLoi_(vpQLNM.loi, 'ct_ds') : VP_CHO;
+    var kq = vpQLNM.kq, qt = !!kq.la_quan_tri, bn = kq.bo_nho || {};
+    if (vpQLNM.hop && qt) return vpHtmlHopNM_();
+    if (vpQLNM.hopDon && vpNMCua_(vpQLNM.hopDon.ma)) { vpSauVe = vpLocDon_; return vpHtmlHopDon_(); }
+    if (typeof moBang_ !== 'function') return '<div class="vp-loi">⚠️ Trang thiếu tệp bang-chung.js — tải lại trang (máy tính: Ctrl + F5).</div>';
+    var dau = '<div class="vp-goi-y">👉 ' + (qt ? 'Mọi nhà máy của công ty.' : 'Nhà máy của đội bạn.') + ' Chạm nút ở cột <b>Tuyển</b> / <b>Báo quân số</b> '
+      + 'để bật hoặc tắt (có ↩ Hoàn tác). Bấm <b>👥 Đổi người đón</b> để giao người.' + (qt ? ' Nhà máy mới: <b>➕ Thêm nhà máy</b>.' : '') + '</div>';
+    var nut = function (viec, ma, chu, dang) {
+      return '<button type="button" class="vp-nut vp-bdk-nut" data-bdk="' + viec + '" data-ma="' + vpThoat_(ma) + '"' + (dang ? ' disabled' : '') + '>' +
+        (dang ? '⏳ Đang lưu…' : chu) + '</button>';
+    };
+    var chuaDon = function (r) { return !(r.don || []).length; };
     vpSauVe = function () {
       moBang_(vpEl_('vp_bang'), { id: 'quan_ly_nha_may', tep: 'nha-may', dong: kq.ds, the_tieu_de: 'ten_cong_ty', the_nhan: 'dang_dung',
-        rong: 'Chưa có nhà máy nào — bấm ➕ Thêm nhà máy.', tim: ['ten_cong_ty', 'ma_ct', 'nhom', 'khu_vuc'],
+        rong: qt ? 'Chưa có nhà máy nào — bấm ➕ Thêm nhà máy.' : 'Đội bạn chưa có nhà máy nào — báo quản trị gắn nhà máy vào đội.',
+        tim: ['ten_cong_ty', 'ma_ct', 'nhom', 'khu_vuc', 'don'],
         loc: [{ k: 'loai', ten: 'Mảng', ds: [['thoi_vu', 'Thời vụ'], ['chinh_thuc', 'Chính thức']], khop: function (r, v) { return r.loai === v; } },
               { k: 'dang_dung', ten: 'Tình trạng', ds: [['co', 'Đang tuyển'], ['khong', 'Tạm ngừng']],
-                khop: function (r, v) { return r.dang_dung === (v === 'co'); } }],
+                khop: function (r, v) { return r.dang_dung === (v === 'co'); } },
+              { k: 'don', ten: 'Người đón', ds: [['chua', '⚠️ Chưa có người đón'], ['co', 'Đã có người đón']],
+                khop: function (r, v) { return chuaDon(r) === (v === 'chua'); } }],
         tong: function (ds) {
           var mo = ds.filter(function (r) { return r.dang_dung; }).length;
-          return 'Tổng: <b>' + ds.length + '</b> nhà máy · ✅ <b>' + mo + '</b> đang tuyển' + (ds.length - mo ? ' · ⏸ <b>' + (ds.length - mo) + '</b> tạm ngừng' : '');
+          var thieu = ds.filter(function (r) { return r.dang_dung && chuaDon(r); }).length;
+          return 'Tổng: <b>' + ds.length + '</b> nhà máy · ✅ <b>' + mo + '</b> đang tuyển' + (ds.length - mo ? ' · ⏸ <b>' + (ds.length - mo) + '</b> tạm ngừng' : '') +
+            (thieu ? ' · ⚠️ <b>' + thieu + '</b> đang tuyển mà chưa có người đón' : '');
         },
-        cot: [{ k: 'ten_cong_ty', ten: 'Tên' }, { k: 'ma_ct', ten: 'Mã' }, { k: 'ten_loai', ten: 'Mảng' }, { k: 'nhom', ten: 'Đội' },
-              { k: 'khu_vuc', ten: 'Khu vực' },
-              { k: 'zalo_chat_id', ten: 'Nhóm Zalo riêng', chu: function (r) { return r.zalo_chat_id ? 'Có' : 'Dùng nhóm chung'; } },
-              { k: 'dang_dung', ten: 'Tình trạng', chu: function (r) { return r.dang_dung ? 'Đang tuyển' : 'Tạm ngừng'; },
-                ve: function (r) { return r.dang_dung ? '<span class="vp-tot">✅ Đang tuyển</span>' : '<span class="vp-xau">⏸ Tạm ngừng</span>'; } },
+        cot: [{ k: 'ten_cong_ty', ten: 'Tên' }, { k: 'ma_ct', ten: 'Mã', md: qt }, { k: 'ten_loai', ten: 'Mảng' }, { k: 'nhom', ten: 'Đội' },
+              { k: 'khu_vuc', ten: 'Khu vực', md: false },
+              { k: 'dang_dung', ten: 'Tuyển', chu: function (r) { return r.dang_dung ? 'Đang tuyển' : 'Tạm ngừng'; },
+                ve: function (r) {
+                  var dang = vpQLNM.dangBat[r.ma_ct + '|dang_dung'];
+                  return (r.dang_dung ? '<span class="vp-tot">✅ Đang tuyển</span>' : '<span class="vp-xau">⏸ Tạm ngừng</span>') + '<br>' +
+                    nut('tuyen', r.ma_ct, r.dang_dung ? '⏸ Tạm ngừng tuyển' : '▶ Mở tuyển lại', dang);
+                } },
+              { k: 'bao_quan_so', ten: 'Báo quân số', chu: function (r) { return r.bao_quan_so ? 'Phải báo' : 'Không cần báo'; },
+                ve: function (r) {
+                  var dang = vpQLNM.dangBat[r.ma_ct + '|bao_quan_so'];
+                  return (r.bao_quan_so ? '<span class="vp-tot">📊 Phải báo</span>' : '<span>🚫 Không cần báo</span>') + '<br>' +
+                    nut('bqs', r.ma_ct, r.bao_quan_so ? 'Thôi báo quân số' : '📊 Bật báo quân số', dang);
+                } },
+              { k: 'don', ten: 'Người đón', chu: function (r) { return vpChuDon_(r) || 'Chưa có người đón'; },
+                ve: function (r) {
+                  var chu = vpChuDon_(r);
+                  return (chu ? vpThoat_(chu) : (r.dang_dung ? '<span class="vp-xau">⚠️ Chưa có người đón</span>' : 'Chưa có người đón')) + '<br>' +
+                    nut('don', r.ma_ct, '👥 Đổi người đón', vpQLNM.dangDon);
+                } },
+              { k: 'zalo_chat_id', ten: 'Nhóm Zalo riêng', md: false, chu: function (r) { return r.zalo_chat_id ? 'Có' : 'Dùng nhóm chung'; } },
               { k: 'ghi_chu', ten: 'Ghi chú', md: false }, { k: 'link', ten: 'Link đăng ký', md: false },
               { k: 'viec', ten: 'Việc', khong_xuat: true, ve: function (r) {
-                return '<span class="vp-hang-nut vp-nut-o"><button type="button" class="vp-nut" data-nm="sua" data-ma="' + vpThoat_(r.ma_ct) + '">✏️ Sửa</button>' +
+                return '<span class="vp-hang-nut vp-nut-o">' + (qt ? '<button type="button" class="vp-nut" data-nm="sua" data-ma="' + vpThoat_(r.ma_ct) + '">✏️ Sửa</button>' : '') +
                   '<button type="button" class="vp-nut" data-nm="link" data-ma="' + vpThoat_(r.ma_ct) + '">🔗 Link</button></span>';
               } }] });
     };
-    return dau +
-      (bn.tran && bn.dung > bn.tran * 0.8 ? '<div class="vp-cho">⚠️ Bộ nhớ danh sách nhà máy đã dùng ' + Math.round(bn.dung * 100 / bn.tran) +
+    return dau + vpHtmlBaoBDK_() +
+      (qt && bn.tran && bn.dung > bn.tran * 0.8 ? '<div class="vp-cho">⚠️ Bộ nhớ danh sách nhà máy đã dùng ' + Math.round(bn.dung * 100 / bn.tran) +
         '%. Gần đầy thì không thêm được nữa — xoá ở tab CONGTY các dòng nhà máy đã thôi hẳn.</div>' : '') +
-      '<div class="vp-hang-nut"><button type="button" class="vp-nut-chinh" data-nm="them">➕ Thêm nhà máy</button>' +
-      '<button type="button" class="vp-nut" data-thu-lai="ct_ds"' + (vpQLNM.dang ? ' disabled' : '') + '>' +
+      '<div class="vp-hang-nut">' + (qt ? '<button type="button" class="vp-nut-chinh" data-nm="them">➕ Thêm nhà máy</button>' : '') +
+      '<button type="button" class="vp-nut vp-bdk-nut" data-thu-lai="ct_ds"' + (vpQLNM.dang ? ' disabled' : '') + '>' +
       (vpQLNM.dang ? '⏳ Đang lấy bản mới…' : '🔄 Lấy lại') + '</button></div>' +
       (vpQLNM.loi ? '<div class="vp-loi">⚠️ Chưa lấy được bản mới: ' + vpThoat_(vpQLNM.loi) + ' Đang hiện bản lấy lúc trước.</div>' : '') +
       '<div class="vp-bang" id="vp_bang"></div>';
@@ -923,6 +1140,9 @@ vpEl_('vp_trang').addEventListener('click', function (e) {
     else if (viec === 'luu' && !vpDangMk) vpLuuMk_();
     return;
   }
+  // 3.75 — bảng điều khiển nhà máy (công tắc, người đón, hoàn tác)
+  var bd = e.target && e.target.closest ? e.target.closest('[data-bdk]') : null;
+  if (bd) { if (!bd.disabled) vpBamBDK_(bd.getAttribute('data-bdk'), bd); return; }
   // 3.68 — 🏭 Nhà máy
   var nm = e.target && e.target.closest ? e.target.closest('[data-nm]') : null;
   if (nm) { vpBamNM_(nm.getAttribute('data-nm'), nm.getAttribute('data-ma')); return; }
@@ -938,7 +1158,7 @@ vpEl_('vp_trang').addEventListener('click', function (e) {
   if (b.getAttribute('data-thu-lai') === 'nha_may') { vpNM.loi = ''; vpLayNhaMay_(); }
   else if (b.getAttribute('data-thu-lai') === 'lien_he') { vpLH.loi = ''; vpLayLienHe_(); }
   else if (b.getAttribute('data-thu-lai') === 'tk_ds') { vpTKQ.loi = ''; vpLayTKQ_(); }
-  else if (b.getAttribute('data-thu-lai') === 'ct_ds') { vpQLNM.loi = ''; vpLayQLNM_(); }
+  else if (b.getAttribute('data-thu-lai') === 'ct_ds') { vpQLNM.loi = ''; vpQLNM.hopDon = null; vpQLNM.bao = null; vpLayQLNM_(); }
   else { vpCK.loi = ''; vpLayCongKhai_(); }
   vpVeMuc_();
 });
@@ -948,6 +1168,7 @@ vpEl_('vp_trang').addEventListener('input', function (e) {
   if (VP_O_MK.some(function (o) { return o[0] === id; })) vpBaoMk_(id, '');
   // 3.68 — 🏭 Nhà máy: gõ tên → gợi ý mã (tới khi người dùng tự gõ ô Mã); gõ lại ô nào thì câu đỏ ô đó tắt
   if (id === 'vp_nm_ten') vpGoiYMaNM_();
+  if (id === 'vp_bdk_tim') vpLocDon_();   // 3.75
   if (id === 'vp_nm_ma') vpQLNM.maTay = !!vpGiaO_('vp_nm_ma');
   if (id && (id.indexOf('vp_nm_') === 0 || id.indexOf('vp_ng_') === 0)) vpBaoO_(id, '');
 });

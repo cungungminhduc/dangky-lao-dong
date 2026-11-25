@@ -54,8 +54,9 @@ var VP_MENU = [
     { id: 'bieu_do', ten: 'Biểu đồ tuyển dụng', bt: '📈', mt: 'Biến động tuyển dụng · quân số · nhân viên', cu: 'bieudo.html', can: 'phan_cong' }] },
   // 3.65 (vé 05): chỉ quản trị. Mục nằm trong khung trang chủ (không có `cu`).
   // 3.68: 🏭 Nhà máy — thêm / sửa nhà máy ngay trên trang (không mở Sheet).
-  { id: 'quan_tri', ten: 'Quản trị', bt: '⚙️', ghi: 'Chỉ quản trị. Thêm, sửa nhà máy và tài khoản ngay trên trang.', viec: [
-    { id: 'quan_ly_nha_may', ten: 'Nhà máy', bt: '🏭', mt: 'Thêm · sửa nhà máy · lấy link đăng ký', can: 'quan_tri' },
+  { id: 'quan_tri', ten: 'Quản trị', bt: '⚙️', ghi: 'Bảng nhà máy: bật / tắt tuyển, người đón — quản trị và trưởng nhóm (nhà máy đội mình). '
+    + 'Thêm nhà máy, tài khoản: chỉ quản trị.', viec: [
+    { id: 'quan_ly_nha_may', ten: 'Nhà máy', bt: '🏭', mt: 'Bật / tắt tuyển · người đón · thêm, sửa nhà máy', can: 'quan_ly_nm' },
     { id: 'tai_khoan_quyen', ten: 'Tài khoản & quyền', bt: '🛡️', mt: 'Thêm · sửa · khoá tài khoản · đặt lại mật khẩu', can: 'quan_tri' }] }
 ];
 var VP_KHOA_VE = 'phien_ds_v3';   // CHUNG vé với trang chủ + các trang có đăng nhập
@@ -95,6 +96,8 @@ function vpThayViec_(v, coVe, q) {
   // (chỉ thấy mục công khai, như luật 3.64). Chưa biết quyền → hiện, trang hộp tự kiểm.
   if (v.can === 'dang_nhap') return !tk || (tk.phong !== 'doi_tac' && tk.phong !== '');
   if (v.can === 'quan_tri') return !!(tk && tk.la_quan_tri);   // 3.65 — chưa rõ quyền thì CHƯA hiện (như ô Kế toán của trang chủ)
+  // 3.75 — 🏭 Nhà máy (bảng điều khiển): quản trị + trưởng nhóm; chưa rõ quyền thì CHƯA hiện (như quản trị)
+  if (v.can === 'quan_ly_nm') return !!(tk && (tk.la_quan_tri || tk.phan_cong_duoc));
   // 3.68 — chưa rõ quyền thì chưa hiện (như quản trị)
   var vhTK = !!tk && !tk.la_quan_tri && (tk.phong === undefined || tk.phong === 'van_hanh');
   if (v.can === 'truong_nhom') return vhTK && !!tk.la_truong_nhom;

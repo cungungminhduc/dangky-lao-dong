@@ -184,3 +184,12 @@ button.vp-nut-chinh:disabled{opacity:.7;cursor:wait}
   .vp-o{padding:12px}
   .vp-tt-dong{grid-template-columns:1fr}
 }
+/* 3.75 — bảng điều khiển nhà máy: nút công tắc / người đón ≥ 48px, chữ ≥ 16px */
+.vp-nut.vp-bdk-nut{min-height:48px;font-size:16px;margin:6px 0 0}
+.vp-chon .vp-nut.vp-bdk-nut{margin:0}
+.vp-bdk-chu{margin:8px 0;font-size:16px;line-height:1.5}
+.vp-bdk-nguoi{padding:10px 0;border-top:1px solid #e6e9ed;font-size:16px}
+.vp-bdk-nguoi .vp-chon{margin-top:8px}
+.vp-bdk-phu{color:#56606b;font-size:16px}
+.vp-bdk-bao{font-size:16px}
+.vp-bdk-bao .vp-hang-nut{margin-top:8px}
